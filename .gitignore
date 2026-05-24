@@ -27,6 +27,7 @@ dist-ssr
 
 *.err
 
+flatten-code.cjs
 project_summary*.md
 changes_*.md
 

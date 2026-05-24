@@ -1,45 +1,29 @@
 {
-  "name": "mobile-recorder",
+  "name": "labour-board",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@headlessui/react": "^2.2.10",
-    "@heroicons/react": "^2.2.0",
-    "axios": "^1.16.1",
-    "clsx": "^2.1.1",
-    "i18next": "^26.2.0",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "react-i18next": "^17.0.8",
-    "tailwind-merge": "^3.5.0",
-    "zustand": "^5.0.12"
+    "dev": "pnpm --parallel --filter @labour-board/web --filter @labour-board/api dev",
+    "dev:web": "pnpm --filter @labour-board/web dev",
+    "dev:api": "pnpm --filter @labour-board/api dev",
+    "build": "pnpm -r build",
+    "build:web": "pnpm --filter @labour-board/web build",
+    "build:api": "pnpm --filter @labour-board/api build",
+    "build:shared": "pnpm --filter @labour-board/shared build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "@babel/core": "^7.29.0",
     "@eslint/js": "^10.0.1",
-    "@rolldown/plugin-babel": "^0.2.3",
-    "@tailwindcss/vite": "^4.2.4",
-    "@types/babel__core": "^7.20.5",
-    "@types/node": "^24.12.2",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^10.2.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.5.0",
     "prettier": "^3.8.3",
-    "tailwindcss": "^4.2.4",
     "typescript": "~6.0.2",
-    "typescript-eslint": "^8.58.2",
-    "vite": "^8.0.10"
+    "typescript-eslint": "^8.58.2"
   }
 }
