@@ -1,18 +1,35 @@
-import type { Collection, Document, OptionalId } from 'mongodb'
+import type { Collection, Document, Filter, OptionalId } from 'mongodb'
 import type {
+  DeepPartial,
+  PatchItem,
   RecordBody,
-  RecordEnvelope,
+  RecordId,
+  RecordItem,
   RecordQuery,
-  UpdateRecordInput,
+  Tag,
+} from '@labour-board/shared'
+import {
+  DEFAULT_BOARD_CONFIG,
+  applyRecordPatch,
+  shouldIncludeInSnapshot,
 } from '@labour-board/shared'
 
-export type BoardRecord = RecordEnvelope<RecordBody>
+export type BoardRecord = RecordItem<RecordBody>
+
+export interface RecordMutationInput {
+  body?: DeepPartial<RecordBody>
+  tags?: Tag[]
+  assignee?: string
+  assets?: BoardRecord['assets']
+  relations?: BoardRecord['relations']
+  description?: string
+}
 
 export interface RecordRepository {
-  list(query: Pick<RecordQuery, 'includeDeleted'>): Promise<BoardRecord[]>
+  list(query: Pick<RecordQuery, 'includeArchived'>): Promise<BoardRecord[]>
   findById(id: string): Promise<BoardRecord | null>
   create(record: BoardRecord): Promise<BoardRecord>
-  update(id: string, input: UpdateRecordInput): Promise<BoardRecord | null>
+  update(id: string, input: RecordMutationInput): Promise<BoardRecord | null>
 }
 
 type MongoRecordDocument = BoardRecord & Document
@@ -20,8 +37,13 @@ type MongoRecordDocument = BoardRecord & Document
 function withoutMongoId(document: MongoRecordDocument): BoardRecord {
   return {
     id: document.id,
+    pid: document.pid,
+    schema: document.schema,
     body: document.body,
-    meta: document.meta,
+    tags: document.tags,
+    assignee: document.assignee,
+    assets: document.assets,
+    relations: document.relations,
   }
 }
 
@@ -29,13 +51,13 @@ export class MemoryRecordRepository implements RecordRepository {
   private records: BoardRecord[] = []
 
   async list(
-    query: Pick<RecordQuery, 'includeDeleted'>
+    query: Pick<RecordQuery, 'includeArchived'>
   ): Promise<BoardRecord[]> {
-    if (query.includeDeleted) {
+    if (query.includeArchived) {
       return [...this.records]
     }
 
-    return this.records.filter((record) => !record.meta.deleted)
+    return this.records.filter((record) => shouldIncludeInSnapshot(record))
   }
 
   async findById(id: string): Promise<BoardRecord | null> {
@@ -49,7 +71,7 @@ export class MemoryRecordRepository implements RecordRepository {
 
   async update(
     id: string,
-    input: UpdateRecordInput
+    input: RecordMutationInput
   ): Promise<BoardRecord | null> {
     const index = this.records.findIndex((record) => record.id === id)
     if (index === -1) {
@@ -57,17 +79,7 @@ export class MemoryRecordRepository implements RecordRepository {
     }
 
     const current = this.records[index]
-    const updated: BoardRecord = {
-      ...current,
-      body: {
-        ...current.body,
-        ...input.body,
-      },
-      meta: {
-        ...current.meta,
-        ...input.meta,
-      },
-    }
+    const updated = applyRecordPatch(current, toPatchItem(current, input))
 
     this.records[index] = updated
     return updated
@@ -82,9 +94,15 @@ export class MongoRecordRepository implements RecordRepository {
   }
 
   async list(
-    query: Pick<RecordQuery, 'includeDeleted'>
+    query: Pick<RecordQuery, 'includeArchived'>
   ): Promise<BoardRecord[]> {
-    const filter = query.includeDeleted ? {} : { 'meta.deleted': { $ne: true } }
+    const filter: Filter<MongoRecordDocument> = query.includeArchived
+      ? {}
+      : {
+          tags: {
+            $nin: DEFAULT_BOARD_CONFIG.snapshot.excludeTags as readonly Tag[],
+          },
+        }
     const records = await this.collection.find(filter).toArray()
     return records.map(withoutMongoId)
   }
@@ -101,33 +119,36 @@ export class MongoRecordRepository implements RecordRepository {
 
   async update(
     id: string,
-    input: UpdateRecordInput
+    input: RecordMutationInput
   ): Promise<BoardRecord | null> {
-    const set = {
-      ...(input.body
-        ? Object.fromEntries(
-            Object.entries(input.body).map(([key, value]) => [
-              `body.${key}`,
-              value,
-            ])
-          )
-        : {}),
-      ...(input.meta
-        ? Object.fromEntries(
-            Object.entries(input.meta).map(([key, value]) => [
-              `meta.${key}`,
-              value,
-            ])
-          )
-        : {}),
+    const current = await this.findById(id)
+    if (!current) {
+      return null
     }
 
-    const result = await this.collection.findOneAndUpdate(
-      { id },
-      { $set: set },
-      { returnDocument: 'after' }
-    )
+    const updated = applyRecordPatch(current, toPatchItem(current, input))
+    const result = await this.collection.findOneAndReplace({ id }, updated, {
+      returnDocument: 'after',
+    })
 
     return result ? withoutMongoId(result) : null
+  }
+}
+
+function toPatchItem(
+  record: BoardRecord,
+  input: RecordMutationInput
+): PatchItem<DeepPartial<RecordBody>> {
+  return {
+    id: crypto.randomUUID() as RecordId,
+    pid: record.pid,
+    schema: record.schema,
+    targetId: record.id,
+    tags: input.tags,
+    assignee: input.assignee,
+    body: input.body,
+    assets: input.assets,
+    relations: input.relations,
+    description: input.description,
   }
 }

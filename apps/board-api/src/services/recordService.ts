@@ -1,13 +1,14 @@
 import type {
+  CreatePatchInput,
   CreateRecordInput,
+  DeepPartial,
   RecordBody,
-  RecordEnvelope,
   RecordQuery,
-  UpdateRecordInput,
+  RecordItem,
 } from '@labour-board/shared'
 import type { RecordRepository } from '../repositories/recordRepository.js'
 
-export type BoardRecord = RecordEnvelope<RecordBody>
+export type BoardRecord = RecordItem<RecordBody>
 
 export class RecordService {
   private readonly repository: RecordRepository
@@ -18,39 +19,49 @@ export class RecordService {
 
   async list(query: RecordQuery): Promise<BoardRecord[]> {
     const records = await this.repository.list({
-      includeDeleted: query.includeDeleted,
+      includeArchived: query.includeArchived,
     })
 
     return records.filter((record) => {
-      if (!query.includeDeleted && record.meta.deleted) {
+      if (!query.includeArchived && record.tags.includes('status:archived')) {
+        return false
+      }
+
+      if (query.id && record.id !== query.id) {
+        return false
+      }
+
+      if (query.schema && record.schema !== query.schema) {
+        return false
+      }
+
+      if (query.pid && record.pid !== query.pid) {
+        return false
+      }
+
+      if (query.assignee && record.assignee !== query.assignee) {
+        return false
+      }
+
+      if (query.assetId && !record.assets?.includes(query.assetId)) {
         return false
       }
 
       if (
-        query.status &&
-        (record.meta.status ?? record.body.card?.status) !== query.status
+        query.relationTarget &&
+        !record.relations?.some(
+          (relation) => relation.target === query.relationTarget
+        )
       ) {
         return false
       }
 
-      if (
-        query.parentId &&
-        (record.meta.parentId ?? record.body.card?.parentId) !== query.parentId
-      ) {
-        return false
-      }
-
-      if (
-        query.projectId &&
-        (record.meta.projectId ?? record.body.card?.projectId) !==
-          query.projectId
-      ) {
-        return false
-      }
-
-      if (query.tag) {
-        const tags = record.meta.tags ?? record.body.card?.tags ?? []
-        if (!tags.includes(query.tag)) {
+      if (query.tags?.length) {
+        const matches =
+          query.tagMatch === 'any'
+            ? query.tags.some((tag) => record.tags.includes(tag))
+            : query.tags.every((tag) => record.tags.includes(tag))
+        if (!matches) {
           return false
         }
       }
@@ -61,20 +72,20 @@ export class RecordService {
 
   async findById(id: string): Promise<BoardRecord | null> {
     const record = await this.repository.findById(id)
-    return record && !record.meta.deleted ? record : null
+    return record && !record.tags.includes('status:archived') ? record : null
   }
 
-  async create(input: CreateRecordInput): Promise<BoardRecord> {
-    const now = new Date().toISOString()
+  async create(input: CreateRecordInput<RecordBody>): Promise<BoardRecord> {
+    const id = crypto.randomUUID()
     const record: BoardRecord = {
-      id: input.id ?? crypto.randomUUID(),
+      id,
+      pid: `${input.pidPrefix ?? 'CARD'}-${Date.now()}`,
+      schema: input.schema,
       body: input.body,
-      meta: {
-        ...input.meta,
-        createdAt: now,
-        updatedAt: now,
-        deleted: input.meta?.deleted ?? false,
-      },
+      tags: input.tags ?? [],
+      assignee: input.assignee,
+      assets: input.assets,
+      relations: input.relations,
     }
 
     return this.repository.create(record)
@@ -82,22 +93,26 @@ export class RecordService {
 
   async update(
     id: string,
-    input: UpdateRecordInput
+    input: CreatePatchInput<DeepPartial<RecordBody>>
   ): Promise<BoardRecord | null> {
     return this.repository.update(id, {
-      ...input,
-      meta: {
-        ...input.meta,
-        updatedAt: new Date().toISOString(),
-      },
+      body: input.body,
+      tags: input.tags,
+      assignee: input.assignee,
+      assets: input.assets,
+      relations: input.relations,
+      description: input.description,
     })
   }
 
   async delete(id: string): Promise<BoardRecord | null> {
-    return this.update(id, {
-      meta: {
-        deleted: true,
-      },
+    const record = await this.repository.findById(id)
+    if (!record) {
+      return null
+    }
+
+    return this.repository.update(id, {
+      tags: Array.from(new Set([...record.tags, 'status:archived'])),
     })
   }
 }

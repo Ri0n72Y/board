@@ -1,16 +1,17 @@
 import { Hono } from 'hono'
 import type {
   ApiResponse,
-  BoardStatus,
+  CreatePatchInput,
   CreateRecordInput,
+  DeepPartial,
   RecordBody,
-  RecordEnvelope,
+  RecordItem,
   RecordQuery,
-  UpdateRecordInput,
+  Tag,
 } from '@labour-board/shared'
 import type { RecordService } from '../services/recordService.js'
 
-type BoardRecord = RecordEnvelope<RecordBody>
+type BoardRecord = RecordItem<RecordBody>
 
 function ok<T>(data: T): ApiResponse<T> {
   return { ok: true, data }
@@ -32,12 +33,21 @@ function error(
 }
 
 function parseQuery(searchParams: URLSearchParams): RecordQuery {
+  const tag = searchParams.get('tag')
+  const tags = searchParams.getAll('tags') as Tag[]
+  const tagMatch = searchParams.get('tagMatch')
   return {
-    tag: searchParams.get('tag') ?? undefined,
-    status: (searchParams.get('status') as BoardStatus | null) ?? undefined,
-    parentId: searchParams.get('parentId') ?? undefined,
-    projectId: searchParams.get('projectId') ?? undefined,
-    includeDeleted: searchParams.get('includeDeleted') === 'true',
+    tags: tag ? [tag as Tag] : tags.length ? tags : undefined,
+    tagMatch: tagMatch === 'any' ? 'any' : 'all',
+    id: searchParams.get('id') ?? undefined,
+    pid: searchParams.get('pid') ?? undefined,
+    schema: searchParams.get('schema') ?? undefined,
+    assignee: searchParams.get('assignee') ?? undefined,
+    assetId: searchParams.get('assetId') ?? undefined,
+    relationTarget: searchParams.get('relationTarget') ?? undefined,
+    includeArchived:
+      searchParams.get('includeArchived') === 'true' ||
+      searchParams.get('includeDeleted') === 'true',
   }
 }
 
@@ -61,13 +71,13 @@ export function createRecordsRoute(recordService: RecordService): Hono {
   })
 
   records.post('/', async (c) => {
-    const input = await c.req.json<CreateRecordInput>()
+    const input = await c.req.json<CreateRecordInput<RecordBody>>()
     const record = await recordService.create(input)
     return c.json<ApiResponse<BoardRecord>>(ok(record), 201)
   })
 
   records.patch('/:id', async (c) => {
-    const input = await c.req.json<UpdateRecordInput>()
+    const input = await c.req.json<CreatePatchInput<DeepPartial<RecordBody>>>()
     const record = await recordService.update(c.req.param('id'), input)
     if (!record) {
       return c.json(error('NOT_FOUND', 'Record not found'), 404)

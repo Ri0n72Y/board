@@ -1,38 +1,43 @@
-import type { BoardStatus } from '../constants/statuses.js'
-import type { BoardTag } from '../constants/tags.js'
-import type { RecordBody } from './body.js'
+import type { BuiltInSchemaName } from "../constants/schemas.js";
+import type { Tag } from "./tag.js";
 
-export interface RecordMeta {
-  createdAt: string
-  updatedAt: string
-  deleted?: boolean
-  status?: BoardStatus
-  tags?: BoardTag[]
-  parentId?: string
-  projectId?: string
+export type RecordId = string;
+export type PublicId = string;
+export type PublicKey = string;
+export type SchemaName = BuiltInSchemaName | (string & {});
+export type AssetRef = RecordId;
+export type RelationConstraint = string;
+
+export interface RelationRef {
+  constraint: RelationConstraint;
+  target: RecordId;
+  description?: string;
 }
 
-export interface RecordEnvelope<TBody> {
-  id: string
-  body: TBody
-  meta: RecordMeta
+export interface CardBody {
+  title: string;
+  description?: string;
+  content?: string;
+  extra?: Record<string, unknown>;
 }
 
-export interface RecordQuery {
-  tag?: string
-  status?: BoardStatus
-  parentId?: string
-  projectId?: string
-  includeDeleted?: boolean
+export interface AssetBody {
+  title: string;
+  description?: string;
+  content?: string;
+  uri?: string;
+  extra?: Record<string, unknown>;
 }
 
-export interface CreateRecordInput {
-  id?: string
-  body: RecordBody
-  meta?: Partial<RecordMeta>
-}
+export type RecordBody = CardBody | AssetBody | Record<string, unknown>;
 
-export interface UpdateRecordInput {
-  body?: Partial<RecordBody>
-  meta?: Partial<RecordMeta>
+export interface RecordItem<TBody = RecordBody> {
+  id: RecordId;
+  pid: PublicId;
+  schema: SchemaName;
+  tags: Tag[];
+  assignee?: PublicKey;
+  body: TBody;
+  assets?: AssetRef[];
+  relations?: RelationRef[];
 }
