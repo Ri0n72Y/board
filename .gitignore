@@ -22,3 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+/dev
+
+*.err
+
+project_summary*.md
+changes_*.md
+
+.temp
+.pnpm-store
