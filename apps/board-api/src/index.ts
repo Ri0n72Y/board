@@ -1,8 +1,9 @@
 import 'dotenv/config'
 import { serve } from '@hono/node-server'
 import { createApp } from './app.js'
+import { loadApiEnv } from './config/env.js'
 
-const port = Number(process.env.PORT ?? 8787)
+const { port } = loadApiEnv()
 const app = await createApp()
 
 serve(

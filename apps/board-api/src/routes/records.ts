@@ -9,28 +9,10 @@ import type {
   RecordQuery,
   Tag,
 } from '@labour-board/shared'
+import { error, ok } from '../http/responses.js'
 import type { RecordService } from '../services/recordService.js'
 
 type BoardRecord = RecordItem<RecordBody>
-
-function ok<T>(data: T): ApiResponse<T> {
-  return { ok: true, data }
-}
-
-function error(
-  code: string,
-  message: string,
-  details?: unknown
-): ApiResponse<never> {
-  return {
-    ok: false,
-    error: {
-      code,
-      message,
-      details,
-    },
-  }
-}
 
 function parseQuery(searchParams: URLSearchParams): RecordQuery {
   const tag = searchParams.get('tag')
