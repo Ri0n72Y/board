@@ -8,6 +8,10 @@ const DEFAULT_CONFIG_PATH = fileURLToPath(
   new URL('../../config/board.yaml', import.meta.url)
 )
 
+interface LoadBoardConfigOptions {
+  defaultConfigPath?: string
+}
+
 export class BoardConfigError extends Error {
   constructor(message: string) {
     super(message)
@@ -15,8 +19,12 @@ export class BoardConfigError extends Error {
   }
 }
 
-export async function loadBoardConfig(env: ApiEnv): Promise<BoardConfig> {
-  const configPath = env.boardConfigPath ?? DEFAULT_CONFIG_PATH
+export async function loadBoardConfig(
+  env: ApiEnv,
+  options: LoadBoardConfigOptions = {}
+): Promise<BoardConfig> {
+  const configPath =
+    env.boardConfigPath ?? options.defaultConfigPath ?? DEFAULT_CONFIG_PATH
 
   try {
     const source = await readFile(configPath, 'utf8')
