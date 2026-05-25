@@ -1,4 +1,5 @@
 import type { DeepPartial } from './patch.js'
+import type { Profile } from './profile.js'
 import type {
   AssetRef,
   PublicKey,
@@ -59,4 +60,11 @@ export interface CreatePatchInput<TBodyPatch = DeepPartial<RecordBody>> {
   assets?: AssetRef[]
   relations?: RelationRef[]
   description?: string
+}
+
+export type CreateProfileInput = Profile
+
+export interface UpdateProfileInput {
+  name?: string
+  extra?: Record<string, unknown> | null
 }

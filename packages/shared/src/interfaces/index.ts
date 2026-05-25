@@ -2,8 +2,10 @@ export type {
   ApiError,
   ApiResponse,
   CreatePatchInput,
+  CreateProfileInput,
   CreateRecordInput,
   RecordQuery,
+  UpdateProfileInput,
 } from './api.js'
 export type { BoardConfig, PidPrefix } from './boardConfig.js'
 export type { Base58String, Identity } from './identity.js'

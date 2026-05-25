@@ -31,3 +31,10 @@ export async function getRecordsCollection<T extends Document>(
 ): Promise<Collection<T>> {
   return getBoardCollection<T>(uri, databaseName, 'records')
 }
+
+export async function getProfilesCollection<T extends Document>(
+  uri: string,
+  databaseName = process.env.MONGODB_DB ?? 'labour_board'
+): Promise<Collection<T>> {
+  return getBoardCollection<T>(uri, databaseName, 'profiles')
+}
