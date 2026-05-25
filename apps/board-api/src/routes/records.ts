@@ -10,7 +10,10 @@ import type {
   Tag,
 } from '@labour-board/shared'
 import { error, ok } from '../http/responses.js'
-import type { RecordService } from '../services/recordService.js'
+import {
+  RecordValidationError,
+  type RecordService,
+} from '../services/recordService.js'
 
 type BoardRecord = RecordItem<RecordBody>
 
@@ -27,10 +30,21 @@ function parseQuery(searchParams: URLSearchParams): RecordQuery {
     assignee: searchParams.get('assignee') ?? undefined,
     assetId: searchParams.get('assetId') ?? undefined,
     relationTarget: searchParams.get('relationTarget') ?? undefined,
+    q: searchParams.get('q') ?? undefined,
+    limit: parseLimit(searchParams.get('limit')),
     includeArchived:
       searchParams.get('includeArchived') === 'true' ||
       searchParams.get('includeDeleted') === 'true',
   }
+}
+
+function parseLimit(value: string | null): number | undefined {
+  if (!value) {
+    return undefined
+  }
+
+  const limit = Number(value)
+  return Number.isInteger(limit) && limit > 0 ? limit : undefined
 }
 
 export function createRecordsRoute(recordService: RecordService): Hono {
@@ -54,8 +68,16 @@ export function createRecordsRoute(recordService: RecordService): Hono {
 
   records.post('/', async (c) => {
     const input = await c.req.json<CreateRecordInput<RecordBody>>()
-    const record = await recordService.create(input)
-    return c.json<ApiResponse<BoardRecord>>(ok(record), 201)
+    try {
+      const record = await recordService.create(input)
+      return c.json<ApiResponse<BoardRecord>>(ok(record), 201)
+    } catch (caught) {
+      if (caught instanceof RecordValidationError) {
+        return c.json(error('INVALID_RECORD', caught.message), 400)
+      }
+
+      throw caught
+    }
   })
 
   records.patch('/:id', async (c) => {

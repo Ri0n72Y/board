@@ -24,6 +24,6 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
 
   return {
     configService: new ConfigService(boardConfig),
-    recordService: new RecordService(repository),
+    recordService: new RecordService(repository, boardConfig),
   }
 }

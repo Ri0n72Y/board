@@ -1,5 +1,6 @@
 import type { Collection, Document, Filter, OptionalId } from 'mongodb'
 import type {
+  BoardConfig,
   DeepPartial,
   PatchItem,
   RecordBody,
@@ -9,7 +10,6 @@ import type {
   Tag,
 } from '@labour-board/shared'
 import {
-  DEFAULT_BOARD_CONFIG,
   applyRecordPatch,
   shouldIncludeInSnapshot,
 } from '@labour-board/shared'
@@ -26,7 +26,11 @@ export interface RecordMutationInput {
 }
 
 export interface RecordRepository {
-  list(query: Pick<RecordQuery, 'includeArchived'>): Promise<BoardRecord[]>
+  list(
+    query: Pick<RecordQuery, 'includeArchived'> & {
+      excludeTags: BoardConfig['snapshot']['excludeTags']
+    }
+  ): Promise<BoardRecord[]>
   findById(id: string): Promise<BoardRecord | null>
   create(record: BoardRecord): Promise<BoardRecord>
   update(id: string, input: RecordMutationInput): Promise<BoardRecord | null>
@@ -51,13 +55,17 @@ export class MemoryRecordRepository implements RecordRepository {
   private records: BoardRecord[] = []
 
   async list(
-    query: Pick<RecordQuery, 'includeArchived'>
+    query: Pick<RecordQuery, 'includeArchived'> & {
+      excludeTags: BoardConfig['snapshot']['excludeTags']
+    }
   ): Promise<BoardRecord[]> {
     if (query.includeArchived) {
       return [...this.records]
     }
 
-    return this.records.filter((record) => shouldIncludeInSnapshot(record))
+    return this.records.filter((record) =>
+      shouldIncludeInSnapshot(record, query.excludeTags)
+    )
   }
 
   async findById(id: string): Promise<BoardRecord | null> {
@@ -94,13 +102,15 @@ export class MongoRecordRepository implements RecordRepository {
   }
 
   async list(
-    query: Pick<RecordQuery, 'includeArchived'>
+    query: Pick<RecordQuery, 'includeArchived'> & {
+      excludeTags: BoardConfig['snapshot']['excludeTags']
+    }
   ): Promise<BoardRecord[]> {
     const filter: Filter<MongoRecordDocument> = query.includeArchived
       ? {}
       : {
           tags: {
-            $nin: DEFAULT_BOARD_CONFIG.snapshot.excludeTags as readonly Tag[],
+            $nin: query.excludeTags as readonly Tag[],
           },
         }
     const records = await this.collection.find(filter).toArray()
