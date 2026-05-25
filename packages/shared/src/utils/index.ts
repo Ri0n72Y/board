@@ -1,4 +1,8 @@
-export { applyDeepPartial, applyRecordPatch, shouldIncludeInSnapshot } from "./patch.js";
+export {
+  applyDeepPartial,
+  applyRecordPatch,
+  shouldIncludeInSnapshot,
+} from './patch.js'
 export {
   getTagDisplayName,
   getTagName,
@@ -6,4 +10,4 @@ export {
   hasTag,
   isTag,
   parseTag,
-} from "./tags.js";
+} from './tags.js'

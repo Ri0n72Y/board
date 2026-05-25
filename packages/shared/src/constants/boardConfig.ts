@@ -1,14 +1,15 @@
-import type { BoardConfig } from "../interfaces/boardConfig.js";
+import type { BoardConfig } from '../interfaces/boardConfig.js'
 import {
   DEFAULT_ASSET_TAGS,
   DEFAULT_PRIORITY_TAGS,
+  DEFAULT_TRANSACTION_TAGS,
   REQUIRED_STATUS_TAGS,
   REQUIRED_TAG_NAMESPACES,
-} from "./tags.js";
+} from './tags.js'
 
 export const DEFAULT_BOARD_CONFIG = {
   pid: {
-    prefixes: ["CARD", "ASSET", "TEST"],
+    prefixes: ['CARD', 'ASSET', 'TEST', 'TX'],
     nextNumber: 1,
   },
   tags: {
@@ -25,24 +26,28 @@ export const DEFAULT_BOARD_CONFIG = {
       defaults: [...DEFAULT_ASSET_TAGS],
       custom: [],
     },
+    transaction: {
+      defaults: [...DEFAULT_TRANSACTION_TAGS],
+      custom: [],
+    },
     custom: [],
   },
   relations: {
     constraints: [
-      "blocks",
-      "blockedBy",
-      "dependsOn",
-      "relatedTo",
-      "duplicate",
-      "contains",
-      "childOf",
-      "supports",
-      "implementedBy",
-      "asset:completion-of",
-      "progress:contributes-to",
+      'blocks',
+      'blockedBy',
+      'dependsOn',
+      'relatedTo',
+      'duplicate',
+      'contains',
+      'childOf',
+      'supports',
+      'implementedBy',
+      'asset:completion-of',
+      'progress:contributes-to',
     ],
   },
   snapshot: {
-    excludeTags: ["status:archived"],
+    excludeTags: ['status:archived'],
   },
-} as const satisfies BoardConfig;
+} as const satisfies BoardConfig
