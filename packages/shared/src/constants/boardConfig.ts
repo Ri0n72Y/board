@@ -1,4 +1,5 @@
 import type { BoardConfig } from '../interfaces/boardConfig.js'
+import { RECORD_SCHEMAS } from './schemas.js'
 import {
   DEFAULT_ASSET_TAGS,
   DEFAULT_PRIORITY_TAGS,
@@ -8,6 +9,13 @@ import {
 } from './tags.js'
 
 export const DEFAULT_BOARD_CONFIG = {
+  records: {
+    schemas: [
+      RECORD_SCHEMAS.card,
+      RECORD_SCHEMAS.asset,
+      RECORD_SCHEMAS.transaction,
+    ],
+  },
   pid: {
     prefixes: ['CARD', 'ASSET', 'TEST', 'TX'],
     nextNumber: 1,

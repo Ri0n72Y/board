@@ -1,0 +1,85 @@
+records:
+  schemas:
+    - CardBody
+    - AssetBody
+    - TransactionBody
+
+pid:
+  prefixes:
+    - CARD
+    - ASSET
+    - TEST
+    - TX
+  nextNumber: 1
+
+tags:
+  namespaces:
+    - id: status
+      displayName: Status
+      locked: true
+    - id: priority
+      displayName: Priority
+      locked: true
+    - id: asset
+      displayName: Asset
+      locked: true
+    - id: transaction
+      displayName: Transaction
+      locked: true
+  status:
+    required:
+      - id: status:todo
+        displayName: Todo
+      - id: status:doing
+        displayName: Doing
+      - id: status:done
+        displayName: Done
+      - id: status:archived
+        displayName: Archived
+    custom: []
+  priority:
+    defaults:
+      - id: priority:low
+        displayName: Low
+      - id: priority:medium
+        displayName: Medium
+      - id: priority:high
+        displayName: High
+    custom: []
+  asset:
+    defaults:
+      - id: asset:character
+        displayName: Character
+      - id: asset:scene
+        displayName: Scene
+      - id: asset:ui
+        displayName: UI
+    custom: []
+  transaction:
+    defaults:
+      - id: transaction:meeting
+        displayName: Meeting
+      - id: transaction:manual
+        displayName: Manual
+      - id: transaction:ai
+        displayName: AI
+    custom: []
+  custom: []
+
+relations:
+  constraints:
+    - blocks
+    - blockedBy
+    - dependsOn
+    - relatedTo
+    - duplicate
+    - contains
+    - childOf
+    - supports
+    - implementedBy
+    - asset:completion-of
+    - progress:contributes-to
+
+snapshot:
+  excludeTags:
+    - status:archived

@@ -1,9 +1,13 @@
 import type { RelationConstraint } from './record.js'
+import type { SchemaName } from './record.js'
 import type { Tag, TagDefinition, TagNamespaceConfig } from './tag.js'
 
 export type PidPrefix = string
 
 export interface BoardConfig {
+  records: {
+    schemas: SchemaName[]
+  }
   pid: {
     prefixes: PidPrefix[]
     nextNumber: number

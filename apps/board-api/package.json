@@ -14,7 +14,8 @@
     "@labour-board/shared": "workspace:*",
     "dotenv": "^17.2.3",
     "hono": "^4.10.7",
-    "mongodb": "^7.0.0"
+    "mongodb": "^7.0.0",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@types/node": "^24.12.2",
