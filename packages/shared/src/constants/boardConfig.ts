@@ -18,6 +18,11 @@ export const DEFAULT_BOARD_CONFIG = {
   },
   pid: {
     prefixes: ['CARD', 'ASSET', 'TEST', 'TX'],
+    schemaPrefixes: {
+      [RECORD_SCHEMAS.card]: 'CARD',
+      [RECORD_SCHEMAS.asset]: 'ASSET',
+      [RECORD_SCHEMAS.transaction]: 'TX',
+    },
     nextNumber: 1,
   },
   tags: {

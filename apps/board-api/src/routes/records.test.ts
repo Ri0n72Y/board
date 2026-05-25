@@ -9,7 +9,7 @@ function createApp(): Hono {
   const app = new Hono()
   const service = new RecordService(
     new MemoryRecordRepository(),
-    DEFAULT_BOARD_CONFIG
+    structuredClone(DEFAULT_BOARD_CONFIG)
   )
   app.route('/api/v0/records', createRecordsRoute(service))
   return app

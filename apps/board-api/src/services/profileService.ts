@@ -59,14 +59,9 @@ function assertProfileInput(input: CreateProfileInput): void {
   if (!input.pk || typeof input.pk !== 'string') {
     throw new ProfileValidationError('Profile pk is required')
   }
-
-  if (!input.name || typeof input.name !== 'string') {
-    throw new ProfileValidationError('Profile name is required')
+  if (typeof input.name !== 'string') {
+    throw new ProfileValidationError('Profile name must be a string')
   }
 }
 
-function assertProfileUpdateInput(input: UpdateProfileInput): void {
-  if (input.name !== undefined && input.name.trim() === '') {
-    throw new ProfileValidationError('Profile name cannot be empty')
-  }
-}
+function assertProfileUpdateInput(_input: UpdateProfileInput): void {}

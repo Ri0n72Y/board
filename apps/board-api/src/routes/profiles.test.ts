@@ -84,11 +84,11 @@ describe('createProfilesRoute', () => {
     })
     expect(missingPatchResponse.status).toBe(404)
 
-    const invalidPatchResponse = await app.request('/api/v0/profiles/member-1', {
+    const blankPatchResponse = await app.request('/api/v0/profiles/member-1', {
       method: 'PATCH',
       body: JSON.stringify({ name: '   ' }),
       headers: { 'content-type': 'application/json' },
     })
-    expect(invalidPatchResponse.status).toBe(400)
+    expect(blankPatchResponse.status).toBe(200)
   })
 })

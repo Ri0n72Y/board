@@ -1,4 +1,4 @@
-import type { RelationConstraint } from './record.js'
+import type { PublicId, RecordId, RelationConstraint } from './record.js'
 import type { SchemaName } from './record.js'
 import type { Tag, TagDefinition, TagNamespaceConfig } from './tag.js'
 
@@ -10,7 +10,18 @@ export interface BoardConfig {
   }
   pid: {
     prefixes: PidPrefix[]
+    schemaPrefixes: Partial<Record<SchemaName, PidPrefix>>
     nextNumber: number
+    latest?: Partial<
+      Record<
+        PidPrefix,
+        {
+          recordId: RecordId
+          pid: PublicId
+          number: number
+        }
+      >
+    >
   }
   tags: {
     namespaces: TagNamespaceConfig[]

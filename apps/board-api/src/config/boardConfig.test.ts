@@ -3,7 +3,11 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { DEFAULT_BOARD_CONFIG } from '@labour-board/shared'
 import { afterEach, describe, expect, it } from 'vitest'
-import { BoardConfigError, loadBoardConfig } from './boardConfig.js'
+import {
+  BoardConfigError,
+  loadBoardConfig,
+  loadBoardConfigState,
+} from './boardConfig.js'
 import type { ApiEnv } from './env.js'
 
 const BASE_ENV: ApiEnv = {
@@ -66,7 +70,11 @@ describe('loadBoardConfig', () => {
     })
 
     expect(config.records.schemas).toEqual(['CardBody', 'AssetBody'])
-    expect(config.pid).toEqual({ prefixes: ['CARD', 'ASSET'], nextNumber: 7 })
+    expect(config.pid).toMatchObject({
+      prefixes: ['CARD', 'ASSET'],
+      schemaPrefixes: DEFAULT_BOARD_CONFIG.pid.schemaPrefixes,
+      nextNumber: 7,
+    })
     expect(config.snapshot.excludeTags).toEqual(['status:archived'])
   })
 
@@ -121,15 +129,61 @@ describe('loadBoardConfig', () => {
     ).rejects.toThrow('Invalid board config YAML')
   })
 
-  it('rejects structurally incomplete config', async () => {
+  it('uses defaults for structurally incomplete config', async () => {
     const configPath = await writeTempConfig('records:\n  schemas: []\n')
 
-    await expect(
-      loadBoardConfig({
-        ...BASE_ENV,
-        boardConfigPath: configPath,
-      })
-    ).rejects.toThrow('pid.prefixes must be an array')
+    const config = await loadBoardConfig({
+      ...BASE_ENV,
+      boardConfigPath: configPath,
+    })
+
+    expect(config.records.schemas).toEqual(DEFAULT_BOARD_CONFIG.records.schemas)
+    expect(config.pid.prefixes).toEqual(DEFAULT_BOARD_CONFIG.pid.prefixes)
+  })
+
+  it('reports warnings while preserving malformed tag ids', async () => {
+    const configPath = await writeTempConfig(`
+records:
+  schemas: []
+pid:
+  prefixes: []
+  nextNumber: -1
+tags:
+  namespaces: []
+  status:
+    required:
+      - id: status todo
+    custom: []
+  priority:
+    defaults: []
+    custom: []
+  asset:
+    defaults: []
+    custom: []
+  transaction:
+    defaults: []
+    custom: []
+  custom: []
+relations:
+  constraints: []
+snapshot:
+  excludeTags:
+    - status:archived
+    - missing:tag
+`)
+
+    const state = await loadBoardConfigState({
+      ...BASE_ENV,
+      boardConfigPath: configPath,
+    })
+
+    expect(state.config.pid.prefixes).toEqual(DEFAULT_BOARD_CONFIG.pid.prefixes)
+    expect(state.config.pid.nextNumber).toBe(DEFAULT_BOARD_CONFIG.pid.nextNumber)
+    expect(state.needsPidReconciliation).toBe(true)
+    expect(state.config.tags.status.required).toEqual([{ id: 'status todo' }])
+    expect(state.warnings).toContain(
+      `Invalid tag id format at ${configPath}: status todo; keeping original value.`
+    )
   })
 })
 

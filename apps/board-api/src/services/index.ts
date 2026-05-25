@@ -1,5 +1,8 @@
 import type { ApiEnv } from '../config/env.js'
-import { loadBoardConfig } from '../config/boardConfig.js'
+import {
+  createBoardConfigPidWriter,
+  loadBoardConfigState,
+} from '../config/boardConfig.js'
 import { getProfilesCollection, getRecordsCollection } from '../db/mongo.js'
 import {
   MemoryProfileRepository,
@@ -23,7 +26,8 @@ export interface ApiServices {
 }
 
 export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
-  const boardConfig = await loadBoardConfig(env)
+  const boardConfigState = await loadBoardConfigState(env)
+  const boardConfig = boardConfigState.config
   const recordRepository: RecordRepository = env.mongodbUri
     ? new MongoRecordRepository(
         await getRecordsCollection<BoardRecord>(env.mongodbUri, env.mongodbDb)
@@ -35,9 +39,18 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
       )
     : new MemoryProfileRepository()
 
+  const recordService = new RecordService(
+    recordRepository,
+    boardConfig,
+    boardConfigState.writable
+      ? createBoardConfigPidWriter(boardConfigState.configPath)
+      : undefined
+  )
+  await recordService.reconcilePidState()
+
   return {
     configService: new ConfigService(boardConfig),
     profileService: new ProfileService(profileRepository),
-    recordService: new RecordService(recordRepository, boardConfig),
+    recordService,
   }
 }

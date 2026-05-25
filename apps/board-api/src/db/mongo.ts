@@ -29,12 +29,17 @@ export async function getRecordsCollection<T extends Document>(
   uri: string,
   databaseName = process.env.MONGODB_DB ?? 'labour_board'
 ): Promise<Collection<T>> {
-  return getBoardCollection<T>(uri, databaseName, 'records')
+  const collection = await getBoardCollection<T>(uri, databaseName, 'records')
+  await collection.createIndex({ id: 1 }, { unique: true })
+  await collection.createIndex({ pid: 1 }, { unique: true })
+  return collection
 }
 
 export async function getProfilesCollection<T extends Document>(
   uri: string,
   databaseName = process.env.MONGODB_DB ?? 'labour_board'
 ): Promise<Collection<T>> {
-  return getBoardCollection<T>(uri, databaseName, 'profiles')
+  const collection = await getBoardCollection<T>(uri, databaseName, 'profiles')
+  await collection.createIndex({ pk: 1 }, { unique: true })
+  return collection
 }

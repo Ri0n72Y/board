@@ -32,6 +32,7 @@ export interface RecordRepository {
     }
   ): Promise<BoardRecord[]>
   findById(id: string): Promise<BoardRecord | null>
+  findByPid(pid: string): Promise<BoardRecord | null>
   create(record: BoardRecord): Promise<BoardRecord>
   update(id: string, input: RecordMutationInput): Promise<BoardRecord | null>
 }
@@ -70,6 +71,10 @@ export class MemoryRecordRepository implements RecordRepository {
 
   async findById(id: string): Promise<BoardRecord | null> {
     return this.records.find((record) => record.id === id) ?? null
+  }
+
+  async findByPid(pid: string): Promise<BoardRecord | null> {
+    return this.records.find((record) => record.pid === pid) ?? null
   }
 
   async create(record: BoardRecord): Promise<BoardRecord> {
@@ -119,6 +124,11 @@ export class MongoRecordRepository implements RecordRepository {
 
   async findById(id: string): Promise<BoardRecord | null> {
     const record = await this.collection.findOne({ id })
+    return record ? withoutMongoId(record) : null
+  }
+
+  async findByPid(pid: string): Promise<BoardRecord | null> {
+    const record = await this.collection.findOne({ pid })
     return record ? withoutMongoId(record) : null
   }
 

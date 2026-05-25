@@ -55,11 +55,19 @@ describe('ProfileService', () => {
       service.create({ pk: '', name: 'No key' })
     ).rejects.toThrow(ProfileValidationError)
     await expect(
+      service.create({ pk: 'member-1', name: 1 as unknown as string })
+    ).rejects.toThrow('Profile name must be a string')
+  })
+
+  it('allows blank profile names so callers can fall back to the public key', async () => {
+    const service = createService()
+
+    await expect(
       service.create({ pk: 'member-1', name: '' })
-    ).rejects.toThrow('Profile name is required')
+    ).resolves.toEqual({ pk: 'member-1', name: '' })
     await expect(
       service.update('member-1', { name: '   ' })
-    ).rejects.toThrow('Profile name cannot be empty')
+    ).resolves.toEqual({ pk: 'member-1', name: '   ' })
   })
 
   it('rejects duplicate profile keys', async () => {
