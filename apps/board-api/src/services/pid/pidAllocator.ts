@@ -5,6 +5,7 @@ import type {
   RecordRepository,
 } from '../../repositories/recordRepository.js'
 import { RecordValidationError } from '../recordService.js'
+import { escapeRegExp } from '../../utils/string.js'
 
 export class PidAllocator {
   private readonly boardConfig: BoardConfig
@@ -155,8 +156,4 @@ function findMaxPidRecord(
   }
 
   return max
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

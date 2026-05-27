@@ -1,8 +1,8 @@
+import { getConfiguredTags } from '../../config/boardConfigTools.js'
 import type {
   BoardConfig,
   CreateRecordInput,
   RecordBody,
-  Tag,
 } from '@labour-board/shared'
 import { RecordValidationError } from '../recordService.js'
 
@@ -32,18 +32,4 @@ export function assertCreateInput(
       )
     }
   }
-}
-
-function getConfiguredTags(config: BoardConfig): Set<Tag> {
-  return new Set([
-    ...config.tags.status.required.map((tag) => tag.id),
-    ...config.tags.status.custom.map((tag) => tag.id),
-    ...config.tags.priority.defaults.map((tag) => tag.id),
-    ...config.tags.priority.custom.map((tag) => tag.id),
-    ...config.tags.asset.defaults.map((tag) => tag.id),
-    ...config.tags.asset.custom.map((tag) => tag.id),
-    ...config.tags.transaction.defaults.map((tag) => tag.id),
-    ...config.tags.transaction.custom.map((tag) => tag.id),
-    ...config.tags.custom.map((tag) => tag.id),
-  ])
 }

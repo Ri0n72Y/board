@@ -13,7 +13,7 @@ export function cleanExcludeTags(config: BoardConfig): BoardConfig {
   }
 }
 
-function getConfiguredTags(config: BoardConfig): Set<string> {
+export function getConfiguredTags(config: BoardConfig): Set<string> {
   return new Set([
     ...config.tags.status.required.map((tag) => tag.id),
     ...config.tags.status.custom.map((tag) => tag.id),
