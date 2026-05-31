@@ -1,6 +1,7 @@
 import { DEFAULT_BOARD_CONFIG } from '@labour-board/shared'
 import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from '../../repositories/recordRepository.js'
+import { MemorySnapshotHeadRepository } from '../../repositories/snapshotHeadRepository.js'
 import { RecordService } from '../recordService.js'
 import {
   cloneDefaultBoardConfig,
@@ -23,8 +24,8 @@ describe('RecordService pid allocation', () => {
       body: { title: 'Inventory icon', uri: 'asset://inventory-icon.png' },
     })
 
-    expect(card.pid).toBe('CARD-1')
-    expect(asset.pid).toBe('ASSET-1')
+    expect(card.body.pid).toBe('CARD-1')
+    expect(asset.body.pid).toBe('ASSET-1')
   })
 
   it('increments public ids from existing records for the same prefix', async () => {
@@ -41,14 +42,15 @@ describe('RecordService pid allocation', () => {
       body: { title: 'Second card' },
     })
 
-    expect(first.pid).toBe('CARD-1')
-    expect(second.pid).toBe('CARD-2')
+    expect(first.body.pid).toBe('CARD-1')
+    expect(second.body.pid).toBe('CARD-2')
   })
 
   it('serializes concurrent pid draws and persists pid cache state', async () => {
     const config = cloneDefaultBoardConfig()
     const writer = createWriter()
-    const service = new RecordService(new MemoryRecordRepository(), config, writer)
+    const repository = new MemoryRecordRepository()
+    const service = new RecordService(repository, new MemorySnapshotHeadRepository(repository), config, writer)
 
     const records = await Promise.all(
       Array.from({ length: 5 }, (_, index) =>
@@ -60,7 +62,7 @@ describe('RecordService pid allocation', () => {
       )
     )
 
-    expect(records.map((record) => record.pid).sort()).toEqual([
+    expect(records.map((record) => record.body.pid).sort()).toEqual([
       'CARD-1',
       'CARD-2',
       'CARD-3',
@@ -79,8 +81,10 @@ describe('RecordService pid allocation', () => {
       schema: 'CardBody',
       tags: ['status:todo'],
       body: { title: 'Existing' },
+      createdBy: 'local',
+      createdAt: '2020-01-01T00:00:00.000Z',
     })
-    const service = new RecordService(repository, cloneDefaultBoardConfig())
+    const service = new RecordService(repository, new MemorySnapshotHeadRepository(repository), cloneDefaultBoardConfig())
 
     const record = await service.create({
       schema: 'CardBody',
@@ -88,7 +92,7 @@ describe('RecordService pid allocation', () => {
       body: { title: 'New record' },
     })
 
-    expect(record.pid).toBe('CARD-2')
+    expect(record.body.pid).toBe('CARD-2')
   })
 
   it('reconciles pid cache and nextNumber from existing records', async () => {
@@ -101,6 +105,8 @@ describe('RecordService pid allocation', () => {
       schema: 'CardBody',
       tags: ['status:todo'],
       body: { title: 'Existing card max' },
+      createdBy: 'local',
+      createdAt: '2020-01-01T00:00:00.000Z',
     })
     await repository.create({
       id: 'record-2',
@@ -108,8 +114,10 @@ describe('RecordService pid allocation', () => {
       schema: 'AssetBody',
       tags: ['status:todo'],
       body: { title: 'Existing asset max' },
+      createdBy: 'local',
+      createdAt: '2020-01-01T00:00:00.000Z',
     })
-    const service = new RecordService(repository, config, writer)
+    const service = new RecordService(repository, new MemorySnapshotHeadRepository(repository), config, writer)
 
     await service.reconcilePidState()
 
@@ -128,7 +136,8 @@ describe('RecordService pid allocation', () => {
       },
     }
     const writer = createWriter()
-    const service = new RecordService(new MemoryRecordRepository(), config, writer)
+    const repository = new MemoryRecordRepository()
+    const service = new RecordService(repository, new MemorySnapshotHeadRepository(repository), config, writer)
 
     await service.reconcilePidState()
 

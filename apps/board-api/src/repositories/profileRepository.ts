@@ -22,16 +22,18 @@ export class MemoryProfileRepository implements ProfileRepository {
   private profiles: Profile[] = []
 
   async list(): Promise<Profile[]> {
-    return [...this.profiles]
+    return structuredClone(this.profiles)
   }
 
   async findByPk(pk: PublicKey): Promise<Profile | null> {
-    return this.profiles.find((profile) => profile.pk === pk) ?? null
+    const profile = this.profiles.find((profile) => profile.pk === pk) ?? null
+    return profile ? structuredClone(profile) : null
   }
 
   async create(profile: Profile): Promise<Profile> {
-    this.profiles.push(profile)
-    return profile
+    const clone = structuredClone(profile)
+    this.profiles.push(clone)
+    return structuredClone(clone)
   }
 
   async update(
@@ -50,7 +52,7 @@ export class MemoryProfileRepository implements ProfileRepository {
       extra: input.extra === undefined ? current.extra : input.extra ?? undefined,
     }
     this.profiles[index] = updated
-    return updated
+    return structuredClone(updated)
   }
 }
 

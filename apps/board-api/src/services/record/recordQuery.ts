@@ -1,25 +1,23 @@
-import type {
-  BoardConfig,
-  RecordBody,
-  RecordQuery,
-} from '@labour-board/shared'
-import type { BoardRecord } from '../../repositories/recordRepository.js'
+import type { BoardConfig, RecordBody, RecordQuery } from '@labour-board/shared'
+import type { StoredRecordDoc } from '../../repositories/recordRepository.js'
 import { isRecord } from '../../utils/object.js'
 
 export function filterRecords(
-  records: BoardRecord[],
+  records: StoredRecordDoc[],
   query: RecordQuery,
   config: BoardConfig
-): BoardRecord[] {
+): StoredRecordDoc[] {
   const filtered = records.filter((record) =>
     matchesRecordQuery(record, query, config)
   )
 
-  return typeof query.limit === 'number' ? filtered.slice(0, query.limit) : filtered
+  return typeof query.limit === 'number'
+    ? filtered.slice(0, query.limit)
+    : filtered
 }
 
 function matchesRecordQuery(
-  record: BoardRecord,
+  record: StoredRecordDoc,
   query: RecordQuery,
   config: BoardConfig
 ): boolean {
@@ -35,7 +33,9 @@ function matchesRecordQuery(
 
   if (
     query.relationTarget &&
-    !record.relations?.some((relation) => relation.target === query.relationTarget)
+    !record.relations?.some(
+      (relation) => relation.target === query.relationTarget
+    )
   ) {
     return false
   }
@@ -48,19 +48,19 @@ function matchesRecordQuery(
 }
 
 function shouldIncludeInCurrentBoard(
-  record: BoardRecord,
+  record: StoredRecordDoc,
   config: BoardConfig
 ): boolean {
   return !config.snapshot.excludeTags.some((tag) => record.tags.includes(tag))
 }
 
-function matchesTags(record: BoardRecord, query: RecordQuery): boolean {
+function matchesTags(record: StoredRecordDoc, query: RecordQuery): boolean {
   return query.tagMatch === 'any'
     ? query.tags?.some((tag) => record.tags.includes(tag)) === true
     : query.tags?.every((tag) => record.tags.includes(tag)) === true
 }
 
-function matchesTextQuery(record: BoardRecord, query: string): boolean {
+function matchesTextQuery(record: StoredRecordDoc, query: string): boolean {
   const normalizedQuery = query.trim().toLowerCase()
   if (!normalizedQuery) {
     return true

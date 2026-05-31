@@ -1,9 +1,15 @@
+import type { Collection, Document } from 'mongodb'
 import type { ApiEnv } from '../config/env.js'
 import {
   createBoardConfigPidWriter,
   loadBoardConfigState,
 } from '../config/boardConfig.js'
-import { getProfilesCollection, getRecordsCollection } from '../db/mongo.js'
+import {
+  getProfilesCollection,
+  getMongoClient,
+  getRecordsCollection,
+  getSnapshotsCollection,
+} from '../db/mongo.js'
 import {
   MemoryProfileRepository,
   MongoProfileRepository,
@@ -12,9 +18,13 @@ import {
 import {
   MemoryRecordRepository,
   MongoRecordRepository,
-  type BoardRecord,
   type RecordRepository,
 } from '../repositories/recordRepository.js'
+import {
+  MemorySnapshotHeadRepository,
+  MongoSnapshotHeadRepository,
+  type SnapshotHeadRepository,
+} from '../repositories/snapshotHeadRepository.js'
 import { RecordService } from './recordService.js'
 import { ConfigService } from './configService.js'
 import { ProfileService } from './profileService.js'
@@ -28,11 +38,26 @@ export interface ApiServices {
 export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
   const boardConfigState = await loadBoardConfigState(env)
   const boardConfig = boardConfigState.config
-  const recordRepository: RecordRepository = env.mongodbUri
-    ? new MongoRecordRepository(
-        await getRecordsCollection<BoardRecord>(env.mongodbUri, env.mongodbDb)
-      )
+  const recordsCollection = env.mongodbUri
+    ? ((await getRecordsCollection<Document>(
+        env.mongodbUri,
+        env.mongodbDb
+      )) as Collection<Document>)
+    : undefined
+  const recordRepository: RecordRepository = recordsCollection
+    ? new MongoRecordRepository(recordsCollection)
     : new MemoryRecordRepository()
+  const snapshotHeadRepository: SnapshotHeadRepository =
+    env.mongodbUri && recordsCollection
+      ? new MongoSnapshotHeadRepository(
+          await getMongoClient(env.mongodbUri),
+          recordsCollection,
+          (await getSnapshotsCollection<Document>(
+            env.mongodbUri,
+            env.mongodbDb
+          )) as Collection<Document>
+        )
+      : new MemorySnapshotHeadRepository(recordRepository)
   const profileRepository: ProfileRepository = env.mongodbUri
     ? new MongoProfileRepository(
         await getProfilesCollection(env.mongodbUri, env.mongodbDb)
@@ -41,6 +66,7 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
 
   const recordService = new RecordService(
     recordRepository,
+    snapshotHeadRepository,
     boardConfig,
     boardConfigState.writable
       ? createBoardConfigPidWriter(boardConfigState.configPath)

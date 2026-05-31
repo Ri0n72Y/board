@@ -34,6 +34,17 @@ describe('MemoryProfileRepository', () => {
     })
     await expect(repository.update('missing', {})).resolves.toBeNull()
   })
+
+  it('list returns clones — external mutations do not affect internal state', async () => {
+    const repository = new MemoryProfileRepository()
+    await repository.create(BASE_PROFILE)
+
+    const profiles = await repository.list()
+    profiles[0].name = 'Corrupted'
+
+    const refetch = await repository.list()
+    expect(refetch[0].name).toBe('Ada')
+  })
 })
 
 describe('MongoProfileRepository', () => {

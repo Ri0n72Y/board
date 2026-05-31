@@ -1,108 +1,172 @@
 import type { Collection, Document, Filter, OptionalId } from 'mongodb'
 import type {
   BoardConfig,
-  DeepPartial,
-  PatchItem,
+  PublicKey,
   RecordBody,
-  RecordId,
   RecordItem,
   RecordQuery,
   Tag,
 } from '@labour-board/shared'
-import {
-  applyRecordPatch,
-  shouldIncludeInSnapshot,
-} from '@labour-board/shared'
+import { shouldIncludeInSnapshot } from '@labour-board/shared'
+import type { StoredPatchDoc } from './snapshotHeadRepository.js'
 
-export type BoardRecord = RecordItem<RecordBody>
-
-export interface RecordMutationInput {
-  body?: DeepPartial<RecordBody>
-  tags?: Tag[]
-  assignee?: string
-  assets?: BoardRecord['assets']
-  relations?: BoardRecord['relations']
-  description?: string
+export type StoredRecordDoc = RecordItem<RecordBody> & {
+  createdBy: PublicKey
+  createdAt: string
 }
-
 export interface RecordRepository {
   list(
     query: Pick<RecordQuery, 'includeArchived'> & {
       excludeTags: BoardConfig['snapshot']['excludeTags']
     }
-  ): Promise<BoardRecord[]>
-  findById(id: string): Promise<BoardRecord | null>
-  findByPid(pid: string): Promise<BoardRecord | null>
-  create(record: BoardRecord): Promise<BoardRecord>
-  update(id: string, input: RecordMutationInput): Promise<BoardRecord | null>
+  ): Promise<StoredRecordDoc[]>
+  findById(id: string): Promise<StoredRecordDoc | null>
+  findByPid(pid: string): Promise<StoredRecordDoc | null>
+  create(record: StoredRecordDoc): Promise<StoredRecordDoc>
+  archive(id: string, tags: Tag[]): Promise<StoredRecordDoc | null>
+  appendPatch(patch: StoredPatchDoc): Promise<StoredPatchDoc>
+  findPatchById(id: string): Promise<StoredPatchDoc | null>
+  findPatchesByTargetId(targetId: string): Promise<StoredPatchDoc[]>
+  listPatches(): Promise<StoredPatchDoc[]>
 }
 
-type MongoRecordDocument = BoardRecord & Document
+// ─── helpers for record / patch separation ───
 
-function withoutMongoId(document: MongoRecordDocument): BoardRecord {
+function recordOnlyFilter(extra?: Filter<Document>): Filter<Document> {
+  const conditions: Filter<Document>[] = [{ targetId: { $exists: false } }]
+  if (extra && Object.keys(extra).length > 0) {
+    conditions.push(extra)
+  }
+  return { $and: conditions } as Filter<Document>
+}
+
+function patchOnlyFilter(extra?: Filter<Document>): Filter<Document> {
+  const conditions: Filter<Document>[] = [{ targetId: { $exists: true } }]
+  if (extra && Object.keys(extra).length > 0) {
+    conditions.push(extra)
+  }
+  return { $and: conditions } as Filter<Document>
+}
+
+// ─── helper: strip _id from mongo document (record) ───
+
+function cleanRecord(doc: Document): StoredRecordDoc {
   return {
-    id: document.id,
-    pid: document.pid,
-    schema: document.schema,
-    body: document.body,
-    tags: document.tags,
-    assignee: document.assignee,
-    assets: document.assets,
-    relations: document.relations,
+    id: doc.id,
+    pid: doc.pid,
+    schema: doc.schema,
+    body: doc.body,
+    tags: doc.tags,
+    assignee: doc.assignee,
+    assets: doc.assets,
+    relations: doc.relations,
+    createdBy: doc.createdBy,
+    createdAt: doc.createdAt,
   }
 }
 
+// ─── helper: strip _id from mongo document (patch) ───
+
+function cleanPatch(doc: Document): StoredPatchDoc {
+  return {
+    id: doc.id,
+    pid: doc.pid,
+    schema: doc.schema,
+    targetId: doc.targetId,
+    parentId: doc.parentId ?? null,
+    tags: doc.tags,
+    assignee: doc.assignee,
+    body: doc.body,
+    assets: doc.assets,
+    relations: doc.relations,
+    description: doc.description,
+    createdBy: doc.createdBy,
+    createdAt: doc.createdAt,
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Memory repository – for tests and dev without MongoDB
+// ═══════════════════════════════════════════════════════════
+
 export class MemoryRecordRepository implements RecordRepository {
-  private records: BoardRecord[] = []
+  private records: StoredRecordDoc[] = []
+  private patches: StoredPatchDoc[] = []
 
   async list(
     query: Pick<RecordQuery, 'includeArchived'> & {
       excludeTags: BoardConfig['snapshot']['excludeTags']
     }
-  ): Promise<BoardRecord[]> {
-    if (query.includeArchived) {
-      return [...this.records]
-    }
-
-    return this.records.filter((record) =>
-      shouldIncludeInSnapshot(record, query.excludeTags)
-    )
+  ): Promise<StoredRecordDoc[]> {
+    const source = query.includeArchived
+      ? this.records
+      : this.records.filter((record) =>
+          shouldIncludeInSnapshot(record, query.excludeTags)
+        )
+    return structuredClone(source)
   }
 
-  async findById(id: string): Promise<BoardRecord | null> {
-    return this.records.find((record) => record.id === id) ?? null
+  async findById(id: string): Promise<StoredRecordDoc | null> {
+    const record = this.records.find((record) => record.id === id) ?? null
+    return record ? structuredClone(record) : null
   }
 
-  async findByPid(pid: string): Promise<BoardRecord | null> {
-    return this.records.find((record) => record.pid === pid) ?? null
+  async findByPid(pid: string): Promise<StoredRecordDoc | null> {
+    const record = this.records.find((record) => record.pid === pid) ?? null
+    return record ? structuredClone(record) : null
   }
 
-  async create(record: BoardRecord): Promise<BoardRecord> {
-    this.records.push(record)
-    return record
+  async create(record: StoredRecordDoc): Promise<StoredRecordDoc> {
+    const clone = structuredClone(record)
+    this.records.push(clone)
+    return structuredClone(clone)
   }
 
-  async update(
-    id: string,
-    input: RecordMutationInput
-  ): Promise<BoardRecord | null> {
+  async archive(id: string, tags: Tag[]): Promise<StoredRecordDoc | null> {
     const index = this.records.findIndex((record) => record.id === id)
     if (index === -1) {
       return null
     }
 
     const current = this.records[index]
-    const updated = applyRecordPatch(current, toPatchItem(current, input))
+    const updated: StoredRecordDoc = {
+      ...current,
+      tags,
+    }
 
     this.records[index] = updated
-    return updated
+    return structuredClone(updated)
+  }
+
+  async appendPatch(patch: StoredPatchDoc): Promise<StoredPatchDoc> {
+    const clone = structuredClone(patch)
+    this.patches.push(clone)
+    return structuredClone(clone)
+  }
+
+  async findPatchById(id: string): Promise<StoredPatchDoc | null> {
+    const patch = this.patches.find((patch) => patch.id === id) ?? null
+    return patch ? structuredClone(patch) : null
+  }
+
+  async findPatchesByTargetId(targetId: string): Promise<StoredPatchDoc[]> {
+    const matches = this.patches.filter((patch) => patch.targetId === targetId)
+    return structuredClone(matches)
+  }
+
+  async listPatches(): Promise<StoredPatchDoc[]> {
+    return structuredClone(this.patches)
   }
 }
 
-export class MongoRecordRepository implements RecordRepository {
-  private readonly collection: Collection<MongoRecordDocument>
+// ═══════════════════════════════════════════════════════════
+//  Mongo repository
+// ═══════════════════════════════════════════════════════════
 
-  constructor(collection: Collection<MongoRecordDocument>) {
+export class MongoRecordRepository implements RecordRepository {
+  private readonly collection: Collection<Document>
+
+  constructor(collection: Collection<Document>) {
     this.collection = collection
   }
 
@@ -110,65 +174,68 @@ export class MongoRecordRepository implements RecordRepository {
     query: Pick<RecordQuery, 'includeArchived'> & {
       excludeTags: BoardConfig['snapshot']['excludeTags']
     }
-  ): Promise<BoardRecord[]> {
-    const filter: Filter<MongoRecordDocument> = query.includeArchived
-      ? {}
-      : {
-          tags: {
-            $nin: query.excludeTags as readonly Tag[],
-          },
-        }
-    const records = await this.collection.find(filter).toArray()
-    return records.map(withoutMongoId)
+  ): Promise<StoredRecordDoc[]> {
+    const filter: Filter<Document> = recordOnlyFilter()
+    if (!query.includeArchived) {
+      filter.tags = { $nin: query.excludeTags as readonly Tag[] }
+    }
+    const docs = await this.collection.find(filter).toArray()
+    return docs.map(cleanRecord)
   }
 
-  async findById(id: string): Promise<BoardRecord | null> {
-    const record = await this.collection.findOne({ id })
-    return record ? withoutMongoId(record) : null
+  async findById(id: string): Promise<StoredRecordDoc | null> {
+    const doc = await this.collection.findOne(recordOnlyFilter({ id }))
+    return doc ? cleanRecord(doc) : null
   }
 
-  async findByPid(pid: string): Promise<BoardRecord | null> {
-    const record = await this.collection.findOne({ pid })
-    return record ? withoutMongoId(record) : null
+  async findByPid(pid: string): Promise<StoredRecordDoc | null> {
+    const doc = await this.collection.findOne(recordOnlyFilter({ pid }))
+    return doc ? cleanRecord(doc) : null
   }
 
-  async create(record: BoardRecord): Promise<BoardRecord> {
-    await this.collection.insertOne(record as OptionalId<MongoRecordDocument>)
+  async create(record: StoredRecordDoc): Promise<StoredRecordDoc> {
+    await this.collection.insertOne(record as OptionalId<Document>)
     return record
   }
 
-  async update(
-    id: string,
-    input: RecordMutationInput
-  ): Promise<BoardRecord | null> {
+  async archive(id: string, tags: Tag[]): Promise<StoredRecordDoc | null> {
     const current = await this.findById(id)
     if (!current) {
       return null
     }
 
-    const updated = applyRecordPatch(current, toPatchItem(current, input))
-    const result = await this.collection.findOneAndReplace({ id }, updated, {
-      returnDocument: 'after',
-    })
+    const updated: StoredRecordDoc = {
+      ...current,
+      tags,
+    }
+    const result = await this.collection.findOneAndReplace(
+      recordOnlyFilter({ id }),
+      updated,
+      { returnDocument: 'after' }
+    )
 
-    return result ? withoutMongoId(result) : null
+    return result ? cleanRecord(result) : null
   }
-}
 
-function toPatchItem(
-  record: BoardRecord,
-  input: RecordMutationInput
-): PatchItem<DeepPartial<RecordBody>> {
-  return {
-    id: crypto.randomUUID() as RecordId,
-    pid: record.pid,
-    schema: record.schema,
-    targetId: record.id,
-    tags: input.tags,
-    assignee: input.assignee,
-    body: input.body,
-    assets: input.assets,
-    relations: input.relations,
-    description: input.description,
+  async appendPatch(patch: StoredPatchDoc): Promise<StoredPatchDoc> {
+    await this.collection.insertOne(patch as OptionalId<Document>)
+    return patch
+  }
+
+  async findPatchById(id: string): Promise<StoredPatchDoc | null> {
+    const doc = await this.collection.findOne(patchOnlyFilter({ id }))
+    return doc ? cleanPatch(doc) : null
+  }
+
+  async findPatchesByTargetId(targetId: string): Promise<StoredPatchDoc[]> {
+    const docs = await this.collection
+      .find(patchOnlyFilter({ targetId }))
+      .toArray()
+    return docs.map(cleanPatch)
+  }
+
+  async listPatches(): Promise<StoredPatchDoc[]> {
+    const docs = await this.collection.find(patchOnlyFilter()).toArray()
+    return docs.map(cleanPatch)
   }
 }

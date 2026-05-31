@@ -42,7 +42,7 @@ export interface RecordItem<TBody = RecordBody> {
   pid: PublicId
   schema: SchemaName
   tags: Tag[]
-  assignee?: PublicKey
+  assignee?: PublicKey | null
   body: TBody
   assets?: AssetRef[]
   relations?: RelationRef[]

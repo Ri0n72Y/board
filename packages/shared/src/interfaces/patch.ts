@@ -24,7 +24,8 @@ export interface PatchItem<TBodyPatch = DeepPartial<RecordBody>> {
   pid: PublicId
   schema: SchemaName
   targetId: RecordId
-  parentId?: RecordId
+  /** Points to the previous patch; null for the first patch in the chain. */
+  parentId: RecordId | null
   tags?: Tag[]
   assignee?: PublicKey | null
   body?: TBodyPatch

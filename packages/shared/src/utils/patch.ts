@@ -45,7 +45,6 @@ export function applyRecordPatch<TBody>(
   // The service layer is responsible for validating patch.pid/schema/targetId.
   let assignee = patch.assignee
   if (assignee === undefined) assignee = record.assignee
-  if (assignee === null) assignee = undefined
   return {
     ...record,
     tags: patch.tags ?? record.tags,

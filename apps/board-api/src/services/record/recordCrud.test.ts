@@ -1,54 +1,38 @@
 import { DEFAULT_BOARD_CONFIG, type BoardConfig } from '@labour-board/shared'
 import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from '../../repositories/recordRepository.js'
+import { MemorySnapshotHeadRepository } from '../../repositories/snapshotHeadRepository.js'
 import { RecordService, RecordValidationError } from '../recordService.js'
 import { createRecordService } from './recordTestUtils.js'
 
-describe('RecordService CRUD and validation', () => {
-  it('updates existing records and returns null for missing records', async () => {
+describe('RecordService CRUD', () => {
+  it('creates, lists, and reads records', async () => {
     const service = createRecordService()
-    const record = await service.create({
+
+    const envelope = await service.create({
       schema: 'CardBody',
       tags: ['status:todo'],
-      body: { title: 'Update me' },
+      body: { title: 'My card' },
     })
 
-    await expect(
-      service.update(record.id, {
-        targetId: record.id,
-        tags: ['status:wip'],
-        body: { description: 'Updated description' },
-      })
-    ).resolves.toMatchObject({
-      id: record.id,
-      tags: ['status:wip'],
-      body: {
-        title: 'Update me',
-        description: 'Updated description',
-      },
-    })
-    await expect(
-      service.update('missing', { targetId: 'missing', tags: ['status:wip'] })
-    ).resolves.toBeNull()
-    await expect(service.delete('missing')).resolves.toBeNull()
+    expect(envelope).toHaveProperty('createdBy')
+    expect(envelope).toHaveProperty('createdAt')
+    expect(envelope.body.pid).toBe('CARD-1')
+    expect(envelope.body.schema).toBe('CardBody')
+    expect(envelope.body.body.title).toBe('My card')
+
+    const found = await service.findById(envelope.body.id)
+    expect(found).not.toBeNull()
+    expect(found!.body.id).toBe(envelope.body.id)
+
+    const list = await service.list({})
+    expect(list).toHaveLength(1)
+    expect(list[0].body.id).toBe(envelope.body.id)
   })
 
-  it('archives records and hides them from current board lists by default', async () => {
+  it('returns null when finding a missing record', async () => {
     const service = createRecordService()
-    const record = await service.create({
-      schema: 'CardBody',
-      tags: ['status:todo'],
-      body: { title: 'Archive me' },
-    })
-
-    const archived = await service.delete(record.id)
-
-    expect(archived?.tags).toContain('status:archived')
-    await expect(service.findById(record.id)).resolves.toBeNull()
-    await expect(service.list({})).resolves.toEqual([])
-    await expect(service.list({ includeArchived: true })).resolves.toEqual([
-      archived,
-    ])
+    await expect(service.findById('missing')).resolves.toBeNull()
   })
 
   it('rejects unsupported schemas, pid prefixes, tags, and relation constraints', async () => {
@@ -96,14 +80,15 @@ describe('RecordService CRUD and validation', () => {
         schemas: [...DEFAULT_BOARD_CONFIG.records.schemas, 'CustomBody'],
       },
     } satisfies BoardConfig
-    const service = new RecordService(new MemoryRecordRepository(), config)
+    const repo = new MemoryRecordRepository()
+    const service = new RecordService(repo, new MemorySnapshotHeadRepository(repo), config)
 
-    const record = await service.create({
+    const envelope = await service.create({
       schema: 'CustomBody',
       tags: ['status:todo'],
       body: { title: 'Custom record' },
     })
 
-    expect(record.pid).toBe('CARD-1')
+    expect(envelope.body.pid).toBe('CARD-1')
   })
 })

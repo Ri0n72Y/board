@@ -1,7 +1,7 @@
 import type { BoardConfig } from '@labour-board/shared'
 import type { BoardConfigPidWriter } from '../../config/boardConfig.js'
 import type {
-  BoardRecord,
+  StoredRecordDoc,
   RecordRepository,
 } from '../../repositories/recordRepository.js'
 import { RecordValidationError } from '../recordService.js'
@@ -32,7 +32,9 @@ export class PidAllocator {
       )
       const cachedPid = `${prefix}-${nextNumber}`
       const existing = await this.repository.findByPid(cachedPid)
-      const pid = existing ? await this.drawPidFromRecordScan(prefix) : cachedPid
+      const pid = existing
+        ? await this.drawPidFromRecordScan(prefix)
+        : cachedPid
 
       this.persistPidState(prefix, recordId, pid)
       return pid
@@ -55,7 +57,10 @@ export class PidAllocator {
 
       maxNumber = Math.max(maxNumber, max.number)
       const current = this.boardConfig.pid.latest?.[prefix]
-      if (current?.recordId === max.record.id && current.number === max.number) {
+      if (
+        current?.recordId === max.record.id &&
+        current.number === max.number
+      ) {
         continue
       }
 
@@ -140,10 +145,10 @@ function parsePublicIdNumber(pid: string, prefix: string): number | undefined {
 }
 
 function findMaxPidRecord(
-  records: BoardRecord[],
+  records: StoredRecordDoc[],
   prefix: string
-): { record: BoardRecord; number: number } | undefined {
-  let max: { record: BoardRecord; number: number } | undefined
+): { record: StoredRecordDoc; number: number } | undefined {
+  let max: { record: StoredRecordDoc; number: number } | undefined
   for (const record of records) {
     const number = parsePublicIdNumber(record.pid, prefix)
     if (number === undefined) {
