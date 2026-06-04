@@ -14,9 +14,14 @@ interface RecordCardProps {
   record: RecordResponse<RecordItem<RecordBody>>
   /** Profiles for assignee name resolution. */
   profiles?: Profile[] | null
+  onHistoryClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
 }
 
-export function RecordCard({ record, profiles }: RecordCardProps) {
+export function RecordCard({
+  record,
+  profiles,
+  onHistoryClick,
+}: RecordCardProps) {
   const { t } = useTranslation()
   const current = record.body
   const body = asDisplayBody(current.body)
@@ -32,9 +37,10 @@ export function RecordCard({ record, profiles }: RecordCardProps) {
           </h2>
         </div>
         <Button
+          type="button"
           variant="ghost"
-          disabled
-          title="History coming soon"
+          onClick={() => onHistoryClick?.(record)}
+          title="Open history"
           icon={<ClockIcon className="h-4 w-4" />}
         >
           History

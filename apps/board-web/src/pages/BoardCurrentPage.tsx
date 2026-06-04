@@ -1,12 +1,21 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type {
+  RecordBody,
+  RecordHistoryResponse,
+  RecordItem,
+  RecordResponse,
+} from '@labour-board/shared'
 import { ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/react/20/solid'
+import axios from 'axios'
 import { Button } from '../components/ui/Button'
 import { BoardFilters } from '../components/BoardFilters'
 import { EmptyState } from '../components/EmptyState'
 import { IssuesPanel } from '../components/IssuesPanel'
 import { RecordCard } from '../components/RecordCard'
+import { RecordHistoryDrawer } from '../components/RecordHistoryDrawer'
 import { StatusBadge } from '../components/StatusBadge'
 import { SummaryBar } from '../components/SummaryBar'
+import { fetchRecordHistory } from '../api/history'
 import { useBoardCurrentStore } from '../stores/boardCurrentStore'
 import { useBoardMetadataStore } from '../stores/boardMetadataStore'
 import {
@@ -20,6 +29,12 @@ import {
 import { useDebouncedValue } from '../utils/useDebounce'
 
 const Q_DEBOUNCE_MS = 300
+
+interface HistorySelection {
+  recordId: string
+  title?: string
+  pid?: string
+}
 
 export function BoardCurrentPage() {
   /* ── Current board store ── */
@@ -46,12 +61,27 @@ export function BoardCurrentPage() {
   const metadataError = useBoardMetadataStore((s) => s.error)
   const loadMetadata = useBoardMetadataStore((s) => s.loadMetadata)
 
+  /* ── Record history drawer ── */
+  const [historySelection, setHistorySelection] =
+    useState<HistorySelection | null>(null)
+  const [history, setHistory] = useState<RecordHistoryResponse | null>(null)
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState<string | null>(null)
+  const historyRequestIdRef = useRef(0)
+  const historyAbortRef = useRef<AbortController | null>(null)
+
   /* ── Load metadata once on mount ── */
   useEffect(() => {
     const controller = new AbortController()
     void loadMetadata(controller.signal)
     return () => controller.abort()
   }, [loadMetadata])
+
+  useEffect(() => {
+    return () => {
+      historyAbortRef.current?.abort()
+    }
+  }, [])
 
   /* ── Effective filters (debounced q) ── */
   const debouncedQ = useDebouncedValue(draftFilters.q, Q_DEBOUNCE_MS)
@@ -120,6 +150,59 @@ export function BoardCurrentPage() {
   function refresh() {
     void loadCurrentBoard(effectiveFilters)
   }
+
+  const openHistory = useCallback(
+    (record: RecordResponse<RecordItem<RecordBody>>) => {
+      const requestId = historyRequestIdRef.current + 1
+      historyRequestIdRef.current = requestId
+      historyAbortRef.current?.abort()
+
+      const controller = new AbortController()
+      historyAbortRef.current = controller
+
+      setHistorySelection({
+        recordId: record.body.id,
+        title: getRecordTitle(record.body.body),
+        pid: record.body.pid,
+      })
+      setHistory(null)
+      setHistoryError(null)
+      setIsHistoryLoading(true)
+
+      void fetchRecordHistory(record.body.id, controller.signal)
+        .then((data) => {
+          if (historyRequestIdRef.current !== requestId) return
+          setHistory(data)
+          setHistoryError(null)
+        })
+        .catch((unknownError: unknown) => {
+          if (
+            historyRequestIdRef.current !== requestId ||
+            controller.signal.aborted ||
+            axios.isCancel(unknownError)
+          ) {
+            return
+          }
+          setHistoryError(errorMessage(unknownError))
+          setHistory(null)
+        })
+        .finally(() => {
+          if (historyRequestIdRef.current !== requestId) return
+          setIsHistoryLoading(false)
+        })
+    },
+    [],
+  )
+
+  const closeHistory = useCallback(() => {
+    historyRequestIdRef.current += 1
+    historyAbortRef.current?.abort()
+    historyAbortRef.current = null
+    setHistorySelection(null)
+    setHistory(null)
+    setHistoryError(null)
+    setIsHistoryLoading(false)
+  }, [])
 
   /* ── Render ── */
   return (
@@ -256,6 +339,7 @@ export function BoardCurrentPage() {
               key={record.body.id}
               record={record}
               profiles={profiles}
+              onHistoryClick={openHistory}
             />
           ))}
         </section>
@@ -263,6 +347,28 @@ export function BoardCurrentPage() {
 
       {/* ── Issues (always shown when content exists, regardless of status) ── */}
       <IssuesPanel blockedRecords={blockedRecords} diagnostics={diagnostics} />
+
+      <RecordHistoryDrawer
+        open={historySelection !== null}
+        recordId={historySelection?.recordId ?? null}
+        title={historySelection?.title}
+        pid={historySelection?.pid}
+        history={history}
+        isLoading={isHistoryLoading}
+        error={historyError}
+        profiles={profiles}
+        onClose={closeHistory}
+      />
     </main>
   )
+}
+
+function getRecordTitle(body: RecordBody): string | undefined {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return undefined
+  const value = (body as Record<string, unknown>).title
+  return typeof value === 'string' && value.trim() ? value : undefined
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
 }
