@@ -33,6 +33,8 @@ export interface ApiServices {
   configService: ConfigService
   profileService: ProfileService
   recordService: RecordService
+  recordRepository: RecordRepository
+  snapshotHeadRepository: SnapshotHeadRepository
 }
 
 export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
@@ -78,5 +80,7 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
     configService: new ConfigService(boardConfig),
     profileService: new ProfileService(profileRepository),
     recordService,
+    recordRepository,
+    snapshotHeadRepository,
   }
 }

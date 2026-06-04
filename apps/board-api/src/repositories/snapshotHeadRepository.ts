@@ -248,76 +248,169 @@ export class MongoSnapshotHeadRepository implements SnapshotHeadRepository {
   async appendPatchAndAdvanceHead(
     params: AppendPatchParams
   ): Promise<AppendPatchResult> {
+    // Try transactional path first (replica set / mongos).
+    // Fall back to standalone mode if the server does not support
+    // transactions. Standalone uses compensating cleanup on CAS
+    // failure; orphan patches may still remain if the process
+    // crashes between insert and cleanup.
     const session = this.client.startSession()
     try {
       return await session.withTransaction(async () => {
-        let head = await this.findStoredHead(session)
-        if (!head) {
-          const patches = await this.loadPatchFacts(session)
-          head = this.rebuildSnapshotHeadFromPatches(patches)
-          try {
-            await this.snapshotsCollection.insertOne(toSnapshotDoc(head), {
-              session,
-            })
-          } catch (caught) {
-            if (isDuplicateKeyError(caught)) {
-              throw new SnapshotHeadTransactionAbort({
-                ok: false,
-                reason: 'snapshotVersionMismatch',
-                currentVersion: head.version,
-              })
-            }
-            throw caught
-          }
-        }
+        return this.appendPatchAndAdvanceHeadImpl(params, session)
+      })
+    } catch (caught) {
+      if (caught instanceof SnapshotHeadTransactionAbort) {
+        return caught.result
+      }
+      if (isTransactionNotSupportedError(caught)) {
+        return this.appendStandaloneWithCleanup(params)
+      }
+      throw caught
+    } finally {
+      await session.endSession()
+    }
+  }
 
-        const validation = await validateAppend(
-          params,
-          head,
-          this.mongoPatchFacts(session)
-        )
-        if (!validation.ok) {
-          throw new SnapshotHeadTransactionAbort(validation)
-        }
+  /**
+   * Standalone (non-transactional) append with compensating cleanup.
+   *
+   * Standalone MongoDB does not support cross-collection transactions,
+   * so a CAS failure after patch insertion would otherwise leave an
+   * orphan patch. Normal CAS failure triggers compensating cleanup; if
+   * cleanup itself fails, the error is thrown rather than swallowed.
+   *
+   * A process crash between insert and cleanup can still leave a
+   * residual patch behind. For strong consistency, use a replica set
+   * with transactions in production.
+   */
+  private async appendStandaloneWithCleanup(
+    params: AppendPatchParams
+  ): Promise<AppendPatchResult> {
+    try {
+      return await this.appendPatchAndAdvanceHeadImpl(params, undefined)
+    } catch (inner) {
+      if (inner instanceof SnapshotHeadTransactionAbort) {
+        await this.deleteOrphanPatch(params.patch)
+        return inner.result
+      }
+      throw inner
+    }
+  }
 
-        await this.recordsCollection.insertOne(
-          params.patch as OptionalId<Document>,
-          { session }
+  /**
+   * Compensating delete for a patch that was inserted just before a
+   * failed standalone snapshot head CAS.
+   *
+   * Uses a strict filter so only this specific patch is removed.
+   *
+   * - `deletedCount === 0` means the patch was never inserted
+   *   (validation failed before insert) — benign, no-op.
+   * - If the delete operation itself throws, the error is re-thrown
+   *   with a message that identifies the patch and the CAS failure
+   *   context.
+   */
+  private async deleteOrphanPatch(patch: StoredPatchDoc): Promise<void> {
+    const filter: Filter<Document> = {
+      id: patch.id,
+      targetId: patch.targetId,
+      schema: patch.schema,
+      pid: patch.pid,
+    }
+    try {
+      const result = await this.recordsCollection.deleteOne(filter)
+      if (result.deletedCount === 0) {
+        // Patch was never inserted (validation failed before
+        // insert) or was already cleaned up — not an orphan.
+      }
+    } catch (cleanupError) {
+      throw new Error(
+        `Orphan patch cleanup failed for patch ${patch.id}: ` +
+          `snapshot head CAS failed and compensating delete ` +
+          `also failed: ${String(cleanupError)}`
+      )
+    }
+  }
+
+  private async appendPatchAndAdvanceHeadImpl(
+    params: AppendPatchParams,
+    session: ClientSession | undefined
+  ): Promise<
+    Extract<AppendPatchResult, { ok: true }>
+  > {
+    const writeOptions = session ? { session } : {}
+
+    let head = await this.findStoredHead(session)
+    if (!head) {
+      const patches = await this.loadPatchFacts(session)
+      head = this.rebuildSnapshotHeadFromPatches(patches)
+      try {
+        await this.snapshotsCollection.insertOne(
+          toSnapshotDoc(head),
+          writeOptions
         )
-        const nextHead = nextSnapshotHead(
-          head,
-          params.targetId,
-          params.patch.id
-        )
-        const replaced = await this.snapshotsCollection.findOneAndReplace(
-          {
-            kind: 'snapshotHead',
-            version: head.version,
-          },
-          toSnapshotDoc(nextHead),
-          { returnDocument: 'before', session }
-        )
-        if (!replaced) {
+      } catch (caught) {
+        if (isDuplicateKeyError(caught)) {
           throw new SnapshotHeadTransactionAbort({
             ok: false,
             reason: 'snapshotVersionMismatch',
             currentVersion: head.version,
           })
         }
-
-        return {
-          ok: true,
-          patch: params.patch,
-          newSnapshotVersion: nextHead.version,
-        }
-      })
-    } catch (caught) {
-      if (caught instanceof SnapshotHeadTransactionAbort) {
-        return caught.result
+        throw caught
       }
-      throw caught
-    } finally {
-      await session.endSession()
+    }
+
+    const validation = await validateAppend(
+      params,
+      head,
+      session ? this.mongoPatchFacts(session) : this.standalonePatchFacts()
+    )
+    if (!validation.ok) {
+      throw new SnapshotHeadTransactionAbort(validation)
+    }
+
+    await this.recordsCollection.insertOne(
+      params.patch as OptionalId<Document>,
+      writeOptions
+    )
+    const nextHead = nextSnapshotHead(
+      head,
+      params.targetId,
+      params.patch.id
+    )
+    const replaced = await this.snapshotsCollection.findOneAndReplace(
+      { kind: 'snapshotHead', version: head.version },
+      toSnapshotDoc(nextHead),
+      { returnDocument: 'before', ...writeOptions }
+    )
+    if (!replaced) {
+      throw new SnapshotHeadTransactionAbort({
+        ok: false,
+        reason: 'snapshotVersionMismatch',
+        currentVersion: head.version,
+      })
+    }
+
+    return {
+      ok: true,
+      patch: params.patch,
+      newSnapshotVersion: nextHead.version,
+    }
+  }
+
+  private standalonePatchFacts(): PatchFactRepository {
+    return {
+      appendPatch: async (patch) => {
+        await this.recordsCollection.insertOne(patch as OptionalId<Document>)
+        return patch
+      },
+      findPatchById: async (id) => {
+        const doc = await this.recordsCollection.findOne(
+          patchOnlyFilter({ id })
+        )
+        return doc ? cleanPatch(doc) : null
+      },
+      listPatches: async () => this.loadPatchFacts(),
     }
   }
 
@@ -522,5 +615,14 @@ function isDuplicateKeyError(caught: unknown): boolean {
     caught !== null &&
     'code' in caught &&
     (caught as { code?: unknown }).code === 11000
+  )
+}
+
+function isTransactionNotSupportedError(caught: unknown): boolean {
+  return (
+    typeof caught === 'object' &&
+    caught !== null &&
+    'code' in caught &&
+    (caught as { code?: unknown }).code === 20
   )
 }

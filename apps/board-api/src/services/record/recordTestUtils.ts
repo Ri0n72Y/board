@@ -2,7 +2,11 @@ import { DEFAULT_BOARD_CONFIG, type BoardConfig } from '@labour-board/shared'
 import { vi } from 'vitest'
 import type { BoardConfigPidWriter } from '../../config/boardConfig.js'
 import { MemoryRecordRepository } from '../../repositories/recordRepository.js'
-import { MemorySnapshotHeadRepository, type StoredPatchDoc } from '../../repositories/snapshotHeadRepository.js'
+import {
+  MemorySnapshotHeadRepository,
+  type StoredPatchDoc,
+} from '../../repositories/snapshotHeadRepository.js'
+import type { SnapshotHeadRepository } from '../../repositories/snapshotHeadRepository.js'
 import { RecordService } from '../recordService.js'
 
 export function createRecordService(): RecordService {
@@ -14,10 +18,15 @@ export function createRecordService(): RecordService {
   )
 }
 
-export function createServiceWithRepo(): { service: RecordService; repo: MemoryRecordRepository } {
+export function createServiceWithRepo(): {
+  service: RecordService
+  repo: MemoryRecordRepository
+  head: SnapshotHeadRepository
+} {
   const repo = new MemoryRecordRepository()
-  const service = new RecordService(repo, new MemorySnapshotHeadRepository(repo), structuredClone(DEFAULT_BOARD_CONFIG))
-  return { service, repo }
+  const head = new MemorySnapshotHeadRepository(repo)
+  const service = new RecordService(repo, head, structuredClone(DEFAULT_BOARD_CONFIG))
+  return { service, repo, head }
 }
 
 export function makePatchDoc(

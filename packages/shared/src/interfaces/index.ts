@@ -13,6 +13,15 @@ export type {
   UpdateProfileInput,
   UpdateRecordInput,
 } from './api.js'
+export type {
+  BlockedRecordEntry,
+  BoardCurrentProjection,
+  BoardCurrentQuery,
+  BoardCurrentSummary,
+  BoardCurrentTagMatch,
+  BoardProjectionStatus,
+  ProjectionDiagnostic,
+} from './boardCurrent.js'
 export type { BoardConfig, PidPrefix } from './boardConfig.js'
 export type { Base58String, Identity } from './identity.js'
 export type { DeepPartial, PatchItem } from './patch.js'
