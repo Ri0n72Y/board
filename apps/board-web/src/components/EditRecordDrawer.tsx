@@ -115,7 +115,16 @@ export function EditRecordDrawer({
       const head = await fetchSnapshotHead(controller.signal)
       if (requestIdRef.current !== requestId || controller.signal.aborted) return
 
-      const parentId = head.records[current.id]?.lastPatchId ?? null
+      const recordHead = head.records[current.id]
+      if (!recordHead) {
+        setError(
+          'Current record is not present in snapshot head. Refresh current board and try again.',
+        )
+        setIsSaving(false)
+        return
+      }
+
+      const parentId = recordHead.lastPatchId
       const payload: SubmitRecordPatchPayload = {
         parentId,
         snapshotVersion: head.version,
