@@ -124,7 +124,7 @@ export function BoardFilters({
             label="Asset ID"
             value={assetId}
             onChange={(event) => onAssetIdChange(event.target.value)}
-            placeholder="record id"
+            placeholder="asset id"
             icon={<HashtagIcon className="h-4 w-4" />}
           />
           <TextInput

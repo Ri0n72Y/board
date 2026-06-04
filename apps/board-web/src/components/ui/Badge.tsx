@@ -1,12 +1,11 @@
-import { type ReactNode } from 'react'
+import { type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 
 type BadgeColor = 'green' | 'amber' | 'red' | 'slate'
 
-interface BadgeProps {
+interface BadgeProps extends ComponentProps<'span'> {
   color?: BadgeColor
   children: ReactNode
-  className?: string
 }
 
 const colorClass: Record<BadgeColor, string> = {
@@ -16,7 +15,7 @@ const colorClass: Record<BadgeColor, string> = {
   slate: 'bg-slate-100 text-slate-500',
 }
 
-export function Badge({ color = 'slate', children, className }: BadgeProps) {
+export function Badge({ color = 'slate', children, className, ...props }: BadgeProps) {
   return (
     <span
       className={cn(
@@ -24,6 +23,7 @@ export function Badge({ color = 'slate', children, className }: BadgeProps) {
         colorClass[color],
         className
       )}
+      {...props}
     >
       {children}
     </span>

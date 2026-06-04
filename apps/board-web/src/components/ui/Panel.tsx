@@ -1,18 +1,18 @@
-import { type ReactNode } from 'react'
+import { type ComponentProps, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 
-interface PanelProps {
+interface PanelProps extends ComponentProps<'section'> {
   children: ReactNode
-  className?: string
 }
 
-export function Panel({ children, className }: PanelProps) {
+export function Panel({ children, className, ...props }: PanelProps) {
   return (
     <section
       className={cn(
         'rounded-lg border border-slate-200 bg-white p-5',
         className
       )}
+      {...props}
     >
       {children}
     </section>
