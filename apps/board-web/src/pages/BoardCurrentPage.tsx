@@ -13,6 +13,7 @@ import {
 import axios from 'axios'
 import { Button } from '../components/ui/Button'
 import { BoardFilters } from '../components/BoardFilters'
+import { BoardView } from '../components/BoardView'
 import { CreateRecordDrawer } from '../components/CreateRecordDrawer'
 import { EditRecordDrawer } from '../components/EditRecordDrawer'
 import { EmptyState } from '../components/EmptyState'
@@ -21,6 +22,10 @@ import { RecordCard } from '../components/RecordCard'
 import { RecordHistoryDrawer } from '../components/RecordHistoryDrawer'
 import { StatusBadge } from '../components/StatusBadge'
 import { SummaryBar } from '../components/SummaryBar'
+import {
+  ViewModeToggle,
+  type BoardViewMode,
+} from '../components/ViewModeToggle'
 import { fetchRecordHistory } from '../api/history'
 import { useBoardCurrentStore } from '../stores/boardCurrentStore'
 import { useBoardMetadataStore } from '../stores/boardMetadataStore'
@@ -78,6 +83,7 @@ export function BoardCurrentPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editRecord, setEditRecord] =
     useState<RecordResponse<RecordItem<RecordBody>> | null>(null)
+  const [viewMode, setViewMode] = useState<BoardViewMode>('list')
 
   /* ── Load metadata once on mount ── */
   useEffect(() => {
@@ -270,6 +276,7 @@ export function BoardCurrentPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
           <StatusBadge status={projectionStatus} />
+          <ViewModeToggle value={viewMode} onChange={setViewMode} />
           <Button
             type="button"
             onClick={openCreate}
@@ -388,17 +395,27 @@ export function BoardCurrentPage() {
 
       {/* ── Records (non-blocked only) ── */}
       {projection && projectionStatus !== 'blocked' && records.length > 0 && (
-        <section className="mt-4 grid gap-3.5" aria-label="Current records">
-          {records.map((record) => (
-            <RecordCard
-              key={record.body.id}
-              record={record}
-              profiles={profiles}
-              onHistoryClick={openHistory}
-              onEditClick={openEdit}
-            />
-          ))}
-        </section>
+        viewMode === 'board' ? (
+          <BoardView
+            records={records}
+            config={config}
+            profiles={profiles}
+            onHistoryClick={openHistory}
+            onEditClick={openEdit}
+          />
+        ) : (
+          <section className="mt-4 grid gap-3.5" aria-label="Current records">
+            {records.map((record) => (
+              <RecordCard
+                key={record.body.id}
+                record={record}
+                profiles={profiles}
+                onHistoryClick={openHistory}
+                onEditClick={openEdit}
+              />
+            ))}
+          </section>
+        )
       )}
 
       {/* ── Issues (always shown when content exists, regardless of status) ── */}

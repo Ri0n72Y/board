@@ -14,6 +14,7 @@ interface RecordCardProps {
   record: RecordResponse<RecordItem<RecordBody>>
   /** Profiles for assignee name resolution. */
   profiles?: Profile[] | null
+  compact?: boolean
   onHistoryClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
   onEditClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
 }
@@ -21,6 +22,7 @@ interface RecordCardProps {
 export function RecordCard({
   record,
   profiles,
+  compact = false,
   onHistoryClick,
   onEditClick,
 }: RecordCardProps) {
@@ -28,6 +30,58 @@ export function RecordCard({
   const current = record.body
   const body = asDisplayBody(current.body)
   const title = body.title ?? current.pid
+
+  if (compact) {
+    return (
+      <article className="grid gap-3 rounded-lg border border-slate-200 bg-white p-3">
+        <div className="grid gap-2">
+          <div className="min-w-0">
+            <p className="mb-1 font-mono text-xs text-slate-500">
+              {current.pid}
+            </p>
+            <h3 className="wrap-break-word text-base font-semibold leading-tight text-slate-950">
+              {title}
+            </h3>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-8 px-2.5 text-xs"
+              onClick={() => onEditClick?.(record)}
+              title="Edit record"
+              icon={<PencilSquareIcon className="h-4 w-4" />}
+            >
+              Edit
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-8 px-2.5 text-xs"
+              onClick={() => onHistoryClick?.(record)}
+              title="Open history"
+              icon={<ClockIcon className="h-4 w-4" />}
+            >
+              History
+            </Button>
+          </div>
+        </div>
+
+        <dl className="grid gap-2">
+          <MetaItem
+            label="Assignee"
+            value={formatAssignee(current.assignee, profiles, t)}
+          />
+        </dl>
+
+        {current.tags.length > 0 ? (
+          <TagChipRow tags={current.tags} readonly />
+        ) : (
+          <p className="text-sm text-slate-500">No tags</p>
+        )}
+      </article>
+    )
+  }
 
   return (
     <article className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5">
