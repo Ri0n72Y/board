@@ -1,17 +1,23 @@
 import type {
+  Profile,
   RecordBody,
   RecordItem,
   RecordResponse,
 } from '@labour-board/shared'
 import { ClockIcon } from '@heroicons/react/20/solid'
+import { useTranslation } from 'react-i18next'
 import { Button } from './ui/Button'
 import { TagChipRow } from './BoardFilters'
+import { lookupProfile } from '../utils/board'
 
 interface RecordCardProps {
   record: RecordResponse<RecordItem<RecordBody>>
+  /** Profiles for assignee name resolution. */
+  profiles?: Profile[] | null
 }
 
-export function RecordCard({ record }: RecordCardProps) {
+export function RecordCard({ record, profiles }: RecordCardProps) {
+  const { t } = useTranslation()
   const current = record.body
   const body = asDisplayBody(current.body)
   const title = body.title ?? current.pid
@@ -36,7 +42,10 @@ export function RecordCard({ record }: RecordCardProps) {
       </div>
 
       <dl className="grid gap-2 sm:grid-cols-3">
-        <MetaItem label="Assignee" value={current.assignee ?? 'Unassigned'} />
+        <MetaItem
+          label="Assignee"
+          value={formatAssignee(current.assignee, profiles, t)}
+        />
         <MetaItem label="Schema" value={current.schema} />
         <MetaItem label="Created" value={formatDate(record.createdAt)} />
       </dl>
@@ -149,4 +158,17 @@ function formatDate(value: string): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   return date.toLocaleString()
+}
+
+function formatAssignee(
+  pk: string | undefined | null,
+  profiles: Profile[] | null | undefined,
+  t: (key: string) => string,
+): string {
+  if (!pk || pk.trim() === '') return t('record.unassigned')
+  const profile = lookupProfile(profiles ?? null, pk)
+  if (profile) {
+    return `${profile.name} (${pk})`
+  }
+  return pk
 }

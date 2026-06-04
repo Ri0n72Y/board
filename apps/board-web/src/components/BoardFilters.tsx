@@ -1,18 +1,24 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { BoardCurrentTagMatch, Tag } from '@labour-board/shared'
 import {
   MagnifyingGlassIcon,
   TagIcon,
-  UserIcon,
   HashtagIcon,
   LinkIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/20/solid'
+import { useTranslation } from 'react-i18next'
 import { Button } from './ui/Button'
 import { TextInput } from './ui/TextInput'
 import { Select } from './ui/Select'
 import { SwitchField } from './ui/SwitchField'
 import { Panel } from './ui/Panel'
 import { cn } from '../lib/cn'
+
+interface MetadataErrorState {
+  config: string | null
+  profiles: string | null
+}
 
 interface BoardFiltersProps {
   q: string
@@ -23,6 +29,16 @@ interface BoardFiltersProps {
   assetId: string
   relationTarget: string
   knownTags: Tag[]
+  /** Config-driven status tag options (only tag ids). */
+  statusTags?: Tag[]
+  /** Config-driven priority tag options (only tag ids). */
+  priorityTags?: Tag[]
+  /** Profile options for assignee autocomplete. */
+  profileOptions?: { value: string; label: string }[]
+  /** Whether metadata is still loading. */
+  metadataLoading?: boolean
+  /** Metadata load errors. */
+  metadataError?: MetadataErrorState
   onQChange: (q: string) => void
   onAddTag: (tag: string) => void
   onRemoveTag: (tag: Tag) => void
@@ -47,6 +63,11 @@ export function BoardFilters({
   assetId,
   relationTarget,
   knownTags,
+  statusTags = [],
+  priorityTags = [],
+  profileOptions = [],
+  metadataLoading = false,
+  metadataError,
   onQChange,
   onAddTag,
   onRemoveTag,
@@ -56,16 +77,41 @@ export function BoardFilters({
   onAssetIdChange,
   onRelationTargetChange,
 }: BoardFiltersProps) {
+  const { t } = useTranslation()
   const [tagInput, setTagInput] = useState('')
+  const assigneeListId = useId()
 
   function submitTag() {
     onAddTag(tagInput)
     setTagInput('')
   }
 
+  const hasMetadataWarning =
+    metadataError && (metadataError.config || metadataError.profiles)
+
   return (
     <>
       <Panel className="p-4" aria-label="Board filters">
+        {/* Metadata loading / warning */}
+        {metadataLoading && (
+          <p className="mb-3 text-xs text-slate-400">
+            {t('metadata.loading.all')}
+          </p>
+        )}
+        {hasMetadataWarning && (
+          <div
+            className="mb-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+            role="alert"
+          >
+            <ExclamationTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>
+              {metadataError?.config && t('metadata.error.config')}
+              {metadataError?.config && metadataError?.profiles && ' '}
+              {metadataError?.profiles && t('metadata.error.profiles')}
+            </span>
+          </div>
+        )}
+
         <div className="grid gap-3 lg:grid-cols-4">
           <TextInput
             label="Search current text"
@@ -104,13 +150,33 @@ export function BoardFilters({
           />
 
           <div className="flex flex-col justify-end gap-3">
-            <TextInput
-              label="Assignee"
-              value={assignee}
-              onChange={(event) => onAssigneeChange(event.target.value)}
-              placeholder="public key"
-              icon={<UserIcon className="h-4 w-4" />}
-            />
+            <div className="grid gap-1.5">
+              <label
+                className="text-xs font-bold text-slate-500"
+                htmlFor={assigneeListId}
+              >
+                Assignee
+              </label>
+              <input
+                id={assigneeListId}
+                className={cn(
+                  'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100',
+                )}
+                value={assignee}
+                onChange={(event) => onAssigneeChange(event.target.value)}
+                placeholder="public key"
+                list={`${assigneeListId}-list`}
+              />
+              {profileOptions.length > 0 && (
+                <datalist id={`${assigneeListId}-list`}>
+                  {profileOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </datalist>
+              )}
+            </div>
             <SwitchField
               label="Include archived"
               checked={includeArchived}
@@ -137,6 +203,27 @@ export function BoardFilters({
         </div>
       </Panel>
 
+      {/* Config-driven status / priority tag quick-select */}
+      {(statusTags.length > 0 || priorityTags.length > 0) && (
+        <Panel className="mt-3 px-4 py-3" aria-label="Config tag options">
+          {statusTags.length > 0 && (
+            <TagChipRow
+              label={t('filters.statusOptions')}
+              tags={statusTags}
+              onTagClick={onAddTag}
+            />
+          )}
+          {priorityTags.length > 0 && (
+            <TagChipRow
+              label={t('filters.priorityOptions')}
+              tags={priorityTags}
+              onTagClick={onAddTag}
+            />
+          )}
+        </Panel>
+      )}
+
+      {/* Active / Known tags */}
       {(tags.length > 0 || knownTags.length > 0) && (
         <Panel className="mt-3 px-4 py-3" aria-label="Tag filters">
           {tags.length > 0 && (

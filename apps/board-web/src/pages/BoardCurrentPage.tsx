@@ -8,13 +8,21 @@ import { RecordCard } from '../components/RecordCard'
 import { StatusBadge } from '../components/StatusBadge'
 import { SummaryBar } from '../components/SummaryBar'
 import { useBoardCurrentStore } from '../stores/boardCurrentStore'
-import { extractKnownTags, hasEffectiveFilters } from '../utils/board'
+import { useBoardMetadataStore } from '../stores/boardMetadataStore'
+import {
+  extractKnownTags,
+  getConfigPriorityTags,
+  getConfigStatusTags,
+  getProfileOptions,
+  hasEffectiveFilters,
+  mergeKnownTags,
+} from '../utils/board'
 import { useDebouncedValue } from '../utils/useDebounce'
 
 const Q_DEBOUNCE_MS = 300
 
 export function BoardCurrentPage() {
-  /* ── Store ── */
+  /* ── Current board store ── */
   const draftFilters = useBoardCurrentStore((s) => s.filters)
   const lastAppliedFilters = useBoardCurrentStore((s) => s.lastAppliedFilters)
   const projection = useBoardCurrentStore((s) => s.projection)
@@ -30,6 +38,20 @@ export function BoardCurrentPage() {
   const setAssetId = useBoardCurrentStore((s) => s.setAssetId)
   const setRelationTarget = useBoardCurrentStore((s) => s.setRelationTarget)
   const loadCurrentBoard = useBoardCurrentStore((s) => s.loadCurrentBoard)
+
+  /* ── Metadata store ── */
+  const config = useBoardMetadataStore((s) => s.config)
+  const profiles = useBoardMetadataStore((s) => s.profiles)
+  const metadataLoading = useBoardMetadataStore((s) => s.isLoading)
+  const metadataError = useBoardMetadataStore((s) => s.error)
+  const loadMetadata = useBoardMetadataStore((s) => s.loadMetadata)
+
+  /* ── Load metadata once on mount ── */
+  useEffect(() => {
+    const controller = new AbortController()
+    void loadMetadata(controller.signal)
+    return () => controller.abort()
+  }, [loadMetadata])
 
   /* ── Effective filters (debounced q) ── */
   const debouncedQ = useDebouncedValue(draftFilters.q, Q_DEBOUNCE_MS)
@@ -55,7 +77,7 @@ export function BoardCurrentPage() {
     ],
   )
 
-  /* ── Auto-load on effective filter change ── */
+  /* ── Auto-load current board on effective filter change ── */
   useEffect(() => {
     const controller = new AbortController()
     void loadCurrentBoard(effectiveFilters, controller.signal)
@@ -63,7 +85,24 @@ export function BoardCurrentPage() {
   }, [effectiveFilters, loadCurrentBoard])
 
   /* ── Derived data ── */
-  const knownTags = useMemo(() => extractKnownTags(projection), [projection])
+  const knownTags = useMemo(
+    () => mergeKnownTags(projection, config),
+    [projection, config],
+  )
+
+  // Fallback when config fails: projection-only tags
+  const projectionKnownTags = useMemo(
+    () => extractKnownTags(projection),
+    [projection],
+  )
+
+  const statusTags = useMemo(() => getConfigStatusTags(config), [config])
+  const priorityTags = useMemo(() => getConfigPriorityTags(config), [config])
+  const profileOptions = useMemo(
+    () => getProfileOptions(profiles),
+    [profiles],
+  )
+
   const records = projection?.records ?? []
   const blockedRecords = projection?.blockedRecords ?? []
   const diagnostics = projection?.diagnostics ?? []
@@ -121,7 +160,13 @@ export function BoardCurrentPage() {
         assignee={draftFilters.assignee}
         assetId={draftFilters.assetId}
         relationTarget={draftFilters.relationTarget}
-        knownTags={knownTags}
+        // Use config-merged knownTags when config loaded, otherwise projection fallback
+        knownTags={config ? knownTags : projectionKnownTags}
+        statusTags={statusTags}
+        priorityTags={priorityTags}
+        profileOptions={profileOptions}
+        metadataLoading={metadataLoading}
+        metadataError={metadataError}
         onQChange={setQ}
         onAddTag={addTag}
         onRemoveTag={removeTag}
@@ -207,7 +252,11 @@ export function BoardCurrentPage() {
       {!error && projectionStatus !== 'blocked' && records.length > 0 && (
         <section className="mt-4 grid gap-3.5" aria-label="Current records">
           {records.map((record) => (
-            <RecordCard key={record.body.id} record={record} />
+            <RecordCard
+              key={record.body.id}
+              record={record}
+              profiles={profiles}
+            />
           ))}
         </section>
       )}
