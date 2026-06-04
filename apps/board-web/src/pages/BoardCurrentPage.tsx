@@ -8,10 +8,12 @@ import type {
 import {
   ArrowPathIcon,
   ExclamationTriangleIcon,
+  PlusIcon,
 } from '@heroicons/react/20/solid'
 import axios from 'axios'
 import { Button } from '../components/ui/Button'
 import { BoardFilters } from '../components/BoardFilters'
+import { CreateRecordDrawer } from '../components/CreateRecordDrawer'
 import { EmptyState } from '../components/EmptyState'
 import { IssuesPanel } from '../components/IssuesPanel'
 import { RecordCard } from '../components/RecordCard'
@@ -72,6 +74,7 @@ export function BoardCurrentPage() {
   const [historyError, setHistoryError] = useState<string | null>(null)
   const historyRequestIdRef = useRef(0)
   const historyAbortRef = useRef<AbortController | null>(null)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
 
   /* ── Load metadata once on mount ── */
   useEffect(() => {
@@ -206,6 +209,19 @@ export function BoardCurrentPage() {
     setIsHistoryLoading(false)
   }, [])
 
+  const openCreate = useCallback(() => {
+    closeHistory()
+    setIsCreateOpen(true)
+  }, [closeHistory])
+
+  const closeCreate = useCallback(() => {
+    setIsCreateOpen(false)
+  }, [])
+
+  const refreshAfterCreate = useCallback(() => {
+    void loadCurrentBoard(effectiveFilters)
+  }, [effectiveFilters, loadCurrentBoard])
+
   /* ── Render ── */
   return (
     <main className="mx-auto min-h-svh w-full max-w-295 bg-stone-50 px-4 py-5 text-slate-950 sm:px-7 sm:py-7">
@@ -221,6 +237,13 @@ export function BoardCurrentPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
           <StatusBadge status={projectionStatus} />
+          <Button
+            type="button"
+            onClick={openCreate}
+            icon={<PlusIcon className="h-4 w-4" />}
+          >
+            Create Record
+          </Button>
           <Button
             type="button"
             onClick={refresh}
@@ -358,6 +381,19 @@ export function BoardCurrentPage() {
         profiles={profiles}
         onClose={closeHistory}
       />
+
+      {isCreateOpen && (
+        <CreateRecordDrawer
+          open
+          config={config}
+          profiles={profiles}
+          knownTags={config ? knownTags : projectionKnownTags}
+          statusTags={statusTags}
+          priorityTags={priorityTags}
+          onClose={closeCreate}
+          onCreated={refreshAfterCreate}
+        />
+      )}
     </main>
   )
 }
