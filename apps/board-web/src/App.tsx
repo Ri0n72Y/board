@@ -1,5 +1,7 @@
+import { BoardCurrentPage } from './pages/BoardCurrentPage'
+
 function App() {
-  return <>Hello Pure World</>
+  return <BoardCurrentPage />
 }
 
 export default App
