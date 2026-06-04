@@ -1,11 +1,11 @@
 interface EmptyStateProps {
   hasActiveFilters: boolean
-  hasProjectionIssues: boolean
+  hasIssues: boolean
 }
 
 export function EmptyState({
   hasActiveFilters,
-  hasProjectionIssues,
+  hasIssues,
 }: EmptyStateProps) {
   return (
     <section className="mt-4 grid gap-1.5 rounded-lg border border-slate-200 bg-white p-5 text-slate-500">
@@ -14,7 +14,7 @@ export function EmptyState({
           ? 'No current records match these filters.'
           : 'The current board has no records.'}
       </p>
-      {hasProjectionIssues && (
+      {hasIssues && (
         <p>
           Projection issues are listed below and may explain missing records.
         </p>

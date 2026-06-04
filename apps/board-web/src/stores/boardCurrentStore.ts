@@ -10,7 +10,10 @@ import {
 } from '../api/boardCurrent'
 
 interface BoardCurrentState {
+  /** Draft filters: always reflect user input immediately (raw q). */
   filters: BoardCurrentFilters
+  /** The effective filters that produced the current projection. */
+  lastAppliedFilters: BoardCurrentFilters | null
   projection: BoardCurrentProjection | null
   isLoading: boolean
   error: string | null
@@ -22,7 +25,7 @@ interface BoardCurrentState {
   setAssignee: (assignee: string) => void
   setAssetId: (assetId: string) => void
   setRelationTarget: (relationTarget: string) => void
-  loadCurrentBoard: (signal?: AbortSignal) => Promise<void>
+  loadCurrentBoard: (filters: BoardCurrentFilters, signal?: AbortSignal) => Promise<void>
 }
 
 const initialFilters: BoardCurrentFilters = {
@@ -35,8 +38,11 @@ const initialFilters: BoardCurrentFilters = {
   relationTarget: '',
 }
 
-export const useBoardCurrentStore = create<BoardCurrentState>((set, get) => ({
+let activeRequestId = 0
+
+export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
   filters: initialFilters,
+  lastAppliedFilters: null,
   projection: null,
   isLoading: true,
   error: null,
@@ -95,14 +101,24 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set, get) => ({
       filters: { ...state.filters, relationTarget },
     })),
 
-  loadCurrentBoard: async (signal) => {
+  loadCurrentBoard: async (filters, signal) => {
+    const requestId = ++activeRequestId
     set({ isLoading: true, error: null })
 
     try {
-      const projection = await fetchBoardCurrent(get().filters, signal)
-      set({ projection, isLoading: false })
+      const projection = await fetchBoardCurrent(filters, signal)
+      if (requestId !== activeRequestId) return
+      set({
+        projection,
+        isLoading: false,
+        lastAppliedFilters: { ...filters, tags: [...filters.tags] },
+      })
     } catch (caught) {
-      if (signal?.aborted) return
+      if (requestId !== activeRequestId) return
+      if (signal?.aborted) {
+        set({ isLoading: false })
+        return
+      }
       set({
         error: caught instanceof Error ? caught.message : 'Request failed',
         isLoading: false,

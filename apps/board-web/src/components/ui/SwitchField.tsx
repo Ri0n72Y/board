@@ -1,16 +1,22 @@
 import { Field, Label, Switch } from '@headlessui/react'
+import { type ComponentProps } from 'react'
 import { cn } from '../../lib/cn'
 
-interface SwitchFieldProps {
+interface SwitchFieldProps extends Omit<ComponentProps<'div'>, 'onChange'> {
   label: string
   checked: boolean
   onChange: (checked: boolean) => void
-  className?: string
 }
 
-export function SwitchField({ label, checked, onChange, className }: SwitchFieldProps) {
+export function SwitchField({
+  label,
+  checked,
+  onChange,
+  className,
+  ...props
+}: SwitchFieldProps) {
   return (
-    <Field className={cn('flex items-center gap-2', className)}>
+    <Field className={cn('flex items-center gap-2', className)} {...props}>
       <Switch
         checked={checked}
         onChange={onChange}

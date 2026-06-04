@@ -18,10 +18,9 @@ export interface BoardCurrentFilters {
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
 
-export async function fetchBoardCurrent(
+export function buildBoardCurrentSearchParams(
   filters: BoardCurrentFilters,
-  signal?: AbortSignal
-): Promise<BoardCurrentProjection> {
+): URLSearchParams {
   const params = new URLSearchParams()
   const q = filters.q.trim()
 
@@ -44,6 +43,14 @@ export async function fetchBoardCurrent(
     params.set('tagMatch', filters.tagMatch)
   }
 
+  return params
+}
+
+export async function fetchBoardCurrent(
+  filters: BoardCurrentFilters,
+  signal?: AbortSignal,
+): Promise<BoardCurrentProjection> {
+  const params = buildBoardCurrentSearchParams(filters)
   const url = `${apiBaseUrl}/board/current${params.size ? `?${params}` : ''}`
   const response = await axios.get<ApiResponse<BoardCurrentProjection>>(url, {
     signal,
