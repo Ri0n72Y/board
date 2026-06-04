@@ -14,6 +14,7 @@ import axios from 'axios'
 import { Button } from '../components/ui/Button'
 import { BoardFilters } from '../components/BoardFilters'
 import { CreateRecordDrawer } from '../components/CreateRecordDrawer'
+import { EditRecordDrawer } from '../components/EditRecordDrawer'
 import { EmptyState } from '../components/EmptyState'
 import { IssuesPanel } from '../components/IssuesPanel'
 import { RecordCard } from '../components/RecordCard'
@@ -75,6 +76,8 @@ export function BoardCurrentPage() {
   const historyRequestIdRef = useRef(0)
   const historyAbortRef = useRef<AbortController | null>(null)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [editRecord, setEditRecord] =
+    useState<RecordResponse<RecordItem<RecordBody>> | null>(null)
 
   /* ── Load metadata once on mount ── */
   useEffect(() => {
@@ -156,8 +159,8 @@ export function BoardCurrentPage() {
     void loadCurrentBoard(effectiveFilters)
   }
 
-  const openHistory = useCallback(
-    (record: RecordResponse<RecordItem<RecordBody>>) => {
+  const loadHistory = useCallback(
+    (selection: HistorySelection) => {
       const requestId = historyRequestIdRef.current + 1
       historyRequestIdRef.current = requestId
       historyAbortRef.current?.abort()
@@ -165,16 +168,12 @@ export function BoardCurrentPage() {
       const controller = new AbortController()
       historyAbortRef.current = controller
 
-      setHistorySelection({
-        recordId: record.body.id,
-        title: getRecordTitle(record.body.body),
-        pid: record.body.pid,
-      })
+      setHistorySelection(selection)
       setHistory(null)
       setHistoryError(null)
       setIsHistoryLoading(true)
 
-      void fetchRecordHistory(record.body.id, controller.signal)
+      void fetchRecordHistory(selection.recordId, controller.signal)
         .then((data) => {
           if (historyRequestIdRef.current !== requestId) return
           setHistory(data)
@@ -199,6 +198,17 @@ export function BoardCurrentPage() {
     []
   )
 
+  const openHistory = useCallback(
+    (record: RecordResponse<RecordItem<RecordBody>>) => {
+      loadHistory({
+        recordId: record.body.id,
+        title: getRecordTitle(record.body.body),
+        pid: record.body.pid,
+      })
+    },
+    [loadHistory]
+  )
+
   const closeHistory = useCallback(() => {
     historyRequestIdRef.current += 1
     historyAbortRef.current?.abort()
@@ -211,6 +221,7 @@ export function BoardCurrentPage() {
 
   const openCreate = useCallback(() => {
     closeHistory()
+    setEditRecord(null)
     setIsCreateOpen(true)
   }, [closeHistory])
 
@@ -221,6 +232,28 @@ export function BoardCurrentPage() {
   const refreshAfterCreate = useCallback(() => {
     void loadCurrentBoard(effectiveFilters)
   }, [effectiveFilters, loadCurrentBoard])
+
+  const openEdit = useCallback(
+    (record: RecordResponse<RecordItem<RecordBody>>) => {
+      setIsCreateOpen(false)
+      setEditRecord(record)
+    },
+    []
+  )
+
+  const closeEdit = useCallback(() => {
+    setEditRecord(null)
+  }, [])
+
+  const refreshAfterPatch = useCallback(
+    async (recordId: string) => {
+      await loadCurrentBoard(effectiveFilters)
+      if (historySelection?.recordId === recordId) {
+        loadHistory(historySelection)
+      }
+    },
+    [effectiveFilters, historySelection, loadCurrentBoard, loadHistory]
+  )
 
   /* ── Render ── */
   return (
@@ -362,6 +395,7 @@ export function BoardCurrentPage() {
               record={record}
               profiles={profiles}
               onHistoryClick={openHistory}
+              onEditClick={openEdit}
             />
           ))}
         </section>
@@ -380,6 +414,7 @@ export function BoardCurrentPage() {
         error={historyError}
         profiles={profiles}
         onClose={closeHistory}
+        onEditClick={openEdit}
       />
 
       {isCreateOpen && (
@@ -392,6 +427,20 @@ export function BoardCurrentPage() {
           priorityTags={priorityTags}
           onClose={closeCreate}
           onCreated={refreshAfterCreate}
+        />
+      )}
+
+      {editRecord && (
+        <EditRecordDrawer
+          key={editRecord.body.id}
+          open
+          record={editRecord}
+          profiles={profiles}
+          knownTags={config ? knownTags : projectionKnownTags}
+          statusTags={statusTags}
+          priorityTags={priorityTags}
+          onClose={closeEdit}
+          onPatched={refreshAfterPatch}
         />
       )}
     </main>

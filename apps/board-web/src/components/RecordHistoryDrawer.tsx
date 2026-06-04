@@ -7,7 +7,11 @@ import type {
   RecordItem,
   RecordResponse,
 } from '@labour-board/shared'
-import { ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/20/solid'
+import {
+  ExclamationTriangleIcon,
+  PencilSquareIcon,
+  XMarkIcon,
+} from '@heroicons/react/20/solid'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
 import { TagChipRow } from './BoardFilters'
@@ -23,6 +27,7 @@ interface RecordHistoryDrawerProps {
   error: string | null
   profiles?: Profile[] | null
   onClose: () => void
+  onEditClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
 }
 
 export function RecordHistoryDrawer({
@@ -35,11 +40,14 @@ export function RecordHistoryDrawer({
   error,
   profiles,
   onClose,
+  onEditClick,
 }: RecordHistoryDrawerProps) {
   if (!open) return null
 
   const baseRecord = history?.record.body
   const finalState = history?.replay?.finalState
+  const editableRecord =
+    history && finalState ? { ...history.record, body: finalState } : history?.record
   const displayTitle =
     title ?? titleFromBody(finalState?.body) ?? titleFromBody(baseRecord?.body)
 
@@ -69,15 +77,28 @@ export function RecordHistoryDrawer({
               {displayTitle ?? 'Record history'}
             </h2>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onClose}
-            title="Close history"
-            icon={<XMarkIcon className="h-4 w-4" />}
-          >
-            Close
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {editableRecord && onEditClick && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onEditClick(editableRecord)}
+                title="Edit record"
+                icon={<PencilSquareIcon className="h-4 w-4" />}
+              >
+                Edit
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              title="Close history"
+              icon={<XMarkIcon className="h-4 w-4" />}
+            >
+              Close
+            </Button>
+          </div>
         </header>
 
         <div className="min-h-0 overflow-y-auto px-5 py-4">

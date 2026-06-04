@@ -4,7 +4,7 @@ import type {
   RecordItem,
   RecordResponse,
 } from '@labour-board/shared'
-import { ClockIcon } from '@heroicons/react/20/solid'
+import { ClockIcon, PencilSquareIcon } from '@heroicons/react/20/solid'
 import { useTranslation } from 'react-i18next'
 import { Button } from './ui/Button'
 import { TagChipRow } from './BoardFilters'
@@ -15,12 +15,14 @@ interface RecordCardProps {
   /** Profiles for assignee name resolution. */
   profiles?: Profile[] | null
   onHistoryClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
+  onEditClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
 }
 
 export function RecordCard({
   record,
   profiles,
   onHistoryClick,
+  onEditClick,
 }: RecordCardProps) {
   const { t } = useTranslation()
   const current = record.body
@@ -36,15 +38,26 @@ export function RecordCard({
             {title}
           </h2>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => onHistoryClick?.(record)}
-          title="Open history"
-          icon={<ClockIcon className="h-4 w-4" />}
-        >
-          History
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => onEditClick?.(record)}
+            title="Edit record"
+            icon={<PencilSquareIcon className="h-4 w-4" />}
+          >
+            Edit
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => onHistoryClick?.(record)}
+            title="Open history"
+            icon={<ClockIcon className="h-4 w-4" />}
+          >
+            History
+          </Button>
+        </div>
       </div>
 
       <dl className="grid gap-2 sm:grid-cols-3">
