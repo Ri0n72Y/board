@@ -5,7 +5,10 @@ import type {
   RecordItem,
   RecordResponse,
 } from '@labour-board/shared'
-import { ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/react/20/solid'
+import {
+  ArrowPathIcon,
+  ExclamationTriangleIcon,
+} from '@heroicons/react/20/solid'
 import axios from 'axios'
 import { Button } from '../components/ui/Button'
 import { BoardFilters } from '../components/BoardFilters'
@@ -79,7 +82,9 @@ export function BoardCurrentPage() {
 
   useEffect(() => {
     return () => {
+      historyRequestIdRef.current += 1
       historyAbortRef.current?.abort()
+      historyAbortRef.current = null
     }
   }, [])
 
@@ -104,7 +109,7 @@ export function BoardCurrentPage() {
       draftFilters.assignee,
       draftFilters.assetId,
       draftFilters.relationTarget,
-    ],
+    ]
   )
 
   /* ── Auto-load current board on effective filter change ── */
@@ -117,21 +122,18 @@ export function BoardCurrentPage() {
   /* ── Derived data ── */
   const knownTags = useMemo(
     () => mergeKnownTags(projection, config),
-    [projection, config],
+    [projection, config]
   )
 
   // Fallback when config fails: projection-only tags
   const projectionKnownTags = useMemo(
     () => extractKnownTags(projection),
-    [projection],
+    [projection]
   )
 
   const statusTags = useMemo(() => getConfigStatusTags(config), [config])
   const priorityTags = useMemo(() => getConfigPriorityTags(config), [config])
-  const profileOptions = useMemo(
-    () => getProfileOptions(profiles),
-    [profiles],
-  )
+  const profileOptions = useMemo(() => getProfileOptions(profiles), [profiles])
 
   const records = projection?.records ?? []
   const blockedRecords = projection?.blockedRecords ?? []
@@ -191,7 +193,7 @@ export function BoardCurrentPage() {
           setIsHistoryLoading(false)
         })
     },
-    [],
+    []
   )
 
   const closeHistory = useCallback(() => {
@@ -206,7 +208,7 @@ export function BoardCurrentPage() {
 
   /* ── Render ── */
   return (
-    <main className="mx-auto min-h-svh w-full max-w-[1180px] bg-stone-50 px-4 py-5 text-slate-950 sm:px-7 sm:py-7">
+    <main className="mx-auto min-h-svh w-full max-w-295 bg-stone-50 px-4 py-5 text-slate-950 sm:px-7 sm:py-7">
       {/* Header */}
       <header className="mb-5 grid gap-4 sm:flex sm:items-start sm:justify-between">
         <div>
@@ -292,7 +294,7 @@ export function BoardCurrentPage() {
       )}
 
       {/* ── Partial projection warning ── */}
-      {projectionStatus === 'partial' && !error && (
+      {projectionStatus === 'partial' && (
         <section
           className="mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900"
           role="alert"
@@ -305,7 +307,7 @@ export function BoardCurrentPage() {
       )}
 
       {/* ── Projection health: blocked ── */}
-      {projectionStatus === 'blocked' && !error && (
+      {projectionStatus === 'blocked' && (
         <section
           className="mt-4 grid gap-2 rounded-lg border-2 border-red-300 bg-red-50 p-5 text-red-800"
           role="alert"
@@ -324,15 +326,12 @@ export function BoardCurrentPage() {
       )}
 
       {/* ── Empty / filtered-empty (non-blocked only) ── */}
-      {!error && projection && projectionStatus !== 'blocked' && records.length === 0 && (
-        <EmptyState
-          hasActiveFilters={active}
-          hasIssues={hasIssues}
-        />
+      {projection && projectionStatus !== 'blocked' && records.length === 0 && (
+        <EmptyState hasActiveFilters={active} hasIssues={hasIssues} />
       )}
 
       {/* ── Records (non-blocked only) ── */}
-      {!error && projectionStatus !== 'blocked' && records.length > 0 && (
+      {projection && projectionStatus !== 'blocked' && records.length > 0 && (
         <section className="mt-4 grid gap-3.5" aria-label="Current records">
           {records.map((record) => (
             <RecordCard
