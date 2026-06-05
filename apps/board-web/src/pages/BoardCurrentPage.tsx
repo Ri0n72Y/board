@@ -10,6 +10,7 @@ import type {
 } from '@labour-board/shared'
 import {
   ArrowPathIcon,
+  ArrowDownTrayIcon,
   CameraIcon,
   ExclamationTriangleIcon,
   PlusIcon,
@@ -32,6 +33,7 @@ import {
   type BoardViewMode,
 } from '../components/ViewModeToggle'
 import { fetchRecordHistory } from '../api/history'
+import { exportCurrentBoard, exportSnapshot } from '../api/exports'
 import { RecordPatchConflictError, submitRecordPatch } from '../api/patches'
 import { fetchRecordHead } from '../api/recordHead'
 import {
@@ -54,6 +56,7 @@ import {
   isStatusMoveNoop,
 } from '../utils/statusMove'
 import { useDebouncedValue } from '../utils/useDebounce'
+import { downloadTextFile } from '../utils/download'
 
 const Q_DEBOUNCE_MS = 300
 
@@ -104,6 +107,10 @@ export function BoardCurrentPage() {
   const [moveErrors, setMoveErrors] = useState<Record<string, string>>({})
   const statusMoveRequestIdRef = useRef(0)
   const statusMoveAbortRef = useRef<AbortController | null>(null)
+  const [isCurrentExporting, setIsCurrentExporting] = useState(false)
+  const [currentExportError, setCurrentExportError] = useState<string | null>(null)
+  const currentExportRequestIdRef = useRef(0)
+  const currentExportAbortRef = useRef<AbortController | null>(null)
   const [isSnapshotOpen, setIsSnapshotOpen] = useState(false)
   const [snapshots, setSnapshots] = useState<SnapshotSummary[]>([])
   const [selectedSnapshot, setSelectedSnapshot] =
@@ -115,22 +122,29 @@ export function BoardCurrentPage() {
   const [snapshotListError, setSnapshotListError] = useState<string | null>(null)
   const [snapshotDetailError, setSnapshotDetailError] = useState<string | null>(null)
   const [snapshotCreateError, setSnapshotCreateError] = useState<string | null>(null)
+  const [isSnapshotExporting, setIsSnapshotExporting] = useState(false)
+  const [snapshotExportError, setSnapshotExportError] = useState<string | null>(null)
   const snapshotListRequestIdRef = useRef(0)
   const snapshotDetailRequestIdRef = useRef(0)
   const snapshotCreateRequestIdRef = useRef(0)
+  const snapshotExportRequestIdRef = useRef(0)
   const snapshotListAbortRef = useRef<AbortController | null>(null)
   const snapshotDetailAbortRef = useRef<AbortController | null>(null)
   const snapshotCreateAbortRef = useRef<AbortController | null>(null)
+  const snapshotExportAbortRef = useRef<AbortController | null>(null)
   const abortSnapshotRequests = useCallback(() => {
     snapshotListRequestIdRef.current += 1
     snapshotDetailRequestIdRef.current += 1
     snapshotCreateRequestIdRef.current += 1
+    snapshotExportRequestIdRef.current += 1
     snapshotListAbortRef.current?.abort()
     snapshotDetailAbortRef.current?.abort()
     snapshotCreateAbortRef.current?.abort()
+    snapshotExportAbortRef.current?.abort()
     snapshotListAbortRef.current = null
     snapshotDetailAbortRef.current = null
     snapshotCreateAbortRef.current = null
+    snapshotExportAbortRef.current = null
   }, [])
 
   /* ── Load metadata once on mount ── */
@@ -148,6 +162,9 @@ export function BoardCurrentPage() {
       statusMoveRequestIdRef.current += 1
       statusMoveAbortRef.current?.abort()
       statusMoveAbortRef.current = null
+      currentExportRequestIdRef.current += 1
+      currentExportAbortRef.current?.abort()
+      currentExportAbortRef.current = null
       abortSnapshotRequests()
     }
   }, [abortSnapshotRequests])
@@ -216,6 +233,50 @@ export function BoardCurrentPage() {
   function refresh() {
     void loadCurrentBoard(effectiveFilters)
   }
+
+  const exportCurrentMarkdown = useCallback(() => {
+    const requestId = currentExportRequestIdRef.current + 1
+    currentExportRequestIdRef.current = requestId
+    currentExportAbortRef.current?.abort()
+
+    const controller = new AbortController()
+    currentExportAbortRef.current = controller
+    setIsCurrentExporting(true)
+    setCurrentExportError(null)
+
+    const hasFilters = hasEffectiveFilters(appliedFilters)
+    void exportCurrentBoard(
+      {
+        level: hasFilters ? 'filtered' : 'full',
+        filters: hasFilters ? appliedFilters : undefined,
+      },
+      controller.signal,
+    )
+      .then((data) => {
+        if (
+          currentExportRequestIdRef.current !== requestId ||
+          controller.signal.aborted
+        ) {
+          return
+        }
+        downloadTextFile(data.filename, data.content)
+      })
+      .catch((unknownError: unknown) => {
+        if (
+          currentExportRequestIdRef.current !== requestId ||
+          controller.signal.aborted ||
+          axios.isCancel(unknownError)
+        ) {
+          return
+        }
+        setCurrentExportError(errorMessage(unknownError))
+      })
+      .finally(() => {
+        if (currentExportRequestIdRef.current !== requestId) return
+        setIsCurrentExporting(false)
+        currentExportAbortRef.current = null
+      })
+  }, [appliedFilters])
 
   const loadHistory = useCallback(
     (selection: HistorySelection) => {
@@ -398,9 +459,11 @@ export function BoardCurrentPage() {
     setSnapshotListError(null)
     setSnapshotDetailError(null)
     setSnapshotCreateError(null)
+    setSnapshotExportError(null)
     setIsSnapshotsLoading(false)
     setIsSnapshotDetailLoading(false)
     setIsSnapshotCreating(false)
+    setIsSnapshotExporting(false)
   }, [abortSnapshotRequests])
 
   const submitSnapshot = useCallback(() => {
@@ -441,6 +504,45 @@ export function BoardCurrentPage() {
         snapshotCreateAbortRef.current = null
       })
   }, [loadSnapshots, snapshotReason])
+
+  const exportSelectedSnapshotMarkdown = useCallback(() => {
+    if (!selectedSnapshot) return
+
+    const requestId = snapshotExportRequestIdRef.current + 1
+    snapshotExportRequestIdRef.current = requestId
+    snapshotExportAbortRef.current?.abort()
+
+    const controller = new AbortController()
+    snapshotExportAbortRef.current = controller
+    setIsSnapshotExporting(true)
+    setSnapshotExportError(null)
+
+    void exportSnapshot(selectedSnapshot.id, { level: 'full' }, controller.signal)
+      .then((data) => {
+        if (
+          snapshotExportRequestIdRef.current !== requestId ||
+          controller.signal.aborted
+        ) {
+          return
+        }
+        downloadTextFile(data.filename, data.content)
+      })
+      .catch((unknownError: unknown) => {
+        if (
+          snapshotExportRequestIdRef.current !== requestId ||
+          controller.signal.aborted ||
+          axios.isCancel(unknownError)
+        ) {
+          return
+        }
+        setSnapshotExportError(errorMessage(unknownError))
+      })
+      .finally(() => {
+        if (snapshotExportRequestIdRef.current !== requestId) return
+        setIsSnapshotExporting(false)
+        snapshotExportAbortRef.current = null
+      })
+  }, [selectedSnapshot])
 
   const moveRecordStatus = useCallback(
     (
@@ -547,6 +649,20 @@ export function BoardCurrentPage() {
           </Button>
           <Button
             type="button"
+            onClick={exportCurrentMarkdown}
+            disabled={isCurrentExporting || !projection}
+            icon={
+              isCurrentExporting ? (
+                <ArrowPathIcon className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowDownTrayIcon className="h-4 w-4" />
+              )
+            }
+          >
+            {isCurrentExporting ? 'Exporting...' : 'Export Current Board'}
+          </Button>
+          <Button
+            type="button"
             onClick={refresh}
             disabled={isLoading}
             icon={
@@ -607,6 +723,16 @@ export function BoardCurrentPage() {
         >
           <strong>Refresh failed — showing stale data</strong>
           <span>{error}</span>
+        </section>
+      )}
+
+      {currentExportError && (
+        <section
+          className="mt-4 grid gap-1.5 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800"
+          role="alert"
+        >
+          <strong>Export failed</strong>
+          <span>{currentExportError}</span>
         </section>
       )}
 
@@ -709,10 +835,13 @@ export function BoardCurrentPage() {
         listError={snapshotListError}
         detailError={snapshotDetailError}
         createError={snapshotCreateError}
+        isExporting={isSnapshotExporting}
+        exportError={snapshotExportError}
         onReasonChange={setSnapshotReason}
         onCreateSnapshot={submitSnapshot}
         onSelectSnapshot={loadSnapshotDetail}
         onRefreshList={loadSnapshots}
+        onExportSnapshot={exportSelectedSnapshotMarkdown}
         onClose={closeSnapshots}
       />
 

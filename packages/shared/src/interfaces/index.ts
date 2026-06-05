@@ -23,6 +23,13 @@ export type {
   BoardProjectionStatus,
   ProjectionDiagnostic,
 } from './boardCurrent.js'
+export type {
+  BoardExportFormat,
+  BoardExportLevel,
+  BoardExportOptions,
+  BoardExportResult,
+  BoardExportSource,
+} from './export.js'
 export type { BoardConfig, PidPrefix } from './boardConfig.js'
 export type { Base58String, Identity } from './identity.js'
 export type { DeepPartial, PatchItem } from './patch.js'

@@ -4,6 +4,7 @@ import type {
   SnapshotSummary,
 } from '@labour-board/shared'
 import {
+  ArrowDownTrayIcon,
   ArrowPathIcon,
   CameraIcon,
   ExclamationTriangleIcon,
@@ -24,10 +25,13 @@ interface SnapshotDrawerProps {
   listError: string | null
   detailError: string | null
   createError: string | null
+  isExporting?: boolean
+  exportError?: string | null
   onReasonChange: (value: string) => void
   onCreateSnapshot: () => void
   onSelectSnapshot: (snapshotId: string) => void
   onRefreshList: () => void
+  onExportSnapshot?: () => void
   onClose: () => void
 }
 
@@ -42,10 +46,13 @@ export function SnapshotDrawer({
   listError,
   detailError,
   createError,
+  isExporting = false,
+  exportError = null,
   onReasonChange,
   onCreateSnapshot,
   onSelectSnapshot,
   onRefreshList,
+  onExportSnapshot,
   onClose,
 }: SnapshotDrawerProps) {
   if (!open) return null
@@ -180,7 +187,12 @@ export function SnapshotDrawer({
             )}
             {detailError && <ErrorBlock title="Detail failed" message={detailError} />}
             {!isDetailLoading && !detailError && selectedSnapshot && (
-              <SnapshotDetailView snapshot={selectedSnapshot} />
+              <SnapshotDetailView
+                snapshot={selectedSnapshot}
+                isExporting={isExporting}
+                exportError={exportError}
+                onExportSnapshot={onExportSnapshot}
+              />
             )}
             {!isDetailLoading && !detailError && !selectedSnapshot && (
               <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">
@@ -194,7 +206,17 @@ export function SnapshotDrawer({
   )
 }
 
-function SnapshotDetailView({ snapshot }: { snapshot: SnapshotDetail }) {
+function SnapshotDetailView({
+  snapshot,
+  isExporting,
+  exportError,
+  onExportSnapshot,
+}: {
+  snapshot: SnapshotDetail
+  isExporting: boolean
+  exportError: string | null
+  onExportSnapshot?: () => void
+}) {
   return (
     <div className="grid gap-4">
       <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
@@ -207,10 +229,27 @@ function SnapshotDetailView({ snapshot }: { snapshot: SnapshotDetail }) {
               {snapshot.id}
             </p>
           </div>
-          <Button type="button" disabled title="Restore not implemented">
-            Restore not implemented
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              onClick={onExportSnapshot}
+              disabled={isExporting || !onExportSnapshot}
+              icon={
+                isExporting ? (
+                  <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowDownTrayIcon className="h-4 w-4" />
+                )
+              }
+            >
+              {isExporting ? 'Exporting...' : 'Export Snapshot'}
+            </Button>
+            <Button type="button" disabled title="Restore not implemented">
+              Restore not implemented
+            </Button>
+          </div>
         </div>
+        {exportError && <ErrorBlock title="Export failed" message={exportError} />}
         <dl className="grid gap-2 sm:grid-cols-2">
           <MetaItem label="Created" value={formatDate(snapshot.createdAt)} />
           <MetaItem label="Created by" value={snapshot.createdBy} mono />

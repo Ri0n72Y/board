@@ -11,3 +11,4 @@ export {
   isTag,
   parseTag,
 } from './tags.js'
+export { buildBoardMarkdownExport } from './boardExport.js'

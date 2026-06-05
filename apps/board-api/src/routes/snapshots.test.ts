@@ -120,6 +120,45 @@ describe('createSnapshotsRoute', () => {
     expect(updated?.body.tags).toEqual(['status:done'])
   })
 
+  it('exports snapshot markdown from static projection', async () => {
+    const { app } = createApp()
+    const record = await createCard(app, 'Snapshot export before', ['status:todo'])
+    const snapshot = await createSnapshot(app, 'Export before')
+
+    await postPatch(app, record.id, {
+      parentId: null,
+      currentVersion: 1,
+      tags: ['status:done'],
+      body: { title: 'Snapshot export after' },
+    })
+
+    const exportResponse = await app.request(
+      `/api/v0/snapshots/${snapshot.id}/export`
+    )
+    const exportPayload = await exportResponse.json()
+
+    expect(exportResponse.status).toBe(200)
+    expect(exportPayload.data.filename).toMatch(/snapshot-.*-full-.*\.md/)
+    expect(exportPayload.data.content).toContain('# LabourBoard Snapshot Export')
+    expect(exportPayload.data.content).toContain(`- Snapshot ID: ${snapshot.id}`)
+    expect(exportPayload.data.content).toContain('Snapshot export before')
+    expect(exportPayload.data.content).toContain('status:todo')
+    expect(exportPayload.data.content).not.toContain('Snapshot export after')
+    expect(exportPayload.data.content).not.toContain('status:done')
+  })
+
+  it('snapshot export returns 404 and validates export query', async () => {
+    const { app } = createApp()
+    const missing = await app.request('/api/v0/snapshots/missing/export')
+    expect(missing.status).toBe(404)
+
+    const snapshot = await createSnapshot(app, 'Invalid export')
+    const invalid = await app.request(
+      `/api/v0/snapshots/${snapshot.id}/export?level=card`
+    )
+    expect(invalid.status).toBe(400)
+  })
+
   it('does not affect record-head or patch submit', async () => {
     const { app, recordService } = createApp()
     const record = await createCard(app, 'Head unaffected', ['status:todo'])

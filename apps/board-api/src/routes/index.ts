@@ -1,4 +1,5 @@
 import type { Hono } from 'hono'
+import { createBoardCurrentExportRoute } from './boardCurrentExport.js'
 import { createBoardCurrentRoute } from './boardCurrent.js'
 import { createConfigRoute } from './config.js'
 import { createPatchesRoute } from './patches.js'
@@ -23,6 +24,10 @@ export interface ApiRouteServices {
 }
 
 export function mountApiRoutes(app: Hono, services: ApiRouteServices): void {
+  app.route('/api/v0/board', createBoardCurrentExportRoute(
+    services.recordRepository,
+    services.snapshotHeadRepository
+  ))
   app.route('/api/v0/board', createBoardCurrentRoute(
     services.recordRepository,
     services.snapshotHeadRepository

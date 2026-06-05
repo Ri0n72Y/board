@@ -1,13 +1,20 @@
 import { Hono } from 'hono'
 import type {
   ApiResponse,
+  BoardExportResult,
   CreateSnapshotInput,
   CreateSnapshotResponse,
   GetSnapshotResponse,
   ListSnapshotsResponse,
 } from '@labour-board/shared'
+import { buildBoardMarkdownExport } from '@labour-board/shared'
 import { ok, error } from '../http/responses.js'
 import type { SnapshotService } from '../services/snapshot/snapshotService.js'
+import {
+  applyExportFilters,
+  BoardExportQueryError,
+  parseBoardExportOptions,
+} from './boardExportQuery.js'
 
 export function createSnapshotsRoute(snapshotService: SnapshotService): Hono {
   const snapshots = new Hono()
@@ -39,6 +46,33 @@ export function createSnapshotsRoute(snapshotService: SnapshotService): Hono {
     }
 
     return c.json<ApiResponse<GetSnapshotResponse>>(ok({ snapshot }))
+  })
+
+  snapshots.get('/:id/export', async (c) => {
+    const snapshot = await snapshotService.getSnapshot(c.req.param('id'))
+    if (!snapshot) {
+      return c.json(
+        error('NOT_FOUND', `Snapshot ${c.req.param('id')} not found`),
+        404
+      )
+    }
+
+    try {
+      const searchParams = new URL(c.req.url).searchParams
+      const options = parseBoardExportOptions(searchParams, 'snapshot', {
+        id: snapshot.id,
+        createdAt: snapshot.createdAt,
+        reason: snapshot.reason,
+      })
+      const projection = applyExportFilters(snapshot.projection, options.filters ?? {})
+      const exported = buildBoardMarkdownExport(projection, options)
+      return c.json<ApiResponse<BoardExportResult>>(ok(exported))
+    } catch (caught) {
+      if (caught instanceof BoardExportQueryError) {
+        return c.json(error('INVALID_EXPORT', caught.message), 400)
+      }
+      throw caught
+    }
   })
 
   return snapshots
