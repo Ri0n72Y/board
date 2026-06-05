@@ -26,6 +26,7 @@ import {
 import { submitRecordPatch } from './record/recordPatchSubmit.js'
 import { archiveRecord } from './record/recordArchive.js'
 import { getRecordHistory } from './record/recordHistoryService.js'
+import { getRecordCurrentHead } from './record/recordCurrentHead.js'
 
 // ─── Re-exports for external consumers ───
 
@@ -37,6 +38,7 @@ export {
   type PatchResult,
   RecordValidationError,
   SnapshotConflictError,
+  CurrentHeadConflictError,
   DEFAULT_ACTOR,
 } from './record/recordResponses.js'
 
@@ -136,9 +138,12 @@ export class RecordService {
       input,
       createdBy,
       repository: this.repository,
-      snapshotHeadRepository: this.snapshotHeadRepository,
       boardConfig: this.boardConfig,
     })
+  }
+
+  async getRecordCurrentHead(id: string) {
+    return getRecordCurrentHead({ recordId: id, repository: this.repository })
   }
 
   // ─── Patch queries ───

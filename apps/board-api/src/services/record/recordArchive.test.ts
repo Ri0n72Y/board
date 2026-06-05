@@ -245,7 +245,7 @@ describe('RecordService archive (delete)', () => {
     expect(archived.tags).toEqual(history!.replay!.finalState.tags)
   })
 
-  it('rejects delete when replayed chain disagrees with snapshot head', async () => {
+  it('delete uses rebuilt snapshot head when no checkpoint has been loaded', async () => {
     const { service, repo } = createServiceWithRepo()
     const envelope = await service.create({
       schema: 'CardBody',
@@ -267,12 +267,13 @@ describe('RecordService archive (delete)', () => {
       })
     )
 
-    await expect(service.delete(recordId)).rejects.toThrow(
-      SnapshotConflictError
+    const archived = await service.delete(recordId)
+    expect(archived!.body.tags).toEqual(
+      expect.arrayContaining(['status:done', 'status:archived'])
     )
 
     const head = await service.getSnapshotHead()
-    expect(head.version).toBe(1)
-    expect(head.records[recordId]?.lastPatchId).toBe(r1!.patch.body.id)
+    expect(head.version).toBe(3)
+    expect(head.records[recordId]?.lastPatchId).not.toBe(r1!.patch.body.id)
   })
 })

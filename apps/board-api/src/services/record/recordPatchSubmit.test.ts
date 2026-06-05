@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { RecordService, RecordValidationError, SnapshotConflictError } from '../recordService.js'
+import {
+  CurrentHeadConflictError,
+  RecordService,
+  RecordValidationError,
+} from '../recordService.js'
 import { createRecordService } from './recordTestUtils.js'
 
 describe('RecordService patch submission (createRecordPatch)', () => {
@@ -260,7 +264,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
   })
 
   describe('snapshot head / parent chain', () => {
-    it('first patch has parentId: null and updates snapshot head', async () => {
+    it('first patch has parentId: null and updates current head', async () => {
       const service = createRecordService()
       const envelope = await service.create({
         schema: 'CardBody',
@@ -277,12 +281,13 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       expect(result).not.toBeNull()
       expect(result!.patch.body.parentId).toBeNull()
 
-      const head = await service.getSnapshotHead()
-      expect(head.version).toBe(1)
-      expect(head.records[envelope.body.id]).toBeDefined()
-      expect(head.records[envelope.body.id].lastPatchId).toBe(
-        result!.patch.body.id
-      )
+      const head = await service.getRecordCurrentHead(envelope.body.id)
+      expect(head).toMatchObject({
+        recordId: envelope.body.id,
+        exists: true,
+        currentVersion: 2,
+        lastPatchId: result!.patch.body.id,
+      })
     })
 
     it('second patch must reference first patch as parentId', async () => {
@@ -308,12 +313,16 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       expect(r2).not.toBeNull()
       expect(r2!.patch.body.parentId).toBe(r1!.patch.body.id)
 
-      const head = await service.getSnapshotHead()
-      expect(head.version).toBe(2)
-      expect(head.records[envelope.body.id].lastPatchId).toBe(r2!.patch.body.id)
+      const head = await service.getRecordCurrentHead(envelope.body.id)
+      expect(head).toMatchObject({
+        recordId: envelope.body.id,
+        exists: true,
+        currentVersion: 3,
+        lastPatchId: r2!.patch.body.id,
+      })
     })
 
-    it('throws SnapshotConflictError when snapshotVersion mismatches', async () => {
+    it('throws CurrentHeadConflictError when currentVersion mismatches', async () => {
       const service = createRecordService()
       const envelope = await service.create({
         schema: 'CardBody',
@@ -327,7 +336,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
           snapshotVersion: 5,
           tags: ['status:wip'],
         })
-      ).rejects.toThrow(SnapshotConflictError)
+      ).rejects.toThrow(CurrentHeadConflictError)
 
       await expect(
         service.createRecordPatch(envelope.body.id, {
@@ -335,10 +344,10 @@ describe('RecordService patch submission (createRecordPatch)', () => {
           snapshotVersion: 5,
           tags: ['status:wip'],
         })
-      ).rejects.toThrow('Snapshot version mismatch')
+      ).rejects.toThrow('Current version mismatch')
     })
 
-    it('throws SnapshotConflictError when parentId mismatches lastPatchId', async () => {
+    it('throws CurrentHeadConflictError when parentId mismatches lastPatchId', async () => {
       const service = createRecordService()
       const envelope = await service.create({
         schema: 'CardBody',
@@ -358,7 +367,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
           snapshotVersion: 1,
           tags: ['status:done'],
         })
-      ).rejects.toThrow(SnapshotConflictError)
+      ).rejects.toThrow(CurrentHeadConflictError)
 
       await expect(
         service.createRecordPatch(envelope.body.id, {
@@ -369,7 +378,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       ).rejects.toThrow('Parent patch mismatch')
     })
 
-    it('treats a non-head parentId as a snapshot conflict even when missing', async () => {
+    it('treats a non-head parentId as a current-head conflict even when missing', async () => {
       const service = createRecordService()
       const envelope = await service.create({
         schema: 'CardBody',
@@ -389,7 +398,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
           snapshotVersion: 1,
           tags: ['status:done'],
         })
-      ).rejects.toThrow(SnapshotConflictError)
+      ).rejects.toThrow(CurrentHeadConflictError)
 
       await expect(
         service.createRecordPatch(envelope.body.id, {

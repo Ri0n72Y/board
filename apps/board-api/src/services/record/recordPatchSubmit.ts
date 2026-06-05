@@ -8,14 +8,12 @@ import type {
 } from '@labour-board/shared'
 import { getConfiguredTags } from '../../config/boardConfigTools.js'
 import type { RecordRepository } from '../../repositories/recordRepository.js'
-import type {
-  SnapshotHeadRepository,
-  StoredPatchDoc,
-} from '../../repositories/snapshotHeadRepository.js'
+import type { StoredPatchDoc } from '../../repositories/snapshotHeadRepository.js'
+import { getRecordCurrentHead } from './recordCurrentHead.js'
 import {
+  CurrentHeadConflictError,
   type PatchResult,
   RecordValidationError,
-  assertAppendPatchResult,
   resolveActor,
   toPatchResponse,
 } from './recordResponses.js'
@@ -33,14 +31,13 @@ export function assertRecordPatchInputShape(
     throw new RecordValidationError('parentId must be a string or null')
   }
 
-  if (!('snapshotVersion' in input)) {
-    throw new RecordValidationError('snapshotVersion is required (number)')
+  const rawInput = input as unknown as Record<string, unknown>
+  if (!('currentVersion' in input) && !('snapshotVersion' in rawInput)) {
+    throw new RecordValidationError('currentVersion is required (number)')
   }
-  if (
-    typeof (input as unknown as Record<string, unknown>).snapshotVersion !==
-    'number'
-  ) {
-    throw new RecordValidationError('snapshotVersion must be a number')
+  const observedVersion = getRawObservedVersion(input)
+  if (typeof observedVersion !== 'number') {
+    throw new RecordValidationError('currentVersion must be a number')
   }
 
   if ('targetId' in (input as unknown as Record<string, unknown>)) {
@@ -110,14 +107,13 @@ export interface SubmitRecordPatchParams {
   input: CreateRecordPatchInput<DeepPartial<RecordBody>>
   createdBy?: string
   repository: RecordRepository
-  snapshotHeadRepository: SnapshotHeadRepository
   boardConfig: BoardConfig
 }
 
 export async function submitRecordPatch(
   params: SubmitRecordPatchParams
 ): Promise<PatchResult | null> {
-  const { targetId, input, createdBy, repository, snapshotHeadRepository, boardConfig } = params
+  const { targetId, input, createdBy, repository, boardConfig } = params
 
   // ── Runtime input validation ──
   assertRecordPatchInputShape(input)
@@ -135,6 +131,39 @@ export async function submitRecordPatch(
 
   assertRecordPatchNonEmpty(input)
   assertRecordPatchInput(input, boardConfig)
+
+  const head = await getRecordCurrentHead({ recordId: targetId, repository })
+  if (!head) {
+    return null
+  }
+  const observedCurrentVersion = await getObservedCurrentVersion(
+    input,
+    repository
+  )
+  if (observedCurrentVersion !== head.currentVersion) {
+    throw new CurrentHeadConflictError(
+      `Current version mismatch: client has ${observedCurrentVersion}, server has ${head.currentVersion}`
+    )
+  }
+  if (input.parentId !== head.lastPatchId) {
+    throw new CurrentHeadConflictError(
+      `Parent patch mismatch: client has ${input.parentId}, server has ${head.lastPatchId}`
+    )
+  }
+
+  if (input.parentId !== null) {
+    const parentPatch = await repository.findPatchById(input.parentId)
+    if (!parentPatch) {
+      throw new RecordValidationError(
+        `Parent patch ${input.parentId} does not exist`
+      )
+    }
+    if (parentPatch.targetId !== targetId) {
+      throw new RecordValidationError(
+        `Parent patch ${input.parentId} does not belong to record ${targetId}`
+      )
+    }
+  }
 
   const now = new Date().toISOString()
   const actor = resolveActor(createdBy)
@@ -159,16 +188,37 @@ export async function submitRecordPatch(
     createdAt: now,
   }
 
-  const append = await snapshotHeadRepository.appendPatchAndAdvanceHead({
-    targetId: targetId as RecordId,
-    patch,
-    expectedSnapshotVersion: input.snapshotVersion,
-    expectedParentId: input.parentId,
-  })
-  assertAppendPatchResult(append, input.snapshotVersion, input.parentId)
+  await repository.appendPatch(patch)
+  const patchCount = (await repository.listPatches()).length
 
   return {
     patch: toPatchResponse(patch),
-    newSnapshotVersion: append.newSnapshotVersion,
+    newCurrentVersion: head.currentVersion + 1,
+    newSnapshotVersion: patchCount,
   }
+}
+
+async function getObservedCurrentVersion(
+  input: CreateRecordPatchInput<DeepPartial<RecordBody>>,
+  repository: RecordRepository
+): Promise<number> {
+  const rawInput = input as unknown as Record<string, unknown>
+  if (typeof rawInput.currentVersion === 'number') {
+    return rawInput.currentVersion
+  }
+
+  const baseRecords = await repository.list({
+    includeArchived: true,
+    excludeTags: [],
+  })
+  return baseRecords.length + (rawInput.snapshotVersion as number)
+}
+
+function getRawObservedVersion(
+  input: CreateRecordPatchInput<DeepPartial<RecordBody>>
+): unknown {
+  const rawInput = input as unknown as Record<string, unknown>
+  return typeof rawInput.currentVersion === 'number'
+    ? rawInput.currentVersion
+    : rawInput.snapshotVersion
 }

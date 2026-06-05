@@ -123,9 +123,9 @@ describe('recordPatchRoute', () => {
       message: 'parentId is required',
     },
     {
-      name: 'snapshotVersion is missing',
+      name: 'currentVersion is missing',
       body: { parentId: null, tags: ['status:wip'] },
-      message: 'snapshotVersion is required',
+      message: 'currentVersion is required',
     },
     {
       name: 'parentId has wrong type',
@@ -133,9 +133,9 @@ describe('recordPatchRoute', () => {
       message: 'parentId must be a string or null',
     },
     {
-      name: 'snapshotVersion has wrong type',
-      body: { parentId: null, snapshotVersion: '0', tags: ['status:wip'] },
-      message: 'snapshotVersion must be a number',
+      name: 'currentVersion has wrong type',
+      body: { parentId: null, currentVersion: '0', tags: ['status:wip'] },
+      message: 'currentVersion must be a number',
     },
   ])('POST /:id/patches returns 400 when $name', async ({ body, message }) => {
     const app = createApp()
@@ -323,7 +323,7 @@ describe('recordPatchRoute', () => {
     expect(payload.error.message).toBe(`Cannot patch archived record ${recordId}`)
   })
 
-  it('POST /:id/patches returns 409 when snapshotVersion mismatches', async () => {
+  it('POST /:id/patches returns 409 when currentVersion mismatches', async () => {
     const app = createApp()
 
     const createResponse = await app.request('/api/v0/records', {
@@ -342,7 +342,7 @@ describe('recordPatchRoute', () => {
       method: 'POST',
       body: JSON.stringify({
         parentId: null,
-        snapshotVersion: 5,
+        currentVersion: 5,
         tags: ['status:wip'],
       }),
       headers: { 'content-type': 'application/json' },
@@ -352,7 +352,7 @@ describe('recordPatchRoute', () => {
     expect(response.status).toBe(409)
     expect(payload.ok).toBe(false)
     expect(payload.error.code).toBe('CONFLICT')
-    expect(payload.error.message).toContain('Snapshot version mismatch')
+    expect(payload.error.message).toContain('Current version mismatch')
   })
 
   it('POST /:id/patches returns 409 when parentId mismatches lastPatchId', async () => {

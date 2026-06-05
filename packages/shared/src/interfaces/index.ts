@@ -4,6 +4,7 @@ export type {
   CreateProfileInput,
   CreateRecordInput,
   CreateRecordPatchInput,
+  RecordCurrentHeadResponse,
   RecordHistoryDiagnostic,
   RecordHistoryReplay,
   RecordHistoryReplayStep,

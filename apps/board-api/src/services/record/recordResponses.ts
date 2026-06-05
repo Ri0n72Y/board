@@ -19,8 +19,10 @@ export type BoardPatchResponse = RecordResponse<
 
 export interface PatchResult {
   patch: BoardPatchResponse
-  /** The new snapshot version after this patch was committed. */
-  newSnapshotVersion: number
+  /** The new dynamic current-head version after this patch was committed. */
+  newCurrentVersion: number
+  /** Deprecated compatibility alias for legacy clients. */
+  newSnapshotVersion?: number
 }
 
 // ─── Error types ───
@@ -36,6 +38,13 @@ export class SnapshotConflictError extends Error {
   constructor(message: string) {
     super(message)
     this.name = 'SnapshotConflictError'
+  }
+}
+
+export class CurrentHeadConflictError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'CurrentHeadConflictError'
   }
 }
 

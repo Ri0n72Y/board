@@ -7,6 +7,7 @@ import type {
 } from '@labour-board/shared'
 import { error, ok } from '../../http/responses.js'
 import {
+  CurrentHeadConflictError,
   RecordValidationError,
   SnapshotConflictError,
   type PatchResult,
@@ -55,7 +56,10 @@ export function createRecordPatchRoute(recordService: RecordService): Hono {
         return c.json(error('INVALID_PATCH', caught.message), 400)
       }
 
-      if (caught instanceof SnapshotConflictError) {
+      if (
+        caught instanceof CurrentHeadConflictError ||
+        caught instanceof SnapshotConflictError
+      ) {
         return c.json(error('CONFLICT', caught.message), 409)
       }
 

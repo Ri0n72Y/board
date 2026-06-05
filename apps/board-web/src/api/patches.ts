@@ -25,7 +25,7 @@ export type NullableRecordBodyPatch = Record<string, unknown>
 
 export interface SubmitRecordPatchPayload {
   parentId: RecordId | null
-  snapshotVersion: number
+  currentVersion: number
   tags?: Tag[]
   assignee?: PublicKey | null
   body?: NullableRecordBodyPatch
@@ -36,7 +36,7 @@ export interface SubmitRecordPatchPayload {
 
 export interface SubmitRecordPatchResponse {
   patch: RecordResponse<PatchItem<NullableRecordBodyPatch>>
-  newSnapshotVersion: number
+  newCurrentVersion: number
 }
 
 export async function submitRecordPatch(

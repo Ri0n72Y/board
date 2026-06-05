@@ -24,7 +24,7 @@ import {
 import axios from 'axios'
 import { submitRecordPatch, RecordPatchConflictError } from '../api/patches'
 import type { SubmitRecordPatchPayload } from '../api/patches'
-import { fetchSnapshotHead } from '../api/snapshotHead'
+import { fetchRecordHead } from '../api/recordHead'
 import { cn } from '../lib/cn'
 import { getProfileOptions } from '../utils/board'
 import { TagChipRow } from './BoardFilters'
@@ -112,22 +112,21 @@ export function EditRecordDrawer({
     setError(null)
 
     try {
-      const head = await fetchSnapshotHead(controller.signal)
+      const head = await fetchRecordHead(current.id, controller.signal)
       if (requestIdRef.current !== requestId || controller.signal.aborted) return
 
-      const recordHead = head.records[current.id]
-      if (!recordHead) {
+      if (!head.exists) {
         setError(
-          'Current record is not present in snapshot head. Refresh current board and try again.',
+          'Current record is not present in current head. Refresh current board and try again.',
         )
         setIsSaving(false)
         return
       }
 
-      const parentId = recordHead.lastPatchId
+      const parentId = head.lastPatchId
       const payload: SubmitRecordPatchPayload = {
         parentId,
-        snapshotVersion: head.version,
+        currentVersion: head.currentVersion,
         tags: validation.patch.tags,
         assignee: validation.patch.assignee,
         assets: validation.patch.assets,

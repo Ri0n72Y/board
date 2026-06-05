@@ -73,14 +73,23 @@ export interface UpdateRecordInput<TBodyPatch = DeepPartial<RecordBody>> {
 export interface CreateRecordPatchInput<TBodyPatch = DeepPartial<RecordBody>> {
   /** Points to the previous patch in the chain; null for the first patch. */
   parentId: RecordId | null
-  /** Client's observed snapshot version for optimistic concurrency. */
-  snapshotVersion: number
+  /** Client's observed dynamic current-head version for optimistic concurrency. */
+  currentVersion?: number
+  /** Deprecated compatibility alias for currentVersion. */
+  snapshotVersion?: number
   tags?: Tag[]
   assignee?: PublicKey | null
   body?: TBodyPatch
   assets?: AssetRef[]
   relations?: RelationRef[]
   description?: string
+}
+
+export interface RecordCurrentHeadResponse {
+  recordId: RecordId
+  exists: true
+  currentVersion: number
+  lastPatchId: RecordId | null
 }
 
 export interface RecordHistoryResponse {
