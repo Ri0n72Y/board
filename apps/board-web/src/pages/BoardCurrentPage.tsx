@@ -299,6 +299,12 @@ export function BoardCurrentPage() {
 
       void (async () => {
         const head = await fetchRecordHead(recordId, controller.signal)
+        if (
+          statusMoveRequestIdRef.current !== requestId ||
+          controller.signal.aborted
+        ) {
+          return
+        }
         const nextTags = buildMovedStatusTags(record.body.tags, targetStatusTag)
         await submitRecordPatch(
           recordId,
