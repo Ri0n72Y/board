@@ -4,6 +4,7 @@ import type {
   RecordHistoryResponse,
   RecordItem,
   RecordResponse,
+  Tag,
 } from '@labour-board/shared'
 import {
   ArrowPathIcon,
@@ -27,6 +28,8 @@ import {
   type BoardViewMode,
 } from '../components/ViewModeToggle'
 import { fetchRecordHistory } from '../api/history'
+import { RecordPatchConflictError, submitRecordPatch } from '../api/patches'
+import { fetchRecordHead } from '../api/recordHead'
 import { useBoardCurrentStore } from '../stores/boardCurrentStore'
 import { useBoardMetadataStore } from '../stores/boardMetadataStore'
 import {
@@ -37,6 +40,10 @@ import {
   hasEffectiveFilters,
   mergeKnownTags,
 } from '../utils/board'
+import {
+  buildMovedStatusTags,
+  isStatusMoveNoop,
+} from '../utils/statusMove'
 import { useDebouncedValue } from '../utils/useDebounce'
 
 const Q_DEBOUNCE_MS = 300
@@ -84,6 +91,10 @@ export function BoardCurrentPage() {
   const [editRecord, setEditRecord] =
     useState<RecordResponse<RecordItem<RecordBody>> | null>(null)
   const [viewMode, setViewMode] = useState<BoardViewMode>('list')
+  const [movingRecordId, setMovingRecordId] = useState<string | null>(null)
+  const [moveErrors, setMoveErrors] = useState<Record<string, string>>({})
+  const statusMoveRequestIdRef = useRef(0)
+  const statusMoveAbortRef = useRef<AbortController | null>(null)
 
   /* ── Load metadata once on mount ── */
   useEffect(() => {
@@ -97,6 +108,9 @@ export function BoardCurrentPage() {
       historyRequestIdRef.current += 1
       historyAbortRef.current?.abort()
       historyAbortRef.current = null
+      statusMoveRequestIdRef.current += 1
+      statusMoveAbortRef.current?.abort()
+      statusMoveAbortRef.current = null
     }
   }, [])
 
@@ -261,6 +275,73 @@ export function BoardCurrentPage() {
     [effectiveFilters, historySelection, loadCurrentBoard, loadHistory]
   )
 
+  const moveRecordStatus = useCallback(
+    (
+      record: RecordResponse<RecordItem<RecordBody>>,
+      targetStatusTag: Tag,
+    ) => {
+      const recordId = record.body.id
+      if (isStatusMoveNoop(record.body.tags, targetStatusTag)) return
+
+      const requestId = statusMoveRequestIdRef.current + 1
+      statusMoveRequestIdRef.current = requestId
+      statusMoveAbortRef.current?.abort()
+
+      const controller = new AbortController()
+      statusMoveAbortRef.current = controller
+
+      setMovingRecordId(recordId)
+      setMoveErrors((current) => {
+        const next = { ...current }
+        delete next[recordId]
+        return next
+      })
+
+      void (async () => {
+        const head = await fetchRecordHead(recordId, controller.signal)
+        const nextTags = buildMovedStatusTags(record.body.tags, targetStatusTag)
+        await submitRecordPatch(
+          recordId,
+          {
+            parentId: head.lastPatchId,
+            currentVersion: head.currentVersion,
+            tags: nextTags,
+            description: `Move status to ${targetStatusTag}`,
+          },
+          controller.signal,
+        )
+        if (
+          statusMoveRequestIdRef.current !== requestId ||
+          controller.signal.aborted
+        ) {
+          return
+        }
+        await refreshAfterPatch(recordId)
+      })()
+        .catch((unknownError: unknown) => {
+          if (
+            statusMoveRequestIdRef.current !== requestId ||
+            controller.signal.aborted ||
+            axios.isCancel(unknownError)
+          ) {
+            return
+          }
+
+          const message =
+            unknownError instanceof RecordPatchConflictError
+              ? `${unknownError.message} Refresh current board and try again.`
+              : errorMessage(unknownError)
+          setMoveErrors((current) => ({ ...current, [recordId]: message }))
+        })
+        .finally(() => {
+          if (statusMoveRequestIdRef.current !== requestId) return
+          setMovingRecordId(null)
+          statusMoveAbortRef.current = null
+        })
+    },
+    [refreshAfterPatch],
+  )
+
   /* ── Render ── */
   return (
     <main className="mx-auto min-h-svh w-full max-w-295 bg-stone-50 px-4 py-5 text-slate-950 sm:px-7 sm:py-7">
@@ -400,8 +481,11 @@ export function BoardCurrentPage() {
             records={records}
             config={config}
             profiles={profiles}
+            movingRecordId={movingRecordId}
+            moveErrors={moveErrors}
             onHistoryClick={openHistory}
             onEditClick={openEdit}
+            onMoveStatus={moveRecordStatus}
           />
         ) : (
           <section className="mt-4 grid gap-3.5" aria-label="Current records">

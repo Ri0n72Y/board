@@ -5,12 +5,15 @@ import type {
   RecordBody,
   RecordItem,
   RecordResponse,
+  Tag,
 } from '@labour-board/shared'
 import { RecordCard } from './RecordCard'
 import {
   getStatusColumns,
   groupRecordsByStatus,
 } from '../utils/boardView'
+import { getMoveStatusOptions } from '../utils/statusMove'
+import type { MoveStatusOption } from '../utils/statusMove'
 
 interface BoardViewProps {
   records: RecordResponse<RecordItem<RecordBody>>[]
@@ -18,6 +21,12 @@ interface BoardViewProps {
   profiles?: Profile[] | null
   onHistoryClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
   onEditClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
+  movingRecordId?: string | null
+  moveErrors?: Record<string, string>
+  onMoveStatus?: (
+    record: RecordResponse<RecordItem<RecordBody>>,
+    targetStatusTag: Tag,
+  ) => void
 }
 
 export function BoardView({
@@ -26,11 +35,18 @@ export function BoardView({
   profiles,
   onHistoryClick,
   onEditClick,
+  movingRecordId,
+  moveErrors,
+  onMoveStatus,
 }: BoardViewProps) {
   const columns = useMemo(() => {
     const statusColumns = getStatusColumns(config, records)
     return groupRecordsByStatus(records, statusColumns)
   }, [config, records])
+  const moveStatusOptions: MoveStatusOption[] = useMemo(
+    () => getMoveStatusOptions(columns),
+    [columns],
+  )
 
   return (
     <section className="mt-4" aria-label="Current records board">
@@ -66,8 +82,12 @@ export function BoardView({
                       record={record}
                       profiles={profiles}
                       compact
+                      moveStatusOptions={moveStatusOptions}
+                      isMovingStatus={movingRecordId === record.body.id}
+                      moveStatusError={moveErrors?.[record.body.id] ?? null}
                       onHistoryClick={onHistoryClick}
                       onEditClick={onEditClick}
+                      onMoveStatus={onMoveStatus}
                     />
                   ))}
                 </div>

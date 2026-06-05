@@ -3,33 +3,48 @@ import type {
   RecordBody,
   RecordItem,
   RecordResponse,
+  Tag,
 } from '@labour-board/shared'
 import { ClockIcon, PencilSquareIcon } from '@heroicons/react/20/solid'
 import { useTranslation } from 'react-i18next'
 import { Button } from './ui/Button'
 import { TagChipRow } from './BoardFilters'
+import { MoveStatusControl } from './MoveStatusControl'
 import { lookupProfile } from '../utils/board'
+import type { MoveStatusOption } from '../utils/statusMove'
 
 interface RecordCardProps {
   record: RecordResponse<RecordItem<RecordBody>>
   /** Profiles for assignee name resolution. */
   profiles?: Profile[] | null
   compact?: boolean
+  moveStatusOptions?: MoveStatusOption[]
+  moveStatusError?: string | null
+  isMovingStatus?: boolean
   onHistoryClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
   onEditClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
+  onMoveStatus?: (
+    record: RecordResponse<RecordItem<RecordBody>>,
+    targetStatusTag: Tag,
+  ) => void
 }
 
 export function RecordCard({
   record,
   profiles,
   compact = false,
+  moveStatusOptions = [],
+  moveStatusError,
+  isMovingStatus = false,
   onHistoryClick,
   onEditClick,
+  onMoveStatus,
 }: RecordCardProps) {
   const { t } = useTranslation()
   const current = record.body
   const body = asDisplayBody(current.body)
   const title = body.title ?? current.pid
+  const currentStatus = current.tags.find((tag) => tag.startsWith('status:')) ?? null
 
   if (compact) {
     return (
@@ -78,6 +93,16 @@ export function RecordCard({
           <TagChipRow tags={current.tags} readonly />
         ) : (
           <p className="text-sm text-slate-500">No tags</p>
+        )}
+
+        {onMoveStatus && moveStatusOptions.length > 0 && (
+          <MoveStatusControl
+            currentStatus={currentStatus}
+            options={moveStatusOptions}
+            isMoving={isMovingStatus}
+            error={moveStatusError}
+            onMove={(targetStatusTag) => onMoveStatus(record, targetStatusTag)}
+          />
         )}
       </article>
     )
