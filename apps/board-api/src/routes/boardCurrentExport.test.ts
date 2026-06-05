@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from '../repositories/recordRepository.js'
 import { MemorySnapshotHeadRepository } from '../repositories/snapshotHeadRepository.js'
 import { createBoardCurrentExportRoute } from './boardCurrentExport.js'
+import { seedLegalMockBoard } from '../testSupport/legalMockBoard.js'
 
 function createAppWithSeededBoard() {
   const repo = new MemoryRecordRepository()
@@ -21,6 +22,8 @@ describe('GET /api/v0/board/current/export', () => {
 
     const response = await app.request('/api/v0/board/current/export')
     const payload = await response.json()
+    const relatedSource = await repo.findByPid('CARD-5')
+    const relatedTarget = await repo.findByPid('CARD-4')
 
     expect(response.status).toBe(200)
     expect(payload.ok).toBe(true)
@@ -31,12 +34,15 @@ describe('GET /api/v0/board/current/export', () => {
     expect(payload.data.content).toContain('## Status Overview')
     expect(payload.data.content).toContain('## Records By Status')
     expect(payload.data.content).toContain('CARD-1')
-    expect(payload.data.content).toContain('record-1')
-    expect(payload.data.content).toContain('status:todo')
-    expect(payload.data.content).toContain('asset:deck')
-    expect(payload.data.content).toContain('dependsOn:record-2')
-    expect(payload.data.content).toContain('Implementation details')
-    expect(payload.data.meta.recordCount).toBe(2)
+    expect(payload.data.content).toContain(relatedSource?.id)
+    expect(payload.data.content).toContain('status:doing')
+    expect(payload.data.content).toContain('asset:deck-system')
+    expect(payload.data.content).toContain(`dependsOn:${relatedTarget?.id}`)
+    expect(payload.data.content).toContain('战斗开始抽固定数量手牌')
+    expect(payload.data.content).not.toMatch(/\\u[0-9a-fA-F]{4}/)
+    expect(payload.data.content).not.toContain('dependsOn:US-')
+    expect(payload.data.content).not.toContain('dependsOn:CARD-')
+    expect(payload.data.meta.recordCount).toBe(33)
   })
 
   it('exports summary markdown without full content by default', async () => {
@@ -49,22 +55,24 @@ describe('GET /api/v0/board/current/export', () => {
     expect(response.status).toBe(200)
     expect(payload.data.content).toContain('- Level: summary')
     expect(payload.data.content).toContain('CARD-1')
-    expect(payload.data.content).not.toContain('Implementation details')
+    expect(payload.data.content).not.toContain('战斗开始抽固定数量手牌')
   })
 
   it('exports a single card by recordId', async () => {
     const { app, repo } = createAppWithSeededBoard()
     await seedBoard(repo)
+    const card = await repo.findByPid('CARD-5')
 
     const response = await app.request(
-      '/api/v0/board/current/export?level=card&recordId=record-1'
+      `/api/v0/board/current/export?level=card&recordId=${card?.id}`
     )
     const payload = await response.json()
 
     expect(response.status).toBe(200)
     expect(payload.data.meta.recordCount).toBe(1)
-    expect(payload.data.content).toContain('CARD-1')
-    expect(payload.data.content).not.toContain('CARD-2')
+    expect(payload.data.content).toContain('CARD-5')
+    expect(payload.data.content).toContain(card?.id)
+    expect(payload.data.content).not.toContain('#### CARD-4')
   })
 
   it('exports sprint and filtered markdown', async () => {
@@ -77,30 +85,36 @@ describe('GET /api/v0/board/current/export', () => {
     const sprintPayload = await sprint.json()
     expect(sprint.status).toBe(200)
     expect(sprintPayload.data.content).toContain('## Sprint Export: sprint:1')
-    expect(sprintPayload.data.meta.recordCount).toBe(1)
+    expect(sprintPayload.data.meta.recordCount).toBe(9)
 
     const filtered = await app.request(
-      '/api/v0/board/current/export?level=filtered&q=Second'
+      '/api/v0/board/current/export?level=filtered&q=%E7%8E%A9%E5%AE%B6%E6%8A%BD%E7%89%8C'
     )
     const filteredPayload = await filtered.json()
     expect(filtered.status).toBe(200)
     expect(filteredPayload.data.content).toContain('- Filters:')
-    expect(filteredPayload.data.content).toContain('CARD-2')
+    expect(filteredPayload.data.content).toContain('CARD-5')
     expect(filteredPayload.data.content).not.toContain('CARD-1')
   })
 
   it('exports related records and meta level', async () => {
     const { app, repo } = createAppWithSeededBoard()
     await seedBoard(repo)
+    const source = await repo.findByPid('CARD-5')
+    const target = await repo.findByPid('CARD-4')
 
     const related = await app.request(
-      '/api/v0/board/current/export?level=related&recordId=record-1'
+      `/api/v0/board/current/export?level=related&recordId=${source?.id}`
     )
     const relatedPayload = await related.json()
     expect(related.status).toBe(200)
-    expect(relatedPayload.data.content).toContain('CARD-1')
-    expect(relatedPayload.data.content).toContain('CARD-2')
-    expect(relatedPayload.data.content).toContain('CARD-1 dependsOn record-2')
+    expect(relatedPayload.data.content).toContain('CARD-5')
+    expect(relatedPayload.data.content).toContain('CARD-4')
+    expect(relatedPayload.data.content).toContain(
+      `CARD-5 dependsOn ${target?.id}`
+    )
+    expect(relatedPayload.data.content).toContain(`dependsOn:${target?.id}`)
+    expect(relatedPayload.data.content).not.toContain('CARD-5 dependsOn US-')
 
     const meta = await app.request('/api/v0/board/current/export?level=meta')
     const metaPayload = await meta.json()
@@ -163,37 +177,5 @@ describe('GET /api/v0/board/current/export', () => {
 })
 
 async function seedBoard(repo: MemoryRecordRepository) {
-  await repo.create({
-    id: 'record-1',
-    pid: 'CARD-1',
-    schema: 'CardBody',
-    body: {
-      title: 'First requirement',
-      description: 'Short description',
-      content: 'Implementation details',
-    },
-    tags: ['status:todo', 'priority:high', 'sprint:1'],
-    assignee: 'pk-1',
-    assets: ['asset:deck'],
-    relations: [
-      {
-        constraint: 'dependsOn',
-        target: 'record-2',
-        description: 'needs foundation',
-      },
-    ],
-    createdBy: 'local',
-    createdAt: '2026-06-05T00:00:00.000Z',
-  })
-  await repo.create({
-    id: 'record-2',
-    pid: 'CARD-2',
-    schema: 'CardBody',
-    body: { title: 'Second requirement' },
-    tags: ['status:wip', 'priority:low'],
-    assets: ['asset:api'],
-    relations: [],
-    createdBy: 'local',
-    createdAt: '2026-06-05T00:00:01.000Z',
-  })
+  await seedLegalMockBoard(repo)
 }

@@ -11,11 +11,13 @@ import {
 import { MemorySnapshotRepository } from '../repositories/snapshotRepository.js'
 import { RecordService } from '../services/recordService.js'
 import { SnapshotService } from '../services/snapshot/snapshotService.js'
+import { seedLegalMockBoard } from '../testSupport/legalMockBoard.js'
 import { createRecordsRoute } from './records.js'
 import { createSnapshotsRoute } from './snapshots.js'
 
 function createApp(): {
   app: Hono
+  repo: MemoryRecordRepository
   recordService: RecordService
   snapshotHeadRepository: SnapshotHeadRepository
 } {
@@ -36,7 +38,7 @@ function createApp(): {
   app.route('/api/v0/records', createRecordsRoute(recordService))
   app.route('/api/v0/snapshots', createSnapshotsRoute(snapshotService))
 
-  return { app, recordService, snapshotHeadRepository }
+  return { app, repo, recordService, snapshotHeadRepository }
 }
 
 describe('createSnapshotsRoute', () => {
@@ -121,15 +123,25 @@ describe('createSnapshotsRoute', () => {
   })
 
   it('exports snapshot markdown from static projection', async () => {
-    const { app } = createApp()
-    const record = await createCard(app, 'Snapshot export before', ['status:todo'])
+    const { app, repo } = createApp()
+    await seedLegalMockBoard(repo)
+    const source = await repo.findByPid('CARD-5')
+    const target = await repo.findByPid('CARD-4')
     const snapshot = await createSnapshot(app, 'Export before')
 
-    await postPatch(app, record.id, {
-      parentId: null,
-      currentVersion: 1,
-      tags: ['status:done'],
-      body: { title: 'Snapshot export after' },
+    await repo.create({
+      id: '11111111-2222-5333-8444-555555555555',
+      pid: 'CARD-34',
+      schema: 'CardBody',
+      tags: ['status:todo', 'priority:p1', 'sprint:1'],
+      body: {
+        title: 'Snapshot export after',
+        description: 'This record was created after the snapshot.',
+      },
+      assets: [],
+      relations: [],
+      createdBy: 'test',
+      createdAt: '2026-06-05T00:01:00.000Z',
     })
 
     const exportResponse = await app.request(
@@ -141,10 +153,14 @@ describe('createSnapshotsRoute', () => {
     expect(exportPayload.data.filename).toMatch(/snapshot-.*-full-.*\.md/)
     expect(exportPayload.data.content).toContain('# LabourBoard Snapshot Export')
     expect(exportPayload.data.content).toContain(`- Snapshot ID: ${snapshot.id}`)
-    expect(exportPayload.data.content).toContain('Snapshot export before')
-    expect(exportPayload.data.content).toContain('status:todo')
+    expect(exportPayload.data.content).toContain('玩家抽牌')
+    expect(exportPayload.data.content).toContain('status:doing')
+    expect(exportPayload.data.content).toContain(source?.id)
+    expect(exportPayload.data.content).toContain(`dependsOn:${target?.id}`)
+    expect(exportPayload.data.content).not.toContain('dependsOn:US-')
+    expect(exportPayload.data.content).not.toContain('dependsOn:CARD-')
     expect(exportPayload.data.content).not.toContain('Snapshot export after')
-    expect(exportPayload.data.content).not.toContain('status:done')
+    expect(exportPayload.data.meta.recordCount).toBe(33)
   })
 
   it('snapshot export returns 404 and validates export query', async () => {

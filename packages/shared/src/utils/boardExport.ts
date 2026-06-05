@@ -222,7 +222,7 @@ function buildRelationsSection(context: ExportContext): string {
       count += 1
       lines.push(
         `- ${record.body.pid} ${relation.constraint} ${relation.target}` +
-          `${relation.description ? ` — ${relation.description}` : ''}`
+          `${relation.description ? ` - ${relation.description}` : ''}`
       )
     }
   }
@@ -282,7 +282,7 @@ function buildDiagnosticsSection(context: ExportContext): string {
 function buildRecordMarkdown(record: BoardRecord, context: ExportContext): string {
   const body = record.body
   const lines = [
-    `#### ${body.pid} — ${markdownInline(titleFromBody(body.body) ?? body.pid)}`,
+    `#### ${body.pid} - ${markdownInline(titleFromBody(body.body) ?? body.pid)}`,
     `- id: ${body.id}`,
     `- pid: ${body.pid}`,
     `- schema: ${body.schema}`,
