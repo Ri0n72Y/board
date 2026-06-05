@@ -1,4 +1,5 @@
-import type { RecordId, RecordItem } from './record.js'
+import type { BoardCurrentProjection } from './boardCurrent.js'
+import type { PublicKey, RecordId, RecordItem } from './record.js'
 
 export type SnapshotSource =
   | 'manual'
@@ -22,4 +23,35 @@ export interface SnapshotItem {
   records: Record<RecordId, RecordItem>
   description?: string
   meta?: Record<string, unknown>
+}
+
+export interface SnapshotSummary {
+  id: string
+  createdAt: string
+  createdBy: PublicKey
+  reason?: string
+  recordCount: number
+  patchCount?: number
+  source: 'manual'
+  projectionStatus: BoardCurrentProjection['summary']['projectionStatus']
+}
+
+export interface SnapshotDetail extends SnapshotSummary {
+  projection: BoardCurrentProjection
+}
+
+export interface CreateSnapshotInput {
+  reason?: string
+}
+
+export interface CreateSnapshotResponse {
+  snapshot: SnapshotDetail
+}
+
+export interface ListSnapshotsResponse {
+  snapshots: SnapshotSummary[]
+}
+
+export interface GetSnapshotResponse {
+  snapshot: SnapshotDetail
 }

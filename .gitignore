@@ -35,3 +35,4 @@ changes_*.md
 .temp
 .pnpm-store
 board.yaml
+/test-data

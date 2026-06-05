@@ -40,7 +40,16 @@ export type {
   RelationRef,
   SchemaName,
 } from './record.js'
-export type { SnapshotItem, SnapshotSource } from './snapshot.js'
+export type {
+  CreateSnapshotInput,
+  CreateSnapshotResponse,
+  GetSnapshotResponse,
+  ListSnapshotsResponse,
+  SnapshotDetail,
+  SnapshotItem,
+  SnapshotSource,
+  SnapshotSummary,
+} from './snapshot.js'
 export type {
   HexSha256String,
   PatchEnvelope,

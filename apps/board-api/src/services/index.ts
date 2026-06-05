@@ -25,16 +25,24 @@ import {
   MongoSnapshotHeadRepository,
   type SnapshotHeadRepository,
 } from '../repositories/snapshotHeadRepository.js'
+import {
+  MemorySnapshotRepository,
+  MongoSnapshotRepository,
+  type SnapshotRepository,
+} from '../repositories/snapshotRepository.js'
 import { RecordService } from './recordService.js'
 import { ConfigService } from './configService.js'
 import { ProfileService } from './profileService.js'
+import { SnapshotService } from './snapshot/snapshotService.js'
 
 export interface ApiServices {
   configService: ConfigService
   profileService: ProfileService
   recordService: RecordService
+  snapshotService: SnapshotService
   recordRepository: RecordRepository
   snapshotHeadRepository: SnapshotHeadRepository
+  snapshotRepository: SnapshotRepository
 }
 
 export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
@@ -60,6 +68,15 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
           )) as Collection<Document>
         )
       : new MemorySnapshotHeadRepository(recordRepository)
+  const snapshotRepository: SnapshotRepository =
+    env.mongodbUri
+      ? new MongoSnapshotRepository(
+          (await getSnapshotsCollection<Document>(
+            env.mongodbUri,
+            env.mongodbDb
+          )) as Collection<Document>
+        )
+      : new MemorySnapshotRepository()
   const profileRepository: ProfileRepository = env.mongodbUri
     ? new MongoProfileRepository(
         await getProfilesCollection(env.mongodbUri, env.mongodbDb)
@@ -75,12 +92,19 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
       : undefined
   )
   await recordService.reconcilePidState()
+  const snapshotService = new SnapshotService(
+    recordRepository,
+    snapshotHeadRepository,
+    snapshotRepository
+  )
 
   return {
     configService: new ConfigService(boardConfig),
     profileService: new ProfileService(profileRepository),
     recordService,
+    snapshotService,
     recordRepository,
     snapshotHeadRepository,
+    snapshotRepository,
   }
 }

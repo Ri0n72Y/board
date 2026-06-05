@@ -4,10 +4,13 @@ import type {
   RecordHistoryResponse,
   RecordItem,
   RecordResponse,
+  SnapshotDetail,
+  SnapshotSummary,
   Tag,
 } from '@labour-board/shared'
 import {
   ArrowPathIcon,
+  CameraIcon,
   ExclamationTriangleIcon,
   PlusIcon,
 } from '@heroicons/react/20/solid'
@@ -21,6 +24,7 @@ import { EmptyState } from '../components/EmptyState'
 import { IssuesPanel } from '../components/IssuesPanel'
 import { RecordCard } from '../components/RecordCard'
 import { RecordHistoryDrawer } from '../components/RecordHistoryDrawer'
+import { SnapshotDrawer } from '../components/SnapshotDrawer'
 import { StatusBadge } from '../components/StatusBadge'
 import { SummaryBar } from '../components/SummaryBar'
 import {
@@ -30,6 +34,11 @@ import {
 import { fetchRecordHistory } from '../api/history'
 import { RecordPatchConflictError, submitRecordPatch } from '../api/patches'
 import { fetchRecordHead } from '../api/recordHead'
+import {
+  createSnapshot,
+  fetchSnapshot,
+  fetchSnapshots,
+} from '../api/snapshots'
 import { useBoardCurrentStore } from '../stores/boardCurrentStore'
 import { useBoardMetadataStore } from '../stores/boardMetadataStore'
 import {
@@ -95,6 +104,34 @@ export function BoardCurrentPage() {
   const [moveErrors, setMoveErrors] = useState<Record<string, string>>({})
   const statusMoveRequestIdRef = useRef(0)
   const statusMoveAbortRef = useRef<AbortController | null>(null)
+  const [isSnapshotOpen, setIsSnapshotOpen] = useState(false)
+  const [snapshots, setSnapshots] = useState<SnapshotSummary[]>([])
+  const [selectedSnapshot, setSelectedSnapshot] =
+    useState<SnapshotDetail | null>(null)
+  const [snapshotReason, setSnapshotReason] = useState('')
+  const [isSnapshotsLoading, setIsSnapshotsLoading] = useState(false)
+  const [isSnapshotDetailLoading, setIsSnapshotDetailLoading] = useState(false)
+  const [isSnapshotCreating, setIsSnapshotCreating] = useState(false)
+  const [snapshotListError, setSnapshotListError] = useState<string | null>(null)
+  const [snapshotDetailError, setSnapshotDetailError] = useState<string | null>(null)
+  const [snapshotCreateError, setSnapshotCreateError] = useState<string | null>(null)
+  const snapshotListRequestIdRef = useRef(0)
+  const snapshotDetailRequestIdRef = useRef(0)
+  const snapshotCreateRequestIdRef = useRef(0)
+  const snapshotListAbortRef = useRef<AbortController | null>(null)
+  const snapshotDetailAbortRef = useRef<AbortController | null>(null)
+  const snapshotCreateAbortRef = useRef<AbortController | null>(null)
+  const abortSnapshotRequests = useCallback(() => {
+    snapshotListRequestIdRef.current += 1
+    snapshotDetailRequestIdRef.current += 1
+    snapshotCreateRequestIdRef.current += 1
+    snapshotListAbortRef.current?.abort()
+    snapshotDetailAbortRef.current?.abort()
+    snapshotCreateAbortRef.current?.abort()
+    snapshotListAbortRef.current = null
+    snapshotDetailAbortRef.current = null
+    snapshotCreateAbortRef.current = null
+  }, [])
 
   /* ── Load metadata once on mount ── */
   useEffect(() => {
@@ -111,8 +148,9 @@ export function BoardCurrentPage() {
       statusMoveRequestIdRef.current += 1
       statusMoveAbortRef.current?.abort()
       statusMoveAbortRef.current = null
+      abortSnapshotRequests()
     }
-  }, [])
+  }, [abortSnapshotRequests])
 
   /* ── Effective filters (debounced q) ── */
   const debouncedQ = useDebouncedValue(draftFilters.q, Q_DEBOUNCE_MS)
@@ -275,6 +313,135 @@ export function BoardCurrentPage() {
     [effectiveFilters, historySelection, loadCurrentBoard, loadHistory]
   )
 
+  const loadSnapshots = useCallback(() => {
+    const requestId = snapshotListRequestIdRef.current + 1
+    snapshotListRequestIdRef.current = requestId
+    snapshotListAbortRef.current?.abort()
+
+    const controller = new AbortController()
+    snapshotListAbortRef.current = controller
+    setIsSnapshotsLoading(true)
+    setSnapshotListError(null)
+
+    void fetchSnapshots(controller.signal)
+      .then((data) => {
+        if (
+          snapshotListRequestIdRef.current !== requestId ||
+          controller.signal.aborted
+        ) {
+          return
+        }
+        setSnapshots(data.snapshots)
+      })
+      .catch((unknownError: unknown) => {
+        if (
+          snapshotListRequestIdRef.current !== requestId ||
+          controller.signal.aborted ||
+          axios.isCancel(unknownError)
+        ) {
+          return
+        }
+        setSnapshotListError(errorMessage(unknownError))
+      })
+      .finally(() => {
+        if (snapshotListRequestIdRef.current !== requestId) return
+        setIsSnapshotsLoading(false)
+        snapshotListAbortRef.current = null
+      })
+  }, [])
+
+  const loadSnapshotDetail = useCallback((snapshotId: string) => {
+    const requestId = snapshotDetailRequestIdRef.current + 1
+    snapshotDetailRequestIdRef.current = requestId
+    snapshotDetailAbortRef.current?.abort()
+
+    const controller = new AbortController()
+    snapshotDetailAbortRef.current = controller
+    setIsSnapshotDetailLoading(true)
+    setSnapshotDetailError(null)
+
+    void fetchSnapshot(snapshotId, controller.signal)
+      .then((data) => {
+        if (
+          snapshotDetailRequestIdRef.current !== requestId ||
+          controller.signal.aborted
+        ) {
+          return
+        }
+        setSelectedSnapshot(data.snapshot)
+      })
+      .catch((unknownError: unknown) => {
+        if (
+          snapshotDetailRequestIdRef.current !== requestId ||
+          controller.signal.aborted ||
+          axios.isCancel(unknownError)
+        ) {
+          return
+        }
+        setSnapshotDetailError(errorMessage(unknownError))
+      })
+      .finally(() => {
+        if (snapshotDetailRequestIdRef.current !== requestId) return
+        setIsSnapshotDetailLoading(false)
+        snapshotDetailAbortRef.current = null
+      })
+  }, [])
+
+  const openSnapshots = useCallback(() => {
+    setIsSnapshotOpen(true)
+    loadSnapshots()
+  }, [loadSnapshots])
+
+  const closeSnapshots = useCallback(() => {
+    abortSnapshotRequests()
+    setIsSnapshotOpen(false)
+    setSnapshotListError(null)
+    setSnapshotDetailError(null)
+    setSnapshotCreateError(null)
+    setIsSnapshotsLoading(false)
+    setIsSnapshotDetailLoading(false)
+    setIsSnapshotCreating(false)
+  }, [abortSnapshotRequests])
+
+  const submitSnapshot = useCallback(() => {
+    const requestId = snapshotCreateRequestIdRef.current + 1
+    snapshotCreateRequestIdRef.current = requestId
+    snapshotCreateAbortRef.current?.abort()
+
+    const controller = new AbortController()
+    snapshotCreateAbortRef.current = controller
+    setIsSnapshotCreating(true)
+    setSnapshotCreateError(null)
+
+    void createSnapshot({ reason: snapshotReason }, controller.signal)
+      .then((data) => {
+        if (
+          snapshotCreateRequestIdRef.current !== requestId ||
+          controller.signal.aborted
+        ) {
+          return
+        }
+        setSelectedSnapshot(data.snapshot)
+        setSnapshotReason('')
+        loadSnapshots()
+      })
+      .catch((unknownError: unknown) => {
+        if (
+          snapshotCreateRequestIdRef.current !== requestId ||
+          controller.signal.aborted ||
+          axios.isCancel(unknownError)
+        ) {
+          return
+        }
+        setSnapshotCreateError(errorMessage(unknownError))
+      })
+      .finally(() => {
+        if (snapshotCreateRequestIdRef.current !== requestId) return
+        setIsSnapshotCreating(false)
+        snapshotCreateAbortRef.current = null
+      })
+  }, [loadSnapshots, snapshotReason])
+
   const moveRecordStatus = useCallback(
     (
       record: RecordResponse<RecordItem<RecordBody>>,
@@ -370,6 +537,13 @@ export function BoardCurrentPage() {
             icon={<PlusIcon className="h-4 w-4" />}
           >
             Create Record
+          </Button>
+          <Button
+            type="button"
+            onClick={openSnapshots}
+            icon={<CameraIcon className="h-4 w-4" />}
+          >
+            Snapshots
           </Button>
           <Button
             type="button"
@@ -522,6 +696,24 @@ export function BoardCurrentPage() {
         profiles={profiles}
         onClose={closeHistory}
         onEditClick={openEdit}
+      />
+
+      <SnapshotDrawer
+        open={isSnapshotOpen}
+        snapshots={snapshots}
+        selectedSnapshot={selectedSnapshot}
+        reason={snapshotReason}
+        isListLoading={isSnapshotsLoading}
+        isDetailLoading={isSnapshotDetailLoading}
+        isCreating={isSnapshotCreating}
+        listError={snapshotListError}
+        detailError={snapshotDetailError}
+        createError={snapshotCreateError}
+        onReasonChange={setSnapshotReason}
+        onCreateSnapshot={submitSnapshot}
+        onSelectSnapshot={loadSnapshotDetail}
+        onRefreshList={loadSnapshots}
+        onClose={closeSnapshots}
       />
 
       {isCreateOpen && (
