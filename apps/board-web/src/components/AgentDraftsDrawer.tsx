@@ -195,6 +195,7 @@ export function AgentDraftsDrawer({
             {detailError && <ErrorBlock title="Detail failed" message={detailError} />}
             {!isDetailLoading && !detailError && selectedDraft && (
               <DraftDetailView
+                key={selectedDraft.id}
                 draft={selectedDraft}
                 isReviewing={isReviewing}
                 reviewError={reviewError}
@@ -332,7 +333,7 @@ function DraftDetailView({
               Mark Discarded
             </Button>
             {draft.status !== 'draft' && (
-              <Button type="button" disabled={isReviewing} onClick={() => onUpdateReview(draft.id, 'draft')}>
+              <Button type="button" disabled={isReviewing} onClick={() => onUpdateReview(draft.id, 'draft', reviewNote.trim() || undefined)}>
                 Reset to Draft
               </Button>
             )}
