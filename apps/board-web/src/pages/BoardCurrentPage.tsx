@@ -419,13 +419,13 @@ export function BoardCurrentPage() {
         onExportSnapshotContext={snapshotController.exportSelectedSnapshotContext}
         onSaveSnapshotDraft={
           snapshotController.selectedSnapshot
-            ? (title: string) => {
-                agentDraftController.saveDraft({
+            ? (title: string): Promise<void> => {
+                return agentDraftController.saveDraft({
                   title,
                   profile: 'agent-snapshot',
                   source: 'snapshot',
                   snapshotId: snapshotController.selectedSnapshot!.id,
-                })
+                }).then(() => undefined)
               }
             : undefined
         }
@@ -458,12 +458,18 @@ export function BoardCurrentPage() {
         error={boardExportController.contextExportError}
         onExport={boardExportController.exportContextPack}
         onSaveDraft={(options) => {
-          agentDraftController.saveDraft({
-            ...options,
-            source: 'current-board',
-            filters: appliedFilters,
-          })
-          setIsContextExportOpen(false)
+          agentDraftController
+            .saveDraft({
+              ...options,
+              source: 'current-board',
+              filters: appliedFilters,
+            })
+            .then(() => {
+              setIsContextExportOpen(false)
+            })
+            .catch(() => {
+              // Error stays visible via draftSaveError; drawer stays open
+            })
         }}
         isSavingDraft={agentDraftController.isCreating}
         draftSaveError={agentDraftController.createError}

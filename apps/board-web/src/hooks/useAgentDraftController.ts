@@ -112,7 +112,7 @@ export function useAgentDraftController() {
       source: 'current-board' | 'snapshot'
       snapshotId?: string
       filters?: BoardCurrentQuery
-    }) => {
+    }): Promise<AgentDraftDetail> => {
       const requestId = createRequestIdRef.current + 1
       createRequestIdRef.current = requestId
       createAbortRef.current?.abort()
@@ -122,7 +122,7 @@ export function useAgentDraftController() {
       setIsCreating(true)
       setCreateError(null)
 
-      void createAgentDraft(
+      return createAgentDraft(
         {
           title: options.title,
           profile: options.profile,
@@ -140,18 +140,25 @@ export function useAgentDraftController() {
         controller.signal,
       )
         .then((data) => {
-          if (createRequestIdRef.current !== requestId || controller.signal.aborted) return
-          // Internally open drawer and populate result – no race with list
+          if (createRequestIdRef.current !== requestId || controller.signal.aborted) {
+            throw new Error('aborted')
+          }
+          // Internally open drawer and populate result
           setIsDrawerOpen(true)
           setDrafts((prev) => {
             const deduped = prev.filter((d) => d.id !== data.draft.id)
             return [data.draft, ...deduped]
           })
           setSelectedDraft(data.draft)
+          return data.draft
         })
         .catch((err: unknown) => {
-          if (createRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) return
-          setCreateError(err instanceof Error ? err.message : String(err))
+          if (createRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) {
+            throw err
+          }
+          const message = err instanceof Error ? err.message : String(err)
+          setCreateError(message)
+          throw err
         })
         .finally(() => {
           if (createRequestIdRef.current !== requestId) return

@@ -37,7 +37,7 @@ interface SnapshotDrawerProps {
   onRefreshList: () => void
   onExportSnapshot?: () => void
   onExportSnapshotContext?: () => void
-  onSaveSnapshotDraft?: (title: string) => void
+  onSaveSnapshotDraft?: (title: string) => Promise<void>
   onClose: () => void
 }
 
@@ -237,7 +237,7 @@ function SnapshotDetailView({
   draftSaveError?: string | null
   onExportSnapshot?: () => void
   onExportSnapshotContext?: () => void
-  onSaveSnapshotDraft?: (title: string) => void
+  onSaveSnapshotDraft?: (title: string) => Promise<void>
 }) {
   const [draftTitle, setDraftTitle] = useState('')
 
@@ -324,8 +324,14 @@ function SnapshotDetailView({
             disabled={!draftTitle.trim() || isSavingDraft}
             onClick={() => {
               if (!draftTitle.trim()) return
-              onSaveSnapshotDraft(draftTitle.trim())
-              setDraftTitle('')
+              const title = draftTitle.trim()
+              onSaveSnapshotDraft(title)
+                .then(() => {
+                  setDraftTitle('')
+                })
+                .catch(() => {
+                  // Keep title visible on failure
+                })
             }}
             icon={
               isSavingDraft ? (
