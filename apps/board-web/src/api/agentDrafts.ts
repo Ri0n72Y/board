@@ -7,6 +7,8 @@ import type {
   CreateAgentDraftResponse,
   GetAgentDraftResponse,
   ListAgentDraftsResponse,
+  UpdateAgentDraftReviewInput,
+  UpdateAgentDraftReviewResponse,
 } from '@labour-board/shared'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
@@ -64,6 +66,24 @@ export async function fetchAgentDraft(
 ): Promise<GetAgentDraftResponse> {
   const response = await axios.get<ApiResponse<GetAgentDraftResponse>>(
     `${apiBaseUrl}/agent/drafts/${encodeURIComponent(id)}`,
+    { signal },
+  )
+
+  if (!response.data.ok) {
+    throw new Error(response.data.error.message)
+  }
+
+  return response.data.data
+}
+
+export async function updateAgentDraftReview(
+  id: string,
+  input: UpdateAgentDraftReviewInput,
+  signal?: AbortSignal,
+): Promise<UpdateAgentDraftReviewResponse> {
+  const response = await axios.patch<ApiResponse<UpdateAgentDraftReviewResponse>>(
+    `${apiBaseUrl}/agent/drafts/${encodeURIComponent(id)}/review`,
+    input,
     { signal },
   )
 

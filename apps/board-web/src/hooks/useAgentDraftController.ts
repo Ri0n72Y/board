@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
-import type { AgentDraftDetail, AgentDraftSummary, BoardCurrentQuery } from '@labour-board/shared'
+import type { AgentDraftDetail, AgentDraftStatus, AgentDraftSummary, BoardCurrentQuery } from '@labour-board/shared'
 import type { ExportContextPackOptions } from './useBoardExportController'
-import { createAgentDraft, fetchAgentDraft, fetchAgentDrafts } from '../api/agentDrafts'
+import { createAgentDraft, fetchAgentDraft, fetchAgentDrafts, updateAgentDraftReview } from '../api/agentDrafts'
 
 export function useAgentDraftController() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -15,23 +15,32 @@ export function useAgentDraftController() {
   const [detailError, setDetailError] = useState<string | null>(null)
   const [createError, setCreateError] = useState<string | null>(null)
 
+  // Review state
+  const [isReviewing, setIsReviewing] = useState(false)
+  const [reviewError, setReviewError] = useState<string | null>(null)
+
   const listRequestIdRef = useRef(0)
   const detailRequestIdRef = useRef(0)
   const createRequestIdRef = useRef(0)
+  const reviewRequestIdRef = useRef(0)
   const listAbortRef = useRef<AbortController | null>(null)
   const detailAbortRef = useRef<AbortController | null>(null)
   const createAbortRef = useRef<AbortController | null>(null)
+  const reviewAbortRef = useRef<AbortController | null>(null)
 
   const abortAll = useCallback(() => {
     listRequestIdRef.current += 1
     detailRequestIdRef.current += 1
     createRequestIdRef.current += 1
+    reviewRequestIdRef.current += 1
     listAbortRef.current?.abort()
     detailAbortRef.current?.abort()
     createAbortRef.current?.abort()
+    reviewAbortRef.current?.abort()
     listAbortRef.current = null
     detailAbortRef.current = null
     createAbortRef.current = null
+    reviewAbortRef.current = null
   }, [])
 
   useEffect(() => abortAll, [abortAll])
@@ -74,9 +83,11 @@ export function useAgentDraftController() {
     setListError(null)
     setDetailError(null)
     setCreateError(null)
+    setReviewError(null)
     setIsListLoading(false)
     setIsDetailLoading(false)
     setIsCreating(false)
+    setIsReviewing(false)
   }, [abortAll])
 
   const loadDraftDetail = useCallback((draftId: string) => {
@@ -143,7 +154,6 @@ export function useAgentDraftController() {
           if (createRequestIdRef.current !== requestId || controller.signal.aborted) {
             throw new Error('aborted')
           }
-          // Internally open drawer and populate result
           setIsDrawerOpen(true)
           setDrafts((prev) => {
             const deduped = prev.filter((d) => d.id !== data.draft.id)
@@ -169,6 +179,42 @@ export function useAgentDraftController() {
     [],
   )
 
+  const updateDraftReview = useCallback(
+    (draftId: string, status: AgentDraftStatus, reviewNote?: string) => {
+      const requestId = reviewRequestIdRef.current + 1
+      reviewRequestIdRef.current = requestId
+      reviewAbortRef.current?.abort()
+
+      const controller = new AbortController()
+      reviewAbortRef.current = controller
+      setIsReviewing(true)
+      setReviewError(null)
+
+      void updateAgentDraftReview(
+        draftId,
+        { status, ...(reviewNote !== undefined ? { reviewNote } : {}) },
+        controller.signal,
+      )
+        .then((data) => {
+          if (reviewRequestIdRef.current !== requestId || controller.signal.aborted) return
+          setSelectedDraft(data.draft)
+          setDrafts((prev) =>
+            prev.map((d) => (d.id === data.draft.id ? data.draft : d)),
+          )
+        })
+        .catch((err: unknown) => {
+          if (reviewRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) return
+          setReviewError(err instanceof Error ? err.message : String(err))
+        })
+        .finally(() => {
+          if (reviewRequestIdRef.current !== requestId) return
+          setIsReviewing(false)
+          reviewAbortRef.current = null
+        })
+    },
+    [],
+  )
+
   return {
     isDrawerOpen,
     drafts,
@@ -179,10 +225,13 @@ export function useAgentDraftController() {
     listError,
     detailError,
     createError,
+    isReviewing,
+    reviewError,
     openDrawer,
     closeDrawer,
     loadDraftList,
     loadDraftDetail,
     saveDraft,
+    updateDraftReview,
   }
 }

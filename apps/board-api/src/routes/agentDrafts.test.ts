@@ -374,3 +374,233 @@ describe('Agent Drafts route', () => {
     expect(res.status).toBe(404)
   })
 })
+
+describe('Agent Draft Review Actions', () => {
+  // ── PATCH reviewed ──
+
+  it('PATCH /api/v0/agent/drafts/:id/review marks draft as reviewed', async () => {
+    const app = await createTestApp()
+    const createRes = await app.request('/api/v0/agent/drafts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Review test',
+        profile: 'agent-full',
+        source: 'current-board',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const draftId = (await createRes.json()).data.draft.id
+
+    const patchRes = await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        status: 'reviewed',
+        reviewNote: 'Looks good',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    expect(patchRes.status).toBe(200)
+    const payload = await patchRes.json()
+    expect(payload.ok).toBe(true)
+    expect(payload.data.draft.status).toBe('reviewed')
+    expect(payload.data.draft.reviewedAt).toBeDefined()
+    expect(payload.data.draft.reviewedBy).toBe('local')
+    expect(payload.data.draft.reviewNote).toBe('Looks good')
+    // contextMarkdown unchanged
+    expect(typeof payload.data.draft.contextMarkdown).toBe('string')
+  })
+
+  // ── PATCH discarded ──
+
+  it('PATCH discarded marks draft as discarded', async () => {
+    const app = await createTestApp()
+    const createRes = await app.request('/api/v0/agent/drafts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Discard test',
+        profile: 'agent-full',
+        source: 'current-board',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const draftId = (await createRes.json()).data.draft.id
+
+    await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'discarded' }),
+      headers: { 'content-type': 'application/json' },
+    })
+
+    // List summary shows discarded
+    const listRes = await app.request('/api/v0/agent/drafts')
+    const listPayload = await listRes.json()
+    const discarded = listPayload.data.drafts.find((d: { id: string }) => d.id === draftId)
+    expect(discarded.status).toBe('discarded')
+    expect(discarded.reviewedAt).toBeDefined()
+  })
+
+  // ── PATCH reset to draft ──
+
+  it('PATCH draft reset clears reviewedAt/reviewedBy', async () => {
+    const app = await createTestApp()
+    const createRes = await app.request('/api/v0/agent/drafts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Reset test',
+        profile: 'agent-full',
+        source: 'current-board',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const draftId = (await createRes.json()).data.draft.id
+
+    // First mark as reviewed
+    await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'reviewed', reviewNote: 'old note' }),
+      headers: { 'content-type': 'application/json' },
+    })
+
+    // Then reset to draft, keep reviewNote
+    const resetRes = await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'draft', reviewNote: 'reset note' }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const payload = await resetRes.json()
+    expect(payload.data.draft.status).toBe('draft')
+    expect(payload.data.draft.reviewedAt).toBeUndefined()
+    expect(payload.data.draft.reviewedBy).toBeUndefined()
+    expect(payload.data.draft.reviewNote).toBe('reset note')
+  })
+
+  // ── Invalid status 400 ──
+
+  it('PATCH invalid status returns 400', async () => {
+    const app = await createTestApp()
+    const createRes = await app.request('/api/v0/agent/drafts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Bad status',
+        profile: 'agent-full',
+        source: 'current-board',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const draftId = (await createRes.json()).data.draft.id
+
+    const res = await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'invalid-status' }),
+      headers: { 'content-type': 'application/json' },
+    })
+    expect(res.status).toBe(400)
+  })
+
+  // ── Missing draft 404 ──
+
+  it('PATCH missing draft returns 404', async () => {
+    const app = await createTestApp()
+    const res = await app.request('/api/v0/agent/drafts/nonexistent/review', {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'reviewed' }),
+      headers: { 'content-type': 'application/json' },
+    })
+    expect(res.status).toBe(404)
+  })
+
+  // ── Invalid body 400 ──
+
+  it('PATCH with non-JSON body returns 400', async () => {
+    const app = await createTestApp()
+    const res = await app.request('/api/v0/agent/drafts/some-id/review', {
+      method: 'PATCH',
+      body: 'not json',
+      headers: { 'content-type': 'text/plain' },
+    })
+    expect(res.status).toBe(400)
+  })
+
+  // ── PATCH does not create records/patches/snapshots ──
+
+  it('PATCH review does not create records, patches, or snapshots', async () => {
+    const app = await createTestApp()
+    const createRes = await app.request('/api/v0/agent/drafts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Side effect test',
+        profile: 'agent-full',
+        source: 'current-board',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const draftId = (await createRes.json()).data.draft.id
+
+    const boardBefore = await app.request('/api/v0/board/current')
+    const recordCountBefore = (await boardBefore.json()).data.records.length
+
+    await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'reviewed' }),
+      headers: { 'content-type': 'application/json' },
+    })
+
+    const boardAfter = await app.request('/api/v0/board/current')
+    expect((await boardAfter.json()).data.records.length).toBe(recordCountBefore)
+
+    const snapshotsRes = await app.request('/api/v0/snapshots')
+    expect((await snapshotsRes.json()).data.snapshots.length).toBe(0)
+  })
+
+  // ── PATCH preserves contextMarkdown ──
+
+  it('PATCH review preserves contextMarkdown', async () => {
+    const app = await createTestApp()
+    const createRes = await app.request('/api/v0/agent/drafts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Markdown test',
+        profile: 'agent-full',
+        source: 'current-board',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const createPayload = await createRes.json()
+    const draftId = createPayload.data.draft.id
+    const originalMd = createPayload.data.draft.contextMarkdown
+
+    await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'reviewed', reviewNote: 'test' }),
+      headers: { 'content-type': 'application/json' },
+    })
+
+    const detailRes = await app.request(`/api/v0/agent/drafts/${draftId}`)
+    expect((await detailRes.json()).data.draft.contextMarkdown).toBe(originalMd)
+  })
+
+  // ── No API key in review response ──
+
+  it('PATCH review response does not contain API key', async () => {
+    const app = await createTestApp()
+    const createRes = await app.request('/api/v0/agent/drafts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Key test',
+        profile: 'agent-full',
+        source: 'current-board',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const draftId = (await createRes.json()).data.draft.id
+
+    const patchRes = await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'reviewed' }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const json = JSON.stringify((await patchRes.json()).data.draft)
+    expect(json).not.toContain('sk-')
+    expect(json).not.toContain('AGENT_API_KEY')
+  })
+})

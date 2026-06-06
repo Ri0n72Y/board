@@ -444,9 +444,12 @@ export function BoardCurrentPage() {
         listError={agentDraftController.listError}
         detailError={agentDraftController.detailError}
         createError={agentDraftController.createError}
+        isReviewing={agentDraftController.isReviewing}
+        reviewError={agentDraftController.reviewError}
         onSelectDraft={agentDraftController.loadDraftDetail}
         onRefreshList={agentDraftController.loadDraftList}
         onClose={agentDraftController.closeDrawer}
+        onUpdateReview={agentDraftController.updateDraftReview}
       />
 
       <ExportContextDrawer

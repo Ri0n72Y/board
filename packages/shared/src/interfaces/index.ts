@@ -82,6 +82,7 @@ export type {
 } from './transaction.js'
 export type {
   AgentDraftDetail,
+  AgentDraftReview,
   AgentDraftSource,
   AgentDraftStatus,
   AgentDraftSummary,
@@ -89,4 +90,6 @@ export type {
   CreateAgentDraftResponse,
   GetAgentDraftResponse,
   ListAgentDraftsResponse,
+  UpdateAgentDraftReviewInput,
+  UpdateAgentDraftReviewResponse,
 } from './agent.js'

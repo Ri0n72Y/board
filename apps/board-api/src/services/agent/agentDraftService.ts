@@ -1,10 +1,13 @@
 import type {
   AgentDraftDetail,
+  AgentDraftReview,
+  AgentDraftStatus,
   AgentDraftSummary,
   BoardContextPackOptions,
   BoardExportSource,
   CreateAgentDraftInput,
   PublicKey,
+  UpdateAgentDraftReviewInput,
 } from '@labour-board/shared'
 import {
   buildBoardContextPack,
@@ -171,6 +174,58 @@ export class AgentDraftService {
     }
 
     return this.agentDraftRepository.create(draft)
+  }
+
+  async updateReview(
+    id: string,
+    input: UpdateAgentDraftReviewInput,
+    actor?: PublicKey,
+  ): Promise<AgentDraftDetail> {
+    const VALID_STATUSES: AgentDraftStatus[] = ['draft', 'reviewed', 'discarded']
+    if (!VALID_STATUSES.includes(input.status)) {
+      throw new AgentDraftValidationError(
+        `Invalid status: ${input.status}. Must be one of: ${VALID_STATUSES.join(', ')}`,
+      )
+    }
+
+    if (
+      input.reviewNote !== undefined &&
+      typeof input.reviewNote !== 'string'
+    ) {
+      throw new AgentDraftValidationError('reviewNote must be a string')
+    }
+
+    const existing = await this.agentDraftRepository.findById(id)
+    if (!existing) {
+      throw new AgentDraftNotFoundError(`Agent draft ${id} not found`)
+    }
+
+    const now = new Date().toISOString()
+    const reviewer = resolveActor(actor)
+
+    const review: AgentDraftReview = {
+      status: input.status,
+    }
+
+    if (input.status === 'reviewed' || input.status === 'discarded') {
+      review.reviewedAt = now
+      review.reviewedBy = reviewer
+    } else {
+      // Reset to draft: clear review metadata
+      review.reviewedAt = ''
+      review.reviewedBy = ''
+    }
+
+    if (input.reviewNote !== undefined) {
+      review.reviewNote = input.reviewNote.trim() || ''
+    }
+
+    const updated = await this.agentDraftRepository.updateReview(id, review)
+    if (!updated) {
+      throw new AgentDraftNotFoundError(`Agent draft ${id} not found`)
+    }
+
+    return updated
   }
 
   async listDrafts(): Promise<AgentDraftSummary[]> {

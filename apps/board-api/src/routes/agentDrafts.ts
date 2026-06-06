@@ -2,12 +2,15 @@ import { Hono } from 'hono'
 import type {
   ApiResponse,
   AgentDraftSource,
+  AgentDraftStatus,
   AgentContextProfile,
   CreateAgentDraftInput,
   CreateAgentDraftResponse,
   GetAgentDraftResponse,
   ListAgentDraftsResponse,
   Tag,
+  UpdateAgentDraftReviewInput,
+  UpdateAgentDraftReviewResponse,
 } from '@labour-board/shared'
 import { getAgentContextProfileDefinition } from '@labour-board/shared'
 import { ok, error } from '../http/responses.js'
@@ -58,7 +61,67 @@ export function createAgentDraftsRoute(agentDraftService: AgentDraftService): Ho
     return c.json<ApiResponse<GetAgentDraftResponse>>(ok({ draft }))
   })
 
+  route.patch('/:id/review', async (c) => {
+    const actor = c.req.header('x-actor-id') ?? undefined
+    try {
+      const input = await parseUpdateReviewInput(c.req.raw)
+      const draft = await agentDraftService.updateReview(
+        c.req.param('id'),
+        input,
+        actor,
+      )
+      return c.json<ApiResponse<UpdateAgentDraftReviewResponse>>(ok({ draft }))
+    } catch (caught) {
+      if (caught instanceof AgentDraftValidationError) {
+        return c.json(error('INVALID_REVIEW', caught.message), 400)
+      }
+      if (caught instanceof AgentDraftNotFoundError) {
+        return c.json(error('NOT_FOUND', caught.message), 404)
+      }
+      throw caught
+    }
+  })
+
   return route
+}
+
+async function parseUpdateReviewInput(
+  request: Request,
+): Promise<UpdateAgentDraftReviewInput> {
+  if (!request.headers.get('content-type')?.includes('application/json')) {
+    throw new AgentDraftValidationError('Content-Type must be application/json')
+  }
+
+  const raw = (await request.json()) as unknown
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new AgentDraftValidationError('Request body must be a JSON object')
+  }
+
+  const body = raw as Record<string, unknown>
+
+  const VALID_STATUSES: AgentDraftStatus[] = ['draft', 'reviewed', 'discarded']
+  if (typeof body.status !== 'string' || !VALID_STATUSES.includes(body.status as AgentDraftStatus)) {
+    throw new AgentDraftValidationError(
+      `status is required and must be one of: ${VALID_STATUSES.join(', ')}`,
+    )
+  }
+  const status = body.status as AgentDraftStatus
+
+  const reviewNote =
+    body.reviewNote !== undefined
+      ? typeof body.reviewNote === 'string'
+        ? body.reviewNote
+        : undefined
+      : undefined
+
+  if (body.reviewNote !== undefined && typeof body.reviewNote !== 'string') {
+    throw new AgentDraftValidationError('reviewNote must be a string')
+  }
+
+  return {
+    status,
+    ...(reviewNote !== undefined ? { reviewNote } : {}),
+  }
 }
 
 async function parseCreateDraftInput(request: Request): Promise<CreateAgentDraftInput> {

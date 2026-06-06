@@ -1,9 +1,25 @@
 import type { AgentContextProfile, BoardContextPackOptions, BoardContextPackResult } from './export.js'
 import type { BoardCurrentQuery } from './boardCurrent.js'
 
-export type AgentDraftStatus = 'draft'
+export type AgentDraftStatus = 'draft' | 'reviewed' | 'discarded'
 
 export type AgentDraftSource = 'current-board' | 'snapshot'
+
+export interface AgentDraftReview {
+  status: AgentDraftStatus
+  reviewedAt?: string
+  reviewedBy?: string
+  reviewNote?: string
+}
+
+export interface UpdateAgentDraftReviewInput {
+  status: AgentDraftStatus
+  reviewNote?: string
+}
+
+export interface UpdateAgentDraftReviewResponse {
+  draft: AgentDraftDetail
+}
 
 export interface CreateAgentDraftInput {
   title: string
@@ -31,6 +47,9 @@ export interface AgentDraftSummary {
   contextGoal?: string
   recordCount: number
   snapshotId?: string
+  reviewedAt?: string
+  reviewedBy?: string
+  reviewNote?: string
 }
 
 export interface AgentDraftDetail extends AgentDraftSummary {

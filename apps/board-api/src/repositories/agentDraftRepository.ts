@@ -1,10 +1,11 @@
 import type { Collection, Document, Filter, OptionalId } from 'mongodb'
-import type { AgentDraftDetail, AgentDraftSummary } from '@labour-board/shared'
+import type { AgentDraftDetail, AgentDraftReview, AgentDraftSummary } from '@labour-board/shared'
 
 export interface AgentDraftRepository {
   create(draft: AgentDraftDetail): Promise<AgentDraftDetail>
   list(): Promise<AgentDraftSummary[]>
   findById(id: string): Promise<AgentDraftDetail | null>
+  updateReview(id: string, review: AgentDraftReview): Promise<AgentDraftDetail | null>
 }
 
 function cloneDetail(draft: AgentDraftDetail): AgentDraftDetail {
@@ -23,6 +24,9 @@ function toSummary(draft: AgentDraftDetail): AgentDraftSummary {
     contextGoal,
     recordCount,
     snapshotId,
+    reviewedAt,
+    reviewedBy,
+    reviewNote,
   } = draft
   return {
     id,
@@ -35,6 +39,9 @@ function toSummary(draft: AgentDraftDetail): AgentDraftSummary {
     ...(contextGoal ? { contextGoal } : {}),
     recordCount,
     ...(snapshotId ? { snapshotId } : {}),
+    ...(reviewedAt ? { reviewedAt } : {}),
+    ...(reviewedBy ? { reviewedBy } : {}),
+    ...(reviewNote ? { reviewNote } : {}),
   }
 }
 
@@ -59,6 +66,22 @@ export class MemoryAgentDraftRepository implements AgentDraftRepository {
   async findById(id: string): Promise<AgentDraftDetail | null> {
     const draft = this.drafts.find((item) => item.id === id) ?? null
     return draft ? cloneDetail(draft) : null
+  }
+
+  async updateReview(id: string, review: AgentDraftReview): Promise<AgentDraftDetail | null> {
+    const index = this.drafts.findIndex((item) => item.id === id)
+    if (index === -1) return null
+
+    const current = this.drafts[index]
+    const updated: AgentDraftDetail = {
+      ...current,
+      status: review.status,
+      ...(review.reviewedAt !== undefined ? { reviewedAt: review.reviewedAt || undefined } : {}),
+      ...(review.reviewedBy !== undefined ? { reviewedBy: review.reviewedBy || undefined } : {}),
+      ...(review.reviewNote !== undefined ? { reviewNote: review.reviewNote || undefined } : {}),
+    }
+    this.drafts[index] = updated
+    return cloneDetail(updated)
   }
 }
 
@@ -89,6 +112,35 @@ export class MongoAgentDraftRepository implements AgentDraftRepository {
     const doc = await this.collection.findOne(draftFilter({ id }))
     return doc ? fromDraftDoc(doc) : null
   }
+
+  async updateReview(id: string, review: AgentDraftReview): Promise<AgentDraftDetail | null> {
+    const setFields: Record<string, unknown> = { status: review.status }
+    const unsetFields: Record<string, unknown> = {}
+
+    if (review.reviewedAt !== undefined) {
+      if (review.reviewedAt) setFields.reviewedAt = review.reviewedAt
+      else unsetFields.reviewedAt = ''
+    }
+    if (review.reviewedBy !== undefined) {
+      if (review.reviewedBy) setFields.reviewedBy = review.reviewedBy
+      else unsetFields.reviewedBy = ''
+    }
+    if (review.reviewNote !== undefined) {
+      if (review.reviewNote) setFields.reviewNote = review.reviewNote
+      else unsetFields.reviewNote = ''
+    }
+
+    const update: Record<string, unknown> = {}
+    if (Object.keys(setFields).length > 0) update.$set = setFields
+    if (Object.keys(unsetFields).length > 0) update.$unset = unsetFields
+
+    const result = await this.collection.findOneAndUpdate(
+      draftFilter({ id }),
+      update,
+      { returnDocument: 'after' },
+    )
+    return result ? fromDraftDoc(result) : null
+  }
 }
 
 function draftFilter(extra?: Filter<Document>): Filter<Document> {
@@ -112,6 +164,9 @@ function toDraftDoc(draft: AgentDraftDetail): OptionalId<Document> {
     contextGoal: draft.contextGoal,
     recordCount: draft.recordCount,
     snapshotId: draft.snapshotId,
+    reviewedAt: draft.reviewedAt,
+    reviewedBy: draft.reviewedBy,
+    reviewNote: draft.reviewNote,
     contextMarkdown: draft.contextMarkdown,
     contextMeta: draft.contextMeta,
     exportOptions: draft.exportOptions,
@@ -133,6 +188,15 @@ function fromDraftDoc(doc: Document): AgentDraftDetail {
     recordCount: doc.recordCount,
     ...(typeof doc.snapshotId === 'string' && doc.snapshotId.trim()
       ? { snapshotId: doc.snapshotId }
+      : {}),
+    ...(typeof doc.reviewedAt === 'string' && doc.reviewedAt.trim()
+      ? { reviewedAt: doc.reviewedAt }
+      : {}),
+    ...(typeof doc.reviewedBy === 'string' && doc.reviewedBy.trim()
+      ? { reviewedBy: doc.reviewedBy }
+      : {}),
+    ...(typeof doc.reviewNote === 'string' && doc.reviewNote.trim()
+      ? { reviewNote: doc.reviewNote }
       : {}),
     contextMarkdown: doc.contextMarkdown,
     contextMeta: doc.contextMeta,
