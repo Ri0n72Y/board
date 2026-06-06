@@ -226,6 +226,49 @@ export function useSnapshotController() {
       })
   }, [selectedSnapshot])
 
+  const exportSelectedSnapshotContext = useCallback(() => {
+    if (!selectedSnapshot) return
+
+    const requestId = snapshotExportRequestIdRef.current + 1
+    snapshotExportRequestIdRef.current = requestId
+    snapshotExportAbortRef.current?.abort()
+
+    const controller = new AbortController()
+    snapshotExportAbortRef.current = controller
+    setIsSnapshotExporting(true)
+    setSnapshotExportError(null)
+
+    void exportSnapshot(
+      selectedSnapshot.id,
+      { profile: 'agent-snapshot' },
+      controller.signal,
+    )
+      .then((data) => {
+        if (
+          snapshotExportRequestIdRef.current !== requestId ||
+          controller.signal.aborted
+        ) {
+          return
+        }
+        downloadTextFile(data.filename, data.content)
+      })
+      .catch((unknownError: unknown) => {
+        if (
+          snapshotExportRequestIdRef.current !== requestId ||
+          controller.signal.aborted ||
+          axios.isCancel(unknownError)
+        ) {
+          return
+        }
+        setSnapshotExportError(errorMessage(unknownError))
+      })
+      .finally(() => {
+        if (snapshotExportRequestIdRef.current !== requestId) return
+        setIsSnapshotExporting(false)
+        snapshotExportAbortRef.current = null
+      })
+  }, [selectedSnapshot])
+
   return {
     isSnapshotOpen,
     snapshots,
@@ -246,6 +289,7 @@ export function useSnapshotController() {
     closeSnapshots,
     submitSnapshot,
     exportSelectedSnapshotMarkdown,
+    exportSelectedSnapshotContext,
   }
 }
 

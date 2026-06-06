@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type {
   ApiResponse,
+  AgentContextProfile,
   BoardCurrentQuery,
   BoardExportLevel,
   BoardExportResult,
@@ -10,6 +11,8 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
 
 export interface ExportRequestOptions {
   level?: BoardExportLevel
+  profile?: AgentContextProfile
+  contextGoal?: string
   recordId?: string
   sprintTag?: string
   filters?: BoardCurrentQuery
@@ -56,6 +59,8 @@ function toParams(options: ExportRequestOptions): URLSearchParams {
   const params = new URLSearchParams()
   params.set('format', 'markdown')
   if (options.level) params.set('level', options.level)
+  if (options.profile) params.set('profile', options.profile)
+  if (options.contextGoal) params.set('contextGoal', options.contextGoal)
   if (options.recordId) params.set('recordId', options.recordId)
   if (options.sprintTag) params.set('sprintTag', options.sprintTag)
   addBoolean(params, 'includeDiagnostics', options.includeDiagnostics)

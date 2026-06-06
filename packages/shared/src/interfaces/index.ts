@@ -29,6 +29,9 @@ export type {
   BoardExportOptions,
   BoardExportResult,
   BoardExportSource,
+  AgentContextProfile,
+  BoardContextPackOptions,
+  BoardContextPackResult,
 } from './export.js'
 export type { BoardConfig, PidPrefix } from './boardConfig.js'
 export type { Base58String, Identity } from './identity.js'

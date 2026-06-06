@@ -161,6 +161,27 @@ describe('createSnapshotsRoute', () => {
     expect(exportPayload.data.content).not.toContain('dependsOn:CARD-')
     expect(exportPayload.data.content).not.toContain('Snapshot export after')
     expect(exportPayload.data.meta.recordCount).toBe(33)
+
+    const contextResponse = await app.request(
+      `/api/v0/snapshots/${snapshot.id}/export?profile=agent-snapshot`
+    )
+    const contextPayload = await contextResponse.json()
+    expect(contextResponse.status).toBe(200)
+    expect(contextPayload.data.filename).toMatch(
+      /snapshot-.*-agent-snapshot-.*\.md/
+    )
+    expect(contextPayload.data.meta.profile).toBe('agent-snapshot')
+    expect(contextPayload.data.content).toContain(
+      '# LabourBoard Agent Context Pack'
+    )
+    expect(contextPayload.data.content).toContain(
+      '## Agent Reading Instructions'
+    )
+    expect(contextPayload.data.content).toContain('static checkpoint')
+    expect(contextPayload.data.content).toContain(`- Snapshot ID: ${snapshot.id}`)
+    expect(contextPayload.data.content).toContain(source?.id)
+    expect(contextPayload.data.content).toContain(`dependsOn:${target?.id}`)
+    expect(contextPayload.data.content).not.toContain('Snapshot export after')
   })
 
   it('snapshot export returns 404 and validates export query', async () => {

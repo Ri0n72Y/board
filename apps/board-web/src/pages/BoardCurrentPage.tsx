@@ -8,6 +8,7 @@ import {
   ArrowDownTrayIcon,
   ArrowPathIcon,
   CameraIcon,
+  DocumentTextIcon,
   ExclamationTriangleIcon,
   PlusIcon,
 } from '@heroicons/react/20/solid'
@@ -17,6 +18,7 @@ import { BoardView } from '../components/BoardView'
 import { CreateRecordDrawer } from '../components/CreateRecordDrawer'
 import { EditRecordDrawer } from '../components/EditRecordDrawer'
 import { EmptyState } from '../components/EmptyState'
+import { ExportContextDrawer } from '../components/ExportContextDrawer'
 import { IssuesPanel } from '../components/IssuesPanel'
 import { RecordCard } from '../components/RecordCard'
 import { RecordHistoryDrawer } from '../components/RecordHistoryDrawer'
@@ -73,6 +75,7 @@ export function BoardCurrentPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editRecord, setEditRecord] =
     useState<RecordResponse<RecordItem<RecordBody>> | null>(null)
+  const [isContextExportOpen, setIsContextExportOpen] = useState(false)
   const [viewMode, setViewMode] = useState<BoardViewMode>('list')
 
   useEffect(() => {
@@ -221,6 +224,14 @@ export function BoardCurrentPage() {
             {boardExportController.isCurrentExporting
               ? 'Exporting...'
               : 'Export Current Board'}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => setIsContextExportOpen(true)}
+            disabled={!projection}
+            icon={<DocumentTextIcon className="h-4 w-4" />}
+          >
+            Context Pack
           </Button>
           <Button
             type="button"
@@ -393,7 +404,19 @@ export function BoardCurrentPage() {
         onSelectSnapshot={snapshotController.loadSnapshotDetail}
         onRefreshList={snapshotController.loadSnapshots}
         onExportSnapshot={snapshotController.exportSelectedSnapshotMarkdown}
+        onExportSnapshotContext={snapshotController.exportSelectedSnapshotContext}
         onClose={snapshotController.closeSnapshots}
+      />
+
+      <ExportContextDrawer
+        open={isContextExportOpen}
+        records={records}
+        filters={appliedFilters}
+        knownTags={config ? knownTags : projectionKnownTags}
+        isExporting={boardExportController.isContextExporting}
+        error={boardExportController.contextExportError}
+        onExport={boardExportController.exportContextPack}
+        onClose={() => setIsContextExportOpen(false)}
       />
 
       {isCreateOpen && (

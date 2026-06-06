@@ -32,6 +32,7 @@ interface SnapshotDrawerProps {
   onSelectSnapshot: (snapshotId: string) => void
   onRefreshList: () => void
   onExportSnapshot?: () => void
+  onExportSnapshotContext?: () => void
   onClose: () => void
 }
 
@@ -53,6 +54,7 @@ export function SnapshotDrawer({
   onSelectSnapshot,
   onRefreshList,
   onExportSnapshot,
+  onExportSnapshotContext,
   onClose,
 }: SnapshotDrawerProps) {
   if (!open) return null
@@ -192,6 +194,7 @@ export function SnapshotDrawer({
                 isExporting={isExporting}
                 exportError={exportError}
                 onExportSnapshot={onExportSnapshot}
+                onExportSnapshotContext={onExportSnapshotContext}
               />
             )}
             {!isDetailLoading && !detailError && !selectedSnapshot && (
@@ -211,11 +214,13 @@ function SnapshotDetailView({
   isExporting,
   exportError,
   onExportSnapshot,
+  onExportSnapshotContext,
 }: {
   snapshot: SnapshotDetail
   isExporting: boolean
   exportError: string | null
   onExportSnapshot?: () => void
+  onExportSnapshotContext?: () => void
 }) {
   return (
     <div className="grid gap-4">
@@ -243,6 +248,20 @@ function SnapshotDetailView({
               }
             >
               {isExporting ? 'Exporting...' : 'Export Snapshot'}
+            </Button>
+            <Button
+              type="button"
+              onClick={onExportSnapshotContext}
+              disabled={isExporting || !onExportSnapshotContext}
+              icon={
+                isExporting ? (
+                  <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowDownTrayIcon className="h-4 w-4" />
+                )
+              }
+            >
+              {isExporting ? 'Exporting...' : 'Export Agent Snapshot Context'}
             </Button>
             <Button type="button" disabled title="Restore not implemented">
               Restore not implemented

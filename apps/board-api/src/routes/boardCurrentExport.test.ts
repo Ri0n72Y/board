@@ -1,6 +1,9 @@
 import { Hono } from 'hono'
 import type { BoardCurrentProjection } from '@labour-board/shared'
-import { buildBoardMarkdownExport } from '@labour-board/shared'
+import {
+  buildBoardContextPack,
+  buildBoardMarkdownExport,
+} from '@labour-board/shared'
 import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from '../repositories/recordRepository.js'
 import { MemorySnapshotHeadRepository } from '../repositories/snapshotHeadRepository.js'
@@ -123,6 +126,72 @@ describe('GET /api/v0/board/current/export', () => {
     expect(metaPayload.data.content).not.toContain('## Records By Status')
   })
 
+  it('exports agent context profiles for current board', async () => {
+    const { app, repo } = createAppWithSeededBoard()
+    await seedBoard(repo)
+    const source = await repo.findByPid('CARD-5')
+    const target = await repo.findByPid('CARD-4')
+
+    const full = await app.request('/api/v0/board/current/export?profile=agent-full')
+    const fullPayload = await full.json()
+    expect(full.status).toBe(200)
+    expect(fullPayload.data.filename).toMatch(/current-board-agent-full-.*\.md/)
+    expect(fullPayload.data.content).toContain('# LabourBoard Agent Context Pack')
+    expect(fullPayload.data.content).toContain('## Context Metadata')
+    expect(fullPayload.data.content).toContain('## Agent Reading Instructions')
+    expect(fullPayload.data.content).toContain('This file is not execution authorization')
+    expect(fullPayload.data.content).toContain('## Board Summary')
+    expect(fullPayload.data.content).toContain('## Records By Status')
+    expect(fullPayload.data.content).toContain('asset:deck-system')
+
+    const filtered = await app.request(
+      '/api/v0/board/current/export?profile=agent-filtered&q=%E7%8E%A9%E5%AE%B6%E6%8A%BD%E7%89%8C'
+    )
+    const filteredPayload = await filtered.json()
+    expect(filtered.status).toBe(200)
+    expect(filteredPayload.data.content).toContain('- Profile: agent-filtered')
+    expect(filteredPayload.data.content).toContain('- Filters:')
+    expect(filteredPayload.data.content).toContain('CARD-5')
+    expect(filteredPayload.data.content).not.toContain('#### CARD-1')
+
+    const card = await app.request(
+      `/api/v0/board/current/export?profile=agent-card&recordId=${source?.id}`
+    )
+    const cardPayload = await card.json()
+    expect(card.status).toBe(200)
+    expect(cardPayload.data.meta.profile).toBe('agent-card')
+    expect(cardPayload.data.content).toContain(`- Center Record ID: ${source?.id}`)
+    expect(cardPayload.data.content).toContain('CARD-5')
+    expect(cardPayload.data.content).toContain(source?.id)
+    expect(cardPayload.data.content).not.toContain('#### CARD-4')
+
+    const related = await app.request(
+      `/api/v0/board/current/export?profile=agent-related&recordId=${source?.id}`
+    )
+    const relatedPayload = await related.json()
+    expect(related.status).toBe(200)
+    expect(relatedPayload.data.content).toContain('CARD-5')
+    expect(relatedPayload.data.content).toContain('CARD-4')
+    expect(relatedPayload.data.content).toContain(`dependsOn:${target?.id}`)
+    expect(relatedPayload.data.content).toContain(`CARD-5 dependsOn ${target?.id}`)
+    expect(relatedPayload.data.content).not.toContain('dependsOn:CARD-')
+
+    const sprint = await app.request(
+      '/api/v0/board/current/export?profile=agent-sprint&sprintTag=sprint:1'
+    )
+    const sprintPayload = await sprint.json()
+    expect(sprint.status).toBe(200)
+    expect(sprintPayload.data.content).toContain('- Sprint Tag: sprint:1')
+    expect(sprintPayload.data.content).toContain('## Sprint Export: sprint:1')
+    expect(sprintPayload.data.meta.recordCount).toBe(9)
+
+    const human = await app.request('/api/v0/board/current/export?profile=human-summary')
+    const humanPayload = await human.json()
+    expect(human.status).toBe(200)
+    expect(humanPayload.data.content).toContain('- Profile: human-summary')
+    expect(humanPayload.data.content).not.toContain('```text')
+  })
+
   it('returns 400 for invalid export combinations', async () => {
     const { app } = createAppWithSeededBoard()
 
@@ -134,6 +203,31 @@ describe('GET /api/v0/board/current/export', () => {
 
     const invalidLevel = await app.request('/api/v0/board/current/export?level=bad')
     expect(invalidLevel.status).toBe(400)
+
+    const invalidProfile = await app.request(
+      '/api/v0/board/current/export?profile=bad'
+    )
+    expect(invalidProfile.status).toBe(400)
+
+    const conflictingLevel = await app.request(
+      '/api/v0/board/current/export?profile=agent-full&level=summary'
+    )
+    expect(conflictingLevel.status).toBe(400)
+
+    const missingProfileCard = await app.request(
+      '/api/v0/board/current/export?profile=agent-card'
+    )
+    expect(missingProfileCard.status).toBe(400)
+
+    const missingProfileSprint = await app.request(
+      '/api/v0/board/current/export?profile=agent-sprint'
+    )
+    expect(missingProfileSprint.status).toBe(400)
+
+    const snapshotProfileOnCurrent = await app.request(
+      '/api/v0/board/current/export?profile=agent-snapshot'
+    )
+    expect(snapshotProfileOnCurrent.status).toBe(400)
   })
 
   it('builder does not mutate input projection', () => {
@@ -168,6 +262,15 @@ describe('GET /api/v0/board/current/export', () => {
     buildBoardMarkdownExport(projection, {
       source: 'current-board',
       level: 'full',
+      format: 'markdown',
+      generatedAt: '2026-06-05T00:00:00.000Z',
+    })
+
+    expect(projection).toEqual(before)
+
+    buildBoardContextPack(projection, {
+      source: 'current-board',
+      profile: 'agent-full',
       format: 'markdown',
       generatedAt: '2026-06-05T00:00:00.000Z',
     })

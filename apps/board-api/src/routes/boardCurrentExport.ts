@@ -1,6 +1,9 @@
 import { Hono } from 'hono'
 import type { ApiResponse, BoardExportResult } from '@labour-board/shared'
-import { buildBoardMarkdownExport } from '@labour-board/shared'
+import {
+  buildBoardContextPack,
+  buildBoardMarkdownExport,
+} from '@labour-board/shared'
 import { ok, error } from '../http/responses.js'
 import type { RecordRepository } from '../repositories/recordRepository.js'
 import type { SnapshotHeadRepository } from '../repositories/snapshotHeadRepository.js'
@@ -27,7 +30,10 @@ export function createBoardCurrentExportRoute(
         query,
       })
       const options = parseBoardExportOptions(searchParams, 'current-board')
-      const exported = buildBoardMarkdownExport(projection, options)
+      const exported =
+        'profile' in options
+          ? buildBoardContextPack(projection, options)
+          : buildBoardMarkdownExport(projection, options)
       return c.json<ApiResponse<BoardExportResult>>(ok(exported))
     } catch (caught) {
       if (caught instanceof BoardExportQueryError) {

@@ -13,6 +13,15 @@ export type BoardExportLevel =
   | 'sprint'
   | 'filtered'
 
+export type AgentContextProfile =
+  | 'agent-full'
+  | 'agent-sprint'
+  | 'agent-filtered'
+  | 'agent-card'
+  | 'agent-related'
+  | 'agent-snapshot'
+  | 'human-summary'
+
 export interface BoardExportOptions {
   source: BoardExportSource
   level: BoardExportLevel
@@ -30,6 +39,12 @@ export interface BoardExportOptions {
   generatedAt?: string
 }
 
+export interface BoardContextPackOptions extends Omit<BoardExportOptions, 'level'> {
+  profile: AgentContextProfile
+  level?: BoardExportLevel
+  contextGoal?: string
+}
+
 export interface BoardExportResult {
   format: 'markdown'
   filename: string
@@ -41,5 +56,12 @@ export interface BoardExportResult {
     generatedAt: string
     sourceSnapshotId?: string
     filters?: Record<string, unknown>
+  }
+}
+
+export interface BoardContextPackResult extends BoardExportResult {
+  meta: BoardExportResult['meta'] & {
+    profile: AgentContextProfile
+    contextGoal?: string
   }
 }
