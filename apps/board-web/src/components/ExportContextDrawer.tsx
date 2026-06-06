@@ -31,6 +31,9 @@ interface ExportContextDrawerProps {
   isExporting: boolean
   error: string | null
   onExport: (options: ExportContextPackOptions) => boolean
+  onSaveDraft?: (options: ExportContextPackOptions & { title: string }) => void
+  isSavingDraft?: boolean
+  draftSaveError?: string | null
   onClose: () => void
 }
 
@@ -42,6 +45,9 @@ export function ExportContextDrawer({
   isExporting,
   error,
   onExport,
+  onSaveDraft,
+  isSavingDraft = false,
+  draftSaveError = null,
   onClose,
 }: ExportContextDrawerProps) {
   const [profile, setProfile] = useState<AgentContextProfile>('agent-full')
@@ -52,6 +58,7 @@ export function ExportContextDrawer({
   const [includeAssets, setIncludeAssets] = useState(true)
   const [includeRelations, setIncludeRelations] = useState(true)
   const [includeDiagnostics, setIncludeDiagnostics] = useState(true)
+  const [draftTitle, setDraftTitle] = useState('')
   const hasFilters = hasEffectiveFilters(filters)
   const profileOptions = useMemo(
     () =>
@@ -231,6 +238,58 @@ export function ExportContextDrawer({
             >
               <strong>Export failed</strong>
               <span>{error}</span>
+            </section>
+          )}
+
+          {onSaveDraft && (
+            <section className="grid gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+              <h3 className="text-xs font-bold uppercase text-emerald-700">
+                Save as Agent Draft
+              </h3>
+              <p className="text-xs text-emerald-800">
+                Save the current context pack as a static Agent Session Draft for human review before handing to an Agent.
+              </p>
+              <TextInput
+                label="Draft title"
+                value={draftTitle}
+                onChange={(event) => setDraftTitle(event.target.value)}
+                placeholder="e.g. Review Sprint 1 board"
+              />
+              {draftSaveError && (
+                <section
+                  className="grid gap-1 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
+                  role="alert"
+                >
+                  <strong>Draft save failed</strong>
+                  <span>{draftSaveError}</span>
+                </section>
+              )}
+              <Button
+                type="button"
+                disabled={!draftTitle.trim() || isSavingDraft}
+                onClick={() => {
+                  if (!draftTitle.trim()) return
+                  onSaveDraft({
+                    title: draftTitle.trim(),
+                    profile,
+                    contextGoal,
+                    recordId: recordId || undefined,
+                    sprintTag: sprintTag || undefined,
+                    includeContent,
+                    includeAssets,
+                    includeRelations,
+                    includeDiagnostics,
+                  })
+                  setDraftTitle('')
+                }}
+                icon={
+                  isSavingDraft ? (
+                    <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                  ) : undefined
+                }
+              >
+                {isSavingDraft ? 'Saving...' : 'Save as Agent Draft'}
+              </Button>
             </section>
           )}
         </div>

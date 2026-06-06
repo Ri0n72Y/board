@@ -80,3 +80,13 @@ export type {
   TransactionItem,
   TransactionStatus,
 } from './transaction.js'
+export type {
+  AgentDraftDetail,
+  AgentDraftSource,
+  AgentDraftStatus,
+  AgentDraftSummary,
+  CreateAgentDraftInput,
+  CreateAgentDraftResponse,
+  GetAgentDraftResponse,
+  ListAgentDraftsResponse,
+} from './agent.js'

@@ -35,12 +35,17 @@ import { RecordService } from './recordService.js'
 import { ConfigService } from './configService.js'
 import { ProfileService } from './profileService.js'
 import { SnapshotService } from './snapshot/snapshotService.js'
+import { AgentDraftService } from './agent/agentDraftService.js'
+import {
+  MemoryAgentDraftRepository,
+} from '../repositories/agentDraftRepository.js'
 
 export interface ApiServices {
   configService: ConfigService
   profileService: ProfileService
   recordService: RecordService
   snapshotService: SnapshotService
+  agentDraftService: AgentDraftService
   recordRepository: RecordRepository
   snapshotHeadRepository: SnapshotHeadRepository
   snapshotRepository: SnapshotRepository
@@ -105,6 +110,12 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
     profileService: new ProfileService(profileRepository),
     recordService,
     snapshotService,
+    agentDraftService: new AgentDraftService(
+      new MemoryAgentDraftRepository(),
+      recordRepository,
+      snapshotHeadRepository,
+      snapshotRepository
+    ),
     recordRepository,
     snapshotHeadRepository,
     snapshotRepository,

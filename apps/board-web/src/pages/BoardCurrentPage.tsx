@@ -11,6 +11,7 @@ import {
   DocumentTextIcon,
   ExclamationTriangleIcon,
   PlusIcon,
+  QueueListIcon,
 } from '@heroicons/react/20/solid'
 import { Button } from '../components/ui/Button'
 import { BoardFilters } from '../components/BoardFilters'
@@ -23,6 +24,7 @@ import { IssuesPanel } from '../components/IssuesPanel'
 import { RecordCard } from '../components/RecordCard'
 import { RecordHistoryDrawer } from '../components/RecordHistoryDrawer'
 import { SnapshotDrawer } from '../components/SnapshotDrawer'
+import { AgentDraftsDrawer } from '../components/AgentDraftsDrawer'
 import { StatusBadge } from '../components/StatusBadge'
 import { SummaryBar } from '../components/SummaryBar'
 import {
@@ -30,6 +32,7 @@ import {
   type BoardViewMode,
 } from '../components/ViewModeToggle'
 import { useBoardExportController } from '../hooks/useBoardExportController'
+import { useAgentDraftController } from '../hooks/useAgentDraftController'
 import { useRecordHistoryController } from '../hooks/useRecordHistoryController'
 import { useSnapshotController } from '../hooks/useSnapshotController'
 import { useStatusMoveController } from '../hooks/useStatusMoveController'
@@ -136,6 +139,7 @@ export function BoardCurrentPage() {
   const isRefreshError = projection && error
 
   const boardExportController = useBoardExportController({ appliedFilters })
+  const agentDraftController = useAgentDraftController()
 
   function refresh() {
     void loadCurrentBoard(effectiveFilters)
@@ -232,6 +236,14 @@ export function BoardCurrentPage() {
             icon={<DocumentTextIcon className="h-4 w-4" />}
           >
             Context Pack
+          </Button>
+          <Button
+            type="button"
+            onClick={agentDraftController.openDrawer}
+            disabled={!projection}
+            icon={<QueueListIcon className="h-4 w-4" />}
+          >
+            Agent Drafts
           </Button>
           <Button
             type="button"
@@ -408,6 +420,21 @@ export function BoardCurrentPage() {
         onClose={snapshotController.closeSnapshots}
       />
 
+      <AgentDraftsDrawer
+        open={agentDraftController.isDrawerOpen}
+        drafts={agentDraftController.drafts}
+        selectedDraft={agentDraftController.selectedDraft}
+        isListLoading={agentDraftController.isListLoading}
+        isDetailLoading={agentDraftController.isDetailLoading}
+        isCreating={agentDraftController.isCreating}
+        listError={agentDraftController.listError}
+        detailError={agentDraftController.detailError}
+        createError={agentDraftController.createError}
+        onSelectDraft={agentDraftController.loadDraftDetail}
+        onRefreshList={agentDraftController.loadDraftList}
+        onClose={agentDraftController.closeDrawer}
+      />
+
       <ExportContextDrawer
         open={isContextExportOpen}
         records={records}
@@ -416,6 +443,16 @@ export function BoardCurrentPage() {
         isExporting={boardExportController.isContextExporting}
         error={boardExportController.contextExportError}
         onExport={boardExportController.exportContextPack}
+        onSaveDraft={(options) => {
+          agentDraftController.saveDraft({
+            ...options,
+            source: 'current-board',
+          })
+          setIsContextExportOpen(false)
+          agentDraftController.openDrawer()
+        }}
+        isSavingDraft={agentDraftController.isCreating}
+        draftSaveError={agentDraftController.createError}
         onClose={() => setIsContextExportOpen(false)}
       />
 
