@@ -10,6 +10,7 @@ import {
   getMongoClient,
   getRecordsCollection,
   getSnapshotsCollection,
+  getAgentDraftsCollection,
 } from '../db/mongo.js'
 import {
   MemoryProfileRepository,
@@ -38,6 +39,7 @@ import { SnapshotService } from './snapshot/snapshotService.js'
 import { AgentDraftService } from './agent/agentDraftService.js'
 import {
   MemoryAgentDraftRepository,
+  MongoAgentDraftRepository,
 } from '../repositories/agentDraftRepository.js'
 
 export interface ApiServices {
@@ -111,7 +113,14 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
     recordService,
     snapshotService,
     agentDraftService: new AgentDraftService(
-      new MemoryAgentDraftRepository(),
+      env.mongodbUri
+        ? new MongoAgentDraftRepository(
+            (await getAgentDraftsCollection<Document>(
+              env.mongodbUri,
+              env.mongodbDb
+            )) as Collection<Document>
+          )
+        : new MemoryAgentDraftRepository(),
       recordRepository,
       snapshotHeadRepository,
       snapshotRepository

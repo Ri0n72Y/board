@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type {
   BoardCurrentProjection,
   SnapshotDetail,
@@ -13,6 +14,7 @@ import {
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
 import { TagChipRow } from './BoardFilters'
+import { TextInput } from './ui/TextInput'
 
 interface SnapshotDrawerProps {
   open: boolean
@@ -27,12 +29,15 @@ interface SnapshotDrawerProps {
   createError: string | null
   isExporting?: boolean
   exportError?: string | null
+  isSavingDraft?: boolean
+  draftSaveError?: string | null
   onReasonChange: (value: string) => void
   onCreateSnapshot: () => void
   onSelectSnapshot: (snapshotId: string) => void
   onRefreshList: () => void
   onExportSnapshot?: () => void
   onExportSnapshotContext?: () => void
+  onSaveSnapshotDraft?: (title: string) => void
   onClose: () => void
 }
 
@@ -49,12 +54,15 @@ export function SnapshotDrawer({
   createError,
   isExporting = false,
   exportError = null,
+  isSavingDraft = false,
+  draftSaveError = null,
   onReasonChange,
   onCreateSnapshot,
   onSelectSnapshot,
   onRefreshList,
   onExportSnapshot,
   onExportSnapshotContext,
+  onSaveSnapshotDraft,
   onClose,
 }: SnapshotDrawerProps) {
   if (!open) return null
@@ -193,8 +201,11 @@ export function SnapshotDrawer({
                 snapshot={selectedSnapshot}
                 isExporting={isExporting}
                 exportError={exportError}
+                isSavingDraft={isSavingDraft}
+                draftSaveError={draftSaveError}
                 onExportSnapshot={onExportSnapshot}
                 onExportSnapshotContext={onExportSnapshotContext}
+                onSaveSnapshotDraft={onSaveSnapshotDraft}
               />
             )}
             {!isDetailLoading && !detailError && !selectedSnapshot && (
@@ -213,15 +224,23 @@ function SnapshotDetailView({
   snapshot,
   isExporting,
   exportError,
+  isSavingDraft = false,
+  draftSaveError = null,
   onExportSnapshot,
   onExportSnapshotContext,
+  onSaveSnapshotDraft,
 }: {
   snapshot: SnapshotDetail
   isExporting: boolean
   exportError: string | null
+  isSavingDraft?: boolean
+  draftSaveError?: string | null
   onExportSnapshot?: () => void
   onExportSnapshotContext?: () => void
+  onSaveSnapshotDraft?: (title: string) => void
 }) {
+  const [draftTitle, setDraftTitle] = useState('')
+
   return (
     <div className="grid gap-4">
       <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
@@ -282,6 +301,42 @@ function SnapshotDetailView({
           />
         </dl>
       </section>
+
+      {onSaveSnapshotDraft && (
+        <section className="grid gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-5">
+          <h3 className="text-xs font-bold uppercase text-emerald-700">
+            Save Agent Snapshot Draft
+          </h3>
+          <p className="text-xs text-emerald-800">
+            Save this snapshot as a static Agent Session Draft for human review before handing to an Agent.
+          </p>
+          <TextInput
+            label="Draft title"
+            value={draftTitle}
+            onChange={(event) => setDraftTitle(event.target.value)}
+            placeholder="e.g. Snapshot checkpoint review"
+          />
+          {draftSaveError && (
+            <ErrorBlock title="Draft save failed" message={draftSaveError} />
+          )}
+          <Button
+            type="button"
+            disabled={!draftTitle.trim() || isSavingDraft}
+            onClick={() => {
+              if (!draftTitle.trim()) return
+              onSaveSnapshotDraft(draftTitle.trim())
+              setDraftTitle('')
+            }}
+            icon={
+              isSavingDraft ? (
+                <ArrowPathIcon className="h-4 w-4 animate-spin" />
+              ) : undefined
+            }
+          >
+            {isSavingDraft ? 'Saving...' : 'Save Agent Snapshot Draft'}
+          </Button>
+        </section>
+      )}
 
       <ProjectionSummary projection={snapshot.projection} />
       <SnapshotRecords projection={snapshot.projection} />

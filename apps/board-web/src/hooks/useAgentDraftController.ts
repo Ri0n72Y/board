@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
-import type { AgentDraftDetail, AgentDraftSummary } from '@labour-board/shared'
+import type { AgentDraftDetail, AgentDraftSummary, BoardCurrentQuery } from '@labour-board/shared'
 import type { ExportContextPackOptions } from './useBoardExportController'
 import { createAgentDraft, fetchAgentDraft, fetchAgentDrafts } from '../api/agentDrafts'
 
@@ -68,10 +68,16 @@ export function useAgentDraftController() {
   }, [loadDraftList])
 
   const closeDrawer = useCallback(() => {
+    abortAll()
     setIsDrawerOpen(false)
     setSelectedDraft(null)
+    setListError(null)
+    setDetailError(null)
     setCreateError(null)
-  }, [])
+    setIsListLoading(false)
+    setIsDetailLoading(false)
+    setIsCreating(false)
+  }, [abortAll])
 
   const loadDraftDetail = useCallback((draftId: string) => {
     const requestId = detailRequestIdRef.current + 1
@@ -101,7 +107,12 @@ export function useAgentDraftController() {
   }, [])
 
   const saveDraft = useCallback(
-    (options: ExportContextPackOptions & { title: string; source: 'current-board' | 'snapshot'; snapshotId?: string }) => {
+    (options: ExportContextPackOptions & {
+      title: string
+      source: 'current-board' | 'snapshot'
+      snapshotId?: string
+      filters?: BoardCurrentQuery
+    }) => {
       const requestId = createRequestIdRef.current + 1
       createRequestIdRef.current = requestId
       createAbortRef.current?.abort()
@@ -120,6 +131,7 @@ export function useAgentDraftController() {
           recordId: options.recordId,
           sprintTag: options.sprintTag,
           snapshotId: options.snapshotId,
+          filters: options.filters,
           includeContent: options.includeContent,
           includeAssets: options.includeAssets,
           includeRelations: options.includeRelations,
@@ -129,7 +141,12 @@ export function useAgentDraftController() {
       )
         .then((data) => {
           if (createRequestIdRef.current !== requestId || controller.signal.aborted) return
-          setDrafts((prev) => [data.draft, ...prev])
+          // Internally open drawer and populate result – no race with list
+          setIsDrawerOpen(true)
+          setDrafts((prev) => {
+            const deduped = prev.filter((d) => d.id !== data.draft.id)
+            return [data.draft, ...deduped]
+          })
           setSelectedDraft(data.draft)
         })
         .catch((err: unknown) => {

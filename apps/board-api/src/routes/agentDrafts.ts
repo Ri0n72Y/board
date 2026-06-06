@@ -7,6 +7,7 @@ import type {
   CreateAgentDraftResponse,
   GetAgentDraftResponse,
   ListAgentDraftsResponse,
+  Tag,
 } from '@labour-board/shared'
 import { getAgentContextProfileDefinition } from '@labour-board/shared'
 import { ok, error } from '../http/responses.js'
@@ -124,6 +125,9 @@ async function parseCreateDraftInput(request: Request): Promise<CreateAgentDraft
   const includeRelations = typeof body.includeRelations === 'boolean' ? body.includeRelations : undefined
   const includeDiagnostics = typeof body.includeDiagnostics === 'boolean' ? body.includeDiagnostics : undefined
 
+  // Parse filters from request body
+  const filters = parseFilters(body)
+
   return {
     title,
     profile,
@@ -132,9 +136,66 @@ async function parseCreateDraftInput(request: Request): Promise<CreateAgentDraft
     ...(recordId ? { recordId } : {}),
     ...(sprintTag ? { sprintTag } : {}),
     ...(snapshotId ? { snapshotId } : {}),
+    ...(filters ? { filters } : {}),
     ...(includeContent !== undefined ? { includeContent } : {}),
     ...(includeAssets !== undefined ? { includeAssets } : {}),
     ...(includeRelations !== undefined ? { includeRelations } : {}),
     ...(includeDiagnostics !== undefined ? { includeDiagnostics } : {}),
   }
+}
+
+function parseFilters(
+  body: Record<string, unknown>,
+): CreateAgentDraftInput['filters'] | undefined {
+  const rawFilters = body.filters
+  if (rawFilters === undefined || rawFilters === null) return undefined
+
+  if (typeof rawFilters !== 'object' || Array.isArray(rawFilters)) {
+    throw new AgentDraftValidationError('filters must be an object')
+  }
+
+  const f = rawFilters as Record<string, unknown>
+  const filters: NonNullable<CreateAgentDraftInput['filters']> = {}
+
+  if (f.q !== undefined) {
+    if (typeof f.q !== 'string') throw new AgentDraftValidationError('filters.q must be a string')
+    if (f.q.trim()) filters.q = f.q.trim()
+  }
+
+  if (f.tags !== undefined) {
+    if (!Array.isArray(f.tags)) throw new AgentDraftValidationError('filters.tags must be an array')
+    const tags = f.tags.filter((t): t is string => typeof t === 'string' && t.trim().length > 0)
+    if (tags.length > 0) filters.tags = tags as Tag[]
+  }
+
+  if (f.tagMatch !== undefined) {
+    if (f.tagMatch !== 'all' && f.tagMatch !== 'any') {
+      throw new AgentDraftValidationError('filters.tagMatch must be all or any')
+    }
+    filters.tagMatch = f.tagMatch
+  }
+
+  if (f.includeArchived !== undefined) {
+    if (typeof f.includeArchived !== 'boolean') {
+      throw new AgentDraftValidationError('filters.includeArchived must be a boolean')
+    }
+    filters.includeArchived = f.includeArchived
+  }
+
+  if (f.assignee !== undefined) {
+    if (typeof f.assignee !== 'string') throw new AgentDraftValidationError('filters.assignee must be a string')
+    if (f.assignee.trim()) filters.assignee = f.assignee.trim()
+  }
+
+  if (f.assetId !== undefined) {
+    if (typeof f.assetId !== 'string') throw new AgentDraftValidationError('filters.assetId must be a string')
+    if (f.assetId.trim()) filters.assetId = f.assetId.trim()
+  }
+
+  if (f.relationTarget !== undefined) {
+    if (typeof f.relationTarget !== 'string') throw new AgentDraftValidationError('filters.relationTarget must be a string')
+    if (f.relationTarget.trim()) filters.relationTarget = f.relationTarget.trim()
+  }
+
+  return Object.keys(filters).length > 0 ? filters : undefined
 }

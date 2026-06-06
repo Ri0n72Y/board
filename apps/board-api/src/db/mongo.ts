@@ -2,7 +2,7 @@ import { MongoClient, type Collection, type Db, type Document } from 'mongodb'
 
 let client: MongoClient | undefined
 
-export type BoardCollectionName = 'records' | 'snapshots' | 'profiles'
+export type BoardCollectionName = 'records' | 'snapshots' | 'profiles' | 'agent_drafts'
 
 export async function getMongoClient(uri: string): Promise<MongoClient> {
   if (!client) {
@@ -23,7 +23,7 @@ export async function getMongoDatabase(
 export async function getBoardCollection<T extends Document>(
   uri: string,
   databaseName: string,
-  collectionName: BoardCollectionName
+  collectionName: string
 ): Promise<Collection<T>> {
   const database = await getMongoDatabase(uri, databaseName)
   return database.collection<T>(collectionName)
@@ -54,5 +54,15 @@ export async function getProfilesCollection<T extends Document>(
 ): Promise<Collection<T>> {
   const collection = await getBoardCollection<T>(uri, databaseName, 'profiles')
   await collection.createIndex({ pk: 1 }, { unique: true })
+  return collection
+}
+
+export async function getAgentDraftsCollection<T extends Document>(
+  uri: string,
+  databaseName = process.env.MONGODB_DB ?? 'labour_board'
+): Promise<Collection<T>> {
+  const collection = await getBoardCollection<T>(uri, databaseName, 'agent_drafts')
+  await collection.createIndex({ kind: 1 })
+  await collection.createIndex({ id: 1 }, { unique: true })
   return collection
 }

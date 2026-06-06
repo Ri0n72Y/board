@@ -3,6 +3,7 @@ import type {
   ApiResponse,
   AgentContextProfile,
   AgentDraftSource,
+  BoardCurrentQuery,
   CreateAgentDraftResponse,
   GetAgentDraftResponse,
   ListAgentDraftsResponse,
@@ -18,6 +19,7 @@ export interface CreateAgentDraftRequest {
   recordId?: string
   sprintTag?: string
   snapshotId?: string
+  filters?: BoardCurrentQuery
   includeContent?: boolean
   includeAssets?: boolean
   includeRelations?: boolean

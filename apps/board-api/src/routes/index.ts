@@ -44,5 +44,5 @@ export function mountApiRoutes(app: Hono, services: ApiRouteServices): void {
   )
   app.route('/api/v0/snapshots', createSnapshotsRoute(services.snapshotService))
   app.route('/api/v0/records', createRecordsRoute(services.recordService))
-  app.route('/api/v0/agent', createAgentDraftsRoute(services.agentDraftService))
+  app.route('/api/v0/agent/drafts', createAgentDraftsRoute(services.agentDraftService))
 }

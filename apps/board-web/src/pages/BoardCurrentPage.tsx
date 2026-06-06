@@ -417,6 +417,20 @@ export function BoardCurrentPage() {
         onRefreshList={snapshotController.loadSnapshots}
         onExportSnapshot={snapshotController.exportSelectedSnapshotMarkdown}
         onExportSnapshotContext={snapshotController.exportSelectedSnapshotContext}
+        onSaveSnapshotDraft={
+          snapshotController.selectedSnapshot
+            ? (title: string) => {
+                agentDraftController.saveDraft({
+                  title,
+                  profile: 'agent-snapshot',
+                  source: 'snapshot',
+                  snapshotId: snapshotController.selectedSnapshot!.id,
+                })
+              }
+            : undefined
+        }
+        isSavingDraft={agentDraftController.isCreating}
+        draftSaveError={agentDraftController.createError}
         onClose={snapshotController.closeSnapshots}
       />
 
@@ -447,9 +461,9 @@ export function BoardCurrentPage() {
           agentDraftController.saveDraft({
             ...options,
             source: 'current-board',
+            filters: appliedFilters,
           })
           setIsContextExportOpen(false)
-          agentDraftController.openDrawer()
         }}
         isSavingDraft={agentDraftController.isCreating}
         draftSaveError={agentDraftController.createError}

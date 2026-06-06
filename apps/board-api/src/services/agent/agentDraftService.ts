@@ -86,27 +86,13 @@ export class AgentDraftService {
     let recordCount: number
 
     if (input.source === 'current-board') {
+      // getBoardCurrentProjection internally applies filterBoardCurrentRecords
+      // when query is provided – no need for a second filter pass.
       projection = await getBoardCurrentProjection({
         repository: this.recordRepository,
         snapshotHeadRepository: this.snapshotHeadRepository,
         query: input.filters,
       })
-
-      // Apply filters if any
-      if (input.filters) {
-        const filteredRecords = filterBoardCurrentRecords(
-          projection.records,
-          input.filters,
-        )
-        projection = {
-          ...projection,
-          records: filteredRecords,
-          summary: {
-            ...projection.summary,
-            visibleCurrentRecords: filteredRecords.length,
-          },
-        }
-      }
 
       recordCount = projection.records.length
     } else {
