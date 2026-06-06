@@ -7,6 +7,10 @@ import type {
   Tag,
 } from '@labour-board/shared'
 import {
+  getAgentContextProfileDefinition,
+  listAgentContextProfiles,
+} from '@labour-board/shared'
+import {
   ArrowDownTrayIcon,
   ArrowPathIcon,
   XMarkIcon,
@@ -30,15 +34,6 @@ interface ExportContextDrawerProps {
   onClose: () => void
 }
 
-const profileOptions: { value: AgentContextProfile; label: string }[] = [
-  { value: 'agent-full', label: 'Agent Full Context' },
-  { value: 'agent-filtered', label: 'Current Filters Context' },
-  { value: 'agent-card', label: 'Single Card Context' },
-  { value: 'agent-related', label: 'Related Cards Context' },
-  { value: 'agent-sprint', label: 'Sprint Context' },
-  { value: 'human-summary', label: 'Human Summary' },
-]
-
 export function ExportContextDrawer({
   open,
   records,
@@ -58,6 +53,18 @@ export function ExportContextDrawer({
   const [includeRelations, setIncludeRelations] = useState(true)
   const [includeDiagnostics, setIncludeDiagnostics] = useState(true)
   const hasFilters = hasEffectiveFilters(filters)
+  const profileOptions = useMemo(
+    () =>
+      listAgentContextProfiles('current-board').map((definition) => ({
+        value: definition.id,
+        label: definition.label,
+      })),
+    [],
+  )
+  const profileDefinition = useMemo(
+    () => getAgentContextProfileDefinition(profile),
+    [profile],
+  )
 
   const recordOptions = useMemo(
     () => [
@@ -82,8 +89,19 @@ export function ExportContextDrawer({
 
   if (!open) return null
 
-  const needsRecord = profile === 'agent-card' || profile === 'agent-related'
-  const needsSprint = profile === 'agent-sprint'
+  const needsRecord = profileDefinition.requiresRecord
+  const needsSprint = profileDefinition.requiresSprint
+
+  const handleProfileChange = (nextProfile: AgentContextProfile) => {
+    const definition = getAgentContextProfileDefinition(nextProfile)
+    setProfile(nextProfile)
+    setIncludeContent(definition.defaultIncludeContent)
+    setIncludeAssets(definition.defaultIncludeAssets)
+    setIncludeRelations(definition.defaultIncludeRelations)
+    setIncludeDiagnostics(definition.defaultIncludeDiagnostics)
+    if (!definition.requiresRecord) setRecordId('')
+    if (!definition.requiresSprint) setSprintTag('')
+  }
 
   return (
     <div
@@ -125,10 +143,16 @@ export function ExportContextDrawer({
               label="Profile"
               value={profile}
               onChange={(event) =>
-                setProfile(event.target.value as AgentContextProfile)
+                handleProfileChange(event.target.value as AgentContextProfile)
               }
               options={profileOptions}
             />
+            <p className="text-sm text-slate-600">
+              {profileDefinition.description}
+            </p>
+            <p className="text-xs text-slate-500">
+              {profileDefinition.agentReadingPurpose}
+            </p>
             <label className="grid gap-1.5 text-xs font-bold text-slate-500">
               Context goal
               <textarea
@@ -138,7 +162,7 @@ export function ExportContextDrawer({
                 placeholder="Optional goal for the exported context"
               />
             </label>
-            {profile === 'agent-filtered' && !hasFilters && (
+            {profileDefinition.usesCurrentFilters && !hasFilters && (
               <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
                 No active filters. This context will export the current visible board scope.
               </p>

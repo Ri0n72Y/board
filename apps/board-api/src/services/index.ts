@@ -1,5 +1,6 @@
 import type { Collection, Document } from 'mongodb'
 import type { ApiEnv } from '../config/env.js'
+import { loadAgentRuntimeConfig } from '../config/agentEnv.js'
 import {
   createBoardConfigPidWriter,
   loadBoardConfigState,
@@ -48,6 +49,7 @@ export interface ApiServices {
 export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
   const boardConfigState = await loadBoardConfigState(env)
   const boardConfig = boardConfigState.config
+  const agentRuntimeConfig = loadAgentRuntimeConfig(process.env)
   const recordsCollection = env.mongodbUri
     ? ((await getRecordsCollection<Document>(
         env.mongodbUri,
@@ -99,7 +101,7 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
   )
 
   return {
-    configService: new ConfigService(boardConfig),
+    configService: new ConfigService(boardConfig, agentRuntimeConfig),
     profileService: new ProfileService(profileRepository),
     recordService,
     snapshotService,

@@ -11,8 +11,5 @@ export {
   isTag,
   parseTag,
 } from './tags.js'
-export {
-  buildBoardMarkdownExport,
-  getBoardExportLevelForProfile,
-} from './boardExport.js'
+export { buildBoardMarkdownExport } from './boardExport.js'
 export { buildBoardContextPack } from './boardContextPack.js'

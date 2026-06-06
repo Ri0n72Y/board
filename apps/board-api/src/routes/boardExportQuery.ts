@@ -8,7 +8,11 @@ import type {
   BoardExportSource,
   Tag,
 } from '@labour-board/shared'
-import { getBoardExportLevelForProfile } from '@labour-board/shared'
+import {
+  getAgentContextProfileDefinition,
+  getBoardExportLevelForProfile,
+  validateAgentContextProfileOptions,
+} from '@labour-board/shared'
 import { filterBoardCurrentRecords } from '../services/boardCurrent/boardCurrentFilter.js'
 import { parseBoardCurrentQuery } from './boardCurrentQuery.js'
 
@@ -20,16 +24,6 @@ const LEVELS: readonly BoardExportLevel[] = [
   'related',
   'sprint',
   'filtered',
-]
-
-const PROFILES: readonly AgentContextProfile[] = [
-  'agent-full',
-  'agent-sprint',
-  'agent-filtered',
-  'agent-card',
-  'agent-related',
-  'agent-snapshot',
-  'human-summary',
 ]
 
 export class BoardExportQueryError extends Error {
@@ -54,10 +48,6 @@ export function parseBoardExportOptions(
   if (profile && searchParams.has('level')) {
     throw new BoardExportQueryError('level cannot be combined with profile')
   }
-  if (profile === 'agent-snapshot' && source !== 'snapshot') {
-    throw new BoardExportQueryError('agent-snapshot profile requires snapshot export source')
-  }
-
   const rawLevel = profile
     ? getBoardExportLevelForProfile(profile)
     : searchParams.get('level') ?? 'full'
@@ -71,12 +61,29 @@ export function parseBoardExportOptions(
   const sprintTag = searchParams.get('sprintTag') ?? inferSprintTag(filters)
   const contextGoal = parseContextGoal(searchParams)
 
-  if ((level === 'card' || profile === 'agent-card') && !recordId) {
-    throw new BoardExportQueryError('recordId is required for card export')
+  if (profile) {
+    const validationError = validateAgentContextProfileOptions({
+      source,
+      profile,
+      recordId,
+      sprintTag,
+      filters,
+    })
+    if (validationError) {
+      throw new BoardExportQueryError(validationError)
+    }
+  } else {
+    if (level === 'card' && !recordId) {
+      throw new BoardExportQueryError('recordId is required for card export')
+    }
+    if (level === 'sprint' && !sprintTag) {
+      throw new BoardExportQueryError('sprintTag is required for sprint export')
+    }
   }
-  if ((level === 'sprint' || profile === 'agent-sprint') && !sprintTag) {
-    throw new BoardExportQueryError('sprintTag is required for sprint export')
-  }
+
+  const profileDefinition = profile
+    ? getAgentContextProfileDefinition(profile)
+    : undefined
 
   return {
     source,
@@ -86,13 +93,25 @@ export function parseBoardExportOptions(
     ...(contextGoal ? { contextGoal } : {}),
     ...(recordId ? { recordId } : {}),
     ...(sprintTag ? { sprintTag } : {}),
-    includeDiagnostics: parseBoolean(searchParams, 'includeDiagnostics', true),
-    includeRelations: parseBoolean(searchParams, 'includeRelations', true),
-    includeAssets: parseBoolean(searchParams, 'includeAssets', true),
+    includeDiagnostics: parseBoolean(
+      searchParams,
+      'includeDiagnostics',
+      profileDefinition?.defaultIncludeDiagnostics ?? true
+    ),
+    includeRelations: parseBoolean(
+      searchParams,
+      'includeRelations',
+      profileDefinition?.defaultIncludeRelations ?? true
+    ),
+    includeAssets: parseBoolean(
+      searchParams,
+      'includeAssets',
+      profileDefinition?.defaultIncludeAssets ?? true
+    ),
     includeContent: parseBoolean(
       searchParams,
       'includeContent',
-      level === 'full' || level === 'card'
+      profileDefinition?.defaultIncludeContent ?? (level === 'full' || level === 'card')
     ),
     filters,
     ...(snapshot
@@ -139,10 +158,11 @@ function inferSprintTag(filters: BoardCurrentQuery): Tag | undefined {
 
 function parseProfile(value: string | null): AgentContextProfile | undefined {
   if (value === null || value === '') return undefined
-  if (!PROFILES.includes(value as AgentContextProfile)) {
+  try {
+    return getAgentContextProfileDefinition(value as AgentContextProfile).id
+  } catch {
     throw new BoardExportQueryError(`Unsupported context profile: ${value}`)
   }
-  return value as AgentContextProfile
 }
 
 function parseContextGoal(searchParams: URLSearchParams): string | undefined {

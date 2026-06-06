@@ -1,8 +1,6 @@
 import type {
   BoardCurrentProjection,
-  AgentContextProfile,
   BoardExportOptions,
-  BoardExportLevel,
   BoardExportResult,
   RecordBody,
   RecordItem,
@@ -11,17 +9,6 @@ import type {
 } from '../interfaces/index.js'
 
 type BoardRecord = RecordResponse<RecordItem<RecordBody>>
-
-export function getBoardExportLevelForProfile(
-  profile: AgentContextProfile
-): BoardExportLevel {
-  if (profile === 'agent-sprint') return 'sprint'
-  if (profile === 'agent-filtered') return 'filtered'
-  if (profile === 'agent-card') return 'card'
-  if (profile === 'agent-related') return 'related'
-  if (profile === 'human-summary') return 'summary'
-  return 'full'
-}
 
 interface ExportContext {
   projection: BoardCurrentProjection

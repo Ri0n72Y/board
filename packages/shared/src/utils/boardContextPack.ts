@@ -5,9 +5,9 @@ import type {
   BoardExportOptions,
 } from '../interfaces/index.js'
 import {
-  buildBoardMarkdownExport,
-  getBoardExportLevelForProfile,
-} from './boardExport.js'
+  getAgentContextProfileDefinition,
+} from '../constants/index.js'
+import { buildBoardMarkdownExport } from './boardExport.js'
 
 export function buildBoardContextPack(
   projection: BoardCurrentProjection,
@@ -39,22 +39,18 @@ function normalizeContextPackOptions(
   options: BoardContextPackOptions,
   generatedAt: string
 ): BoardExportOptions {
-  const level = getBoardExportLevelForProfile(options.profile)
+  const definition = getAgentContextProfileDefinition(options.profile)
   return {
     ...options,
-    level,
+    level: definition.level,
     format: 'markdown',
     generatedAt,
     includeDiagnostics:
-      options.includeDiagnostics ?? options.profile !== 'human-summary',
+      options.includeDiagnostics ?? definition.defaultIncludeDiagnostics,
     includeRelations:
-      options.includeRelations ?? options.profile !== 'human-summary',
-    includeAssets: options.includeAssets ?? options.profile !== 'human-summary',
-    includeContent:
-      options.includeContent ??
-      (options.profile === 'agent-full' ||
-        options.profile === 'agent-card' ||
-        options.profile === 'agent-snapshot'),
+      options.includeRelations ?? definition.defaultIncludeRelations,
+    includeAssets: options.includeAssets ?? definition.defaultIncludeAssets,
+    includeContent: options.includeContent ?? definition.defaultIncludeContent,
   }
 }
 
@@ -64,6 +60,7 @@ function buildContextPackHeader(
   exportOptions: BoardExportOptions,
   recordCount: number
 ): string {
+  const definition = getAgentContextProfileDefinition(options.profile)
   const filters = exportOptions.filters ? JSON.stringify(exportOptions.filters) : 'none'
   const lines = [
     '# LabourBoard Agent Context Pack',
@@ -78,6 +75,7 @@ function buildContextPackHeader(
     `- Snapshot ID: ${exportOptions.snapshotId ?? 'none'}`,
     `- Filters: ${filters}`,
     `- Context Goal: ${options.contextGoal?.trim() || 'none'}`,
+    `- Profile Description: ${definition.description}`,
   ]
 
   if (exportOptions.recordId) lines.push(`- Center Record ID: ${exportOptions.recordId}`)
@@ -92,7 +90,7 @@ function buildContextPackHeader(
   lines.push(
     '',
     '## Agent Reading Instructions',
-    'This file is structured context for an agent. Use pid/id/tags/relations/assets to reason about LabourBoard project state.',
+    definition.agentReadingPurpose,
     'This file is not execution authorization. Do not mutate the board based on this file alone; patch/edit/move operations must still go through LabourBoard APIs and human confirmation.',
     'Keep relation targets as UUID record ids. Public pids such as CARD-n are labels for reading, not relation targets.',
     '',
@@ -116,6 +114,7 @@ function describeIncludedRecords(
   options: BoardContextPackOptions,
   exportOptions: BoardExportOptions
 ): string {
+  const definition = getAgentContextProfileDefinition(options.profile)
   if (options.profile === 'agent-card') return `single center card ${exportOptions.recordId}`
   if (options.profile === 'agent-related' && exportOptions.recordId) {
     return `center card ${exportOptions.recordId} plus direct incoming and outgoing relations`
@@ -123,7 +122,7 @@ function describeIncludedRecords(
   if (options.profile === 'agent-related') return 'records participating in relation graph'
   if (options.profile === 'agent-sprint') return `records tagged ${exportOptions.sprintTag}`
   if (options.profile === 'agent-filtered') return 'records matching current export filters'
-  if (options.profile === 'human-summary') return 'summary-level board records'
+  if (options.profile === 'human-summary') return definition.description
   if (options.profile === 'agent-snapshot') return 'records captured in the static snapshot checkpoint'
   return 'full current board projection'
 }

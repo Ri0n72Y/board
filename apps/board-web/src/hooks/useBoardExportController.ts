@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import type { AgentContextProfile } from '@labour-board/shared'
+import {
+  getAgentContextProfileDefinition,
+  validateAgentContextProfileOptions,
+} from '@labour-board/shared'
 import { exportCurrentBoard } from '../api/exports'
 import type { BoardCurrentFilters } from '../api/boardCurrent'
 import { hasEffectiveFilters } from '../utils/board'
@@ -94,7 +98,11 @@ export function useBoardExportController({
 
   const exportContextPack = useCallback(
     (options: ExportContextPackOptions): boolean => {
-      const validationError = validateContextPackOptions(options)
+      const profileDefinition = getAgentContextProfileDefinition(options.profile)
+      const validationError = validateContextPackOptions(
+        options,
+        profileDefinition.usesCurrentFilters ? appliedFilters : undefined,
+      )
       if (validationError) {
         setContextExportError(validationError)
         return false
@@ -115,12 +123,15 @@ export function useBoardExportController({
           contextGoal: options.contextGoal?.trim() || undefined,
           recordId: options.recordId,
           sprintTag: options.sprintTag,
-          filters:
-            options.profile === 'agent-filtered' ? appliedFilters : undefined,
-          includeDiagnostics: options.includeDiagnostics,
-          includeRelations: options.includeRelations,
-          includeAssets: options.includeAssets,
-          includeContent: options.includeContent,
+          filters: profileDefinition.usesCurrentFilters ? appliedFilters : undefined,
+          includeDiagnostics:
+            options.includeDiagnostics ?? profileDefinition.defaultIncludeDiagnostics,
+          includeRelations:
+            options.includeRelations ?? profileDefinition.defaultIncludeRelations,
+          includeAssets:
+            options.includeAssets ?? profileDefinition.defaultIncludeAssets,
+          includeContent:
+            options.includeContent ?? profileDefinition.defaultIncludeContent,
         },
         controller.signal,
       )
@@ -166,14 +177,18 @@ export function useBoardExportController({
 
 function validateContextPackOptions(
   options: ExportContextPackOptions,
+  filters?: BoardCurrentFilters,
 ): string | null {
-  if (options.profile === 'agent-card' && !options.recordId) {
-    return 'Select a record for Agent Card Context.'
-  }
-  if (options.profile === 'agent-sprint' && !options.sprintTag) {
-    return 'Enter a sprint tag for Agent Sprint Context.'
-  }
-  return null
+  return (
+    validateAgentContextProfileOptions({
+      source: 'current-board',
+      profile: options.profile,
+      recordId: options.recordId,
+      sprintTag: options.sprintTag,
+      filters,
+    }) ??
+    null
+  )
 }
 
 function errorMessage(error: unknown): string {
