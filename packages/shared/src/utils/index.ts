@@ -13,3 +13,7 @@ export {
 } from './tags.js'
 export { buildBoardMarkdownExport } from './boardExport.js'
 export { buildBoardContextPack } from './boardContextPack.js'
+export {
+  buildAgentDraftHandoffMarkdown,
+  AgentDraftHandoffValidationError,
+} from './agentDraftHandoff.js'

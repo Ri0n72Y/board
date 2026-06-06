@@ -5,6 +5,7 @@ import type {
   AgentDraftSource,
   BoardCurrentQuery,
   CreateAgentDraftResponse,
+  GetAgentDraftHandoffResponse,
   GetAgentDraftResponse,
   ListAgentDraftsResponse,
   UpdateAgentDraftReviewInput,
@@ -84,6 +85,22 @@ export async function updateAgentDraftReview(
   const response = await axios.patch<ApiResponse<UpdateAgentDraftReviewResponse>>(
     `${apiBaseUrl}/agent/drafts/${encodeURIComponent(id)}/review`,
     input,
+    { signal },
+  )
+
+  if (!response.data.ok) {
+    throw new Error(response.data.error.message)
+  }
+
+  return response.data.data
+}
+
+export async function fetchAgentDraftHandoff(
+  id: string,
+  signal?: AbortSignal,
+): Promise<GetAgentDraftHandoffResponse> {
+  const response = await axios.get<ApiResponse<GetAgentDraftHandoffResponse>>(
+    `${apiBaseUrl}/agent/drafts/${encodeURIComponent(id)}/handoff`,
     { signal },
   )
 

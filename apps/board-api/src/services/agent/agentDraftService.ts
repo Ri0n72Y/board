@@ -1,5 +1,6 @@
 import type {
   AgentDraftDetail,
+  AgentDraftHandoffResult,
   AgentDraftReview,
   AgentDraftStatus,
   AgentDraftSummary,
@@ -10,6 +11,7 @@ import type {
   UpdateAgentDraftReviewInput,
 } from '@labour-board/shared'
 import {
+  buildAgentDraftHandoffMarkdown,
   buildBoardContextPack,
   getAgentContextProfileDefinition,
   validateAgentContextProfileOptions,
@@ -235,6 +237,27 @@ export class AgentDraftService {
   async getDraft(id: string): Promise<AgentDraftDetail | null> {
     return this.agentDraftRepository.findById(id)
   }
+
+  async getHandoff(id: string): Promise<AgentDraftHandoffResult> {
+    const draft = await this.agentDraftRepository.findById(id)
+    if (!draft) {
+      throw new AgentDraftNotFoundError(`Agent draft ${id} not found`)
+    }
+
+    if (draft.status !== 'reviewed') {
+      throw new AgentDraftHandoffNotReadyError(
+        `Draft status "${draft.status}" is not "reviewed". Only reviewed drafts can generate formal handoff.`,
+      )
+    }
+
+    if (!draft.reviewedAt || !draft.reviewedBy) {
+      throw new AgentDraftHandoffNotReadyError(
+        'Draft is missing reviewedAt or reviewedBy metadata.',
+      )
+    }
+
+    return buildAgentDraftHandoffMarkdown(draft)
+  }
 }
 
 export class AgentDraftValidationError extends Error {
@@ -248,5 +271,12 @@ export class AgentDraftNotFoundError extends Error {
   constructor(message: string) {
     super(message)
     this.name = 'AgentDraftNotFoundError'
+  }
+}
+
+export class AgentDraftHandoffNotReadyError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AgentDraftHandoffNotReadyError'
   }
 }

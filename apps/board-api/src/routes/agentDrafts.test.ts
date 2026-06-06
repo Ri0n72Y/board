@@ -4,6 +4,11 @@ import { ok } from '../http/responses.js'
 import { loadApiEnv } from '../config/env.js'
 import { createApiServices } from '../services/index.js'
 import { mountApiRoutes } from '../routes/index.js'
+import {
+  buildAgentDraftHandoffMarkdown,
+  AgentDraftHandoffValidationError,
+  type AgentDraftDetail,
+} from '@labour-board/shared'
 
 async function createTestApp(): Promise<Hono> {
   const env = loadApiEnv({ BOARD_CONFIG_OPTIONAL: 'true' })
@@ -602,5 +607,303 @@ describe('Agent Draft Review Actions', () => {
     const json = JSON.stringify((await patchRes.json()).data.draft)
     expect(json).not.toContain('sk-')
     expect(json).not.toContain('AGENT_API_KEY')
+  })
+})
+
+describe('Agent Draft Handoff', () => {
+  // ── GET handoff success ──
+
+  it('GET /api/v0/agent/drafts/:id/handoff returns formal handoff for reviewed draft', async () => {
+    const app = await createTestApp()
+    const createRes = await app.request('/api/v0/agent/drafts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Handoff test draft',
+        profile: 'agent-full',
+        source: 'current-board',
+        contextGoal: 'Review and handoff',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const draftId = (await createRes.json()).data.draft.id
+
+    // Mark as reviewed
+    await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'reviewed', reviewNote: 'Approved for handoff' }),
+      headers: { 'content-type': 'application/json' },
+    })
+
+    const res = await app.request(`/api/v0/agent/drafts/${draftId}/handoff`)
+    expect(res.status).toBe(200)
+    const payload = await res.json()
+    expect(payload.ok).toBe(true)
+    expect(payload.data.handoff).toBeDefined()
+    expect(payload.data.handoff.format).toBe('markdown')
+    expect(typeof payload.data.handoff.content).toBe('string')
+    expect(payload.data.handoff.content).toContain('LabourBoard Agent Manual Handoff')
+    expect(payload.data.handoff.content).toContain('not execution authorization')
+    expect(payload.data.handoff.content).toContain('not execution authorization')
+    expect(payload.data.handoff.content).toContain('## Original Agent Context Pack')
+    expect(payload.data.handoff.content).toContain('Handoff Metadata')
+    expect(payload.data.handoff.content).toContain('Reviewed By')
+    expect(payload.data.handoff.content).toContain('Reviewed At')
+    expect(typeof payload.data.handoff.filename).toBe('string')
+    expect(payload.data.handoff.filename).toContain('agent-handoff')
+    expect(payload.data.handoff.meta.status).toBe('reviewed')
+    expect(payload.data.handoff.meta.draftId).toBe(draftId)
+    expect(payload.data.handoff.meta.draftTitle).toBe('Handoff test draft')
+    expect(payload.data.handoff.meta.reviewedBy).toBe('local')
+    expect(typeof payload.data.handoff.meta.reviewedAt).toBe('string')
+    expect(payload.data.handoff.meta.recordCount).toBe(0)
+  })
+
+  // ── GET handoff draft status 409 ──
+
+  it('GET /api/v0/agent/drafts/:id/handoff returns 409 for draft status', async () => {
+    const app = await createTestApp()
+    const createRes = await app.request('/api/v0/agent/drafts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Unreviewed draft',
+        profile: 'agent-full',
+        source: 'current-board',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const draftId = (await createRes.json()).data.draft.id
+
+    const res = await app.request(`/api/v0/agent/drafts/${draftId}/handoff`)
+    expect(res.status).toBe(409)
+    const payload = await res.json()
+    expect(payload.ok).toBe(false)
+    expect(payload.error.code).toBe('HANDOFF_NOT_READY')
+  })
+
+  // ── GET handoff discarded status 409 ──
+
+  it('GET /api/v0/agent/drafts/:id/handoff returns 409 for discarded draft', async () => {
+    const app = await createTestApp()
+    const createRes = await app.request('/api/v0/agent/drafts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Discarded draft',
+        profile: 'agent-full',
+        source: 'current-board',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const draftId = (await createRes.json()).data.draft.id
+
+    // Mark as discarded
+    await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'discarded' }),
+      headers: { 'content-type': 'application/json' },
+    })
+
+    const res = await app.request(`/api/v0/agent/drafts/${draftId}/handoff`)
+    expect(res.status).toBe(409)
+    const payload = await res.json()
+    expect(payload.ok).toBe(false)
+    expect(payload.error.code).toBe('HANDOFF_NOT_READY')
+  })
+
+  // ── missing draft 404 ──
+
+  it('GET /api/v0/agent/drafts/:id/handoff returns 404 for missing draft', async () => {
+    const app = await createTestApp()
+    const res = await app.request('/api/v0/agent/drafts/nonexistent-id/handoff')
+    expect(res.status).toBe(404)
+  })
+
+  // ── no side effects ──
+
+  it('GET handoff does not modify draft, records, patches, or snapshots', async () => {
+    const app = await createTestApp()
+    const createRes = await app.request('/api/v0/agent/drafts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Side effect test',
+        profile: 'agent-full',
+        source: 'current-board',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const draftId = (await createRes.json()).data.draft.id
+
+    // Mark as reviewed
+    await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'reviewed' }),
+      headers: { 'content-type': 'application/json' },
+    })
+
+    // Get draft before handoff
+    const beforeRes = await app.request(`/api/v0/agent/drafts/${draftId}`)
+    const beforeDraft = (await beforeRes.json()).data.draft
+
+    const boardBefore = await app.request('/api/v0/board/current')
+    const recordCountBefore = (await boardBefore.json()).data.records.length
+
+    // Call handoff
+    await app.request(`/api/v0/agent/drafts/${draftId}/handoff`)
+
+    // Draft unchanged
+    const afterRes = await app.request(`/api/v0/agent/drafts/${draftId}`)
+    const afterDraft = (await afterRes.json()).data.draft
+    expect(afterDraft.status).toBe(beforeDraft.status)
+    expect(afterDraft.contextMarkdown).toBe(beforeDraft.contextMarkdown)
+    expect(afterDraft.reviewedAt).toBe(beforeDraft.reviewedAt)
+    expect(afterDraft.reviewedBy).toBe(beforeDraft.reviewedBy)
+
+    // No records created
+    const boardAfter = await app.request('/api/v0/board/current')
+    expect((await boardAfter.json()).data.records.length).toBe(recordCountBefore)
+
+    // No snapshots created
+    const snapshotsRes = await app.request('/api/v0/snapshots')
+    expect((await snapshotsRes.json()).data.snapshots.length).toBe(0)
+  })
+
+  // ── No API key in handoff ──
+
+  it('handoff markdown does not contain API key', async () => {
+    const app = await createTestApp()
+    const createRes = await app.request('/api/v0/agent/drafts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Key check',
+        profile: 'agent-full',
+        source: 'current-board',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const draftId = (await createRes.json()).data.draft.id
+
+    await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'reviewed' }),
+      headers: { 'content-type': 'application/json' },
+    })
+
+    const res = await app.request(`/api/v0/agent/drafts/${draftId}/handoff`)
+    const handoff = (await res.json()).data.handoff
+    const json = JSON.stringify(handoff)
+    // Real API keys (sk-…) must not appear. Safety instructions mentioning AGENT_API_KEY are allowed.
+    expect(json).not.toContain('sk-')
+  })
+})
+
+describe('buildAgentDraftHandoffMarkdown (shared purity)', () => {
+  function makeMockDraft(overrides: Partial<AgentDraftDetail> = {}): AgentDraftDetail {
+    return {
+      id: 'test-id-123',
+      title: 'Test Draft',
+      status: 'reviewed',
+      profile: 'agent-full',
+      source: 'current-board',
+      createdAt: new Date().toISOString(),
+      createdBy: 'test-user',
+      recordCount: 5,
+      reviewedAt: new Date().toISOString(),
+      reviewedBy: 'reviewer',
+      reviewNote: 'Looks good',
+      contextMarkdown: '# Original content\n\nSome markdown.',
+      contextMeta: {
+        source: 'current-board',
+        level: 'full',
+        recordCount: 5,
+        generatedAt: new Date().toISOString(),
+        profile: 'agent-full',
+      },
+      exportOptions: {
+        source: 'current-board',
+        profile: 'agent-full',
+        format: 'markdown',
+        includeContent: true,
+        includeAssets: true,
+        includeRelations: false,
+        includeDiagnostics: false,
+      },
+      ...overrides,
+    }
+  }
+
+  it('generates stable markdown output', () => {
+    const draft = makeMockDraft()
+    const result = buildAgentDraftHandoffMarkdown(draft)
+    expect(result.format).toBe('markdown')
+    expect(result.content).toContain('LabourBoard Agent Manual Handoff')
+    expect(result.content).toContain('not execution authorization')
+    expect(result.content).toContain('Do not mutate LabourBoard directly')
+    expect(result.content).toContain('Do not assume API write permission')
+    expect(result.content).toContain(draft.reviewedAt!)
+    expect(result.content).toContain(draft.reviewedBy!)
+    expect(result.content).toContain(draft.contextMarkdown)
+    expect(result.content).toContain('## Original Agent Context Pack')
+    expect(result.filename).toContain('agent-handoff')
+    expect(result.meta.draftId).toBe(draft.id)
+    expect(result.meta.status).toBe('reviewed')
+  })
+
+  it('throws for non-reviewed draft', () => {
+    const draft = makeMockDraft({ status: 'draft' })
+    expect(() => buildAgentDraftHandoffMarkdown(draft)).toThrow(
+      AgentDraftHandoffValidationError,
+    )
+  })
+
+  it('throws for discarded draft', () => {
+    const draft = makeMockDraft({ status: 'discarded' })
+    expect(() => buildAgentDraftHandoffMarkdown(draft)).toThrow(
+      AgentDraftHandoffValidationError,
+    )
+  })
+
+  it('throws when missing reviewedAt', () => {
+    const draft = makeMockDraft({ reviewedAt: undefined })
+    expect(() => buildAgentDraftHandoffMarkdown(draft)).toThrow(
+      AgentDraftHandoffValidationError,
+    )
+  })
+
+  it('throws when missing reviewedBy', () => {
+    const draft = makeMockDraft({ reviewedBy: undefined })
+    expect(() => buildAgentDraftHandoffMarkdown(draft)).toThrow(
+      AgentDraftHandoffValidationError,
+    )
+  })
+
+  it('does not mutate input draft', () => {
+    const draft = makeMockDraft()
+    const snapshot = JSON.stringify(draft)
+    buildAgentDraftHandoffMarkdown(draft)
+    expect(JSON.stringify(draft)).toBe(snapshot)
+  })
+
+  it('does not contain API key pattern in output', () => {
+    const draft = makeMockDraft()
+    const result = buildAgentDraftHandoffMarkdown(draft)
+    // Safety instructions mention AGENT_API_KEY as a warning – that is allowed.
+    // Real API keys (sk-…) must not appear.
+    expect(result.content).not.toContain('sk-')
+    const json = JSON.stringify(result)
+    expect(json).not.toContain('sk-')
+  })
+
+  it('includes review note in output', () => {
+    const draft = makeMockDraft({ reviewNote: 'Ready for agent handoff' })
+    const result = buildAgentDraftHandoffMarkdown(draft)
+    expect(result.content).toContain('Ready for agent handoff')
+  })
+
+  it('includes expected agent behavior instructions', () => {
+    const draft = makeMockDraft()
+    const result = buildAgentDraftHandoffMarkdown(draft)
+    expect(result.content).toContain('Expected Agent Behavior')
+    expect(result.content).toContain('Do not output secrets')
+    expect(result.content).toContain('Do not request or expose AGENT_API_KEY')
+    expect(result.content).toContain('Do not claim any patch was applied')
   })
 })

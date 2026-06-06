@@ -446,10 +446,15 @@ export function BoardCurrentPage() {
         createError={agentDraftController.createError}
         isReviewing={agentDraftController.isReviewing}
         reviewError={agentDraftController.reviewError}
+        isHandoffLoading={agentDraftController.isHandoffLoading}
+        handoffError={agentDraftController.handoffError}
+        handoffFeedback={agentDraftController.handoffFeedback}
         onSelectDraft={agentDraftController.loadDraftDetail}
         onRefreshList={agentDraftController.loadDraftList}
         onClose={agentDraftController.closeDrawer}
         onUpdateReview={agentDraftController.updateDraftReview}
+        onCopyHandoff={agentDraftController.copyHandoff}
+        onDownloadHandoff={agentDraftController.downloadHandoff}
       />
 
       <ExportContextDrawer

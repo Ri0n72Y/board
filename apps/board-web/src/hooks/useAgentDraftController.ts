@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import type { AgentDraftDetail, AgentDraftStatus, AgentDraftSummary, BoardCurrentQuery } from '@labour-board/shared'
 import type { ExportContextPackOptions } from './useBoardExportController'
-import { createAgentDraft, fetchAgentDraft, fetchAgentDrafts, updateAgentDraftReview } from '../api/agentDrafts'
+import { createAgentDraft, fetchAgentDraft, fetchAgentDrafts, fetchAgentDraftHandoff, updateAgentDraftReview } from '../api/agentDrafts'
+import { downloadTextFile } from '../utils/download'
 
 export function useAgentDraftController() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -19,28 +20,38 @@ export function useAgentDraftController() {
   const [isReviewing, setIsReviewing] = useState(false)
   const [reviewError, setReviewError] = useState<string | null>(null)
 
+  // Handoff state
+  const [isHandoffLoading, setIsHandoffLoading] = useState(false)
+  const [handoffError, setHandoffError] = useState<string | null>(null)
+  const [handoffFeedback, setHandoffFeedback] = useState<string | null>(null)
+
   const listRequestIdRef = useRef(0)
   const detailRequestIdRef = useRef(0)
   const createRequestIdRef = useRef(0)
   const reviewRequestIdRef = useRef(0)
+  const handoffRequestIdRef = useRef(0)
   const listAbortRef = useRef<AbortController | null>(null)
   const detailAbortRef = useRef<AbortController | null>(null)
   const createAbortRef = useRef<AbortController | null>(null)
   const reviewAbortRef = useRef<AbortController | null>(null)
+  const handoffAbortRef = useRef<AbortController | null>(null)
 
   const abortAll = useCallback(() => {
     listRequestIdRef.current += 1
     detailRequestIdRef.current += 1
     createRequestIdRef.current += 1
     reviewRequestIdRef.current += 1
+    handoffRequestIdRef.current += 1
     listAbortRef.current?.abort()
     detailAbortRef.current?.abort()
     createAbortRef.current?.abort()
     reviewAbortRef.current?.abort()
+    handoffAbortRef.current?.abort()
     listAbortRef.current = null
     detailAbortRef.current = null
     createAbortRef.current = null
     reviewAbortRef.current = null
+    handoffAbortRef.current = null
   }, [])
 
   useEffect(() => abortAll, [abortAll])
@@ -84,10 +95,13 @@ export function useAgentDraftController() {
     setDetailError(null)
     setCreateError(null)
     setReviewError(null)
+    setHandoffError(null)
+    setHandoffFeedback(null)
     setIsListLoading(false)
     setIsDetailLoading(false)
     setIsCreating(false)
     setIsReviewing(false)
+    setIsHandoffLoading(false)
   }, [abortAll])
 
   const loadDraftDetail = useCallback((draftId: string) => {
@@ -215,6 +229,70 @@ export function useAgentDraftController() {
     [],
   )
 
+  const fetchHandoff = useCallback(
+    (draftId: string): Promise<{ content: string; filename: string }> => {
+      const requestId = handoffRequestIdRef.current + 1
+      handoffRequestIdRef.current = requestId
+      handoffAbortRef.current?.abort()
+
+      const controller = new AbortController()
+      handoffAbortRef.current = controller
+      setIsHandoffLoading(true)
+      setHandoffError(null)
+      setHandoffFeedback(null)
+
+      return fetchAgentDraftHandoff(draftId, controller.signal)
+        .then((data) => {
+          if (handoffRequestIdRef.current !== requestId || controller.signal.aborted) {
+            throw new Error('aborted')
+          }
+          return { content: data.handoff.content, filename: data.handoff.filename }
+        })
+        .catch((err: unknown) => {
+          if (handoffRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) {
+            throw err
+          }
+          const message = err instanceof Error ? err.message : String(err)
+          setHandoffError(message)
+          throw err
+        })
+        .finally(() => {
+          if (handoffRequestIdRef.current !== requestId) return
+          setIsHandoffLoading(false)
+          handoffAbortRef.current = null
+        })
+    },
+    [],
+  )
+
+  const copyHandoff = useCallback(
+    (draftId: string) => {
+      fetchHandoff(draftId)
+        .then(({ content }) => navigator.clipboard.writeText(content))
+        .then(() => {
+          setHandoffFeedback('Handoff copied!')
+          setTimeout(() => setHandoffFeedback(null), 2000)
+        })
+        .catch(() => {
+          // error already set by fetchHandoff
+        })
+    },
+    [fetchHandoff],
+  )
+
+  const downloadHandoff = useCallback(
+    (draftId: string) => {
+      fetchHandoff(draftId)
+        .then(({ content, filename }) => {
+          downloadTextFile(filename, content)
+        })
+        .catch(() => {
+          // error already set by fetchHandoff
+        })
+    },
+    [fetchHandoff],
+  )
+
   return {
     isDrawerOpen,
     drafts,
@@ -227,11 +305,16 @@ export function useAgentDraftController() {
     createError,
     isReviewing,
     reviewError,
+    isHandoffLoading,
+    handoffError,
+    handoffFeedback,
     openDrawer,
     closeDrawer,
     loadDraftList,
     loadDraftDetail,
     saveDraft,
     updateDraftReview,
+    copyHandoff,
+    downloadHandoff,
   }
 }

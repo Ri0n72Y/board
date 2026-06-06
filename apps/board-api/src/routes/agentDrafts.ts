@@ -6,6 +6,7 @@ import type {
   AgentContextProfile,
   CreateAgentDraftInput,
   CreateAgentDraftResponse,
+  GetAgentDraftHandoffResponse,
   GetAgentDraftResponse,
   ListAgentDraftsResponse,
   Tag,
@@ -18,6 +19,7 @@ import type { AgentDraftService } from '../services/agent/agentDraftService.js'
 import {
   AgentDraftValidationError,
   AgentDraftNotFoundError,
+  AgentDraftHandoffNotReadyError,
 } from '../services/agent/agentDraftService.js'
 
 const VALID_SOURCES: readonly AgentDraftSource[] = ['current-board', 'snapshot']
@@ -48,6 +50,25 @@ export function createAgentDraftsRoute(agentDraftService: AgentDraftService): Ho
   route.get('/', async (c) => {
     const drafts = await agentDraftService.listDrafts()
     return c.json<ApiResponse<ListAgentDraftsResponse>>(ok({ drafts }))
+  })
+
+  // Must be before /:id to avoid being captured by the wildcard
+  route.get('/:id/handoff', async (c) => {
+    try {
+      const handoff = await agentDraftService.getHandoff(c.req.param('id'))
+      return c.json<ApiResponse<GetAgentDraftHandoffResponse>>(
+        ok({ handoff }),
+        200,
+      )
+    } catch (caught) {
+      if (caught instanceof AgentDraftNotFoundError) {
+        return c.json(error('NOT_FOUND', caught.message), 404)
+      }
+      if (caught instanceof AgentDraftHandoffNotReadyError) {
+        return c.json(error('HANDOFF_NOT_READY', caught.message), 409)
+      }
+      throw caught
+    }
   })
 
   route.get('/:id', async (c) => {

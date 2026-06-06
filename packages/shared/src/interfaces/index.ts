@@ -82,12 +82,15 @@ export type {
 } from './transaction.js'
 export type {
   AgentDraftDetail,
+  AgentDraftHandoffOptions,
+  AgentDraftHandoffResult,
   AgentDraftReview,
   AgentDraftSource,
   AgentDraftStatus,
   AgentDraftSummary,
   CreateAgentDraftInput,
   CreateAgentDraftResponse,
+  GetAgentDraftHandoffResponse,
   GetAgentDraftResponse,
   ListAgentDraftsResponse,
   UpdateAgentDraftReviewInput,

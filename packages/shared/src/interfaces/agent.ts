@@ -69,3 +69,29 @@ export interface ListAgentDraftsResponse {
 export interface GetAgentDraftResponse {
   draft: AgentDraftDetail
 }
+
+export interface AgentDraftHandoffOptions {
+  generatedAt?: string
+}
+
+export interface AgentDraftHandoffResult {
+  format: 'markdown'
+  filename: string
+  content: string
+  meta: {
+    draftId: string
+    draftTitle: string
+    profile: AgentContextProfile
+    source: AgentDraftSource
+    status: AgentDraftStatus
+    generatedAt: string
+    reviewedAt: string
+    reviewedBy: string
+    recordCount: number
+    snapshotId?: string
+  }
+}
+
+export interface GetAgentDraftHandoffResponse {
+  handoff: AgentDraftHandoffResult
+}

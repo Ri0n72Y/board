@@ -23,10 +23,15 @@ interface AgentDraftsDrawerProps {
   createError: string | null
   isReviewing?: boolean
   reviewError?: string | null
+  isHandoffLoading?: boolean
+  handoffError?: string | null
+  handoffFeedback?: string | null
   onSelectDraft: (draftId: string) => void
   onRefreshList: () => void
   onClose: () => void
   onUpdateReview?: (draftId: string, status: AgentDraftStatus, reviewNote?: string) => void
+  onCopyHandoff?: (draftId: string) => void
+  onDownloadHandoff?: (draftId: string) => void
 }
 
 type StatusFilter = 'all' | AgentDraftStatus
@@ -50,10 +55,15 @@ export function AgentDraftsDrawer({
   createError,
   isReviewing = false,
   reviewError = null,
+  isHandoffLoading = false,
+  handoffError = null,
+  handoffFeedback = null,
   onSelectDraft,
   onRefreshList,
   onClose,
   onUpdateReview,
+  onCopyHandoff,
+  onDownloadHandoff,
 }: AgentDraftsDrawerProps) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
@@ -199,7 +209,12 @@ export function AgentDraftsDrawer({
                 draft={selectedDraft}
                 isReviewing={isReviewing}
                 reviewError={reviewError}
+                isHandoffLoading={isHandoffLoading}
+                handoffError={handoffError}
+                handoffFeedback={handoffFeedback}
                 onUpdateReview={onUpdateReview}
+                onCopyHandoff={onCopyHandoff}
+                onDownloadHandoff={onDownloadHandoff}
               />
             )}
             {!isDetailLoading && !detailError && !selectedDraft && (
@@ -225,12 +240,22 @@ function DraftDetailView({
   draft,
   isReviewing,
   reviewError,
+  isHandoffLoading,
+  handoffError,
+  handoffFeedback,
   onUpdateReview,
+  onCopyHandoff,
+  onDownloadHandoff,
 }: {
   draft: AgentDraftDetail
   isReviewing: boolean
   reviewError: string | null
+  isHandoffLoading: boolean
+  handoffError: string | null
+  handoffFeedback: string | null
   onUpdateReview?: (draftId: string, status: AgentDraftStatus, reviewNote?: string) => void
+  onCopyHandoff?: (draftId: string) => void
+  onDownloadHandoff?: (draftId: string) => void
 }) {
   const [reviewNote, setReviewNote] = useState(draft.reviewNote ?? '')
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
@@ -306,6 +331,49 @@ function DraftDetailView({
           <p>Not reviewed yet</p>
         </section>
       )}
+
+      {/* ── Formal Handoff section ── */}
+      <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
+        <h3 className="text-sm font-semibold uppercase text-slate-500">Formal Handoff</h3>
+
+        {draft.status === 'reviewed' && onCopyHandoff && onDownloadHandoff ? (
+          <div className="grid gap-3">
+            <div className="grid gap-1 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+              <p>This reviewed draft can be manually handed to an external Agent.</p>
+              <p className="text-xs text-emerald-700">This does not execute the Agent. This does not mutate LabourBoard.</p>
+            </div>
+            {handoffError && <ErrorBlock title="Handoff failed" message={handoffError} />}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                disabled={isHandoffLoading}
+                onClick={() => onCopyHandoff(draft.id)}
+                icon={isHandoffLoading ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <ClipboardDocumentIcon className="h-4 w-4" />}
+              >
+                {handoffFeedback ?? 'Copy Handoff Markdown'}
+              </Button>
+              <Button
+                type="button"
+                disabled={isHandoffLoading}
+                onClick={() => onDownloadHandoff(draft.id)}
+                icon={isHandoffLoading ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <ArrowDownTrayIcon className="h-4 w-4" />}
+              >
+                Download Handoff
+              </Button>
+            </div>
+          </div>
+        ) : draft.status === 'draft' ? (
+          <div className="grid gap-1 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <p className="font-semibold">Handoff not available</p>
+            <p className="text-xs">Mark this draft as reviewed before generating a formal handoff.</p>
+          </div>
+        ) : draft.status === 'discarded' ? (
+          <div className="grid gap-1 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+            <p className="font-semibold">Handoff not available</p>
+            <p className="text-xs">Discarded drafts cannot generate formal handoff. Reset to Draft and review again if needed.</p>
+          </div>
+        ) : null}
+      </section>
 
       {onUpdateReview && (
         <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
