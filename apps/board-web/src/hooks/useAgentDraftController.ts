@@ -5,6 +5,12 @@ import type { ExportContextPackOptions } from './useBoardExportController'
 import { createAgentDraft, fetchAgentDraft, fetchAgentDrafts, fetchAgentDraftHandoff, updateAgentDraftReview } from '../api/agentDrafts'
 import { downloadTextFile } from '../utils/download'
 
+function isIgnoredHandoffAbort(err: unknown): boolean {
+  if (axios.isCancel(err)) return true
+  if (err instanceof Error && err.message === 'aborted') return true
+  return false
+}
+
 export function useAgentDraftController() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [drafts, setDrafts] = useState<AgentDraftSummary[]>([])
@@ -108,6 +114,14 @@ export function useAgentDraftController() {
     const requestId = detailRequestIdRef.current + 1
     detailRequestIdRef.current = requestId
     detailAbortRef.current?.abort()
+
+    // Abort in-flight handoff request and clear handoff state for new draft
+    handoffRequestIdRef.current += 1
+    handoffAbortRef.current?.abort()
+    handoffAbortRef.current = null
+    setHandoffError(null)
+    setHandoffFeedback(null)
+    setIsHandoffLoading(false)
 
     const controller = new AbortController()
     detailAbortRef.current = controller
@@ -270,11 +284,14 @@ export function useAgentDraftController() {
       fetchHandoff(draftId)
         .then(({ content }) => navigator.clipboard.writeText(content))
         .then(() => {
+          setHandoffError(null)
           setHandoffFeedback('Handoff copied!')
           setTimeout(() => setHandoffFeedback(null), 2000)
         })
-        .catch(() => {
-          // error already set by fetchHandoff
+        .catch((err: unknown) => {
+          if (isIgnoredHandoffAbort(err)) return
+          setHandoffFeedback(null)
+          setHandoffError(err instanceof Error ? err.message : 'Copy handoff failed')
         })
     },
     [fetchHandoff],
@@ -285,9 +302,11 @@ export function useAgentDraftController() {
       fetchHandoff(draftId)
         .then(({ content, filename }) => {
           downloadTextFile(filename, content)
+          setHandoffError(null)
         })
-        .catch(() => {
-          // error already set by fetchHandoff
+        .catch((err: unknown) => {
+          if (isIgnoredHandoffAbort(err)) return
+          setHandoffError(err instanceof Error ? err.message : 'Download handoff failed')
         })
     },
     [fetchHandoff],
