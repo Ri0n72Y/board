@@ -259,6 +259,24 @@ describe('Agent Responses route', () => {
     expect(res.status).toBe(400)
   })
 
+  it('POST response returns 400 for responseMarkdown exceeding max length', async () => {
+    const app = await createTestApp()
+    const draftId = await createReviewedDraft(app)
+
+    const tooLong = 'x'.repeat(200_001)
+    const res = await app.request(`/api/v0/agent/drafts/${draftId}/responses`, {
+      method: 'POST',
+      body: JSON.stringify({
+        source: 'manual-paste',
+        responseMarkdown: tooLong,
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    expect(res.status).toBe(400)
+    const payload = await res.json()
+    expect(payload.error.code).toBe('INVALID_AGENT_RESPONSE')
+  })
+
   // ── List responses ──
 
   it('GET /api/v0/agent/drafts/:id/responses returns summaries without responseMarkdown', async () => {

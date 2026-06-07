@@ -43,8 +43,23 @@ export function useAgentDraftController() {
   const reviewAbortRef = useRef<AbortController | null>(null)
   const handoffAbortRef = useRef<AbortController | null>(null)
 
-  // Agent Response controller
-  const responseCtrl = useAgentResponseController()
+  // Agent Response controller — destructure stable callbacks, never capture the whole object
+  const {
+    responses,
+    selectedResponse,
+    isListLoading: isResponseListLoading,
+    isDetailLoading: isResponseDetailLoading,
+    isCreating: isResponseCreating,
+    listError: responseListError,
+    detailError: responseDetailError,
+    createError: responseCreateError,
+    abortAll: abortAllResponses,
+    clearResponses,
+    loadResponseList,
+    loadResponseDetail,
+    saveResponse,
+    setSelectedResponse,
+  } = useAgentResponseController()
 
   const abortAll = useCallback(() => {
     listRequestIdRef.current += 1
@@ -62,8 +77,8 @@ export function useAgentDraftController() {
     createAbortRef.current = null
     reviewAbortRef.current = null
     handoffAbortRef.current = null
-    responseCtrl.abortAll()
-  }, [responseCtrl])
+    abortAllResponses()
+  }, [abortAllResponses])
 
   useEffect(() => abortAll, [abortAll])
 
@@ -113,8 +128,8 @@ export function useAgentDraftController() {
     setIsCreating(false)
     setIsReviewing(false)
     setIsHandoffLoading(false)
-    responseCtrl.clearResponses()
-  }, [abortAll, responseCtrl])
+    clearResponses()
+  }, [abortAll, clearResponses])
 
   const loadDraftDetail = useCallback((draftId: string) => {
     const requestId = detailRequestIdRef.current + 1
@@ -130,7 +145,7 @@ export function useAgentDraftController() {
     setIsHandoffLoading(false)
 
     // Clear response state for new draft
-    responseCtrl.clearResponses()
+    clearResponses()
 
     const controller = new AbortController()
     detailAbortRef.current = controller
@@ -143,7 +158,7 @@ export function useAgentDraftController() {
         if (detailRequestIdRef.current !== requestId || controller.signal.aborted) return
         setSelectedDraft(data.draft)
         // Load responses for this draft
-        responseCtrl.loadResponseList(draftId)
+        loadResponseList(draftId)
       })
       .catch((err: unknown) => {
         if (detailRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) return
@@ -154,7 +169,7 @@ export function useAgentDraftController() {
         setIsDetailLoading(false)
         detailAbortRef.current = null
       })
-  }, [responseCtrl])
+  }, [clearResponses, loadResponseList])
 
   const saveDraft = useCallback(
     (options: ExportContextPackOptions & {
@@ -346,17 +361,17 @@ export function useAgentDraftController() {
     updateDraftReview,
     copyHandoff,
     downloadHandoff,
-    // Agent Response
-    responses: responseCtrl.responses,
-    selectedResponse: responseCtrl.selectedResponse,
-    isResponseListLoading: responseCtrl.isListLoading,
-    isResponseDetailLoading: responseCtrl.isDetailLoading,
-    isResponseCreating: responseCtrl.isCreating,
-    responseListError: responseCtrl.listError,
-    responseDetailError: responseCtrl.detailError,
-    responseCreateError: responseCtrl.createError,
-    loadResponseDetail: responseCtrl.loadResponseDetail,
-    saveResponse: responseCtrl.saveResponse,
-    setSelectedResponse: responseCtrl.setSelectedResponse,
+    // Agent Response — returned directly from destructured stable values
+    responses,
+    selectedResponse,
+    isResponseListLoading,
+    isResponseDetailLoading,
+    isResponseCreating,
+    responseListError,
+    responseDetailError,
+    responseCreateError,
+    loadResponseDetail,
+    saveResponse,
+    setSelectedResponse,
   }
 }
