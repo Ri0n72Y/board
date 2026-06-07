@@ -1,15 +1,15 @@
-import { useState, useMemo } from 'react'
 import type { AgentDraftDetail, AgentDraftStatus, AgentDraftSummary, AgentResponseDetail, AgentResponseSummary } from '@labour-board/shared'
-import {
-  ArrowDownTrayIcon,
-  ArrowPathIcon,
-  ClipboardDocumentIcon,
-  ExclamationTriangleIcon,
-  XMarkIcon,
-} from '@heroicons/react/20/solid'
+import { XMarkIcon } from '@heroicons/react/20/solid'
 import { Button } from './ui/Button'
-import { Badge } from './ui/Badge'
-import { downloadTextFile } from '../utils/download'
+import { AgentDraftQueuePanel } from './agentDrafts/AgentDraftQueuePanel'
+import { AgentDraftSafetyBanner } from './agentDrafts/AgentDraftSafetyBanner'
+import { AgentDraftMetaPanel } from './agentDrafts/AgentDraftMetaPanel'
+import { AgentDraftReviewInfo } from './agentDrafts/AgentDraftReviewInfo'
+import { AgentDraftReviewActions } from './agentDrafts/AgentDraftReviewActions'
+import { AgentDraftContextPreview } from './agentDrafts/AgentDraftContextPreview'
+import { FormalHandoffSection } from './agentDrafts/FormalHandoffSection'
+import { ManualAgentResponseSection } from './agentDrafts/ManualAgentResponseSection'
+import { ErrorBlock } from './agentDrafts/ErrorBlock'
 
 interface AgentDraftsDrawerProps {
   open: boolean
@@ -45,15 +45,6 @@ interface AgentDraftsDrawerProps {
   onSaveResponse?: (draftId: string, responseMarkdown: string, externalAgentName?: string, responseNote?: string) => Promise<AgentResponseDetail>
 }
 
-type StatusFilter = 'all' | AgentDraftStatus
-
-const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'draft', label: 'Draft' },
-  { value: 'reviewed', label: 'Reviewed' },
-  { value: 'discarded', label: 'Discarded' },
-]
-
 export function AgentDraftsDrawer({
   open,
   drafts,
@@ -86,16 +77,6 @@ export function AgentDraftsDrawer({
   onLoadResponseDetail,
   onSaveResponse,
 }: AgentDraftsDrawerProps) {
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
-
-  const filteredDrafts = useMemo(
-    () =>
-      statusFilter === 'all'
-        ? drafts
-        : drafts.filter((d) => d.status === statusFilter),
-    [drafts, statusFilter],
-  )
-
   if (!open) return null
 
   return (
@@ -131,93 +112,16 @@ export function AgentDraftsDrawer({
         </header>
 
         <div className="grid min-h-0 gap-4 overflow-y-auto px-5 py-4 lg:grid-cols-[20rem_1fr]">
-          <section className="grid content-start gap-4">
-            <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold uppercase text-slate-500">Draft Queue</h3>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="min-h-8 px-2.5 text-xs"
-                  onClick={onRefreshList}
-                  disabled={isListLoading}
-                  icon={<ArrowPathIcon className={isListLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />}
-                >
-                  Refresh
-                </Button>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5">
-                {STATUS_FILTERS.map((f) => (
-                  <button
-                    key={f.value}
-                    type="button"
-                    className={
-                      statusFilter === f.value
-                        ? 'rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white'
-                        : 'rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200'
-                    }
-                    onClick={() => setStatusFilter(f.value)}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-
-              {createError && <ErrorBlock title="Create failed" message={createError} />}
-              {listError && <ErrorBlock title="List failed" message={listError} />}
-
-              {isCreating && (
-                <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-                  Creating draft...
-                </p>
-              )}
-              {isListLoading && (
-                <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-                  Loading drafts...
-                </p>
-              )}
-
-              {!isListLoading && filteredDrafts.length === 0 && (
-                <div className="grid gap-2 rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-sm text-slate-500">
-                  <p>{statusFilter === 'all' ? 'No agent drafts yet.' : `No ${statusFilter} drafts.`}</p>
-                  <p className="text-xs">Save a Context Pack from the Export drawer as an Agent Draft to review here.</p>
-                </div>
-              )}
-
-              {filteredDrafts.length > 0 && (
-                <ol className="grid gap-2">
-                  {filteredDrafts.map((draft) => (
-                    <li key={draft.id}>
-                      <button
-                        type="button"
-                        className={
-                          selectedDraft?.id === draft.id
-                            ? 'grid w-full gap-1.5 rounded-md border border-emerald-500 bg-emerald-50 px-3 py-2 text-left'
-                            : 'grid w-full gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-emerald-500'
-                        }
-                        onClick={() => onSelectDraft(draft.id)}
-                      >
-                        <span className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-slate-950">{draft.title}</span>
-                          <StatusBadge status={draft.status} />
-                        </span>
-                        {draft.contextGoal && (
-                          <span className="wrap-break-word text-xs text-slate-600">{draft.contextGoal}</span>
-                        )}
-                        <span className="flex flex-wrap items-center gap-1.5">
-                          <Badge>{draft.profile}</Badge>
-                          <Badge>{draft.source}</Badge>
-                          <Badge>{draft.recordCount.toString()} records</Badge>
-                        </span>
-                        <span className="text-xs text-slate-400">{formatDate(draft.createdAt)}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </div>
-          </section>
+          <AgentDraftQueuePanel
+            drafts={drafts}
+            selectedDraftId={selectedDraft?.id ?? null}
+            isListLoading={isListLoading}
+            isCreating={isCreating}
+            listError={listError}
+            createError={createError}
+            onSelectDraft={onSelectDraft}
+            onRefreshList={onRefreshList}
+          />
 
           <section className="min-w-0">
             {isDetailLoading && (
@@ -225,28 +129,53 @@ export function AgentDraftsDrawer({
             )}
             {detailError && <ErrorBlock title="Detail failed" message={detailError} />}
             {!isDetailLoading && !detailError && selectedDraft && (
-              <DraftDetailView
-                key={selectedDraft.id}
-                draft={selectedDraft}
-                isReviewing={isReviewing}
-                reviewError={reviewError}
-                isHandoffLoading={isHandoffLoading}
-                handoffError={handoffError}
-                handoffFeedback={handoffFeedback}
-                onUpdateReview={onUpdateReview}
-                onCopyHandoff={onCopyHandoff}
-                onDownloadHandoff={onDownloadHandoff}
-                responses={responses}
-                selectedResponse={selectedResponse}
-                isResponseListLoading={isResponseListLoading}
-                isResponseDetailLoading={isResponseDetailLoading}
-                isResponseCreating={isResponseCreating}
-                responseListError={responseListError}
-                responseDetailError={responseDetailError}
-                responseCreateError={responseCreateError}
-                onLoadResponseDetail={onLoadResponseDetail}
-                onSaveResponse={onSaveResponse}
-              />
+              <div className="grid gap-4">
+                <AgentDraftSafetyBanner />
+
+                <AgentDraftMetaPanel draft={selectedDraft} />
+
+                <AgentDraftReviewInfo draft={selectedDraft} />
+
+                {onCopyHandoff && onDownloadHandoff && (
+                  <FormalHandoffSection
+                    draft={selectedDraft}
+                    isHandoffLoading={isHandoffLoading}
+                    handoffError={handoffError}
+                    handoffFeedback={handoffFeedback}
+                    onCopyHandoff={onCopyHandoff}
+                    onDownloadHandoff={onDownloadHandoff}
+                  />
+                )}
+
+                {onUpdateReview && (
+                  <AgentDraftReviewActions
+                    key={selectedDraft.id}
+                    draft={selectedDraft}
+                    isReviewing={isReviewing}
+                    reviewError={reviewError}
+                    onUpdateReview={onUpdateReview}
+                  />
+                )}
+
+                <AgentDraftContextPreview draft={selectedDraft} />
+
+                {onSaveResponse && onLoadResponseDetail && (
+                  <ManualAgentResponseSection
+                    key={selectedDraft.id}
+                    draft={selectedDraft}
+                    responses={responses}
+                    selectedResponse={selectedResponse}
+                    isResponseListLoading={isResponseListLoading}
+                    isResponseDetailLoading={isResponseDetailLoading}
+                    isResponseCreating={isResponseCreating}
+                    responseListError={responseListError}
+                    responseDetailError={responseDetailError}
+                    responseCreateError={responseCreateError}
+                    onLoadResponseDetail={onLoadResponseDetail}
+                    onSaveResponse={onSaveResponse}
+                  />
+                )}
+              </div>
             )}
             {!isDetailLoading && !detailError && !selectedDraft && (
               <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">Select a draft to view its context.</div>
@@ -256,467 +185,4 @@ export function AgentDraftsDrawer({
       </aside>
     </div>
   )
-}
-
-function StatusBadge({ status }: { status: AgentDraftStatus }) {
-  const colors: Record<AgentDraftStatus, string> = {
-    draft: 'bg-slate-200 text-slate-700',
-    reviewed: 'bg-emerald-200 text-emerald-800',
-    discarded: 'bg-red-200 text-red-800',
-  }
-  return <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-semibold uppercase ${colors[status]}`}>{status}</span>
-}
-
-function DraftDetailView({
-  draft,
-  isReviewing,
-  reviewError,
-  isHandoffLoading,
-  handoffError,
-  handoffFeedback,
-  onUpdateReview,
-  onCopyHandoff,
-  onDownloadHandoff,
-  responses = [],
-  selectedResponse = null,
-  isResponseListLoading = false,
-  isResponseDetailLoading = false,
-  isResponseCreating = false,
-  responseListError = null,
-  responseDetailError = null,
-  responseCreateError = null,
-  onLoadResponseDetail,
-  onSaveResponse,
-}: {
-  draft: AgentDraftDetail
-  isReviewing: boolean
-  reviewError: string | null
-  isHandoffLoading: boolean
-  handoffError: string | null
-  handoffFeedback: string | null
-  onUpdateReview?: (draftId: string, status: AgentDraftStatus, reviewNote?: string) => void
-  onCopyHandoff?: (draftId: string) => void
-  onDownloadHandoff?: (draftId: string) => void
-  responses?: AgentResponseSummary[]
-  selectedResponse?: AgentResponseDetail | null
-  isResponseListLoading?: boolean
-  isResponseDetailLoading?: boolean
-  isResponseCreating?: boolean
-  responseListError?: string | null
-  responseDetailError?: string | null
-  responseCreateError?: string | null
-  onLoadResponseDetail?: (responseId: string) => void
-  onSaveResponse?: (draftId: string, responseMarkdown: string, externalAgentName?: string, responseNote?: string) => Promise<AgentResponseDetail>
-}) {
-  const [reviewNote, setReviewNote] = useState(draft.reviewNote ?? '')
-  const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
-
-  // Response form state
-  const [responseAgentName, setResponseAgentName] = useState('')
-  const [responseNote, setResponseNote] = useState('')
-  const [responseMarkdown, setResponseMarkdown] = useState('')
-  const [responseFormError, setResponseFormError] = useState<string | null>(null)
-  const [responseCopyFeedback, setResponseCopyFeedback] = useState<string | null>(null)
-
-  const copyMarkdown = () => {
-    navigator.clipboard.writeText(draft.contextMarkdown).then(
-      () => { setCopyFeedback('Copied!'); setTimeout(() => setCopyFeedback(null), 2000) },
-      () => setCopyFeedback('Copy failed'),
-    )
-  }
-
-  const downloadMarkdown = () => {
-    downloadTextFile(`agent-draft-${draft.id.slice(0, 8)}-${draft.status}.md`, draft.contextMarkdown)
-  }
-
-  const handleSaveResponse = () => {
-    if (!onSaveResponse) return
-    const trimmed = responseMarkdown.trim()
-    if (!trimmed) {
-      setResponseFormError('Response Markdown is required.')
-      return
-    }
-    setResponseFormError(null)
-    onSaveResponse(draft.id, trimmed, responseAgentName.trim() || undefined, responseNote.trim() || undefined)
-      .then(() => {
-        setResponseMarkdown('')
-        setResponseAgentName('')
-        setResponseNote('')
-        setResponseFormError(null)
-      })
-      .catch(() => {
-        // Error stays visible via responseCreateError
-      })
-  }
-
-  const copyResponseMarkdown = (markdown: string) => {
-    navigator.clipboard.writeText(markdown).then(
-      () => { setResponseCopyFeedback('Copied!'); setTimeout(() => setResponseCopyFeedback(null), 2000) },
-      () => setResponseCopyFeedback('Copy failed'),
-    )
-  }
-
-  const downloadResponseMarkdown = (response: AgentResponseDetail) => {
-    downloadTextFile(
-      `agent-response-${response.id.slice(0, 8)}.md`,
-      response.responseMarkdown,
-    )
-  }
-
-  const preview =
-    draft.contextMarkdown.length > 2000
-      ? draft.contextMarkdown.slice(0, 2000) + '\n\n... (truncated)'
-      : draft.contextMarkdown
-
-  return (
-    <div className="grid gap-4">
-      <section className="grid gap-2 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-950">
-        <div className="flex items-center gap-2">
-          <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />
-          <strong className="text-sm font-semibold uppercase">Draft Only - Not Executed</strong>
-        </div>
-        <p className="text-sm">This is a static context pack saved for review. No AI call has been made. No agent execution, patch, or board mutation has been performed.</p>
-        <p className="text-xs text-amber-800">Drafts are reviewed by humans before being handed to an Agent.</p>
-      </section>
-
-      <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="mb-1 flex items-center gap-2">
-              <h3 className="text-lg font-semibold text-slate-950">{draft.title}</h3>
-              <StatusBadge status={draft.status} />
-            </div>
-            <p className="break-all font-mono text-xs text-slate-500">{draft.id}</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" onClick={copyMarkdown} icon={<ClipboardDocumentIcon className="h-4 w-4" />}>
-              {copyFeedback ?? 'Copy Markdown'}
-            </Button>
-            <Button type="button" onClick={downloadMarkdown} icon={<ArrowDownTrayIcon className="h-4 w-4" />}>
-              Download
-            </Button>
-          </div>
-        </div>
-        <dl className="grid gap-2 sm:grid-cols-2">
-          <MetaItem label="Profile" value={draft.profile} />
-          <MetaItem label="Source" value={draft.source} />
-          <MetaItem label="Created" value={formatDate(draft.createdAt)} />
-          <MetaItem label="Created by" value={draft.createdBy} mono />
-          <MetaItem label="Status" value={draft.status} />
-          <MetaItem label="Records" value={draft.recordCount.toString()} />
-          <MetaItem label="Context goal" value={draft.contextGoal ?? 'None'} />
-          {draft.snapshotId && <MetaItem label="Snapshot" value={draft.snapshotId} mono />}
-        </dl>
-      </section>
-
-      {draft.reviewedAt ? (
-        <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
-          <h3 className="text-sm font-semibold uppercase text-slate-500">Review Info</h3>
-          <dl className="grid gap-2 sm:grid-cols-2">
-            <MetaItem label="Reviewed at" value={formatDate(draft.reviewedAt)} />
-            <MetaItem label="Reviewed by" value={draft.reviewedBy ?? 'unknown'} mono />
-            <MetaItem label="Review note" value={draft.reviewNote || 'None'} />
-          </dl>
-        </section>
-      ) : (
-        <section className="grid gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-          <p>Not reviewed yet</p>
-        </section>
-      )}
-
-      {/* ── Formal Handoff section ── */}
-      <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
-        <h3 className="text-sm font-semibold uppercase text-slate-500">Formal Handoff</h3>
-
-        {draft.status === 'reviewed' && onCopyHandoff && onDownloadHandoff ? (
-          <div className="grid gap-3">
-            <div className="grid gap-1 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
-              <p>This reviewed draft can be manually handed to an external Agent.</p>
-              <p className="text-xs text-emerald-700">This does not execute the Agent. This does not mutate LabourBoard.</p>
-            </div>
-            {handoffError && <ErrorBlock title="Handoff failed" message={handoffError} />}
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                disabled={isHandoffLoading}
-                onClick={() => onCopyHandoff(draft.id)}
-                icon={isHandoffLoading ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <ClipboardDocumentIcon className="h-4 w-4" />}
-              >
-                {handoffFeedback ?? 'Copy Handoff Markdown'}
-              </Button>
-              <Button
-                type="button"
-                disabled={isHandoffLoading}
-                onClick={() => onDownloadHandoff(draft.id)}
-                icon={isHandoffLoading ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <ArrowDownTrayIcon className="h-4 w-4" />}
-              >
-                Download Handoff
-              </Button>
-            </div>
-          </div>
-        ) : draft.status === 'draft' ? (
-          <div className="grid gap-1 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            <p className="font-semibold">Handoff not available</p>
-            <p className="text-xs">Mark this draft as reviewed before generating a formal handoff.</p>
-          </div>
-        ) : draft.status === 'discarded' ? (
-          <div className="grid gap-1 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900">
-            <p className="font-semibold">Handoff not available</p>
-            <p className="text-xs">Discarded drafts cannot generate formal handoff. Reset to Draft and review again if needed.</p>
-          </div>
-        ) : null}
-      </section>
-
-      {onUpdateReview && (
-        <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
-          <h3 className="text-sm font-semibold uppercase text-slate-500">Review Actions</h3>
-          <label className="grid gap-1.5 text-xs font-bold text-slate-500">
-            Review note
-            <textarea
-              className="min-h-20 resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
-              value={reviewNote}
-              onChange={(event) => setReviewNote(event.target.value)}
-              placeholder="Optional review note"
-            />
-          </label>
-          {reviewError && <ErrorBlock title="Review update failed" message={reviewError} />}
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              disabled={isReviewing}
-              onClick={() => onUpdateReview(draft.id, 'reviewed', reviewNote.trim() || undefined)}
-              icon={isReviewing ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : undefined}
-            >
-              {isReviewing ? 'Saving...' : 'Mark Reviewed'}
-            </Button>
-            <Button type="button" disabled={isReviewing} onClick={() => onUpdateReview(draft.id, 'discarded', reviewNote.trim() || undefined)}>
-              Mark Discarded
-            </Button>
-            {draft.status !== 'draft' && (
-              <Button type="button" disabled={isReviewing} onClick={() => onUpdateReview(draft.id, 'draft', reviewNote.trim() || undefined)}>
-                Reset to Draft
-              </Button>
-            )}
-          </div>
-        </section>
-      )}
-
-      <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
-        <h3 className="text-sm font-semibold uppercase text-slate-500">Context Markdown Preview</h3>
-        <pre className="max-h-96 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-slate-200 bg-slate-50 p-4 font-mono text-xs leading-relaxed text-slate-800">
-          {preview}
-        </pre>
-      </section>
-
-      {/* ── Manual Agent Response section ── */}
-      <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
-        <h3 className="text-sm font-semibold uppercase text-slate-500">Manual Agent Response</h3>
-
-        {/* Status-based form */}
-        {draft.status === 'reviewed' && onSaveResponse ? (
-          <div className="grid gap-3">
-            <div className="grid gap-1 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
-              <p>Paste the external Agent's response below.</p>
-              <p className="text-xs text-blue-700">
-                This response was pasted manually. No AI call was made by LabourBoard. No patch or board mutation has been performed.
-              </p>
-            </div>
-
-            <label className="grid gap-1.5 text-xs font-bold text-slate-500">
-              External agent name (optional)
-              <input
-                type="text"
-                className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
-                value={responseAgentName}
-                onChange={(e) => setResponseAgentName(e.target.value)}
-                placeholder="e.g. Codex, ChatGPT"
-                maxLength={100}
-              />
-            </label>
-
-            <label className="grid gap-1.5 text-xs font-bold text-slate-500">
-              Response note (optional)
-              <input
-                type="text"
-                className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
-                value={responseNote}
-                onChange={(e) => setResponseNote(e.target.value)}
-                placeholder="e.g. First manual response"
-                maxLength={2000}
-              />
-            </label>
-
-            <label className="grid gap-1.5 text-xs font-bold text-slate-500">
-              Response Markdown *
-              <textarea
-                className="min-h-40 resize-y rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
-                value={responseMarkdown}
-                onChange={(e) => setResponseMarkdown(e.target.value)}
-                placeholder="Paste the Agent's markdown response here..."
-              />
-            </label>
-
-            {responseFormError && !responseCreateError && (
-              <ErrorBlock title="Validation Error" message={responseFormError} />
-            )}
-            {responseCreateError && (
-              <ErrorBlock title="Save failed" message={responseCreateError} />
-            )}
-
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                disabled={isResponseCreating}
-                onClick={handleSaveResponse}
-                icon={isResponseCreating ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : undefined}
-              >
-                {isResponseCreating ? 'Saving...' : 'Save Agent Response'}
-              </Button>
-            </div>
-          </div>
-        ) : draft.status === 'draft' ? (
-          <div className="grid gap-1 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            <p className="font-semibold">Response paste not available</p>
-            <p className="text-xs">Mark this draft as reviewed before pasting an external Agent response.</p>
-          </div>
-        ) : draft.status === 'discarded' ? (
-          <div className="grid gap-1 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900">
-            <p className="font-semibold">Response paste not available</p>
-            <p className="text-xs">Discarded drafts cannot receive Agent responses. Reset to Draft and review again if needed.</p>
-          </div>
-        ) : null}
-
-        {/* Response list */}
-        {responses.length > 0 && (
-          <div className="grid gap-2">
-            <h4 className="text-xs font-bold uppercase text-slate-400">
-              Pasted Responses ({responses.length})
-            </h4>
-            {isResponseListLoading && (
-              <p className="text-xs text-slate-500">Loading responses...</p>
-            )}
-            {responseListError && (
-              <ErrorBlock title="Response list failed" message={responseListError} />
-            )}
-            <ol className="grid gap-1.5">
-              {responses.map((r) => (
-                <li key={r.id}>
-                  <button
-                    type="button"
-                    className={
-                      selectedResponse?.id === r.id
-                        ? 'grid w-full gap-0.5 rounded-md border border-emerald-500 bg-emerald-50 px-3 py-2 text-left'
-                        : 'grid w-full gap-0.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-emerald-500'
-                    }
-                    onClick={() => onLoadResponseDetail?.(r.id)}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-950">
-                        {r.externalAgentName ?? 'Manual Paste'}
-                      </span>
-                      <Badge>{r.responseLength.toLocaleString()} chars</Badge>
-                    </span>
-                    <span className="text-xs text-slate-400">
-                      {formatDate(r.pastedAt)} by {r.pastedBy}
-                    </span>
-                    {r.responseNote && (
-                      <span className="wrap-break-word text-xs text-slate-600">{r.responseNote}</span>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
-
-        {/* Response detail */}
-        {isResponseDetailLoading && (
-          <p className="text-xs text-slate-500">Loading response detail...</p>
-        )}
-        {responseDetailError && (
-          <ErrorBlock title="Response detail failed" message={responseDetailError} />
-        )}
-        {selectedResponse && !isResponseDetailLoading && (
-          <div className="grid gap-3 rounded-md border border-blue-200 bg-blue-50 p-4">
-            <div className="flex items-center gap-2">
-              <span className="rounded bg-blue-200 px-1.5 py-0.5 text-xs font-bold uppercase text-blue-800">
-                Manual Paste
-              </span>
-              <span className="rounded bg-amber-200 px-1.5 py-0.5 text-xs font-bold uppercase text-amber-800">
-                Not Applied
-              </span>
-              <span className="rounded bg-slate-200 px-1.5 py-0.5 text-xs font-bold uppercase text-slate-700">
-                No board mutation
-              </span>
-            </div>
-
-            <div className="grid gap-1 rounded-md bg-white p-3 text-xs text-slate-600">
-              <p>
-                This response was pasted manually.
-                No AI call was made by LabourBoard.
-                No patch or board mutation has been performed.
-              </p>
-            </div>
-
-            <dl className="grid gap-2 sm:grid-cols-2">
-              <MetaItem label="Agent" value={selectedResponse.externalAgentName ?? 'Manual Paste'} />
-              <MetaItem label="Pasted at" value={formatDate(selectedResponse.pastedAt)} />
-              <MetaItem label="Pasted by" value={selectedResponse.pastedBy} mono />
-              <MetaItem label="Length" value={`${selectedResponse.responseLength.toLocaleString()} chars`} />
-              {selectedResponse.responseNote && (
-                <MetaItem label="Note" value={selectedResponse.responseNote} />
-              )}
-            </dl>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                onClick={() => copyResponseMarkdown(selectedResponse.responseMarkdown)}
-                icon={<ClipboardDocumentIcon className="h-4 w-4" />}
-              >
-                {responseCopyFeedback ?? 'Copy Response Markdown'}
-              </Button>
-              <Button
-                type="button"
-                onClick={() => downloadResponseMarkdown(selectedResponse)}
-                icon={<ArrowDownTrayIcon className="h-4 w-4" />}
-              >
-                Download Response
-              </Button>
-            </div>
-
-            <div className="rounded-md border border-slate-200 bg-white p-3">
-              <pre className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-slate-800">
-                {selectedResponse.responseMarkdown}
-              </pre>
-            </div>
-          </div>
-        )}
-      </section>
-    </div>
-  )
-}
-
-function ErrorBlock({ title, message }: { title: string; message: string }) {
-  return (
-    <section className="grid gap-1 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
-      <strong>{title}</strong>
-      <span>{message}</span>
-    </section>
-  )
-}
-
-function MetaItem({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div className="grid min-w-0 gap-0.5 rounded-md bg-slate-100 p-2.5">
-      <dt className="text-xs font-bold uppercase text-slate-500">{label}</dt>
-      <dd className={mono ? 'm-0 break-all font-mono text-xs text-slate-950' : 'm-0 wrap-break-word text-slate-950'}>{value}</dd>
-    </div>
-  )
-}
-
-function formatDate(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
 }
