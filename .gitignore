@@ -13,6 +13,7 @@ dist-ssr
 coverage
 *.local
 .env
+!.env.example
 
 # Editor directories and files
 .vscode/*
@@ -37,4 +38,3 @@ changes_*.md
 .pnpm-store
 board.yaml
 /test-data
-.env*

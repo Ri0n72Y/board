@@ -3,18 +3,22 @@
  *
  * Imports mocked_board.yaml and mocked_records.json into a local MongoDB.
  *
+ * Reads MONGODB_URI and MONGODB_DB from:
+ *   1. Shell environment (highest priority)
+ *   2. apps/board-api/.env (loaded via dotenv)
+ *
  * Safety:
  *  - Refuses to run in production (NODE_ENV === 'production').
- *  - Requires MONGODB_URI to be set.
+ *  - Requires MONGODB_URI to be set (from shell or .env).
  *  - Refuses to overwrite non-empty collections unless --reset is passed.
  *  - Prints target database/collection info before inserting.
  *
  * Usage:
  *   pnpm --filter @labour-board/api import:test-data -- --reset
- *   MONGODB_URI=mongodb://localhost:27017/labourboard_dev pnpm --filter @labour-board/api import:test-data -- --reset
  *   pnpm --filter @labour-board/api import:test-data -- --help
  */
 
+import 'dotenv/config'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parseDocument } from 'yaml'
@@ -34,11 +38,17 @@ function printUsage() {
       '  --help     Show this help message.',
       '',
       'Environment:',
-      '  MONGODB_URI   MongoDB connection string (required).',
+      '  MONGODB_URI   MongoDB connection string.',
       '  MONGODB_DB    Database name (default: labour_board).',
       '',
+      '  These are automatically loaded from apps/board-api/.env if present.',
+      '  Shell environment variables take priority over .env values.',
+      '',
       'Example:',
-      '  MONGODB_URI=mongodb://localhost:27017/labourboard_dev pnpm --filter @labour-board/api import:test-data -- --reset',
+      '  # With .env configured:',
+      '  pnpm --filter @labour-board/api import:test-data -- --reset',
+      '  # Or override via command line:',
+      '  MONGODB_URI=mongodb://localhost:27017 pnpm --filter @labour-board/api import:test-data -- --reset',
     ].join('\n'),
   )
 }
@@ -63,7 +73,11 @@ async function main() {
   const mongoUri = process.env.MONGODB_URI
   if (!mongoUri) {
     console.error('ERROR: MONGODB_URI must be set.')
-    console.error('Example: MONGODB_URI=mongodb://localhost:27017/labourboard_dev')
+    console.error('Configure it in apps/board-api/.env:')
+    console.error('  MONGODB_URI=mongodb://localhost:27017')
+    console.error('  MONGODB_DB=labourboard_dev')
+    console.error('Or pass it on the command line:')
+    console.error('  MONGODB_URI=mongodb://localhost:27017 pnpm --filter @labour-board/api import:test-data -- --reset')
     process.exit(1)
   }
 

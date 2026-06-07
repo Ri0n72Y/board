@@ -3,7 +3,6 @@ records:
     - CardBody
     - AssetBody
     - TransactionBody
-
 pid:
   prefixes:
     - CARD
@@ -14,8 +13,12 @@ pid:
     CardBody: CARD
     AssetBody: ASSET
     TransactionBody: TX
-  nextNumber: 1
-
+  nextNumber: 34
+  latest:
+    CARD:
+      recordId: faaabc3b-fa62-5365-8486-c31590fad468
+      pid: CARD-33
+      number: 33
 tags:
   namespaces:
     - id: status
@@ -69,7 +72,6 @@ tags:
         displayName: AI
     custom: []
   custom: []
-
 relations:
   constraints:
     - blocks
@@ -83,7 +85,6 @@ relations:
     - implementedBy
     - asset:completion-of
     - progress:contributes-to
-
 snapshot:
   excludeTags:
     - status:archived
