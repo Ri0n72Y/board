@@ -132,7 +132,7 @@ export function AgentDraftsDrawer({
               <div className="grid gap-4">
                 <AgentDraftSafetyBanner />
 
-                <AgentDraftMetaPanel draft={selectedDraft} />
+                <AgentDraftMetaPanel key={selectedDraft.id} draft={selectedDraft} />
 
                 <AgentDraftReviewInfo draft={selectedDraft} />
 

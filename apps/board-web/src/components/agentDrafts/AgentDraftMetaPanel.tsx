@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { AgentDraftDetail } from '@labour-board/shared'
 import { ArrowDownTrayIcon, ClipboardDocumentIcon } from '@heroicons/react/20/solid'
 import { Button } from '../ui/Button'
@@ -13,6 +13,12 @@ interface AgentDraftMetaPanelProps {
 
 export function AgentDraftMetaPanel({ draft }: AgentDraftMetaPanelProps) {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
+
+  // Clear copy feedback when draft changes
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset on key change, parent also uses key={draft.id}
+    setCopyFeedback(null)
+  }, [draft.id])
 
   const copyMarkdown = () => {
     navigator.clipboard.writeText(draft.contextMarkdown).then(
