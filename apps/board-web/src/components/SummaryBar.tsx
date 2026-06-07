@@ -1,4 +1,5 @@
 import type { BoardCurrentProjection } from '@labour-board/shared'
+import { useTranslation } from 'react-i18next'
 import { Panel } from './ui/Panel'
 
 interface SummaryBarProps {
@@ -6,27 +7,29 @@ interface SummaryBarProps {
 }
 
 export function SummaryBar({ projection }: SummaryBarProps) {
+  const { t } = useTranslation()
+
   return (
     <Panel className="mt-4 overflow-hidden p-0" aria-label="Projection summary">
       <div className="grid sm:grid-cols-5">
         <SummaryItem
-          label="Snapshot"
+          label={t('summary.snapshot')}
           value={String(projection.snapshotHeadVersion)}
         />
         <SummaryItem
-          label="Visible"
+          label={t('summary.visible')}
           value={String(projection.summary.visibleCurrentRecords)}
         />
         <SummaryItem
-          label="Base"
+          label={t('summary.base')}
           value={String(projection.summary.totalBaseRecords)}
         />
         <SummaryItem
-          label="Archived"
+          label={t('summary.archived')}
           value={String(projection.summary.archivedRecords)}
         />
         <SummaryItem
-          label="Blocked"
+          label={t('summary.blocked')}
           value={String(projection.summary.blockedRecords)}
         />
       </div>

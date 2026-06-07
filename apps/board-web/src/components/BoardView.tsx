@@ -7,6 +7,7 @@ import type {
   RecordResponse,
   Tag,
 } from '@labour-board/shared'
+import { useTranslation } from 'react-i18next'
 import { RecordCard } from './RecordCard'
 import {
   getStatusColumns,
@@ -14,6 +15,7 @@ import {
 } from '../utils/boardView'
 import { getMoveStatusOptions } from '../utils/statusMove'
 import type { MoveStatusOption } from '../utils/statusMove'
+import { formatTagLabel } from '../utils/tagDisplay'
 
 interface BoardViewProps {
   records: RecordResponse<RecordItem<RecordBody>>[]
@@ -39,6 +41,7 @@ export function BoardView({
   moveErrors,
   onMoveStatus,
 }: BoardViewProps) {
+  const { t } = useTranslation()
   const columns = useMemo(() => {
     const statusColumns = getStatusColumns(config, records)
     return groupRecordsByStatus(records, statusColumns)
@@ -65,7 +68,7 @@ export function BoardView({
                   </h2>
                   {column.tag && (
                     <p className="truncate font-mono text-xs text-slate-500">
-                      {column.tag}
+                      {formatTagLabel(column.tag, t)}
                     </p>
                   )}
                 </div>
@@ -93,7 +96,7 @@ export function BoardView({
                 </div>
               ) : (
                 <p className="rounded-md border border-dashed border-slate-300 bg-white px-3 py-4 text-sm text-slate-500">
-                  No records
+                  {t('record.noRecords')}
                 </p>
               )}
             </section>

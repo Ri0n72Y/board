@@ -8,11 +8,13 @@ import {
   ArrowDownTrayIcon,
   ArrowPathIcon,
   CameraIcon,
+  Cog6ToothIcon,
   DocumentTextIcon,
   ExclamationTriangleIcon,
   PlusIcon,
   QueueListIcon,
 } from '@heroicons/react/20/solid'
+import { useTranslation } from 'react-i18next'
 import { Button } from '../components/ui/Button'
 import { BoardFilters } from '../components/BoardFilters'
 import { BoardView } from '../components/BoardView'
@@ -25,6 +27,7 @@ import { RecordCard } from '../components/RecordCard'
 import { RecordHistoryDrawer } from '../components/RecordHistoryDrawer'
 import { SnapshotDrawer } from '../components/SnapshotDrawer'
 import { AgentDraftsDrawer } from '../components/AgentDraftsDrawer'
+import { AppSettingsDrawer } from '../components/AppSettingsDrawer'
 import { StatusBadge } from '../components/StatusBadge'
 import { SummaryBar } from '../components/SummaryBar'
 import {
@@ -51,6 +54,7 @@ import { useDebouncedValue } from '../utils/useDebounce'
 const Q_DEBOUNCE_MS = 300
 
 export function BoardCurrentPage() {
+  const { t } = useTranslation()
   const draftFilters = useBoardCurrentStore((s) => s.filters)
   const lastAppliedFilters = useBoardCurrentStore((s) => s.lastAppliedFilters)
   const projection = useBoardCurrentStore((s) => s.projection)
@@ -79,6 +83,7 @@ export function BoardCurrentPage() {
   const [editRecord, setEditRecord] =
     useState<RecordResponse<RecordItem<RecordBody>> | null>(null)
   const [isContextExportOpen, setIsContextExportOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [viewMode, setViewMode] = useState<BoardViewMode>('list')
 
   useEffect(() => {
@@ -190,10 +195,10 @@ export function BoardCurrentPage() {
       <header className="mb-5 grid gap-4 sm:flex sm:items-start sm:justify-between">
         <div>
           <p className="mb-1 text-xs font-bold uppercase text-slate-500">
-            Current board
+            {t('header.currentBoard')}
           </p>
           <h1 className="text-3xl font-bold leading-tight text-slate-950">
-            LabourBoard
+            {t('header.appTitle')}
           </h1>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
@@ -204,14 +209,14 @@ export function BoardCurrentPage() {
             onClick={openCreate}
             icon={<PlusIcon className="h-4 w-4" />}
           >
-            Create Record
+            {t('header.createRecord')}
           </Button>
           <Button
             type="button"
             onClick={snapshotController.openSnapshots}
             icon={<CameraIcon className="h-4 w-4" />}
           >
-            Snapshots
+            {t('header.snapshots')}
           </Button>
           <Button
             type="button"
@@ -226,8 +231,8 @@ export function BoardCurrentPage() {
             }
           >
             {boardExportController.isCurrentExporting
-              ? 'Exporting...'
-              : 'Export Current Board'}
+              ? t('header.exporting')
+              : t('header.exportCurrentBoard')}
           </Button>
           <Button
             type="button"
@@ -235,7 +240,7 @@ export function BoardCurrentPage() {
             disabled={!projection}
             icon={<DocumentTextIcon className="h-4 w-4" />}
           >
-            Context Pack
+            {t('header.contextPack')}
           </Button>
           <Button
             type="button"
@@ -243,7 +248,14 @@ export function BoardCurrentPage() {
             disabled={!projection}
             icon={<QueueListIcon className="h-4 w-4" />}
           >
-            Agent Drafts
+            {t('header.agentDrafts')}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => setIsSettingsOpen(true)}
+            icon={<Cog6ToothIcon className="h-4 w-4" />}
+          >
+            {t('header.settings')}
           </Button>
           <Button
             type="button"
@@ -255,7 +267,7 @@ export function BoardCurrentPage() {
               />
             }
           >
-            {isLoading ? 'Refreshing...' : 'Refresh'}
+            {isLoading ? t('header.refreshing') : t('header.refresh')}
           </Button>
         </div>
       </header>
@@ -291,7 +303,7 @@ export function BoardCurrentPage() {
           className="mt-4 grid gap-1.5 rounded-lg border-2 border-red-300 bg-red-50 p-5 text-red-800"
           role="alert"
         >
-          <strong>Failed to load current board</strong>
+          <strong>{t('status.loadError')}</strong>
           <span>{error}</span>
         </section>
       )}
@@ -301,7 +313,7 @@ export function BoardCurrentPage() {
           className="mt-4 grid gap-1.5 rounded-lg border border-amber-300 bg-amber-50 p-5 text-amber-900"
           role="alert"
         >
-          <strong>Refresh failed - showing stale data</strong>
+          <strong>{t('status.refreshError')}</strong>
           <span>{error}</span>
         </section>
       )}
@@ -311,14 +323,14 @@ export function BoardCurrentPage() {
           className="mt-4 grid gap-1.5 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800"
           role="alert"
         >
-          <strong>Export failed</strong>
+          <strong>{t('status.exportError')}</strong>
           <span>{boardExportController.currentExportError}</span>
         </section>
       )}
 
       {isInitialLoad && (
         <section className="mt-4 rounded-lg border border-slate-200 bg-white p-5 text-slate-500">
-          Loading current board...
+          {t('status.loading')}
         </section>
       )}
 
@@ -329,7 +341,7 @@ export function BoardCurrentPage() {
         >
           <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />
           <span className="text-sm font-medium">
-            Projection is partial - some records may be missing.
+            {t('status.projectionPartial')}
           </span>
         </section>
       )}
@@ -341,14 +353,14 @@ export function BoardCurrentPage() {
         >
           <p className="flex items-center gap-2 font-semibold">
             <ExclamationTriangleIcon className="h-5 w-5" />
-            Projection blocked
+            {t('status.projectionBlocked')}
           </p>
           <p>
             {active
-              ? 'The current board projection is blocked - no records match these filters.'
-              : 'The current board projection is blocked - no records can be shown.'}
+              ? t('status.projectionBlockedActive')
+              : t('status.projectionBlockedInactive')}
           </p>
-          {hasIssues && <p>See projection issues below for details.</p>}
+          {hasIssues && <p>{t('status.projectionIssues')}</p>}
         </section>
       )}
 
@@ -517,6 +529,11 @@ export function BoardCurrentPage() {
           onPatched={refreshAfterPatch}
         />
       )}
+
+      <AppSettingsDrawer
+        open={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </main>
   )
 }

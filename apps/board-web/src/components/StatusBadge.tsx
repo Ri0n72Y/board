@@ -1,4 +1,5 @@
 import type { BoardProjectionStatus } from '@labour-board/shared'
+import { useTranslation } from 'react-i18next'
 import { Badge } from './ui/Badge'
 
 interface StatusBadgeProps {
@@ -13,9 +14,11 @@ const statusColor: Record<BoardProjectionStatus, 'green' | 'amber' | 'red' | 'sl
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
+  const { t } = useTranslation()
+
   return (
     <Badge color={status ? statusColor[status] : 'slate'}>
-      {status ?? 'loading'}
+      {status ? t(`badge.${status}`) : t('badge.loading')}
     </Badge>
   )
 }

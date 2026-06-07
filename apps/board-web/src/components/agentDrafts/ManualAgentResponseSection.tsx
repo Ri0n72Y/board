@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { AgentDraftDetail, AgentResponseDetail, AgentResponseSummary } from '@labour-board/shared'
 import { ArrowDownTrayIcon, ArrowPathIcon, ClipboardDocumentIcon } from '@heroicons/react/20/solid'
+import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'
 import { ErrorBlock } from './ErrorBlock'
@@ -35,6 +36,7 @@ export function ManualAgentResponseSection({
   onLoadResponseDetail,
   onSaveResponse,
 }: ManualAgentResponseSectionProps) {
+  const { t } = useTranslation()
   // Form state
   const [responseAgentName, setResponseAgentName] = useState('')
   const [responseNote, setResponseNote] = useState('')
@@ -92,32 +94,32 @@ export function ManualAgentResponseSection({
 
   return (
     <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
-      <h3 className="text-sm font-semibold uppercase text-slate-500">Manual Agent Response</h3>
+      <h3 className="text-sm font-semibold uppercase text-slate-500">{t('agent.response.sectionTitle')}</h3>
 
       {/* Status-based form */}
       {draft.status === 'reviewed' ? (
         <div className="grid gap-3">
           <div className="grid gap-1 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
-            <p>Paste the external Agent's response below.</p>
+            <p>{t('agent.response.pasteInfo')}</p>
             <p className="text-xs text-blue-700">
-              This response was pasted manually. No AI call was made by LabourBoard. No patch or board mutation has been performed.
+              {t('agent.response.pasteSafety')}
             </p>
           </div>
 
           <label className="grid gap-1.5 text-xs font-bold text-slate-500">
-            External agent name (optional)
+            {t('agent.response.agentName')}
             <input
               type="text"
               className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
               value={responseAgentName}
               onChange={(e) => setResponseAgentName(e.target.value)}
-              placeholder="e.g. Codex, ChatGPT"
+              placeholder={t('agent.response.agentNamePlaceholder')}
               maxLength={100}
             />
           </label>
 
           <label className="grid gap-1.5 text-xs font-bold text-slate-500">
-            Response note (optional)
+            {t('agent.response.note')}
             <input
               type="text"
               className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
@@ -129,20 +131,20 @@ export function ManualAgentResponseSection({
           </label>
 
           <label className="grid gap-1.5 text-xs font-bold text-slate-500">
-            Response Markdown *
+            {t('agent.response.markdownLabel')}
             <textarea
               className="min-h-40 resize-y rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
               value={responseMarkdown}
               onChange={(e) => setResponseMarkdown(e.target.value)}
-              placeholder="Paste the Agent's markdown response here..."
+              placeholder={t('agent.response.markdownPlaceholder')}
             />
           </label>
 
           {responseFormError && !responseCreateError && (
-            <ErrorBlock title="Validation Error" message={responseFormError} />
+            <ErrorBlock title={t('agent.response.validationError')} message={responseFormError} />
           )}
           {responseCreateError && (
-            <ErrorBlock title="Save failed" message={responseCreateError} />
+            <ErrorBlock title={t('agent.response.saveFailed')} message={responseCreateError} />
           )}
 
           <div className="flex items-center gap-2">
@@ -152,19 +154,19 @@ export function ManualAgentResponseSection({
               onClick={handleSaveResponse}
               icon={isResponseCreating ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : undefined}
             >
-              {isResponseCreating ? 'Saving...' : 'Save Agent Response'}
+              {isResponseCreating ? t('agent.response.saving') : t('agent.response.saveButton')}
             </Button>
           </div>
         </div>
       ) : draft.status === 'draft' ? (
         <div className="grid gap-1 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          <p className="font-semibold">Response paste not available</p>
-          <p className="text-xs">Mark this draft as reviewed before pasting an external Agent response.</p>
+          <p className="font-semibold">{t('agent.response.pasteUnavailable')}</p>
+          <p className="text-xs">{t('agent.response.pasteUnavailableDesc')}</p>
         </div>
       ) : draft.status === 'discarded' ? (
         <div className="grid gap-1 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900">
-          <p className="font-semibold">Response paste not available</p>
-          <p className="text-xs">Discarded drafts cannot receive Agent responses. Reset to Draft and review again if needed.</p>
+          <p className="font-semibold">{t('agent.response.pasteDiscarded')}</p>
+          <p className="text-xs">{t('agent.response.pasteDiscardedDesc')}</p>
         </div>
       ) : null}
 
@@ -222,13 +224,13 @@ export function ManualAgentResponseSection({
         <div className="grid gap-3 rounded-md border border-blue-200 bg-blue-50 p-4">
           <div className="flex items-center gap-2">
             <span className="rounded bg-blue-200 px-1.5 py-0.5 text-xs font-bold uppercase text-blue-800">
-              Manual Paste
+              {t('agent.response.manualPaste')}
             </span>
             <span className="rounded bg-amber-200 px-1.5 py-0.5 text-xs font-bold uppercase text-amber-800">
-              Not Applied
+              {t('agent.response.notApplied')}
             </span>
             <span className="rounded bg-slate-200 px-1.5 py-0.5 text-xs font-bold uppercase text-slate-700">
-              No board mutation
+              {t('agent.response.noBoardMutation')}
             </span>
           </div>
 
@@ -256,14 +258,14 @@ export function ManualAgentResponseSection({
               onClick={() => copyResponseMarkdown(selectedResponse.responseMarkdown)}
               icon={<ClipboardDocumentIcon className="h-4 w-4" />}
             >
-              {responseCopyFeedback ?? 'Copy Response Markdown'}
+              {responseCopyFeedback ?? t('agent.response.copyButton')}
             </Button>
             <Button
               type="button"
               onClick={() => downloadResponseMarkdown(selectedResponse)}
               icon={<ArrowDownTrayIcon className="h-4 w-4" />}
             >
-              Download Response
+              {t('agent.response.downloadButton')}
             </Button>
           </div>
 

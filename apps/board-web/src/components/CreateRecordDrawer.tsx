@@ -5,6 +5,7 @@ import {
   PlusIcon,
   XMarkIcon,
 } from '@heroicons/react/20/solid'
+import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { createRecord, type CreateRecordPayload } from '../api/records'
 import { cn } from '../lib/cn'
@@ -48,6 +49,7 @@ export function CreateRecordDrawer({
   onClose,
   onCreated,
 }: CreateRecordDrawerProps) {
+  const { t } = useTranslation()
   const assigneeListId = useId()
   const [form, setForm] = useState<FormState>(() =>
     initialFormState(config, knownTags, statusTags),
@@ -101,7 +103,7 @@ export function CreateRecordDrawer({
       ) {
         return
       }
-      setError(caught instanceof Error ? caught.message : 'Create record failed')
+      setError(caught instanceof Error ? caught.message : t('create.errorGeneral'))
       setIsCreating(false)
     } finally {
       if (createRequestIdRef.current === requestId) {
@@ -129,20 +131,20 @@ export function CreateRecordDrawer({
         <header className="flex min-w-0 items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4">
           <div className="min-w-0">
             <p className="mb-1 text-xs font-bold uppercase text-slate-500">
-              Base record
+              {t('create.subtitle')}
             </p>
             <h2 className="text-xl font-semibold leading-tight" id="create-record-title">
-              Create Record
+              {t('create.title')}
             </h2>
           </div>
           <Button
             type="button"
             variant="ghost"
             onClick={close}
-            title="Close create record"
+            title={t('create.closeTitle')}
             icon={<XMarkIcon className="h-4 w-4" />}
           >
-            Close
+            {t('create.close')}
           </Button>
         </header>
 
@@ -166,7 +168,7 @@ export function CreateRecordDrawer({
 
             <div className="grid gap-3 sm:grid-cols-2">
               <Select
-                label="Schema"
+                label={t('create.schema')}
                 value={form.schema}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, schema: event.target.value }))
@@ -175,42 +177,42 @@ export function CreateRecordDrawer({
                 disabled={isCreating}
               />
               <TextInput
-                label="Title"
+                label={t('create.titleField')}
                 value={form.title}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, title: event.target.value }))
                 }
-                placeholder="Record title"
+                placeholder={t('create.titlePlaceholder')}
                 disabled={isCreating}
                 required
               />
             </div>
 
             <TextAreaField
-              label="Description"
+              label={t('create.description')}
               value={form.description}
               onChange={(value) =>
                 setForm((current) => ({ ...current, description: value }))
               }
-              placeholder="Short description"
+              placeholder={t('create.descriptionPlaceholder')}
               disabled={isCreating}
               rows={3}
             />
 
             <TextAreaField
-              label="Content"
+              label={t('create.content')}
               value={form.content}
               onChange={(value) =>
                 setForm((current) => ({ ...current, content: value }))
               }
-              placeholder="Record content"
+              placeholder={t('create.contentPlaceholder')}
               disabled={isCreating}
               rows={5}
             />
 
             <div className="grid gap-3 sm:grid-cols-2">
               <TagInput
-                label="Status tag"
+                label={t('create.statusTag')}
                 value={form.statusTag}
                 tags={statusTags}
                 fallbackTags={knownTags.filter((tag) => tag.startsWith('status:'))}
@@ -218,10 +220,10 @@ export function CreateRecordDrawer({
                   setForm((current) => ({ ...current, statusTag: value }))
                 }
                 disabled={isCreating}
-                placeholder="status:todo"
+                placeholder={t('create.statusTagPlaceholder')}
               />
               <TagInput
-                label="Priority tag"
+                label={t('create.priorityTag')}
                 value={form.priorityTag}
                 tags={priorityTags}
                 fallbackTags={knownTags.filter((tag) => tag.startsWith('priority:'))}
@@ -229,14 +231,14 @@ export function CreateRecordDrawer({
                   setForm((current) => ({ ...current, priorityTag: value }))
                 }
                 disabled={isCreating}
-                placeholder="priority:medium"
+                placeholder={t('create.priorityTagPlaceholder')}
                 optional
               />
             </div>
 
             <div className="grid gap-1.5">
               <label className="text-xs font-bold text-slate-500" htmlFor={assigneeListId}>
-                Assignee
+                {t('create.assignee')}
               </label>
               <input
                 id={assigneeListId}
@@ -263,22 +265,22 @@ export function CreateRecordDrawer({
             </div>
 
             <TextAreaField
-              label="Assets"
+              label={t('create.assets')}
               value={form.assetsText}
               onChange={(value) =>
                 setForm((current) => ({ ...current, assetsText: value }))
               }
-              placeholder={'asset-record-id-1\nasset-record-id-2'}
+              placeholder={t('create.assetsPlaceholder')}
               disabled={isCreating}
               rows={4}
-              hint="One asset id per line."
+              hint={t('create.assetsHint')}
             />
           </form>
         </div>
 
         <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 bg-white px-5 py-4">
           <Button type="button" variant="ghost" onClick={close} disabled={isCreating}>
-            Cancel
+            {t('create.cancel')}
           </Button>
           <Button
             type="button"
@@ -286,7 +288,7 @@ export function CreateRecordDrawer({
             disabled={isCreating}
             icon={<PlusIcon className="h-4 w-4" />}
           >
-            {isCreating ? 'Creating...' : 'Create Record'}
+            {isCreating ? t('create.creating') : t('create.createButton')}
           </Button>
         </footer>
       </aside>

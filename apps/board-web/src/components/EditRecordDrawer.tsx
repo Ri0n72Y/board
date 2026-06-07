@@ -21,6 +21,7 @@ import {
   PencilSquareIcon,
   XMarkIcon,
 } from '@heroicons/react/20/solid'
+import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { submitRecordPatch, RecordPatchConflictError } from '../api/patches'
 import type { SubmitRecordPatchPayload } from '../api/patches'
@@ -74,6 +75,7 @@ export function EditRecordDrawer({
   onClose,
   onPatched,
 }: EditRecordDrawerProps) {
+  const { t } = useTranslation()
   const assigneeListId = useId()
   const current = record.body
   const [form, setForm] = useState<FormState>(() =>
@@ -116,9 +118,7 @@ export function EditRecordDrawer({
       if (requestIdRef.current !== requestId || controller.signal.aborted) return
 
       if (!head.exists) {
-        setError(
-          'Current record is not present in current head. Refresh current board and try again.',
-        )
+        setError(t('edit.headMissing'))
         setIsSaving(false)
         return
       }
@@ -151,10 +151,10 @@ export function EditRecordDrawer({
 
       if (caught instanceof RecordPatchConflictError) {
         setError(
-          `Record changed on the server. Refresh and try again. ${caught.message}`,
+          `${t('edit.conflictError')} ${caught.message}`,
         )
       } else {
-        setError(caught instanceof Error ? caught.message : 'Save patch failed')
+        setError(caught instanceof Error ? caught.message : t('edit.errorGeneral'))
       }
       setIsSaving(false)
     } finally {
@@ -183,20 +183,20 @@ export function EditRecordDrawer({
         <header className="flex min-w-0 items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4">
           <div className="min-w-0">
             <p className="mb-1 break-all font-mono text-xs text-slate-500">
-              {current.pid} / {current.id}
+              {t('edit.subtitle', { pid: current.pid, id: current.id })}
             </p>
             <h2 className="text-xl font-semibold leading-tight" id="edit-record-title">
-              Edit Record
+              {t('edit.title')}
             </h2>
           </div>
           <Button
             type="button"
             variant="ghost"
             onClick={close}
-            title="Close edit record"
+            title={t('edit.closeTitle')}
             icon={<XMarkIcon className="h-4 w-4" />}
           >
-            Close
+            {t('edit.close')}
           </Button>
         </header>
 
@@ -219,44 +219,44 @@ export function EditRecordDrawer({
             )}
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <ReadOnlyMeta label="Schema" value={current.schema} />
+              <ReadOnlyMeta label={t('record.schema')} value={current.schema} />
               <TextInput
-                label="Title"
+                label={t('edit.titleField')}
                 value={form.title}
                 onChange={(event) =>
                   setForm((state) => ({ ...state, title: event.target.value }))
                 }
-                placeholder="Record title"
+                placeholder={t('edit.titlePlaceholder')}
                 disabled={isSaving}
                 required
               />
             </div>
 
             <TextAreaField
-              label="Description"
+              label={t('edit.description')}
               value={form.description}
               onChange={(value) =>
                 setForm((state) => ({ ...state, description: value }))
               }
-              placeholder="Short description"
+              placeholder={t('edit.descriptionPlaceholder')}
               disabled={isSaving}
               rows={3}
             />
 
             <TextAreaField
-              label="Content"
+              label={t('edit.content')}
               value={form.content}
               onChange={(value) =>
                 setForm((state) => ({ ...state, content: value }))
               }
-              placeholder="Record content"
+              placeholder={t('edit.contentPlaceholder')}
               disabled={isSaving}
               rows={5}
             />
 
             <div className="grid gap-3 sm:grid-cols-2">
               <TagInput
-                label="Status tag"
+                label={t('edit.statusTag')}
                 value={form.statusTag}
                 tags={statusTags}
                 fallbackTags={knownTags.filter((tag) => tag.startsWith('status:'))}
@@ -264,10 +264,10 @@ export function EditRecordDrawer({
                   setForm((state) => ({ ...state, statusTag: value }))
                 }
                 disabled={isSaving}
-                placeholder="status:todo"
+                placeholder={t('edit.statusTagPlaceholder')}
               />
               <TagInput
-                label="Priority tag"
+                label={t('edit.priorityTag')}
                 value={form.priorityTag}
                 tags={priorityTags}
                 fallbackTags={knownTags.filter((tag) => tag.startsWith('priority:'))}
@@ -275,26 +275,26 @@ export function EditRecordDrawer({
                   setForm((state) => ({ ...state, priorityTag: value }))
                 }
                 disabled={isSaving}
-                placeholder="priority:medium"
+                placeholder={t('edit.priorityTagPlaceholder')}
                 optional
               />
             </div>
 
             <TextAreaField
-              label="Other tags"
+              label={t('edit.otherTags')}
               value={form.otherTagsText}
               onChange={(value) =>
                 setForm((state) => ({ ...state, otherTagsText: value }))
               }
-              placeholder={'custom:tag\narea:ui'}
+              placeholder={t('edit.otherTagsPlaceholder')}
               disabled={isSaving}
               rows={4}
-              hint="One tag per line. Status and priority tags are managed above."
+              hint={t('edit.otherTagsHint')}
             />
 
             <div className="grid gap-1.5">
               <label className="text-xs font-bold text-slate-500" htmlFor={assigneeListId}>
-                Assignee
+                {t('edit.assignee')}
               </label>
               <input
                 id={assigneeListId}
@@ -321,15 +321,15 @@ export function EditRecordDrawer({
             </div>
 
             <TextAreaField
-              label="Assets"
+              label={t('edit.assets')}
               value={form.assetsText}
               onChange={(value) =>
                 setForm((state) => ({ ...state, assetsText: value }))
               }
-              placeholder={'asset-record-id-1\nasset-record-id-2'}
+              placeholder={t('edit.assetsPlaceholder')}
               disabled={isSaving}
               rows={4}
-              hint="One asset id per line. Saving replaces the record assets list."
+              hint={t('edit.assetsHint')}
             />
 
             <ReadOnlyRelations relations={current.relations ?? []} />
@@ -338,7 +338,7 @@ export function EditRecordDrawer({
 
         <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 bg-white px-5 py-4">
           <Button type="button" variant="ghost" onClick={close} disabled={isSaving}>
-            Cancel
+            {t('edit.cancel')}
           </Button>
           <Button
             type="button"
@@ -346,7 +346,7 @@ export function EditRecordDrawer({
             disabled={isSaving}
             icon={<PencilSquareIcon className="h-4 w-4" />}
           >
-            {isSaving ? 'Saving...' : 'Save patch'}
+            {isSaving ? t('edit.saving') : t('edit.saveButton')}
           </Button>
         </footer>
       </aside>
@@ -566,9 +566,11 @@ function ReadOnlyRelations({
 }: {
   relations: RecordItem<RecordBody>['relations']
 }) {
+  const { t } = useTranslation()
+
   return (
     <section className="grid gap-2 rounded-lg border border-slate-200 bg-white p-4">
-      <h3 className="text-sm font-semibold text-slate-500">Relations</h3>
+      <h3 className="text-sm font-semibold text-slate-500">{t('record.relations')}</h3>
       {relations && relations.length > 0 ? (
         <ul className="grid gap-1.5">
           {relations.map((relation) => (
@@ -587,7 +589,7 @@ function ReadOnlyRelations({
           ))}
         </ul>
       ) : (
-        <p className="text-slate-500">None</p>
+        <p className="text-slate-500">{t('record.none')}</p>
       )}
     </section>
   )

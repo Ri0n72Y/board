@@ -64,27 +64,27 @@ export function RecordCard({
               variant="ghost"
               className="min-h-8 px-2.5 text-xs"
               onClick={() => onEditClick?.(record)}
-              title="Edit record"
+              title={t('record.editTitle')}
               icon={<PencilSquareIcon className="h-4 w-4" />}
             >
-              Edit
+              {t('record.edit')}
             </Button>
             <Button
               type="button"
               variant="ghost"
               className="min-h-8 px-2.5 text-xs"
               onClick={() => onHistoryClick?.(record)}
-              title="Open history"
+              title={t('record.openHistory')}
               icon={<ClockIcon className="h-4 w-4" />}
             >
-              History
+              {t('record.history')}
             </Button>
           </div>
         </div>
 
         <dl className="grid gap-2">
           <MetaItem
-            label="Assignee"
+            label={t('record.assignee')}
             value={formatAssignee(current.assignee, profiles, t)}
           />
         </dl>
@@ -92,7 +92,7 @@ export function RecordCard({
         {current.tags.length > 0 ? (
           <TagChipRow tags={current.tags} readonly />
         ) : (
-          <p className="text-sm text-slate-500">No tags</p>
+          <p className="text-sm text-slate-500">{t('record.noTags')}</p>
         )}
 
         {onMoveStatus && moveStatusOptions.length > 0 && (
@@ -122,30 +122,30 @@ export function RecordCard({
             type="button"
             variant="ghost"
             onClick={() => onEditClick?.(record)}
-            title="Edit record"
+            title={t('record.editTitle')}
             icon={<PencilSquareIcon className="h-4 w-4" />}
           >
-            Edit
+            {t('record.edit')}
           </Button>
           <Button
             type="button"
             variant="ghost"
             onClick={() => onHistoryClick?.(record)}
-            title="Open history"
+            title={t('record.openHistory')}
             icon={<ClockIcon className="h-4 w-4" />}
           >
-            History
+            {t('record.history')}
           </Button>
         </div>
       </div>
 
       <dl className="grid gap-2 sm:grid-cols-3">
         <MetaItem
-          label="Assignee"
+          label={t('record.assignee')}
           value={formatAssignee(current.assignee, profiles, t)}
         />
-        <MetaItem label="Schema" value={current.schema} />
-        <MetaItem label="Created" value={formatDate(record.createdAt)} />
+        <MetaItem label={t('record.schema')} value={current.schema} />
+        <MetaItem label={t('record.created')} value={formatDate(record.createdAt)} />
       </dl>
 
       {(body.description || body.content) && (
@@ -162,10 +162,10 @@ export function RecordCard({
       {current.tags.length > 0 ? (
         <TagChipRow tags={current.tags} readonly />
       ) : (
-        <p className="text-slate-500">No tags</p>
+        <p className="text-slate-500">{t('record.noTags')}</p>
       )}
 
-      <ReferenceList label="Assets" values={current.assets ?? []} />
+      <ReferenceList label={t('record.assets')} values={current.assets ?? []} />
       <RelationsList relations={current.relations ?? []} />
     </article>
   )
@@ -181,6 +181,8 @@ function MetaItem({ label, value }: { label: string; value: string }) {
 }
 
 function ReferenceList({ label, values }: { label: string; values: string[] }) {
+  const { t } = useTranslation()
+
   return (
     <section className="grid gap-2">
       <h3 className="text-sm font-semibold text-slate-500">{label}</h3>
@@ -193,7 +195,7 @@ function ReferenceList({ label, values }: { label: string; values: string[] }) {
           ))}
         </ul>
       ) : (
-        <p className="text-slate-500">None</p>
+        <p className="text-slate-500">{t('record.none')}</p>
       )}
     </section>
   )
@@ -204,9 +206,11 @@ function RelationsList({
 }: {
   relations: RecordItem<RecordBody>['relations']
 }) {
+  const { t } = useTranslation()
+
   return (
     <section className="grid gap-2">
-      <h3 className="text-sm font-semibold text-slate-500">Relations</h3>
+      <h3 className="text-sm font-semibold text-slate-500">{t('record.relations')}</h3>
       {relations && relations.length > 0 ? (
         <ul className="grid gap-1.5">
           {relations.map((relation) => (
@@ -225,12 +229,11 @@ function RelationsList({
           ))}
         </ul>
       ) : (
-        <p className="text-slate-500">None</p>
+        <p className="text-slate-500">{t('record.none')}</p>
       )}
     </section>
   )
 }
-
 function asDisplayBody(body: RecordBody): {
   title?: string
   description?: string

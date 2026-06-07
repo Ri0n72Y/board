@@ -1,4 +1,5 @@
 import type { Tag } from '@labour-board/shared'
+import { useTranslation } from 'react-i18next'
 import type { MoveStatusOption } from '../utils/statusMove'
 
 interface MoveStatusControlProps {
@@ -16,18 +17,19 @@ export function MoveStatusControl({
   error,
   onMove,
 }: MoveStatusControlProps) {
+  const { t } = useTranslation()
   const availableOptions = options.filter((option) => option.tag !== currentStatus)
   const disabled = isMoving || availableOptions.length === 0
 
   return (
     <div className="grid gap-1.5">
       <label className="grid gap-1 text-xs font-bold uppercase text-slate-500">
-        Move to
+        {t('move.label')}
         <select
           className="min-h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 text-sm font-medium normal-case text-slate-800 outline-none transition focus:border-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           value=""
           disabled={disabled}
-          aria-label="Move to status"
+          aria-label={t('move.label')}
           onChange={(event) => {
             const targetStatusTag = event.currentTarget.value as Tag
             event.currentTarget.value = ''
@@ -37,10 +39,10 @@ export function MoveStatusControl({
         >
           <option value="">
             {isMoving
-              ? 'Moving...'
+              ? t('move.moving')
               : availableOptions.length > 0
-                ? 'Select status'
-                : 'No moves'}
+                ? t('move.placeholder')
+                : t('move.noMoves')}
           </option>
           {availableOptions.map((option) => (
             <option key={option.tag} value={option.tag}>

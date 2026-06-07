@@ -2,6 +2,7 @@ import {
   ListBulletIcon,
   RectangleGroupIcon,
 } from '@heroicons/react/20/solid'
+import { useTranslation } from 'react-i18next'
 import { cn } from '../lib/cn'
 
 export type BoardViewMode = 'list' | 'board'
@@ -11,16 +12,18 @@ interface ViewModeToggleProps {
   onChange: (value: BoardViewMode) => void
 }
 
-const options: {
-  value: BoardViewMode
-  label: string
-  icon: typeof ListBulletIcon
-}[] = [
-  { value: 'list', label: 'List View', icon: ListBulletIcon },
-  { value: 'board', label: 'Board View', icon: RectangleGroupIcon },
-]
-
 export function ViewModeToggle({ value, onChange }: ViewModeToggleProps) {
+  const { t } = useTranslation()
+
+  const options: {
+    value: BoardViewMode
+    label: string
+    icon: typeof ListBulletIcon
+  }[] = [
+    { value: 'list', label: t('viewMode.list'), icon: ListBulletIcon },
+    { value: 'board', label: t('viewMode.board'), icon: RectangleGroupIcon },
+  ]
+
   return (
     <div
       className="inline-flex min-h-10 rounded-md border border-slate-200 bg-white p-1"

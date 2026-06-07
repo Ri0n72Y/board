@@ -14,6 +14,7 @@ import { Select } from './ui/Select'
 import { SwitchField } from './ui/SwitchField'
 import { Panel } from './ui/Panel'
 import { cn } from '../lib/cn'
+import { formatTagLabel } from '../utils/tagDisplay'
 
 interface MetadataErrorState {
   config: string | null
@@ -49,9 +50,9 @@ interface BoardFiltersProps {
   onRelationTargetChange: (relationTarget: string) => void
 }
 
-const TAG_MATCH_OPTIONS: { value: string; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'any', label: 'Any' },
+const tagMatchOptions = (t: (key: string) => string): { value: string; label: string }[] => [
+  { value: 'all', label: t('filters.tagMatchAll') },
+  { value: 'any', label: t('filters.tagMatchAny') },
 ]
 
 export function BoardFilters({
@@ -114,15 +115,15 @@ export function BoardFilters({
 
         <div className="grid gap-3 lg:grid-cols-4">
           <TextInput
-            label="Search current text"
+            label={t('filters.search')}
             value={q}
             onChange={(event) => onQChange(event.target.value)}
-            placeholder="title, description, content"
+            placeholder={t('filters.searchPlaceholder')}
             icon={<MagnifyingGlassIcon className="h-4 w-4" />}
           />
 
           <TextInput
-            label="Tag"
+            label={t('filters.tag')}
             value={tagInput}
             onChange={(event) => setTagInput(event.target.value)}
             onKeyDown={(event) => {
@@ -131,22 +132,22 @@ export function BoardFilters({
                 submitTag()
               }
             }}
-            placeholder="status:todo"
+            placeholder={t('filters.tagPlaceholder')}
             icon={<TagIcon className="h-4 w-4" />}
             after={
               <Button type="button" onClick={submitTag} className="shrink-0 rounded-l-none">
-                Add
+                {t('filters.tagAdd')}
               </Button>
             }
           />
 
           <Select
-            label="Tag match"
+            label={t('filters.tagMatch')}
             value={tagMatch}
             onChange={(event) =>
               onTagMatchChange(event.target.value as BoardCurrentTagMatch)
             }
-            options={TAG_MATCH_OPTIONS}
+            options={tagMatchOptions(t)}
           />
 
           <div className="flex flex-col justify-end gap-3">
@@ -155,7 +156,7 @@ export function BoardFilters({
                 className="text-xs font-bold text-slate-500"
                 htmlFor={assigneeListId}
               >
-                Assignee
+                {t('filters.assignee')}
               </label>
               <input
                 id={assigneeListId}
@@ -164,7 +165,7 @@ export function BoardFilters({
                 )}
                 value={assignee}
                 onChange={(event) => onAssigneeChange(event.target.value)}
-                placeholder="public key"
+                placeholder={t('filters.assigneePlaceholder')}
                 list={`${assigneeListId}-list`}
               />
               {profileOptions.length > 0 && (
@@ -178,7 +179,7 @@ export function BoardFilters({
               )}
             </div>
             <SwitchField
-              label="Include archived"
+              label={t('filters.includeArchived')}
               checked={includeArchived}
               onChange={onIncludeArchivedChange}
             />
@@ -187,17 +188,17 @@ export function BoardFilters({
 
         <div className="mt-3 grid gap-3 lg:grid-cols-2">
           <TextInput
-            label="Asset ID"
+            label={t('filters.assetId')}
             value={assetId}
             onChange={(event) => onAssetIdChange(event.target.value)}
-            placeholder="asset id"
+            placeholder={t('filters.assetIdPlaceholder')}
             icon={<HashtagIcon className="h-4 w-4" />}
           />
           <TextInput
-            label="Relation target"
+            label={t('filters.relationTarget')}
             value={relationTarget}
             onChange={(event) => onRelationTargetChange(event.target.value)}
-            placeholder="record id"
+            placeholder={t('filters.relationTargetPlaceholder')}
             icon={<LinkIcon className="h-4 w-4" />}
           />
         </div>
@@ -228,14 +229,14 @@ export function BoardFilters({
         <Panel className="mt-3 px-4 py-3" aria-label="Tag filters">
           {tags.length > 0 && (
             <TagChipRow
-              label="Active"
+              label={t('filters.activeTag')}
               tags={tags}
               selected
               onTagClick={onRemoveTag}
             />
           )}
           {knownTags.length > 0 && (
-            <TagChipRow label="Known" tags={knownTags} onTagClick={onAddTag} />
+            <TagChipRow label={t('filters.knownTag')} tags={knownTags} onTagClick={onAddTag} />
           )}
         </Panel>
       )}
@@ -260,6 +261,8 @@ export function TagChipRow({
   readonly = false,
   onTagClick,
 }: TagChipRowProps) {
+  const { t } = useTranslation()
+
   if (tags.length === 0) return null
 
   return (
@@ -268,7 +271,7 @@ export function TagChipRow({
       {tags.map((tag) =>
         readonly || !onTagClick ? (
           <span className={chipClassName({ selected, readonly })} key={tag}>
-            {tag}
+            {formatTagLabel(tag, t)}
           </span>
         ) : (
           <button
@@ -276,9 +279,9 @@ export function TagChipRow({
             key={tag}
             type="button"
             onClick={() => onTagClick(tag)}
-            title={selected ? 'Remove tag filter' : 'Add tag filter'}
+            title={selected ? t('filters.removeTagFilter') : t('filters.addTagFilter')}
           >
-            {tag}
+            {formatTagLabel(tag, t)}
           </button>
         )
       )}
