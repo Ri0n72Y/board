@@ -485,9 +485,6 @@ export function BoardCurrentPage() {
             .then(() => {
               setIsContextExportOpen(false)
             })
-            .catch(() => {
-              // Error stays visible via draftSaveError; drawer stays open
-            })
         }}
         isSavingDraft={agentDraftController.isCreating}
         draftSaveError={agentDraftController.createError}
