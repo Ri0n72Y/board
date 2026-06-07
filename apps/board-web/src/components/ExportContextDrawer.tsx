@@ -280,7 +280,6 @@ export function ExportContextDrawer({
                     includeRelations,
                     includeDiagnostics,
                   })
-                  setDraftTitle('')
                 }}
                 icon={
                   isSavingDraft ? (

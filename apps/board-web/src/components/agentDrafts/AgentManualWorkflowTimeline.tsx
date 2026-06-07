@@ -118,7 +118,7 @@ export function AgentManualWorkflowTimeline({
         <TimelineItem
           tone="complete"
           title="Human Reviewed"
-          meta={`${formatDate(draft.reviewedAt!)} by ${draft.reviewedBy}`}
+          meta={draft.reviewedAt ? `${formatDate(draft.reviewedAt)} by ${draft.reviewedBy ?? 'unknown'}` : undefined}
         >
           <p>This draft is eligible for formal handoff and manual response intake.</p>
           {draft.reviewNote && <p className="italic">Note: {draft.reviewNote}</p>}
