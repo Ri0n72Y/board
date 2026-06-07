@@ -9,6 +9,7 @@ import { AgentDraftReviewActions } from './agentDrafts/AgentDraftReviewActions'
 import { AgentDraftContextPreview } from './agentDrafts/AgentDraftContextPreview'
 import { FormalHandoffSection } from './agentDrafts/FormalHandoffSection'
 import { ManualAgentResponseSection } from './agentDrafts/ManualAgentResponseSection'
+import { AgentManualWorkflowTimeline } from './agentDrafts/AgentManualWorkflowTimeline'
 import { ErrorBlock } from './agentDrafts/ErrorBlock'
 
 interface AgentDraftsDrawerProps {
@@ -131,6 +132,11 @@ export function AgentDraftsDrawer({
             {!isDetailLoading && !detailError && selectedDraft && (
               <div className="grid gap-4">
                 <AgentDraftSafetyBanner />
+
+                <AgentManualWorkflowTimeline
+                  draft={selectedDraft}
+                  responses={responses}
+                />
 
                 <AgentDraftMetaPanel key={selectedDraft.id} draft={selectedDraft} />
 
