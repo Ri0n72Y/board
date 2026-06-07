@@ -264,7 +264,9 @@ boardMetadataStore  — config, profiles, initial metadata load
 | `useAgentDraftController` | Draft CRUD + review + handoff + response orchestration | Yes |
 | `useAgentResponseController` | Response CRUD lifecycle | Yes |
 
-All controllers use `requestId` counters and `AbortController` to prevent stale writes. Close/unmount triggers abort for in-flight requests. Abort/cancel errors are filtered and never surfaced as user-facing errors.
+Async controllers (`useBoardExportController`, `useSnapshotController`, `useRecordHistoryController`, `useAgentDraftController`, `useAgentResponseController`) use `requestId` counters and `AbortController` to prevent stale writes. Close/unmount triggers abort for in-flight requests. Abort/cancel errors are filtered and never surfaced as user-facing errors.
+
+`useStatusMoveController` is single-shot (no abort/stale guard) — documented as N/A above.
 
 ### 5.4 API Clients
 
