@@ -96,3 +96,12 @@ export type {
   UpdateAgentDraftReviewInput,
   UpdateAgentDraftReviewResponse,
 } from './agent.js'
+export type {
+  AgentResponseDetail,
+  AgentResponseSource,
+  AgentResponseSummary,
+  CreateAgentResponseInput,
+  CreateAgentResponseResponse,
+  GetAgentResponseResponse,
+  ListAgentResponsesResponse,
+} from './agent.js'

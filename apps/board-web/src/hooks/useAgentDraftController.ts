@@ -4,6 +4,7 @@ import type { AgentDraftDetail, AgentDraftStatus, AgentDraftSummary, BoardCurren
 import type { ExportContextPackOptions } from './useBoardExportController'
 import { createAgentDraft, fetchAgentDraft, fetchAgentDrafts, fetchAgentDraftHandoff, updateAgentDraftReview } from '../api/agentDrafts'
 import { downloadTextFile } from '../utils/download'
+import { useAgentResponseController } from './useAgentResponseController'
 
 function isIgnoredHandoffAbort(err: unknown): boolean {
   if (axios.isCancel(err)) return true
@@ -42,6 +43,9 @@ export function useAgentDraftController() {
   const reviewAbortRef = useRef<AbortController | null>(null)
   const handoffAbortRef = useRef<AbortController | null>(null)
 
+  // Agent Response controller
+  const responseCtrl = useAgentResponseController()
+
   const abortAll = useCallback(() => {
     listRequestIdRef.current += 1
     detailRequestIdRef.current += 1
@@ -58,7 +62,8 @@ export function useAgentDraftController() {
     createAbortRef.current = null
     reviewAbortRef.current = null
     handoffAbortRef.current = null
-  }, [])
+    responseCtrl.abortAll()
+  }, [responseCtrl])
 
   useEffect(() => abortAll, [abortAll])
 
@@ -108,7 +113,8 @@ export function useAgentDraftController() {
     setIsCreating(false)
     setIsReviewing(false)
     setIsHandoffLoading(false)
-  }, [abortAll])
+    responseCtrl.clearResponses()
+  }, [abortAll, responseCtrl])
 
   const loadDraftDetail = useCallback((draftId: string) => {
     const requestId = detailRequestIdRef.current + 1
@@ -123,6 +129,9 @@ export function useAgentDraftController() {
     setHandoffFeedback(null)
     setIsHandoffLoading(false)
 
+    // Clear response state for new draft
+    responseCtrl.clearResponses()
+
     const controller = new AbortController()
     detailAbortRef.current = controller
     setIsDetailLoading(true)
@@ -133,6 +142,8 @@ export function useAgentDraftController() {
       .then((data) => {
         if (detailRequestIdRef.current !== requestId || controller.signal.aborted) return
         setSelectedDraft(data.draft)
+        // Load responses for this draft
+        responseCtrl.loadResponseList(draftId)
       })
       .catch((err: unknown) => {
         if (detailRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) return
@@ -143,7 +154,7 @@ export function useAgentDraftController() {
         setIsDetailLoading(false)
         detailAbortRef.current = null
       })
-  }, [])
+  }, [responseCtrl])
 
   const saveDraft = useCallback(
     (options: ExportContextPackOptions & {
@@ -335,5 +346,17 @@ export function useAgentDraftController() {
     updateDraftReview,
     copyHandoff,
     downloadHandoff,
+    // Agent Response
+    responses: responseCtrl.responses,
+    selectedResponse: responseCtrl.selectedResponse,
+    isResponseListLoading: responseCtrl.isListLoading,
+    isResponseDetailLoading: responseCtrl.isDetailLoading,
+    isResponseCreating: responseCtrl.isCreating,
+    responseListError: responseCtrl.listError,
+    responseDetailError: responseCtrl.detailError,
+    responseCreateError: responseCtrl.createError,
+    loadResponseDetail: responseCtrl.loadResponseDetail,
+    saveResponse: responseCtrl.saveResponse,
+    setSelectedResponse: responseCtrl.setSelectedResponse,
   }
 }

@@ -11,6 +11,7 @@ import {
   getRecordsCollection,
   getSnapshotsCollection,
   getAgentDraftsCollection,
+  getAgentResponsesCollection,
 } from '../db/mongo.js'
 import {
   MemoryProfileRepository,
@@ -37,10 +38,17 @@ import { ConfigService } from './configService.js'
 import { ProfileService } from './profileService.js'
 import { SnapshotService } from './snapshot/snapshotService.js'
 import { AgentDraftService } from './agent/agentDraftService.js'
+import { AgentResponseService } from './agent/agentResponseService.js'
 import {
   MemoryAgentDraftRepository,
   MongoAgentDraftRepository,
+  type AgentDraftRepository,
 } from '../repositories/agentDraftRepository.js'
+import {
+  MemoryAgentResponseRepository,
+  MongoAgentResponseRepository,
+  type AgentResponseRepository,
+} from '../repositories/agentResponseRepository.js'
 
 export interface ApiServices {
   configService: ConfigService
@@ -48,6 +56,7 @@ export interface ApiServices {
   recordService: RecordService
   snapshotService: SnapshotService
   agentDraftService: AgentDraftService
+  agentResponseService: AgentResponseService
   recordRepository: RecordRepository
   snapshotHeadRepository: SnapshotHeadRepository
   snapshotRepository: SnapshotRepository
@@ -107,23 +116,39 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
     snapshotRepository
   )
 
+  // Shared AgentDraftRepository – both services use the same instance
+  const agentDraftRepository: AgentDraftRepository = env.mongodbUri
+    ? new MongoAgentDraftRepository(
+        (await getAgentDraftsCollection<Document>(
+          env.mongodbUri,
+          env.mongodbDb
+        )) as Collection<Document>
+      )
+    : new MemoryAgentDraftRepository()
+
+  const agentResponseRepository: AgentResponseRepository = env.mongodbUri
+    ? new MongoAgentResponseRepository(
+        (await getAgentResponsesCollection<Document>(
+          env.mongodbUri,
+          env.mongodbDb
+        )) as Collection<Document>
+      )
+    : new MemoryAgentResponseRepository()
+
   return {
     configService: new ConfigService(boardConfig, agentRuntimeConfig),
     profileService: new ProfileService(profileRepository),
     recordService,
     snapshotService,
     agentDraftService: new AgentDraftService(
-      env.mongodbUri
-        ? new MongoAgentDraftRepository(
-            (await getAgentDraftsCollection<Document>(
-              env.mongodbUri,
-              env.mongodbDb
-            )) as Collection<Document>
-          )
-        : new MemoryAgentDraftRepository(),
+      agentDraftRepository,
       recordRepository,
       snapshotHeadRepository,
       snapshotRepository
+    ),
+    agentResponseService: new AgentResponseService(
+      agentResponseRepository,
+      agentDraftRepository
     ),
     recordRepository,
     snapshotHeadRepository,
