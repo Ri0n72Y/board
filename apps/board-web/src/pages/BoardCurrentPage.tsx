@@ -476,7 +476,7 @@ export function BoardCurrentPage() {
         error={boardExportController.contextExportError}
         onExport={boardExportController.exportContextPack}
         onSaveDraft={(options) => {
-          agentDraftController
+          return agentDraftController
             .saveDraft({
               ...options,
               source: 'current-board',

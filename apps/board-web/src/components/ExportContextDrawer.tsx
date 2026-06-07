@@ -31,7 +31,7 @@ interface ExportContextDrawerProps {
   isExporting: boolean
   error: string | null
   onExport: (options: ExportContextPackOptions) => boolean
-  onSaveDraft?: (options: ExportContextPackOptions & { title: string }) => void
+  onSaveDraft?: (options: ExportContextPackOptions & { title: string }) => Promise<void>
   isSavingDraft?: boolean
   draftSaveError?: string | null
   onClose: () => void
@@ -280,6 +280,12 @@ export function ExportContextDrawer({
                     includeRelations,
                     includeDiagnostics,
                   })
+                    .then(() => {
+                      setDraftTitle('')
+                    })
+                    .catch(() => {
+                      // Title preserved on failure
+                    })
                 }}
                 icon={
                   isSavingDraft ? (
