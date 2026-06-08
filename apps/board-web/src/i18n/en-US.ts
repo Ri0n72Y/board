@@ -47,20 +47,42 @@ const enUS = {
     'filters.priorityOptions': 'Priority options',
     'filters.removeTagFilter': 'Remove tag filter',
     'filters.addTagFilter': 'Add tag filter',
+    'filters.advancedFilters': 'Advanced Filters',
+    'filters.advancedTitle': 'Advanced Filters',
+    'filters.advancedSubtitle': 'All filters',
+    'filters.close': 'Close',
+    'filters.clearFilters': 'Clear filters',
+    'filters.noKnownTags': 'No known tags.',
+    // ─── Tag groups ───
+    'filters.group.status': 'Status',
+    'filters.group.priority': 'Priority',
+    'filters.group.epic': 'Epic',
+    'filters.group.sprint': 'Sprint',
+    'filters.group.owner': 'Owner',
+    'filters.group.scope': 'Scope',
+    'filters.group.type': 'Type',
+    'filters.group.milestone': 'Milestone',
+    'filters.group.asset': 'Asset',
+    'filters.group.transaction': 'Transaction',
+    'filters.group.other': 'Other',
 
     // ─── Status / Alerts ───
     'status.loading': 'Loading current board...',
     'status.loadError': 'Failed to load current board',
     'status.refreshError': 'Refresh failed - showing stale data',
     'status.exportError': 'Export failed',
-    'status.projectionPartial': 'Projection is partial - some records may be missing.',
+    'status.projectionPartial':
+      'Projection is partial - some records may be missing.',
     'status.projectionBlocked': 'Projection blocked',
-    'status.projectionBlockedActive': 'The current board projection is blocked - no records match these filters.',
-    'status.projectionBlockedInactive': 'The current board projection is blocked - no records can be shown.',
+    'status.projectionBlockedActive':
+      'The current board projection is blocked - no records match these filters.',
+    'status.projectionBlockedInactive':
+      'The current board projection is blocked - no records can be shown.',
     'status.projectionIssues': 'See projection issues below for details.',
     'status.emptyFiltered': 'No current records match these filters.',
     'status.empty': 'The current board has no records.',
-    'status.projectionIssuesHint': 'Projection issues are listed below and may explain missing records.',
+    'status.projectionIssuesHint':
+      'Projection issues are listed below and may explain missing records.',
 
     // ─── Record Card ───
     'record.edit': 'Edit',
@@ -124,16 +146,20 @@ const enUS = {
     'edit.priorityTagPlaceholder': 'priority:medium',
     'edit.otherTags': 'Other tags',
     'edit.otherTagsPlaceholder': 'custom:tag\narea:ui',
-    'edit.otherTagsHint': 'One tag per line. Status and priority tags are managed above.',
+    'edit.otherTagsHint':
+      'One tag per line. Status and priority tags are managed above.',
     'edit.assignee': 'Assignee',
     'edit.assets': 'Assets',
     'edit.assetsPlaceholder': 'asset-record-id-1\nasset-record-id-2',
-    'edit.assetsHint': 'One asset id per line. Saving replaces the record assets list.',
+    'edit.assetsHint':
+      'One asset id per line. Saving replaces the record assets list.',
     'edit.cancel': 'Cancel',
     'edit.saving': 'Saving...',
     'edit.saveButton': 'Save patch',
-    'edit.conflictError': 'Record changed on the server. Refresh and try again.',
-    'edit.headMissing': 'Current record is not present in current head. Refresh current board and try again.',
+    'edit.conflictError':
+      'Record changed on the server. Refresh and try again.',
+    'edit.headMissing':
+      'Current record is not present in current head. Refresh current board and try again.',
     'edit.errorGeneral': 'Save patch failed',
     'edit.errorTitleRequired': 'Title is required.',
     'edit.errorStatusTagRequired': 'Status tag is required.',
@@ -169,7 +195,8 @@ const enUS = {
     'snapshot.detailPatches': 'Patches',
     'snapshot.detailProjection': 'Projection',
     'snapshot.draftSectionTitle': 'Save Agent Snapshot Draft',
-    'snapshot.draftDescription': 'Save this snapshot as a static Agent Session Draft for human review before handing to an Agent.',
+    'snapshot.draftDescription':
+      'Save this snapshot as a static Agent Session Draft for human review before handing to an Agent.',
     'snapshot.draftTitle': 'Draft title',
     'snapshot.draftPlaceholder': 'e.g. Snapshot checkpoint review',
     'snapshot.draftSaveError': 'Draft save failed',
@@ -198,7 +225,8 @@ const enUS = {
     'export.profile': 'Profile',
     'export.contextGoal': 'Context goal',
     'export.contextGoalPlaceholder': 'Optional goal for the exported context',
-    'export.noFiltersNote': 'No active filters. This context will export the current visible board scope.',
+    'export.noFiltersNote':
+      'No active filters. This context will export the current visible board scope.',
     'export.record': 'Record',
     'export.recordPlaceholder': 'Select record',
     'export.sprintTag': 'Sprint tag',
@@ -215,7 +243,8 @@ const enUS = {
     'export.previewTitle': 'Markdown Preview',
     'export.previewEmpty': 'No preview content. Click Preview to generate.',
     'export.draftSectionTitle': 'Save as Agent Draft',
-    'export.draftDescription': 'Save the current context pack as a static Agent Session Draft for human review before handing to an Agent.',
+    'export.draftDescription':
+      'Save the current context pack as a static Agent Session Draft for human review before handing to an Agent.',
     'export.draftTitle': 'Draft title',
     'export.draftPlaceholder': 'e.g. Review Sprint 1 board',
     'export.draftSaveError': 'Draft save failed',
@@ -224,26 +253,39 @@ const enUS = {
 
     // ─── Export profiles ───
     'export.profiles.agent-full.label': 'Agent Full',
-    'export.profiles.agent-full.description': 'Export the full current board with all records and metadata.',
-    'export.profiles.agent-full.purpose': 'Best for comprehensive agent review of the entire board.',
+    'export.profiles.agent-full.description':
+      'Export the full current board with all records and metadata.',
+    'export.profiles.agent-full.purpose':
+      'Best for comprehensive agent review of the entire board.',
     'export.profiles.agent-sprint.label': 'Agent Sprint',
-    'export.profiles.agent-sprint.description': 'Export records belonging to a specific sprint.',
-    'export.profiles.agent-sprint.purpose': 'Review sprint scope and track delivery progress.',
+    'export.profiles.agent-sprint.description':
+      'Export records belonging to a specific sprint.',
+    'export.profiles.agent-sprint.purpose':
+      'Review sprint scope and track delivery progress.',
     'export.profiles.agent-filtered.label': 'Agent Filtered',
-    'export.profiles.agent-filtered.description': 'Export only records matching current filters.',
-    'export.profiles.agent-filtered.purpose': 'Focus an agent on a filtered subset of the board.',
+    'export.profiles.agent-filtered.description':
+      'Export only records matching current filters.',
+    'export.profiles.agent-filtered.purpose':
+      'Focus an agent on a filtered subset of the board.',
     'export.profiles.agent-card.label': 'Agent Card',
     'export.profiles.agent-card.description': 'Export a single record.',
-    'export.profiles.agent-card.purpose': 'Provide focused context for a single card.',
+    'export.profiles.agent-card.purpose':
+      'Provide focused context for a single card.',
     'export.profiles.agent-related.label': 'Agent Related',
-    'export.profiles.agent-related.description': 'Export a card and its direct relations.',
-    'export.profiles.agent-related.purpose': 'Review a card with its dependency graph.',
+    'export.profiles.agent-related.description':
+      'Export a card and its direct relations.',
+    'export.profiles.agent-related.purpose':
+      'Review a card with its dependency graph.',
     'export.profiles.agent-snapshot.label': 'Agent Snapshot',
-    'export.profiles.agent-snapshot.description': 'Export records captured in a static snapshot.',
-    'export.profiles.agent-snapshot.purpose': 'Review a frozen board checkpoint with an agent.',
+    'export.profiles.agent-snapshot.description':
+      'Export records captured in a static snapshot.',
+    'export.profiles.agent-snapshot.purpose':
+      'Review a frozen board checkpoint with an agent.',
     'export.profiles.human-summary.label': 'Human Summary',
-    'export.profiles.human-summary.description': 'Lightweight summary export for human reading.',
-    'export.profiles.human-summary.purpose': 'Quick overview for stakeholders and team leads.',
+    'export.profiles.human-summary.description':
+      'Lightweight summary export for human reading.',
+    'export.profiles.human-summary.purpose':
+      'Quick overview for stakeholders and team leads.',
 
     // ─── Agent Drafts Drawer ───
     'agent.subtitle': 'Agent',
@@ -264,13 +306,16 @@ const enUS = {
     'agent.queue.loading': 'Loading drafts...',
     'agent.queue.empty': 'No agent drafts yet.',
     'agent.queue.emptyFilter': 'No {status} drafts.',
-    'agent.queue.emptyHint': 'Save a Context Pack from the Export drawer as an Agent Draft to review here.',
+    'agent.queue.emptyHint':
+      'Save a Context Pack from the Export drawer as an Agent Draft to review here.',
     'agent.queue.records': 'records',
 
     // ─── Agent Draft Safety Banner ───
     'agent.safety.title': 'Draft Only - Not Executed',
-    'agent.safety.description': 'This is a static context pack saved for review. No AI call has been made. No agent execution, patch, or board mutation has been performed.',
-    'agent.safety.footer': 'Drafts are reviewed by humans before being handed to an Agent.',
+    'agent.safety.description':
+      'This is a static context pack saved for review. No AI call has been made. No agent execution, patch, or board mutation has been performed.',
+    'agent.safety.footer':
+      'Drafts are reviewed by humans before being handed to an Agent.',
 
     // ─── Agent Draft Status Badge ───
     'agent.status.draft': 'draft',
@@ -289,51 +334,67 @@ const enUS = {
 
     // ─── Agent Manual Workflow Timeline ───
     'agent.timeline.title': 'Manual Workflow Overview',
-    'agent.timeline.disclaimer1': 'This timeline is derived from the current draft, review metadata, handoff readiness, and pasted responses.',
+    'agent.timeline.disclaimer1':
+      'This timeline is derived from the current draft, review metadata, handoff readiness, and pasted responses.',
     'agent.timeline.disclaimer2': 'It is not a persistent audit log.',
-    'agent.timeline.disclaimer3': 'No AI call, patch, or board mutation is performed by this timeline.',
+    'agent.timeline.disclaimer3':
+      'No AI call, patch, or board mutation is performed by this timeline.',
     'agent.timeline.tone.complete': 'complete',
     'agent.timeline.tone.pending': 'pending',
     'agent.timeline.tone.blocked': 'blocked',
     'agent.timeline.draftCreated': 'Draft Created',
-    'agent.timeline.draftCreatedDesc': 'A static Agent context draft was created from the selected source.',
+    'agent.timeline.draftCreatedDesc':
+      'A static Agent context draft was created from the selected source.',
     'agent.timeline.reviewPending': 'Human Review Pending',
     'agent.timeline.reviewPendingDesc': 'Not reviewed yet.',
-    'agent.timeline.reviewPendingHint': 'Mark Reviewed is required before formal handoff or response intake.',
+    'agent.timeline.reviewPendingHint':
+      'Mark Reviewed is required before formal handoff or response intake.',
     'agent.timeline.reviewed': 'Human Reviewed',
-    'agent.timeline.reviewedDesc': 'This draft is eligible for formal handoff and manual response intake.',
+    'agent.timeline.reviewedDesc':
+      'This draft is eligible for formal handoff and manual response intake.',
     'agent.timeline.reviewedNote': 'Note: {note}',
     'agent.timeline.discarded': 'Discarded',
-    'agent.timeline.discardedDesc': 'This draft is not eligible for formal handoff or manual response intake.',
+    'agent.timeline.discardedDesc':
+      'This draft is not eligible for formal handoff or manual response intake.',
     'agent.timeline.handoffReady': 'Formal Handoff Ready',
-    'agent.timeline.handoffReadyDesc': 'Reviewed drafts can generate a formal handoff markdown.',
+    'agent.timeline.handoffReadyDesc':
+      'Reviewed drafts can generate a formal handoff markdown.',
     'agent.timeline.handoffManual': 'Handoff is manual only.',
-    'agent.timeline.handoffNoMutation': 'It does not execute the Agent. It does not mutate LabourBoard.',
+    'agent.timeline.handoffNoMutation':
+      'It does not execute the Agent. It does not mutate LabourBoard.',
     'agent.timeline.handoffLocked': 'Formal Handoff Locked',
-    'agent.timeline.handoffLockedDesc': 'Review this draft before generating formal handoff.',
+    'agent.timeline.handoffLockedDesc':
+      'Review this draft before generating formal handoff.',
     'agent.timeline.handoffDisabled': 'Formal Handoff Disabled',
-    'agent.timeline.handoffDisabledDesc': 'Discarded drafts cannot generate formal handoff.',
+    'agent.timeline.handoffDisabledDesc':
+      'Discarded drafts cannot generate formal handoff.',
     'agent.timeline.responses': 'Manual Responses Pasted ({count})',
-    'agent.timeline.responsesDesc': 'Responses are manually pasted records. They are not applied patches and do not mutate the board.',
+    'agent.timeline.responsesDesc':
+      'Responses are manually pasted records. They are not applied patches and do not mutate the board.',
     'agent.timeline.responsesMore': '+{count} more responses',
     'agent.timeline.noResponses': 'No Manual Responses Yet',
-    'agent.timeline.noResponsesDesc': 'Paste an external Agent response manually after using the handoff.',
+    'agent.timeline.noResponsesDesc':
+      'Paste an external Agent response manually after using the handoff.',
     'agent.timeline.noResponsesLocked': 'No Manual Responses',
-    'agent.timeline.noResponsesLockedDesc': 'Review this draft before pasting an external Agent response.',
+    'agent.timeline.noResponsesLockedDesc':
+      'Review this draft before pasting an external Agent response.',
     'agent.timeline.noResponsesBlocked': 'No Manual Responses',
-    'agent.timeline.noResponsesBlockedDesc': 'Discarded drafts cannot receive Agent responses.',
+    'agent.timeline.noResponsesBlockedDesc':
+      'Discarded drafts cannot receive Agent responses.',
 
     // ─── Agent Manual Response Section ───
     'agent.response.manualPaste': 'Manual Paste',
     'agent.response.notApplied': 'Not Applied',
     'agent.response.noBoardMutation': 'No board mutation',
-    'agent.response.notAppliedDesc': 'This response was pasted manually. No AI call was made by LabourBoard. No patch or board mutation has been performed.',
+    'agent.response.notAppliedDesc':
+      'This response was pasted manually. No AI call was made by LabourBoard. No patch or board mutation has been performed.',
     'agent.response.agentName': 'External agent name (optional)',
     'agent.response.agentNamePlaceholder': 'e.g. Codex, ChatGPT',
     'agent.response.note': 'Response note (optional)',
     'agent.response.notePlaceholder': 'e.g. First manual response',
     'agent.response.markdownLabel': 'Response Markdown *',
-    'agent.response.markdownPlaceholder': "Paste the Agent's markdown response here...",
+    'agent.response.markdownPlaceholder':
+      "Paste the Agent's markdown response here...",
     'agent.response.validationError': 'Validation Error',
     'agent.response.markdownRequired': 'Response Markdown is required.',
     'agent.response.saveFailed': 'Save failed',
@@ -341,11 +402,14 @@ const enUS = {
     'agent.response.saving': 'Saving...',
     'agent.response.sectionTitle': 'Manual Agent Response',
     'agent.response.pasteInfo': "Paste the external Agent's response below.",
-    'agent.response.pasteSafety': 'This response was pasted manually. No AI call was made by LabourBoard. No patch or board mutation has been performed.',
+    'agent.response.pasteSafety':
+      'This response was pasted manually. No AI call was made by LabourBoard. No patch or board mutation has been performed.',
     'agent.response.pasteUnavailable': 'Response paste not available',
-    'agent.response.pasteUnavailableDesc': 'Mark this draft as reviewed before pasting an external Agent response.',
+    'agent.response.pasteUnavailableDesc':
+      'Mark this draft as reviewed before pasting an external Agent response.',
     'agent.response.pasteDiscarded': 'Response paste not available',
-    'agent.response.pasteDiscardedDesc': 'Discarded drafts cannot receive Agent responses. Reset to Draft and review again if needed.',
+    'agent.response.pasteDiscardedDesc':
+      'Discarded drafts cannot receive Agent responses. Reset to Draft and review again if needed.',
     'agent.response.listTitle': 'Pasted Responses ({count})',
     'agent.response.loadingResponses': 'Loading responses...',
     'agent.response.listFailed': 'Response list failed',
@@ -360,14 +424,18 @@ const enUS = {
 
     // ─── Formal Handoff Section ───
     'agent.handoff.sectionTitle': 'Formal Handoff',
-    'agent.handoff.readyInfo': 'This reviewed draft can be manually handed to an external Agent.',
-    'agent.handoff.readySafety': 'This does not execute the Agent. This does not mutate LabourBoard.',
+    'agent.handoff.readyInfo':
+      'This reviewed draft can be manually handed to an external Agent.',
+    'agent.handoff.readySafety':
+      'This does not execute the Agent. This does not mutate LabourBoard.',
     'agent.handoff.copyButton': 'Copy Handoff Markdown',
     'agent.handoff.downloadButton': 'Download Handoff',
     'agent.handoff.unavailable': 'Handoff not available',
-    'agent.handoff.unavailableDesc': 'Mark this draft as reviewed before generating a formal handoff.',
+    'agent.handoff.unavailableDesc':
+      'Mark this draft as reviewed before generating a formal handoff.',
     'agent.handoff.discarded': 'Handoff not available',
-    'agent.handoff.discardedDesc': 'Discarded drafts cannot generate formal handoff. Reset to Draft and review again if needed.',
+    'agent.handoff.discardedDesc':
+      'Discarded drafts cannot generate formal handoff. Reset to Draft and review again if needed.',
     'agent.handoff.failed': 'Handoff failed',
 
     // ─── Record History Drawer ───
@@ -378,7 +446,8 @@ const enUS = {
     'history.defaultTitle': 'Record history',
     'history.closeTitle': 'Close history',
     'history.statusLabel': 'History status',
-    'history.statusIncomplete': 'Replay is not complete. Review diagnostics before trusting final state.',
+    'history.statusIncomplete':
+      'Replay is not complete. Review diagnostics before trusting final state.',
     'history.basicInfo': 'Basic information',
     'history.recordId': 'Record id',
     'history.pid': 'PID',
@@ -391,7 +460,8 @@ const enUS = {
     'history.parentId': 'Parent id',
     'history.description': 'Description',
     'history.finalState': 'Final state',
-    'history.finalStateUnavailable': 'Final state is unavailable for this history status.',
+    'history.finalStateUnavailable':
+      'Final state is unavailable for this history status.',
     'history.noHistoryDiagnostics': 'No history diagnostics.',
 
     // ─── Move Status Control ───
@@ -416,8 +486,10 @@ const enUS = {
 
     // ─── Metadata ───
     'metadata.loading.all': 'Loading board config and profiles…',
-    'metadata.error.config': 'Board config failed to load; using raw IDs and fallback options.',
-    'metadata.error.profiles': 'Profiles failed to load; using raw public keys.',
+    'metadata.error.config':
+      'Board config failed to load; using raw IDs and fallback options.',
+    'metadata.error.profiles':
+      'Profiles failed to load; using raw public keys.',
 
     // ─── Default Tags ───
     'tags.status:backlog': 'Backlog',
@@ -428,10 +500,10 @@ const enUS = {
     'tags.status:done': 'Done',
     'tags.status:blocked': 'Blocked',
     'tags.status:archived': 'Archived',
-    'tags.priority:p0': 'P0 Must Have',
-    'tags.priority:p1': 'P1 Should Have',
-    'tags.priority:p2': 'P2 Could Have',
-    'tags.priority:p3': 'P3 Later',
+    'tags.priority:p0': 'P0 Urgent & Important',
+    'tags.priority:p1': 'P1 Not Urgent & Important',
+    'tags.priority:p2': 'P2 Urgent & Not Important',
+    'tags.priority:p3': 'P3 Not Urgent & Not Important',
     'tags.priority:urgent-important': 'Urgent & Important',
     'tags.priority:urgent-not-important': 'Urgent & Not Important',
     'tags.priority:not-urgent-important': 'Not Urgent & Important',

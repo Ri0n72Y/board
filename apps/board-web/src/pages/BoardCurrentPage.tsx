@@ -28,6 +28,7 @@ import { RecordHistoryDrawer } from '../components/RecordHistoryDrawer'
 import { SnapshotDrawer } from '../components/SnapshotDrawer'
 import { AgentDraftsDrawer } from '../components/AgentDraftsDrawer'
 import { AppSettingsDrawer } from '../components/AppSettingsDrawer'
+import { AdvancedFiltersDrawer } from '../components/AdvancedFiltersDrawer'
 import { StatusBadge } from '../components/StatusBadge'
 import { SummaryBar } from '../components/SummaryBar'
 import {
@@ -84,6 +85,7 @@ export function BoardCurrentPage() {
     useState<RecordResponse<RecordItem<RecordBody>> | null>(null)
   const [isContextExportOpen, setIsContextExportOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
   const [viewMode, setViewMode] = useState<BoardViewMode>('list')
 
   useEffect(() => {
@@ -294,6 +296,15 @@ export function BoardCurrentPage() {
         onAssigneeChange={setAssignee}
         onAssetIdChange={setAssetId}
         onRelationTargetChange={setRelationTarget}
+        onOpenAdvanced={() => setIsAdvancedFiltersOpen(true)}
+        onClearFilters={() => {
+          setQ('')
+          draftFilters.tags.forEach((t) => removeTag(t))
+          setAssignee('')
+          setAssetId('')
+          setRelationTarget('')
+          setIncludeArchived(false)
+        }}
       />
 
       {projection && <SummaryBar projection={projection} />}
@@ -533,6 +544,20 @@ export function BoardCurrentPage() {
       <AppSettingsDrawer
         open={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+      <AdvancedFiltersDrawer
+        open={isAdvancedFiltersOpen}
+        knownTags={config ? knownTags : projectionKnownTags}
+        tags={draftFilters.tags}
+        tagMatch={draftFilters.tagMatch}
+        assetId={draftFilters.assetId}
+        relationTarget={draftFilters.relationTarget}
+        onAddTag={addTag}
+        onRemoveTag={removeTag}
+        onTagMatchChange={setTagMatch}
+        onAssetIdChange={setAssetId}
+        onRelationTargetChange={setRelationTarget}
+        onClose={() => setIsAdvancedFiltersOpen(false)}
       />
     </main>
   )

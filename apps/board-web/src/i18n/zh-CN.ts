@@ -47,6 +47,24 @@ const zhCN = {
     'filters.priorityOptions': '优先级选项',
     'filters.removeTagFilter': '移除标签筛选',
     'filters.addTagFilter': '添加标签筛选',
+    'filters.advancedFilters': '高级筛选',
+    'filters.advancedTitle': '高级筛选',
+    'filters.advancedSubtitle': '全部筛选项',
+    'filters.close': '关闭',
+    'filters.clearFilters': '清空筛选',
+    'filters.noKnownTags': '无已知标签。',
+    // ─── Tag groups ───
+    'filters.group.status': '状态',
+    'filters.group.priority': '优先级',
+    'filters.group.epic': 'Epic',
+    'filters.group.sprint': '迭代',
+    'filters.group.owner': '负责人',
+    'filters.group.scope': '范围',
+    'filters.group.type': '类型',
+    'filters.group.milestone': '里程碑',
+    'filters.group.asset': '资产',
+    'filters.group.transaction': '事务',
+    'filters.group.other': '其他',
 
     // ─── Status / Alerts ───
     'status.loading': '正在加载当前看板...',
@@ -55,12 +73,15 @@ const zhCN = {
     'status.exportError': '导出失败',
     'status.projectionPartial': '投影不完整 - 部分记录可能缺失。',
     'status.projectionBlocked': '投影已阻塞',
-    'status.projectionBlockedActive': '当前看板投影已阻塞 - 没有记录匹配这些筛选项。',
-    'status.projectionBlockedInactive': '当前看板投影已阻塞 - 无法显示任何记录。',
+    'status.projectionBlockedActive':
+      '当前看板投影已阻塞 - 没有记录匹配这些筛选项。',
+    'status.projectionBlockedInactive':
+      '当前看板投影已阻塞 - 无法显示任何记录。',
     'status.projectionIssues': '请查看下方的投影问题以了解详情。',
     'status.emptyFiltered': '没有当前记录匹配这些筛选项。',
     'status.empty': '当前看板没有记录。',
-    'status.projectionIssuesHint': '下方列出了投影问题，可能解释记录缺失的原因。',
+    'status.projectionIssuesHint':
+      '下方列出了投影问题，可能解释记录缺失的原因。',
 
     // ─── Record Card ───
     'record.edit': '编辑',
@@ -169,7 +190,8 @@ const zhCN = {
     'snapshot.detailPatches': '补丁数',
     'snapshot.detailProjection': '投影',
     'snapshot.draftSectionTitle': '保存 Agent 快照草稿',
-    'snapshot.draftDescription': '将此快照保存为静态 Agent 会话草稿，供人工审核后再交给 Agent。',
+    'snapshot.draftDescription':
+      '将此快照保存为静态 Agent 会话草稿，供人工审核后再交给 Agent。',
     'snapshot.draftTitle': '草稿标题',
     'snapshot.draftPlaceholder': '例如：快照检查点审核',
     'snapshot.draftSaveError': '草稿保存失败',
@@ -215,7 +237,8 @@ const zhCN = {
     'export.previewTitle': 'Markdown 预览',
     'export.previewEmpty': '暂无预览内容。请点击预览生成。',
     'export.draftSectionTitle': '保存为 Agent 草稿',
-    'export.draftDescription': '将当前上下文包保存为静态 Agent 会话草稿，供人工审核后再交给 Agent。',
+    'export.draftDescription':
+      '将当前上下文包保存为静态 Agent 会话草稿，供人工审核后再交给 Agent。',
     'export.draftTitle': '草稿标题',
     'export.draftPlaceholder': '例如：审核 Sprint 1 看板',
     'export.draftSaveError': '草稿保存失败',
@@ -224,7 +247,8 @@ const zhCN = {
 
     // ─── Export profiles ───
     'export.profiles.agent-full.label': '完整上下文',
-    'export.profiles.agent-full.description': '导出完整当前看板及所有记录与元数据。',
+    'export.profiles.agent-full.description':
+      '导出完整当前看板及所有记录与元数据。',
     'export.profiles.agent-full.purpose': '适合全面审查整个看板。',
     'export.profiles.agent-sprint.label': '迭代上下文',
     'export.profiles.agent-sprint.description': '导出属于特定迭代的记录。',
@@ -243,7 +267,8 @@ const zhCN = {
     'export.profiles.agent-snapshot.purpose': '审查冻结的看板检查点。',
     'export.profiles.human-summary.label': '人工摘要',
     'export.profiles.human-summary.description': '面向人工阅读的轻量摘要导出。',
-    'export.profiles.human-summary.purpose': '供利益相关者和团队负责人快速概览。',
+    'export.profiles.human-summary.purpose':
+      '供利益相关者和团队负责人快速概览。',
 
     // ─── Agent Drafts Drawer ───
     'agent.subtitle': '人工 Agent 工作流',
@@ -264,12 +289,14 @@ const zhCN = {
     'agent.queue.loading': '正在加载草稿...',
     'agent.queue.empty': '尚无 Agent 草稿。',
     'agent.queue.emptyFilter': '无{status}草稿。',
-    'agent.queue.emptyHint': '从导出面板保存上下文包为 Agent 草稿，可在此处审核。',
+    'agent.queue.emptyHint':
+      '从导出面板保存上下文包为 Agent 草稿，可在此处审核。',
     'agent.queue.records': '条记录',
 
     // ─── Agent Draft Safety Banner ───
     'agent.safety.title': '仅草稿 - 未执行',
-    'agent.safety.description': '这是一个为审核而保存的静态上下文包。未发起 AI 调用。未进行 Agent 执行、补丁或看板变更。',
+    'agent.safety.description':
+      '这是一个为审核而保存的静态上下文包。未发起 AI 调用。未进行 Agent 执行、补丁或看板变更。',
     'agent.safety.footer': '草稿在交给 Agent 之前需由人工审核。',
 
     // ─── Agent Draft Status Badge ───
@@ -289,14 +316,16 @@ const zhCN = {
 
     // ─── Agent Manual Workflow Timeline ───
     'agent.timeline.title': '手动工作流概览',
-    'agent.timeline.disclaimer1': '此时间线根据当前草稿、审核元数据、移交就绪状态和粘贴的响应推导得出。',
+    'agent.timeline.disclaimer1':
+      '此时间线根据当前草稿、审核元数据、移交就绪状态和粘贴的响应推导得出。',
     'agent.timeline.disclaimer2': '它不是持久化的审计日志。',
     'agent.timeline.disclaimer3': '此时间线不会执行 AI 调用、补丁或看板变更。',
     'agent.timeline.tone.complete': '已完成',
     'agent.timeline.tone.pending': '待处理',
     'agent.timeline.tone.blocked': '已阻塞',
     'agent.timeline.draftCreated': '草稿已创建',
-    'agent.timeline.draftCreatedDesc': '从所选来源创建了静态 Agent 上下文草稿。',
+    'agent.timeline.draftCreatedDesc':
+      '从所选来源创建了静态 Agent 上下文草稿。',
     'agent.timeline.reviewPending': '待人工审核',
     'agent.timeline.reviewPendingDesc': '尚未审核。',
     'agent.timeline.reviewPendingHint': '正式移交或响应录入前需标记为已审核。',
@@ -308,26 +337,32 @@ const zhCN = {
     'agent.timeline.handoffReady': '正式移交就绪',
     'agent.timeline.handoffReadyDesc': '已审核草稿可以生成正式移交 Markdown。',
     'agent.timeline.handoffManual': '移交仅限手动操作。',
-    'agent.timeline.handoffNoMutation': '不会执行 Agent，不会变更 LabourBoard。',
+    'agent.timeline.handoffNoMutation':
+      '不会执行 Agent，不会变更 LabourBoard。',
     'agent.timeline.handoffLocked': '正式移交已锁定',
     'agent.timeline.handoffLockedDesc': '请先审核此草稿再生成正式移交。',
     'agent.timeline.handoffDisabled': '正式移交已禁用',
     'agent.timeline.handoffDisabledDesc': '已丢弃的草稿无法生成正式移交。',
     'agent.timeline.responses': '手动粘贴的响应（{count}）',
-    'agent.timeline.responsesDesc': '响应是手动粘贴的记录。它们不是已应用的补丁，不会变更看板。',
+    'agent.timeline.responsesDesc':
+      '响应是手动粘贴的记录。它们不是已应用的补丁，不会变更看板。',
     'agent.timeline.responsesMore': '+{count} 条更多响应',
     'agent.timeline.noResponses': '尚无手动响应',
-    'agent.timeline.noResponsesDesc': '使用移交后将外部 Agent 响应手动粘贴于此。',
+    'agent.timeline.noResponsesDesc':
+      '使用移交后将外部 Agent 响应手动粘贴于此。',
     'agent.timeline.noResponsesLocked': '无手动响应',
-    'agent.timeline.noResponsesLockedDesc': '请先审核此草稿再粘贴外部 Agent 响应。',
+    'agent.timeline.noResponsesLockedDesc':
+      '请先审核此草稿再粘贴外部 Agent 响应。',
     'agent.timeline.noResponsesBlocked': '无手动响应',
-    'agent.timeline.noResponsesBlockedDesc': '已丢弃的草稿无法接收 Agent 响应。',
+    'agent.timeline.noResponsesBlockedDesc':
+      '已丢弃的草稿无法接收 Agent 响应。',
 
     // ─── Agent Manual Response Section ───
     'agent.response.manualPaste': '手动粘贴',
     'agent.response.notApplied': '未应用',
     'agent.response.noBoardMutation': '无看板变更',
-    'agent.response.notAppliedDesc': '此响应为手动粘贴。LabourBoard 未发起 AI 调用。未执行补丁或看板变更。',
+    'agent.response.notAppliedDesc':
+      '此响应为手动粘贴。LabourBoard 未发起 AI 调用。未执行补丁或看板变更。',
     'agent.response.agentName': '外部 Agent 名称（可选）',
     'agent.response.agentNamePlaceholder': '例如：Codex、ChatGPT',
     'agent.response.note': '响应备注（可选）',
@@ -341,11 +376,14 @@ const zhCN = {
     'agent.response.saving': '保存中...',
     'agent.response.sectionTitle': '手动 Agent 响应',
     'agent.response.pasteInfo': '在下方粘贴外部 Agent 的响应。',
-    'agent.response.pasteSafety': '此响应为手动粘贴。LabourBoard 未发起 AI 调用。未执行补丁或看板变更。',
+    'agent.response.pasteSafety':
+      '此响应为手动粘贴。LabourBoard 未发起 AI 调用。未执行补丁或看板变更。',
     'agent.response.pasteUnavailable': '响应粘贴不可用',
-    'agent.response.pasteUnavailableDesc': '请先标记此草稿为已审核再粘贴外部 Agent 响应。',
+    'agent.response.pasteUnavailableDesc':
+      '请先标记此草稿为已审核再粘贴外部 Agent 响应。',
     'agent.response.pasteDiscarded': '响应粘贴不可用',
-    'agent.response.pasteDiscardedDesc': '已丢弃的草稿无法接收 Agent 响应。请重置为草稿后重新审核。',
+    'agent.response.pasteDiscardedDesc':
+      '已丢弃的草稿无法接收 Agent 响应。请重置为草稿后重新审核。',
     'agent.response.listTitle': '已粘贴的响应（{count}）',
     'agent.response.loadingResponses': '正在加载响应...',
     'agent.response.listFailed': '响应列表加载失败',
@@ -367,7 +405,8 @@ const zhCN = {
     'agent.handoff.unavailable': '移交不可用',
     'agent.handoff.unavailableDesc': '请先标记此草稿为已审核再生成正式移交。',
     'agent.handoff.discarded': '移交不可用',
-    'agent.handoff.discardedDesc': '已丢弃的草稿无法生成正式移交。请重置为草稿后重新审核。',
+    'agent.handoff.discardedDesc':
+      '已丢弃的草稿无法生成正式移交。请重置为草稿后重新审核。',
     'agent.handoff.failed': '移交失败',
 
     // ─── Record History Drawer ───
@@ -378,7 +417,8 @@ const zhCN = {
     'history.defaultTitle': '记录历史',
     'history.closeTitle': '关闭历史',
     'history.statusLabel': '历史状态',
-    'history.statusIncomplete': '重放未完成。在信任最终状态之前请先检查诊断信息。',
+    'history.statusIncomplete':
+      '重放未完成。在信任最终状态之前请先检查诊断信息。',
     'history.basicInfo': '基本信息',
     'history.recordId': '记录 ID',
     'history.pid': 'PID',
@@ -428,10 +468,10 @@ const zhCN = {
     'tags.status:done': '已完成',
     'tags.status:blocked': '已阻塞',
     'tags.status:archived': '已归档',
-    'tags.priority:p0': 'P0 必须有',
-    'tags.priority:p1': 'P1 应该有',
-    'tags.priority:p2': 'P2 可以有',
-    'tags.priority:p3': 'P3 以后再说',
+    'tags.priority:p0': 'P0 紧急且重要',
+    'tags.priority:p1': 'P1 重要不紧急',
+    'tags.priority:p2': 'P2 紧急不重要',
+    'tags.priority:p3': 'P3 不重要不紧急',
     'tags.priority:urgent-important': '紧急且重要',
     'tags.priority:urgent-not-important': '紧急不重要',
     'tags.priority:not-urgent-important': '重要不紧急',

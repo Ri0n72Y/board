@@ -1,0 +1,139 @@
+import { useMemo } from 'react'
+import type { BoardCurrentTagMatch, Tag } from '@labour-board/shared'
+import { useTranslation } from 'react-i18next'
+import { AnimatedDrawer } from './ui/AnimatedDrawer'
+import { TextInput } from './ui/TextInput'
+import { Select } from './ui/Select'
+import { TagChipRow } from './BoardFilters'
+import { formatTagLabel } from '../utils/tagDisplay'
+import { groupTagsByNamespace, TAG_GROUP_I18N_KEYS } from '../utils/tagGroups'
+import { HashtagIcon, LinkIcon } from '@heroicons/react/20/solid'
+
+interface AdvancedFiltersDrawerProps {
+  open: boolean
+  knownTags: Tag[]
+  tags: Tag[]
+  tagMatch: BoardCurrentTagMatch
+  assetId: string
+  relationTarget: string
+  onAddTag: (tag: string) => void
+  onRemoveTag: (tag: Tag) => void
+  onTagMatchChange: (tagMatch: BoardCurrentTagMatch) => void
+  onAssetIdChange: (assetId: string) => void
+  onRelationTargetChange: (relationTarget: string) => void
+  onClose: () => void
+}
+
+export function AdvancedFiltersDrawer({
+  open,
+  knownTags,
+  tags,
+  tagMatch,
+  assetId,
+  relationTarget,
+  onAddTag,
+  onRemoveTag,
+  onTagMatchChange,
+  onAssetIdChange,
+  onRelationTargetChange,
+  onClose,
+}: AdvancedFiltersDrawerProps) {
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
+
+  const tagGroups = useMemo(() => groupTagsByNamespace(knownTags), [knownTags])
+
+  const tagMatchOptions = useMemo(
+    () => [
+      { value: 'all' as const, label: t('filters.tagMatchAll') },
+      { value: 'any' as const, label: t('filters.tagMatchAny') },
+    ],
+    [t],
+  )
+
+  return (
+    <AnimatedDrawer
+      open={open}
+      onClose={onClose}
+      title={t('filters.advancedTitle')}
+      subtitle={t('filters.advancedSubtitle')}
+      closeLabel={t('filters.close')}
+    >
+      <div className="grid content-start gap-4">
+        {/* Active tags */}
+        {tags.length > 0 && (
+          <section className="grid gap-2 rounded-lg border border-slate-200 bg-white p-4">
+            <h3 className="text-xs font-bold uppercase text-slate-500">{t('filters.activeTag')}</h3>
+            <TagChipRow tags={tags} selected onTagClick={onRemoveTag} />
+          </section>
+        )}
+
+        {/* Tag match */}
+        <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
+          <Select
+            label={t('filters.tagMatch')}
+            value={tagMatch}
+            onChange={(event) => onTagMatchChange(event.target.value as BoardCurrentTagMatch)}
+            options={tagMatchOptions}
+          />
+        </section>
+
+        {/* Asset ID / Relation target */}
+        <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
+          <TextInput
+            label={t('filters.assetId')}
+            value={assetId}
+            onChange={(event) => onAssetIdChange(event.target.value)}
+            placeholder={t('filters.assetIdPlaceholder')}
+            icon={<HashtagIcon className="h-4 w-4" />}
+          />
+          <TextInput
+            label={t('filters.relationTarget')}
+            value={relationTarget}
+            onChange={(event) => onRelationTargetChange(event.target.value)}
+            placeholder={t('filters.relationTargetPlaceholder')}
+            icon={<LinkIcon className="h-4 w-4" />}
+          />
+        </section>
+
+        {/* Known tags grouped by namespace */}
+        {tagGroups.map((group) => (
+          <section
+            key={group.key}
+            className="grid gap-2 rounded-lg border border-slate-200 bg-white p-4"
+          >
+            <h3 className="text-xs font-bold uppercase text-slate-500">
+              {t(TAG_GROUP_I18N_KEYS[group.key])}
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {group.tags.map((tag) => {
+                const isActive = tags.includes(tag as Tag)
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    className={
+                      isActive
+                        ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 font-mono text-xs leading-tight text-emerald-800 break-all'
+                        : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 font-mono text-xs leading-tight text-slate-700 break-all hover:bg-slate-200'
+                    }
+                    onClick={() => (isActive ? onRemoveTag(tag as Tag) : onAddTag(tag))}
+                    title={isActive ? t('filters.removeTagFilter') : t('filters.addTagFilter')}
+                  >
+                    {formatTagLabel(tag, lang)}
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+        ))}
+
+        {tagGroups.length === 0 && (
+          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+            {t('filters.noKnownTags')}
+          </div>
+        )}
+      </div>
+    </AnimatedDrawer>
+  )
+}

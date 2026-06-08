@@ -44,8 +44,10 @@ eq(formatTagLabel('status:review', 'zh-CN'), '审核中', 'status:review zh-CN')
 eq(formatTagLabel('status:blocked', 'zh-CN'), '阻塞', 'status:blocked zh-CN')
 eq(formatTagLabel('status:backlog', 'zh-CN'), '待整理', 'status:backlog zh-CN')
 
-eq(formatTagLabel('priority:p0', 'zh-CN'), 'P0 必须有', 'priority:p0 zh-CN')
-eq(formatTagLabel('priority:p1', 'zh-CN'), 'P1 重要', 'priority:p1 zh-CN')
+eq(formatTagLabel('priority:p0', 'zh-CN'), 'P0：重要紧急', 'priority:p0 zh-CN')
+eq(formatTagLabel('priority:p1', 'zh-CN'), 'P1：重要不紧急', 'priority:p1 zh-CN')
+eq(formatTagLabel('priority:p2', 'zh-CN'), 'P2：紧急不重要', 'priority:p2 zh-CN')
+eq(formatTagLabel('priority:p3', 'zh-CN'), 'P3：不紧急不重要', 'priority:p3 zh-CN')
 
 ne(formatTagLabel('epic:1', 'zh-CN'), '1', 'epic:1 zh-CN')
 contains(formatTagLabel('epic:1', 'zh-CN'), 'Epic', 'epic:1 zh-CN')
@@ -62,7 +64,7 @@ contains(formatTagLabel('1', 'zh-CN'), '其他', 'bare 1 zh-CN contains 其他')
 
 // Bare with namespace hint
 eq(formatTagLabel('doing', 'zh-CN', { namespace: 'status' }), '进行中', 'bare doing + status zh-CN')
-eq(formatTagLabel('p0', 'zh-CN', { namespace: 'priority' }), 'P0 必须有', 'bare p0 + priority zh-CN')
+eq(formatTagLabel('p0', 'zh-CN', { namespace: 'priority' }), 'P0：重要紧急', 'bare p0 + priority zh-CN')
 
 // Custom/unknown tag
 eq(formatTagLabel('custom:abc', 'zh-CN'), 'custom:abc', 'custom:abc zh-CN')
@@ -73,7 +75,7 @@ eq(formatTagLabel('status:todo', 'en-US'), 'Todo', 'status:todo en-US')
 eq(formatTagLabel('status:doing', 'en-US'), 'Doing', 'status:doing en-US')
 eq(formatTagLabel('status:done', 'en-US'), 'Done', 'status:done en-US')
 eq(formatTagLabel('status:archived', 'en-US'), 'Archived', 'status:archived en-US')
-eq(formatTagLabel('priority:p0', 'en-US'), 'P0 Must Have', 'priority:p0 en-US')
+eq(formatTagLabel('priority:p0', 'en-US'), 'P0: Important & Urgent', 'priority:p0 en-US')
 eq(formatTagLabel('sprint:1', 'en-US'), 'Sprint 1', 'sprint:1 en-US')
 ne(formatTagLabel('epic:1', 'en-US'), '1', 'epic:1 en-US')
 eq(formatTagLabel('scope:combat', 'en-US'), 'Combat', 'scope:combat en-US')
@@ -82,4 +84,4 @@ contains(formatTagLabel('1', 'en-US'), 'Other', 'bare 1 en-US contains Other')
 
 // ─── Summary ───
 console.log(`\n${failures === 0 ? 'ALL PASSED' : `${failures} FAILURES`}`)
-process.exit(failures > 0 ? 1 : 0)
+if (failures > 0) throw new Error(`${failures} assertions failed`)
