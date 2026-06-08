@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type {
   AgentContextProfile,
   RecordBody,
@@ -114,23 +114,23 @@ export function ExportContextDrawer({
       ...knownTags
         .filter((tag) => tag.startsWith('sprint:'))
         .sort((a, b) => a.localeCompare(b))
-        .map((tag) => ({ value: tag, label: formatTagLabel(tag, t) })),
+        .map((tag) => ({ value: tag, label: formatTagLabel(tag, lang) })),
     ],
-    [knownTags, t],
+    [knownTags, lang, t],
   )
 
   const needsRecord = profileDefinition.requiresRecord
   const needsSprint = profileDefinition.requiresSprint
 
   // ── Stable clearPreview ──
-  const clearPreview = useCallback(() => {
+  function clearPreview() {
     previewRequestIdRef.current += 1
     previewAbortRef.current?.abort()
     previewAbortRef.current = null
     setPreviewContent(null)
     setPreviewError(null)
     setIsPreviewLoading(false)
-  }, [])
+  }
 
   // ── Track preview inputs for staleness detection ──
   const previewInputKey = `${lang}|${profile}|${contextGoal}|${recordId}|${sprintTag}|${includeContent}|${includeAssets}|${includeRelations}|${includeDiagnostics}|${JSON.stringify(filters)}`
@@ -150,7 +150,7 @@ export function ExportContextDrawer({
     }
   }, [previewInputKey])
 
-  const handleProfileChange = useCallback((nextProfile: AgentContextProfile) => {
+  function handleProfileChange(nextProfile: AgentContextProfile) {
     const definition = getAgentContextProfileDefinition(nextProfile)
     setProfile(nextProfile)
     setIncludeContent(definition.defaultIncludeContent)
@@ -159,9 +159,9 @@ export function ExportContextDrawer({
     setIncludeDiagnostics(definition.defaultIncludeDiagnostics)
     if (!definition.requiresRecord) setRecordId('')
     if (!definition.requiresSprint) setSprintTag('')
-  }, [])
+  }
 
-  const handlePreview = useCallback(() => {
+  function handlePreview() {
     const requestId = previewRequestIdRef.current + 1
     previewRequestIdRef.current = requestId
     previewAbortRef.current?.abort()
@@ -201,9 +201,9 @@ export function ExportContextDrawer({
         setIsPreviewLoading(false)
         previewAbortRef.current = null
       })
-  }, [profile, lang, contextGoal, recordId, sprintTag, includeDiagnostics, includeRelations, includeAssets, includeContent, filters, profileDefinition, previewInputKey])
+  }
 
-  const handleExportClick = useCallback(() => {
+  function handleExportClick() {
     clearPreview()
     onExport({
       profile,
@@ -216,7 +216,7 @@ export function ExportContextDrawer({
       includeRelations,
       includeDiagnostics,
     })
-  }, [onExport, clearPreview, profile, lang, contextGoal, recordId, sprintTag, includeContent, includeAssets, includeRelations, includeDiagnostics])
+  }
 
   const footer = (
     <div className="flex flex-wrap items-center justify-between gap-2">

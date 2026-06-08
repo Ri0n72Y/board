@@ -41,8 +41,9 @@ export function BoardView({
   moveErrors,
   onMoveStatus,
 }: BoardViewProps) {
-  const { t } = useTranslation()
-  const tagLabel = useCallback((tag: string) => formatTagLabel(tag, t), [t])
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
+  const tagLabel = useCallback((tag: string) => formatTagLabel(tag, lang), [lang])
   const columns = useMemo(() => {
     const statusColumns = getStatusColumns(config, records, tagLabel)
     return groupRecordsByStatus(records, statusColumns)
@@ -69,7 +70,7 @@ export function BoardView({
                   </h2>
                   {column.tag && (
                     <p className="truncate font-mono text-xs text-slate-500">
-                      {formatTagLabel(column.tag, t)}
+                      {column.tag}
                     </p>
                   )}
                 </div>

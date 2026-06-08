@@ -1,145 +1,131 @@
-import type { TFunction } from 'i18next'
-
 /**
- * Known tag namespace categories used for display inference.
+ * Tag display formatter.
+ *
+ * Uses standalone label dictionaries (tagLabels.en-US.ts / tagLabels.zh-CN.ts)
+ * instead of i18next. This separates tag domain i18n from UI i18n.
  */
-export type TagDisplayNamespace =
+
+import { enUSTagLabels } from '../i18n/tagLabels.en-US'
+import { zhCNTagLabels } from '../i18n/tagLabels.zh-CN'
+
+/* ─── Types ─── */
+
+export type TagLabelNamespace =
   | 'status'
   | 'priority'
   | 'transaction'
-  | 'asset'
   | 'epic'
   | 'sprint'
   | 'owner'
   | 'scope'
   | 'type'
   | 'milestone'
+  | 'asset'
 
-/**
- * The set of namespaces whose tag keys follow the pattern `namespace:value`.
- */
-const KNOWN_NAMESPACES: readonly TagDisplayNamespace[] = [
-  'status',
-  'priority',
-  'transaction',
-  'asset',
-  'epic',
-  'sprint',
-  'owner',
-  'scope',
-  'type',
-  'milestone',
+const KNOWN_NAMESPACES: readonly string[] = [
+  'status', 'priority', 'transaction', 'epic', 'sprint',
+  'owner', 'scope', 'type', 'milestone', 'asset',
 ]
 
-/** Regex matching canonical tag format: namespace:value */
-const TAG_PATTERN = /^([a-zA-Z][a-zA-Z0-9_-]*):(.+)$/
+export type TagLabelDictionary = Partial<
+  Record<TagLabelNamespace, Record<string, string>>
+>
 
-/** ─── Parse ─── */
+export type TagDisplayLanguage = 'en-US' | 'zh-CN'
 
 export interface ParsedTag {
   raw: string
-  namespace: string
+  namespace?: TagLabelNamespace
   value: string
+  canonical: boolean
 }
 
-export function parseTag(raw: string): ParsedTag | null {
-  const match = TAG_PATTERN.exec(raw)
-  if (!match) return null
-  return { raw, namespace: match[1], value: match[2] }
+/* ─── Dictionary lookup ─── */
+
+const DICTIONARIES: Record<TagDisplayLanguage, TagLabelDictionary> = {
+  'en-US': enUSTagLabels,
+  'zh-CN': zhCNTagLabels,
 }
 
-/** ─── Display helpers ─── */
+export function normalizeTagLanguage(
+  language: string | undefined,
+): TagDisplayLanguage {
+  if (language === 'zh-CN') return 'zh-CN'
+  return 'en-US'
+}
 
-export interface TagDisplayInput {
-  raw: string
-  namespace?: TagDisplayNamespace
+/* ─── Parse ─── */
+
+const TAG_RE = /^([a-zA-Z][a-zA-Z0-9_-]*):(.+)$/
+
+export function parseTag(raw: string): ParsedTag {
+  const match = TAG_RE.exec(raw)
+  if (!match) {
+    return { raw, value: raw, canonical: false }
+  }
+  const ns = match[1]
+  const value = match[2]
+  if ((KNOWN_NAMESPACES as readonly string[]).includes(ns)) {
+    return { raw, namespace: ns as TagLabelNamespace, value, canonical: true }
+  }
+  return { raw, value, canonical: true }
+}
+
+/* ─── Format ─── */
+
+function lookup(
+  namespace: TagLabelNamespace,
+  value: string,
+  lang: TagDisplayLanguage,
+): string | undefined {
+  return DICTIONARIES[lang]?.[namespace]?.[value] ?? undefined
 }
 
 /**
- * Format a tag for display using i18next translations.
+ * Format a tag for display.
  *
- * Strategy (in order):
- * 1. If raw is canonical `namespace:value`, look up `tags.namespace:value`
- * 2. If a namespace hint is provided, also try `tags.{namespace}:{raw}` (for bare values)
- * 3. Fall back to raw tag string
+ * @param raw       Raw tag string (e.g. `status:doing` or bare `doing`)
+ * @param language  UI language, e.g. `zh-CN` or `en-US`
+ * @param options.namespace  Hint when `raw` is a bare value without prefix
  */
 export function formatTagLabel(
-  input: string | TagDisplayInput,
-  t: TFunction,
-): string {
-  const raw = typeof input === 'string' ? input : input.raw
-  const hintNs = typeof input === 'string' ? undefined : input.namespace
-
-  // 1. Try canonical key: `tags.{raw}` (e.g. `tags.status:todo`)
-  const canonicalKey = `tags.${raw}`
-  const canonicalResult = t(canonicalKey)
-  if (canonicalResult !== canonicalKey) return canonicalResult
-
-  // 2. If namespace hint provided and raw is bare, try `tags.{hintNs}:{raw}`
-  if (hintNs && !raw.includes(':')) {
-    const hintedKey = `tags.${hintNs}:${raw}`
-    const hintedResult = t(hintedKey)
-    if (hintedResult !== hintedKey) return hintedResult
-  }
-
-  // 3. If raw is canonical but no translation found, try to construct a readable label
-  const parsed = parseTag(raw)
-  if (parsed) {
-    // Try with just the value part and namespace hint
-    const nsKey = `tags.${parsed.namespace}:${parsed.value}`
-    const nsResult = t(nsKey)
-    if (nsResult !== nsKey) return nsResult
-  }
-
-  // 4. Fallback: raw
-  return raw
-}
-
-/**
- * Format a tag with a known namespace.
- *
- * Use when the caller knows the namespace context (e.g. BoardView status columns,
- * BoardFilters status/priority options).
- */
-export function formatTagLabelWithNamespace(
   raw: string,
-  namespace: TagDisplayNamespace,
-  t: TFunction,
+  language: string | undefined,
+  options?: { namespace?: TagLabelNamespace },
 ): string {
-  // Try canonical `tags.{namespace}:{raw}`
-  const canonicalKey = `tags.${namespace}:${raw}`
-  const canonicalResult = t(canonicalKey)
-  if (canonicalResult !== canonicalKey) return canonicalResult
+  const lang = normalizeTagLanguage(language)
+  const hintNs = options?.namespace
 
-  // If raw is already namespace:value, try full key
-  if (raw.includes(':')) {
-    const fullKey = `tags.${raw}`
-    const fullResult = t(fullKey)
-    if (fullResult !== fullKey) return fullResult
+  // 1. Parse the tag
+  const parsed = parseTag(raw)
+
+  // 2. Canonical: lookup by namespace + value
+  if (parsed.canonical && parsed.namespace) {
+    const found = lookup(parsed.namespace, parsed.value, lang)
+    if (found) return found
+    // If namespace is known but value has no translation, return raw
+    return raw
   }
 
+  // 3. Bare tag with explicit namespace hint
+  if (hintNs) {
+    const found = lookup(hintNs, parsed.value, lang)
+    if (found) return found
+  }
+
+  // 4. Bare tag without namespace
+  //    If it looks numeric, wrap it to avoid showing raw "1"
+  if (/^\d+$/.test(parsed.value)) {
+    return lang === 'zh-CN' ? `其他：${parsed.value}` : `Other: ${parsed.value}`
+  }
+
+  // 5. Last resort: raw value
   return raw
 }
 
 /**
- * Try to infer the tag namespace from known defaults.
- * Returns null if no unique namespace can be inferred.
+ * Format a tag's title/tooltip — always the raw tag id.
  */
-export function inferDefaultTagNamespace(raw: string): TagDisplayNamespace | null {
-  // If raw is canonical, extract namespace
-  const parsed = parseTag(raw)
-  if (parsed && (KNOWN_NAMESPACES as readonly string[]).includes(parsed.namespace)) {
-    return parsed.namespace as TagDisplayNamespace
-  }
-
-  // Cannot infer bare value namespace reliably
-  return null
-}
-
-/**
- * Check if a tag has a known i18n translation.
- */
-export function isDefaultTag(raw: string, t: TFunction): boolean {
-  const key = `tags.${raw}`
-  return t(key) !== key
+export function formatTagTitle(raw: string): string {
+  return raw
 }

@@ -261,7 +261,8 @@ export function TagChipRow({
   readonly = false,
   onTagClick,
 }: TagChipRowProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
 
   if (tags.length === 0) return null
 
@@ -271,7 +272,7 @@ export function TagChipRow({
       {tags.map((tag) =>
         readonly || !onTagClick ? (
           <span className={chipClassName({ selected, readonly })} key={tag}>
-            {formatTagLabel(tag, t)}
+            {formatTagLabel(tag, lang)}
           </span>
         ) : (
           <button
@@ -281,7 +282,7 @@ export function TagChipRow({
             onClick={() => onTagClick(tag)}
             title={selected ? t('filters.removeTagFilter') : t('filters.addTagFilter')}
           >
-            {formatTagLabel(tag, t)}
+            {formatTagLabel(tag, lang)}
           </button>
         )
       )}
