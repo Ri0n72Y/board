@@ -90,6 +90,10 @@ export function CreateRecordDrawer({
     return () => abortCreate(createRequestIdRef, createAbortRef)
   }, [])
 
+  // Derive effective status/priority: use form choice, fallback to config default
+  const effectiveStatusTag = form.statusTag || statusTags[0] || ''
+  const effectivePriorityTag = form.priorityTag || priorityTags[0] || ''
+
   const close = useCallback(() => {
     abortCreate(createRequestIdRef, createAbortRef, setIsCreating)
     onClose()
@@ -108,7 +112,7 @@ export function CreateRecordDrawer({
   }
 
   async function submit() {
-    const validation = buildPayload(form)
+    const validation = buildPayload(form, effectiveStatusTag, effectivePriorityTag)
     if (!validation.ok) {
       setError(t(validation.error))
       return
@@ -251,7 +255,7 @@ export function CreateRecordDrawer({
                       key={tag}
                       type="button"
                       className={
-                        form.statusTag === tag
+                        effectiveStatusTag === tag
                           ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
                           : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
                       }
@@ -279,7 +283,7 @@ export function CreateRecordDrawer({
                       key={tag}
                       type="button"
                       className={
-                        form.priorityTag === tag
+                        effectivePriorityTag === tag
                           ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
                           : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
                       }
@@ -409,11 +413,13 @@ function initialFormState(
 
 function buildPayload(
   form: FormState,
+  effectiveStatusTag: string,
+  effectivePriorityTag: string,
 ): { ok: true; payload: CreateRecordPayload } | { ok: false; error: string } {
   const schema = form.schema.trim()
   const title = form.title.trim()
-  const statusTag = form.statusTag.trim() as Tag
-  const priorityTag = form.priorityTag.trim() as Tag
+  const statusTag = effectiveStatusTag.trim() as Tag
+  const priorityTag = effectivePriorityTag.trim() as Tag
   const assignee = form.assignee.trim()
   const description = form.summary.trim()
   const content = form.details.trim()
