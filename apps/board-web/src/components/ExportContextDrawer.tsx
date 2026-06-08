@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type {
   AgentContextProfile,
   RecordBody,
@@ -29,6 +29,14 @@ import { Select } from './ui/Select'
 import { SwitchField } from './ui/SwitchField'
 import { TextInput } from './ui/TextInput'
 
+function normalizeLanguage(lang: string): string {
+  return lang === 'zh-CN' ? 'zh-CN' : 'en-US'
+}
+
+function profileI18nKey(profile: string, suffix: string): string {
+  return `export.profiles.${profile}.${suffix}`
+}
+
 interface ExportContextDrawerProps {
   open: boolean
   records: RecordResponse<RecordItem<RecordBody>>[]
@@ -57,6 +65,7 @@ export function ExportContextDrawer({
   onClose,
 }: ExportContextDrawerProps) {
   const { t, i18n } = useTranslation()
+  const lang = normalizeLanguage(i18n.language)
   const [profile, setProfile] = useState<AgentContextProfile>('agent-full')
   const [contextGoal, setContextGoal] = useState('')
   const [recordId, setRecordId] = useState('')
@@ -80,9 +89,9 @@ export function ExportContextDrawer({
     () =>
       listAgentContextProfiles('current-board').map((definition) => ({
         value: definition.id,
-        label: definition.label,
+        label: t(profileI18nKey(definition.id, 'label'), definition.label),
       })),
-    [],
+    [t],
   )
   const profileDefinition = useMemo(
     () => getAgentContextProfileDefinition(profile),
@@ -113,6 +122,34 @@ export function ExportContextDrawer({
   const needsRecord = profileDefinition.requiresRecord
   const needsSprint = profileDefinition.requiresSprint
 
+  // ── Stable clearPreview ──
+  const clearPreview = useCallback(() => {
+    previewRequestIdRef.current += 1
+    previewAbortRef.current?.abort()
+    previewAbortRef.current = null
+    setPreviewContent(null)
+    setPreviewError(null)
+    setIsPreviewLoading(false)
+  }, [])
+
+  // ── Track preview inputs for staleness detection ──
+  const previewInputKey = `${lang}|${profile}|${contextGoal}|${recordId}|${sprintTag}|${includeContent}|${includeAssets}|${includeRelations}|${includeDiagnostics}|${JSON.stringify(filters)}`
+  const lastPreviewKeyRef = useRef<string | null>(null)
+
+  // ── Abort on input change without triggering state updates ──
+  useEffect(() => {
+    previewRequestIdRef.current += 1
+    previewAbortRef.current?.abort()
+    previewAbortRef.current = null
+    // If there was a preview and inputs changed, mark stale
+    if (lastPreviewKeyRef.current !== null && lastPreviewKeyRef.current !== previewInputKey) {
+      setPreviewContent(null)
+      setPreviewError(null)
+      setIsPreviewLoading(false)
+      lastPreviewKeyRef.current = null
+    }
+  }, [previewInputKey])
+
   const handleProfileChange = useCallback((nextProfile: AgentContextProfile) => {
     const definition = getAgentContextProfileDefinition(nextProfile)
     setProfile(nextProfile)
@@ -122,16 +159,7 @@ export function ExportContextDrawer({
     setIncludeDiagnostics(definition.defaultIncludeDiagnostics)
     if (!definition.requiresRecord) setRecordId('')
     if (!definition.requiresSprint) setSprintTag('')
-    // Clear stale preview
-    clearPreview()
   }, [])
-
-  function clearPreview() {
-    previewAbortRef.current?.abort()
-    previewAbortRef.current = null
-    setPreviewContent(null)
-    setPreviewError(null)
-  }
 
   const handlePreview = useCallback(() => {
     const requestId = previewRequestIdRef.current + 1
@@ -147,7 +175,7 @@ export function ExportContextDrawer({
     void exportCurrentBoard(
       {
         profile,
-        language: i18n.language,
+        language: lang,
         contextGoal: contextGoal.trim() || undefined,
         recordId: recordId || undefined,
         sprintTag: sprintTag || undefined,
@@ -162,6 +190,7 @@ export function ExportContextDrawer({
       .then((data) => {
         if (previewRequestIdRef.current !== requestId || controller.signal.aborted) return
         setPreviewContent(data.content)
+        lastPreviewKeyRef.current = previewInputKey
       })
       .catch((caught: unknown) => {
         if (previewRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(caught)) return
@@ -172,12 +201,13 @@ export function ExportContextDrawer({
         setIsPreviewLoading(false)
         previewAbortRef.current = null
       })
-  }, [profile, contextGoal, recordId, sprintTag, includeDiagnostics, includeRelations, includeAssets, includeContent, filters, profileDefinition, i18n.language])
+  }, [profile, lang, contextGoal, recordId, sprintTag, includeDiagnostics, includeRelations, includeAssets, includeContent, filters, profileDefinition, previewInputKey])
 
   const handleExportClick = useCallback(() => {
     clearPreview()
     onExport({
       profile,
+      language: lang,
       contextGoal,
       recordId: recordId || undefined,
       sprintTag: sprintTag || undefined,
@@ -186,7 +216,7 @@ export function ExportContextDrawer({
       includeRelations,
       includeDiagnostics,
     })
-  }, [onExport, profile, contextGoal, recordId, sprintTag, includeContent, includeAssets, includeRelations, includeDiagnostics])
+  }, [onExport, clearPreview, profile, lang, contextGoal, recordId, sprintTag, includeContent, includeAssets, includeRelations, includeDiagnostics])
 
   const footer = (
     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -243,10 +273,10 @@ export function ExportContextDrawer({
             options={profileOptions}
           />
           <p className="text-sm text-slate-600">
-            {profileDefinition.description}
+            {t(profileI18nKey(profile, 'description'), profileDefinition.description)}
           </p>
           <p className="text-xs text-slate-500">
-            {profileDefinition.agentReadingPurpose}
+            {t(profileI18nKey(profile, 'purpose'), profileDefinition.agentReadingPurpose)}
           </p>
           <label className="grid gap-1.5 text-xs font-bold text-slate-500">
             {t('export.contextGoal')}
@@ -380,6 +410,7 @@ export function ExportContextDrawer({
                 onSaveDraft({
                   title: draftTitle.trim(),
                   profile,
+                  language: lang,
                   contextGoal,
                   recordId: recordId || undefined,
                   sprintTag: sprintTag || undefined,

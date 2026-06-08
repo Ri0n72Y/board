@@ -222,6 +222,29 @@ const enUS = {
     'export.draftSaving': 'Saving...',
     'export.draftSaveButton': 'Save as Agent Draft',
 
+    // ─── Export profiles ───
+    'export.profiles.agent-full.label': 'Agent Full',
+    'export.profiles.agent-full.description': 'Export the full current board with all records and metadata.',
+    'export.profiles.agent-full.purpose': 'Best for comprehensive agent review of the entire board.',
+    'export.profiles.agent-sprint.label': 'Agent Sprint',
+    'export.profiles.agent-sprint.description': 'Export records belonging to a specific sprint.',
+    'export.profiles.agent-sprint.purpose': 'Review sprint scope and track delivery progress.',
+    'export.profiles.agent-filtered.label': 'Agent Filtered',
+    'export.profiles.agent-filtered.description': 'Export only records matching current filters.',
+    'export.profiles.agent-filtered.purpose': 'Focus an agent on a filtered subset of the board.',
+    'export.profiles.agent-card.label': 'Agent Card',
+    'export.profiles.agent-card.description': 'Export a single record.',
+    'export.profiles.agent-card.purpose': 'Provide focused context for a single card.',
+    'export.profiles.agent-related.label': 'Agent Related',
+    'export.profiles.agent-related.description': 'Export a card and its direct relations.',
+    'export.profiles.agent-related.purpose': 'Review a card with its dependency graph.',
+    'export.profiles.agent-snapshot.label': 'Agent Snapshot',
+    'export.profiles.agent-snapshot.description': 'Export records captured in a static snapshot.',
+    'export.profiles.agent-snapshot.purpose': 'Review a frozen board checkpoint with an agent.',
+    'export.profiles.human-summary.label': 'Human Summary',
+    'export.profiles.human-summary.description': 'Lightweight summary export for human reading.',
+    'export.profiles.human-summary.purpose': 'Quick overview for stakeholders and team leads.',
+
     // ─── Agent Drafts Drawer ───
     'agent.subtitle': 'Agent',
     'agent.title': 'Agent Drafts / Review Queue',
@@ -230,6 +253,19 @@ const enUS = {
     'agent.loadingDetail': 'Loading draft detail...',
     'agent.selectHint': 'Select a draft to view its context.',
     'agent.detailFailed': 'Detail failed',
+
+    // ─── Agent Draft Queue ───
+    'agent.queue.title': 'Draft Queue',
+    'agent.queue.refresh': 'Refresh',
+    'agent.queue.all': 'All',
+    'agent.queue.createFailed': 'Create failed',
+    'agent.queue.listFailed': 'List failed',
+    'agent.queue.creating': 'Creating draft...',
+    'agent.queue.loading': 'Loading drafts...',
+    'agent.queue.empty': 'No agent drafts yet.',
+    'agent.queue.emptyFilter': 'No {status} drafts.',
+    'agent.queue.emptyHint': 'Save a Context Pack from the Export drawer as an Agent Draft to review here.',
+    'agent.queue.records': 'records',
 
     // ─── Agent Draft Safety Banner ───
     'agent.safety.title': 'Draft Only - Not Executed',

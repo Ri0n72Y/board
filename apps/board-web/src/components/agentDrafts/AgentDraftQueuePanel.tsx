@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { AgentDraftStatus, AgentDraftSummary } from '@labour-board/shared'
 import { ArrowPathIcon } from '@heroicons/react/20/solid'
+import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'
 import { AgentDraftStatusBadge } from './AgentDraftStatusBadge'
@@ -8,13 +9,6 @@ import { ErrorBlock } from './ErrorBlock'
 import { formatDate } from './format'
 
 type StatusFilter = 'all' | AgentDraftStatus
-
-const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'draft', label: 'Draft' },
-  { value: 'reviewed', label: 'Reviewed' },
-  { value: 'discarded', label: 'Discarded' },
-]
 
 interface AgentDraftQueuePanelProps {
   drafts: AgentDraftSummary[]
@@ -37,7 +31,18 @@ export function AgentDraftQueuePanel({
   onSelectDraft,
   onRefreshList,
 }: AgentDraftQueuePanelProps) {
+  const { t } = useTranslation()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+
+  const statusFilters: { value: StatusFilter; label: string }[] = useMemo(
+    () => [
+      { value: 'all', label: t('agent.queue.all') },
+      { value: 'draft', label: t('agent.status.draft') },
+      { value: 'reviewed', label: t('agent.status.reviewed') },
+      { value: 'discarded', label: t('agent.status.discarded') },
+    ],
+    [t],
+  )
 
   const filteredDrafts = useMemo(
     () =>
@@ -51,7 +56,9 @@ export function AgentDraftQueuePanel({
     <section className="grid content-start gap-4">
       <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold uppercase text-slate-500">Draft Queue</h3>
+          <h3 className="text-sm font-semibold uppercase text-slate-500">
+            {t('agent.queue.title')}
+          </h3>
           <Button
             type="button"
             variant="ghost"
@@ -60,12 +67,12 @@ export function AgentDraftQueuePanel({
             disabled={isListLoading}
             icon={<ArrowPathIcon className={isListLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />}
           >
-            Refresh
+            {t('agent.queue.refresh')}
           </Button>
         </div>
 
         <div className="flex flex-wrap gap-1.5">
-          {STATUS_FILTERS.map((f) => (
+          {statusFilters.map((f) => (
             <button
               key={f.value}
               type="button"
@@ -81,24 +88,28 @@ export function AgentDraftQueuePanel({
           ))}
         </div>
 
-        {createError && <ErrorBlock title="Create failed" message={createError} />}
-        {listError && <ErrorBlock title="List failed" message={listError} />}
+        {createError && <ErrorBlock title={t('agent.queue.createFailed')} message={createError} />}
+        {listError && <ErrorBlock title={t('agent.queue.listFailed')} message={listError} />}
 
         {isCreating && (
           <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-            Creating draft...
+            {t('agent.queue.creating')}
           </p>
         )}
         {isListLoading && (
           <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-            Loading drafts...
+            {t('agent.queue.loading')}
           </p>
         )}
 
         {!isListLoading && filteredDrafts.length === 0 && (
           <div className="grid gap-2 rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-sm text-slate-500">
-            <p>{statusFilter === 'all' ? 'No agent drafts yet.' : `No ${statusFilter} drafts.`}</p>
-            <p className="text-xs">Save a Context Pack from the Export drawer as an Agent Draft to review here.</p>
+            <p>
+              {statusFilter === 'all'
+                ? t('agent.queue.empty')
+                : t('agent.queue.emptyFilter', { status: statusFilter })}
+            </p>
+            <p className="text-xs">{t('agent.queue.emptyHint')}</p>
           </div>
         )}
 
@@ -125,7 +136,7 @@ export function AgentDraftQueuePanel({
                   <span className="flex flex-wrap items-center gap-1.5">
                     <Badge>{draft.profile}</Badge>
                     <Badge>{draft.source}</Badge>
-                    <Badge>{draft.recordCount.toString()} records</Badge>
+                    <Badge>{draft.recordCount.toString()} {t('agent.queue.records')}</Badge>
                   </span>
                   <span className="text-xs text-slate-400">{formatDate(draft.createdAt)}</span>
                 </button>

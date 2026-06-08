@@ -222,6 +222,29 @@ const zhCN = {
     'export.draftSaving': '保存中...',
     'export.draftSaveButton': '保存为 Agent 草稿',
 
+    // ─── Export profiles ───
+    'export.profiles.agent-full.label': 'Agent 完整',
+    'export.profiles.agent-full.description': '导出完整当前看板及所有记录与元数据。',
+    'export.profiles.agent-full.purpose': '适合 Agent 全面审查整个看板。',
+    'export.profiles.agent-sprint.label': 'Agent 迭代',
+    'export.profiles.agent-sprint.description': '导出属于特定迭代的记录。',
+    'export.profiles.agent-sprint.purpose': '审查迭代范围并跟踪交付进度。',
+    'export.profiles.agent-filtered.label': 'Agent 筛选',
+    'export.profiles.agent-filtered.description': '仅导出匹配当前筛选的记录。',
+    'export.profiles.agent-filtered.purpose': '让 Agent 聚焦于筛选后的看板子集。',
+    'export.profiles.agent-card.label': 'Agent 单卡',
+    'export.profiles.agent-card.description': '导出单条记录。',
+    'export.profiles.agent-card.purpose': '为单张卡片提供聚焦上下文。',
+    'export.profiles.agent-related.label': 'Agent 关联',
+    'export.profiles.agent-related.description': '导出一张卡及其直接关联。',
+    'export.profiles.agent-related.purpose': '审查卡片及其依赖图。',
+    'export.profiles.agent-snapshot.label': 'Agent 快照',
+    'export.profiles.agent-snapshot.description': '导出静态快照中捕获的记录。',
+    'export.profiles.agent-snapshot.purpose': '用 Agent 审查冻结的看板检查点。',
+    'export.profiles.human-summary.label': '人工摘要',
+    'export.profiles.human-summary.description': '面向人工阅读的轻量摘要导出。',
+    'export.profiles.human-summary.purpose': '供利益相关者和团队负责人快速概览。',
+
     // ─── Agent Drafts Drawer ───
     'agent.subtitle': 'Agent',
     'agent.title': 'Agent 草稿 / 审核队列',
@@ -230,6 +253,19 @@ const zhCN = {
     'agent.loadingDetail': '正在加载草稿详情...',
     'agent.selectHint': '选择草稿以查看其上下文。',
     'agent.detailFailed': '详情加载失败',
+
+    // ─── Agent Draft Queue ───
+    'agent.queue.title': '草稿队列',
+    'agent.queue.refresh': '刷新',
+    'agent.queue.all': '全部',
+    'agent.queue.createFailed': '创建失败',
+    'agent.queue.listFailed': '列表加载失败',
+    'agent.queue.creating': '正在创建草稿...',
+    'agent.queue.loading': '正在加载草稿...',
+    'agent.queue.empty': '尚无 Agent 草稿。',
+    'agent.queue.emptyFilter': '无{status}草稿。',
+    'agent.queue.emptyHint': '从导出面板保存上下文包为 Agent 草稿，可在此处审核。',
+    'agent.queue.records': '条记录',
 
     // ─── Agent Draft Safety Banner ───
     'agent.safety.title': '仅草稿 - 未执行',

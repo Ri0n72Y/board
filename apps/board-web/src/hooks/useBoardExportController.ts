@@ -16,6 +16,7 @@ interface UseBoardExportControllerParams {
 
 export interface ExportContextPackOptions {
   profile: AgentContextProfile
+  language?: string
   contextGoal?: string
   recordId?: string
   sprintTag?: string
@@ -120,6 +121,7 @@ export function useBoardExportController({
       void exportCurrentBoard(
         {
           profile: options.profile,
+          language: options.language,
           contextGoal: options.contextGoal?.trim() || undefined,
           recordId: options.recordId,
           sprintTag: options.sprintTag,
