@@ -1,5 +1,5 @@
 import type { AgentDraftDetail, AgentDraftStatus, AgentDraftSummary, AgentResponseDetail, AgentResponseSummary } from '@labour-board/shared'
-import { XMarkIcon } from '@heroicons/react/20/solid'
+import { useTranslation } from 'react-i18next'
 import { Button } from './ui/Button'
 import { AgentDraftQueuePanel } from './agentDrafts/AgentDraftQueuePanel'
 import { AgentDraftSafetyBanner } from './agentDrafts/AgentDraftSafetyBanner'
@@ -78,6 +78,8 @@ export function AgentDraftsDrawer({
   onLoadResponseDetail,
   onSaveResponse,
 }: AgentDraftsDrawerProps) {
+  const { t } = useTranslation()
+
   if (!open) return null
 
   return (
@@ -96,19 +98,18 @@ export function AgentDraftsDrawer({
       >
         <header className="flex min-w-0 items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4">
           <div className="min-w-0">
-            <p className="mb-1 text-xs font-bold uppercase text-slate-500">Agent</p>
+            <p className="mb-1 text-xs font-bold uppercase text-slate-500">{t('agent.subtitle')}</p>
             <h2 className="text-xl font-semibold leading-tight" id="agent-drafts-title">
-              Agent Drafts / Review Queue
+              {t('agent.title')}
             </h2>
           </div>
           <Button
             type="button"
             variant="ghost"
             onClick={onClose}
-            title="Close agent drafts"
-            icon={<XMarkIcon className="h-4 w-4" />}
+            title={t('agent.closeTitle')}
           >
-            Close
+            {t('agent.close')}
           </Button>
         </header>
 
@@ -126,9 +127,9 @@ export function AgentDraftsDrawer({
 
           <section className="min-w-0">
             {isDetailLoading && (
-              <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">Loading draft detail...</div>
+              <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">{t('agent.loadingDetail')}</div>
             )}
-            {detailError && <ErrorBlock title="Detail failed" message={detailError} />}
+            {detailError && <ErrorBlock title={t('agent.detailFailed')} message={detailError} />}
             {!isDetailLoading && !detailError && selectedDraft && (
               <div className="grid gap-4">
                 <AgentDraftSafetyBanner />
@@ -184,7 +185,7 @@ export function AgentDraftsDrawer({
               </div>
             )}
             {!isDetailLoading && !detailError && !selectedDraft && (
-              <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">Select a draft to view its context.</div>
+              <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">{t('agent.selectHint')}</div>
             )}
           </section>
         </div>
