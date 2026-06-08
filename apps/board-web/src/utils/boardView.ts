@@ -123,7 +123,7 @@ function addConfigStatusDefinitions(
     if (seeds.has(definition.id)) continue
     seeds.set(definition.id, {
       id: definition.id,
-      label: definition.displayName || formatTag(definition.id),
+      label: formatTag(definition.id),
       tag: definition.id,
     })
   }

@@ -85,10 +85,11 @@ export function parseBoardExportOptions(
     ? getAgentContextProfileDefinition(profile)
     : undefined
 
-  return {
+  const base = {
     source,
     level,
-    format: 'markdown',
+    format: 'markdown' as const,
+    language: parseLanguage(searchParams),
     ...(profile ? { profile } : {}),
     ...(contextGoal ? { contextGoal } : {}),
     ...(recordId ? { recordId } : {}),
@@ -122,6 +123,8 @@ export function parseBoardExportOptions(
         }
       : {}),
   }
+
+  return base as BoardExportOptions | BoardContextPackOptions
 }
 
 export function applyExportFilters(
@@ -168,4 +171,10 @@ function parseProfile(value: string | null): AgentContextProfile | undefined {
 function parseContextGoal(searchParams: URLSearchParams): string | undefined {
   const value = searchParams.get('contextGoal')?.trim()
   return value || undefined
+}
+
+function parseLanguage(searchParams: URLSearchParams): string | undefined {
+  const value = searchParams.get('language')
+  if (value === 'zh-CN' || value === 'en-US') return value
+  return undefined // let downstream fallback to en-US
 }

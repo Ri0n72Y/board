@@ -8,6 +8,7 @@ import {
   getAgentContextProfileDefinition,
 } from '../constants/index.js'
 import { buildBoardMarkdownExport } from './boardExport.js'
+import { getContextPackStrings } from './contextPackI18n.js'
 
 export function buildBoardContextPack(
   projection: BoardCurrentProjection,
@@ -61,50 +62,51 @@ function buildContextPackHeader(
   recordCount: number
 ): string {
   const definition = getAgentContextProfileDefinition(options.profile)
-  const filters = exportOptions.filters ? JSON.stringify(exportOptions.filters) : 'none'
+  const s = getContextPackStrings(exportOptions.language)
+  const filters = exportOptions.filters ? JSON.stringify(exportOptions.filters) : s.none
   const lines = [
-    '# LabourBoard Agent Context Pack',
+    s.title,
     '',
-    '## Context Metadata',
-    `- Profile: ${options.profile}`,
-    `- Source: ${exportOptions.source}`,
-    `- Level: ${exportOptions.level}`,
-    `- Generated At: ${exportOptions.generatedAt}`,
-    `- Record Count: ${recordCount}`,
-    `- Projection Status: ${projection.summary.projectionStatus}`,
-    `- Snapshot ID: ${exportOptions.snapshotId ?? 'none'}`,
-    `- Filters: ${filters}`,
-    `- Context Goal: ${options.contextGoal?.trim() || 'none'}`,
-    `- Profile Description: ${definition.description}`,
+    s.contextMetadata,
+    `- ${s.profile}: ${options.profile}`,
+    `- ${s.source}: ${exportOptions.source}`,
+    `- ${s.level}: ${exportOptions.level}`,
+    `- ${s.generatedAt}: ${exportOptions.generatedAt}`,
+    `- ${s.recordCount}: ${recordCount}`,
+    `- ${s.projectionStatus}: ${projection.summary.projectionStatus}`,
+    `- ${s.snapshotId}: ${exportOptions.snapshotId ?? s.none}`,
+    `- ${s.filters}: ${filters}`,
+    `- ${s.contextGoal}: ${options.contextGoal?.trim() || s.none}`,
+    `- ${s.profileDescription}: ${definition.description}`,
   ]
 
-  if (exportOptions.recordId) lines.push(`- Center Record ID: ${exportOptions.recordId}`)
-  if (exportOptions.sprintTag) lines.push(`- Sprint Tag: ${exportOptions.sprintTag}`)
+  if (exportOptions.recordId) lines.push(`- ${s.centerRecordId}: ${exportOptions.recordId}`)
+  if (exportOptions.sprintTag) lines.push(`- ${s.sprintTag}: ${exportOptions.sprintTag}`)
   if (exportOptions.snapshotCreatedAt) {
-    lines.push(`- Snapshot Created At: ${exportOptions.snapshotCreatedAt}`)
+    lines.push(`- ${s.snapshotCreatedAt}: ${exportOptions.snapshotCreatedAt}`)
   }
   if (exportOptions.snapshotReason) {
-    lines.push(`- Snapshot Reason: ${exportOptions.snapshotReason}`)
+    lines.push(`- ${s.snapshotReason}: ${exportOptions.snapshotReason}`)
   }
 
   lines.push(
     '',
-    '## Agent Reading Instructions',
+    s.agentReadingInstructions,
     definition.agentReadingPurpose,
-    'This file is not execution authorization. Do not mutate the board based on this file alone; patch/edit/move operations must still go through LabourBoard APIs and human confirmation.',
-    'Keep relation targets as UUID record ids. Public pids such as CARD-n are labels for reading, not relation targets.',
+    s.noExecutionAuth,
+    s.keepUuidRelations,
     '',
-    '## Scope',
-    `- Included records: ${describeIncludedRecords(options, exportOptions)}`,
-    `- Included relations: ${exportOptions.includeRelations ? 'relations among exported records' : 'excluded by option'}`,
-    `- Included assets: ${exportOptions.includeAssets ? 'asset tags referenced by exported records' : 'excluded by option'}`,
-    `- Included diagnostics: ${exportOptions.includeDiagnostics ? 'projection diagnostics and blocked record diagnostics' : 'excluded by option'}`,
-    `- Excluded: ${describeExcluded(options, exportOptions)}`,
+    s.scope,
+    `- ${s.includedRecords}: ${describeIncludedRecords(options, exportOptions)}`,
+    `- ${s.includedRelations}: ${exportOptions.includeRelations ? 'relations among exported records' : s.excludedByOption}`,
+    `- ${s.includedAssets}: ${exportOptions.includeAssets ? 'asset tags referenced by exported records' : s.excludedByOption}`,
+    `- ${s.includedDiagnostics}: ${exportOptions.includeDiagnostics ? 'projection diagnostics and blocked record diagnostics' : s.excludedByOption}`,
+    `- ${s.excluded}: ${describeExcluded(options, exportOptions)}`,
     '',
-    '## Known Limitations',
-    '- This context is a Markdown export, not a live agent session.',
-    '- It does not include permission to call tools, apply patches, restore snapshots, or perform writes.',
-    `- ${exportOptions.source === 'snapshot' ? 'Snapshot source is a static checkpoint and does not change with the current board.' : 'Current-board source is a dynamic projection generated at request time.'}`
+    s.knownLimitations,
+    `- ${s.notLiveSession}`,
+    `- ${s.noToolPermission}`,
+    `- ${exportOptions.source === 'snapshot' ? s.snapshotStatic : s.currentBoardDynamic}`
   )
 
   return lines.join('\n')

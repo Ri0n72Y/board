@@ -26,6 +26,7 @@ export interface BoardExportOptions {
   source: BoardExportSource
   level: BoardExportLevel
   format: BoardExportFormat
+  language?: string
   recordId?: string
   sprintTag?: string
   includeDiagnostics?: boolean

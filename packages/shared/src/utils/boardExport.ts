@@ -7,6 +7,7 @@ import type {
   RecordResponse,
   Tag,
 } from '../interfaces/index.js'
+import { getContextPackStrings } from './contextPackI18n.js'
 
 type BoardRecord = RecordResponse<RecordItem<RecordBody>>
 
@@ -105,77 +106,81 @@ function buildMarkdown(context: ExportContext): string {
 }
 
 function buildMarkdownHeader(context: ExportContext): string {
+  const s = getContextPackStrings(context.options.language)
   const title =
     context.options.source === 'snapshot'
-      ? 'LabourBoard Snapshot Export'
-      : 'LabourBoard Current Board Export'
+      ? s.snapshotExportTitle
+      : s.boardExportTitle
   const filters = context.options.filters
     ? JSON.stringify(context.options.filters)
-    : 'none'
+    : s.none
   const lines = [
     `# ${title}`,
     '',
-    '## Export Metadata',
-    `- Source: ${context.options.source}`,
-    `- Level: ${context.options.level}`,
-    `- Generated At: ${context.generatedAt}`,
-    `- Record Count: ${context.records.length}`,
-    `- Projection Status: ${context.projection.summary.projectionStatus}`,
-    `- Filters: ${filters}`,
+    s.exportMetadata,
+    `- ${s.source}: ${context.options.source}`,
+    `- ${s.level}: ${context.options.level}`,
+    `- ${s.generatedAt}: ${context.generatedAt}`,
+    `- ${s.recordCount}: ${context.records.length}`,
+    `- ${s.projectionStatus}: ${context.projection.summary.projectionStatus}`,
+    `- ${s.filters}: ${filters}`,
   ]
 
   if (context.options.snapshotId) {
-    lines.push(`- Snapshot ID: ${context.options.snapshotId}`)
+    lines.push(`- ${s.snapshotId}: ${context.options.snapshotId}`)
   }
   if (context.options.snapshotCreatedAt) {
-    lines.push(`- Snapshot Created At: ${context.options.snapshotCreatedAt}`)
+    lines.push(`- ${s.snapshotCreatedAt}: ${context.options.snapshotCreatedAt}`)
   }
   if (context.options.snapshotReason) {
-    lines.push(`- Snapshot Reason: ${context.options.snapshotReason}`)
+    lines.push(`- ${s.snapshotReason}: ${context.options.snapshotReason}`)
   }
 
   lines.push(
     '',
-    '## How To Use This Context',
-    'This file is a structured project board export for agent reading. Records are grouped by status. Use pid/id/tags/assets/relations to reason about dependencies and sprint scope.'
+    s.howToUse,
   )
 
   return lines.join('\n')
 }
 
 function buildBoardSummarySection(context: ExportContext): string {
+  const s = getContextPackStrings(context.options.language)
   const summary = context.projection.summary
   return [
-    '## Board Summary',
-    `- Total base records: ${summary.totalBaseRecords}`,
-    `- Visible current records: ${summary.visibleCurrentRecords}`,
-    `- Exported records: ${context.records.length}`,
-    `- Archived records: ${summary.archivedRecords}`,
-    `- Blocked records: ${summary.blockedRecords}`,
-    `- Projection status: ${summary.projectionStatus}`,
-    `- Snapshot head version: ${context.projection.snapshotHeadVersion}`,
+    s.boardSummary,
+    `- ${s.totalBaseRecords}: ${summary.totalBaseRecords}`,
+    `- ${s.visibleCurrentRecords}: ${summary.visibleCurrentRecords}`,
+    `- ${s.exportedRecords}: ${context.records.length}`,
+    `- ${s.archivedRecords}: ${summary.archivedRecords}`,
+    `- ${s.blockedRecords}: ${summary.blockedRecords}`,
+    `- ${s.projectionStatus}: ${summary.projectionStatus}`,
+    `- ${s.snapshotHeadVersion}: ${context.projection.snapshotHeadVersion}`,
   ].join('\n')
 }
 
 function buildStatusOverviewSection(context: ExportContext): string {
+  const s = getContextPackStrings(context.options.language)
   return buildCountTable(
-    '## Status Overview',
-    'Status',
-    countBy(context.records, (record) => getStatusTag(record) ?? 'uncategorized')
+    s.statusOverview,
+    s.status,
+    countBy(context.records, (record) => getStatusTag(record) ?? s.uncategorized)
   )
 }
 
 function buildSprintOverviewSection(context: ExportContext): string {
+  const s = getContextPackStrings(context.options.language)
   return buildCountTable(
-    '## Sprint Overview',
+    s.sprintOverview,
     'Sprint',
-    countBy(context.records, (record) => getSprintTags(record), 'none')
+    countBy(context.records, (record) => getSprintTags(record), s.none)
   )
 }
 
 function buildRecordsByStatusSection(context: ExportContext): string {
-  const lines = ['## Records By Status']
-  const groups = groupBy(context.records, (record) => getStatusTag(record) ?? 'uncategorized')
+  const s = getContextPackStrings(context.options.language)
+  const lines = [s.recordsByStatus]
+  const groups = groupBy(context.records, (record) => getStatusTag(record) ?? s.uncategorized)
 
   for (const [status, records] of groups) {
     lines.push('', `### ${status}`)
@@ -188,14 +193,16 @@ function buildRecordsByStatusSection(context: ExportContext): string {
 }
 
 function buildSingleRecordSection(context: ExportContext): string {
+  const s = getContextPackStrings(context.options.language)
   const record = context.records[0]
-  return ['## Record', record ? buildRecordMarkdown(record, context) : 'Record not found.'].join('\n\n')
+  return [s.record, record ? buildRecordMarkdown(record, context) : s.recordNotFound].join('\n\n')
 }
 
 function buildRelatedRecordsSection(context: ExportContext): string {
-  const lines = ['## Related Records']
+  const s = getContextPackStrings(context.options.language)
+  const lines = [s.relatedRecords]
   if (context.records.length === 0) {
-    lines.push('No related records in this export.')
+    lines.push(s.noRelatedRecords)
     return lines.join('\n')
   }
 
@@ -212,7 +219,8 @@ function buildSprintSection(context: ExportContext): string {
 }
 
 function buildRelationsSection(context: ExportContext): string {
-  const lines = ['## Relations / Requirement Graph']
+  const s = getContextPackStrings(context.options.language)
+  const lines = [s.relationsGraph]
   const byId = new Map(context.records.map((record) => [record.body.id, record]))
   let count = 0
 
@@ -227,11 +235,12 @@ function buildRelationsSection(context: ExportContext): string {
     }
   }
 
-  if (count === 0) lines.push('- No relations in exported records.')
+  if (count === 0) lines.push(`- ${s.noRelationsExported}`)
   return lines.join('\n')
 }
 
 function buildAssetsIndexSection(context: ExportContext): string {
+  const s = getContextPackStrings(context.options.language)
   const assets = new Map<string, string[]>()
   for (const record of context.records) {
     for (const asset of record.body.assets ?? []) {
@@ -241,9 +250,9 @@ function buildAssetsIndexSection(context: ExportContext): string {
     }
   }
 
-  const lines = ['## Assets Index']
+  const lines = [s.assetsIndex]
   if (assets.size === 0) {
-    lines.push('- No assets in exported records.')
+    lines.push(`- ${s.noAssets}`)
     return lines.join('\n')
   }
 
@@ -258,12 +267,13 @@ function buildAssetsIndexSection(context: ExportContext): string {
 }
 
 function buildDiagnosticsSection(context: ExportContext): string {
+  const s = getContextPackStrings(context.options.language)
   const diagnostics = context.projection.diagnostics ?? []
   const blocked = context.projection.blockedRecords ?? []
-  const lines = ['## Diagnostics']
+  const lines = [s.diagnostics]
 
   if (diagnostics.length === 0 && blocked.length === 0) {
-    lines.push('- No diagnostics.')
+    lines.push(`- ${s.noDiagnostics}`)
     return lines.join('\n')
   }
 
@@ -280,26 +290,27 @@ function buildDiagnosticsSection(context: ExportContext): string {
 }
 
 function buildRecordMarkdown(record: BoardRecord, context: ExportContext): string {
+  const s = getContextPackStrings(context.options.language)
   const body = record.body
   const lines = [
     `#### ${body.pid} - ${markdownInline(titleFromBody(body.body) ?? body.pid)}`,
-    `- id: ${body.id}`,
-    `- pid: ${body.pid}`,
-    `- schema: ${body.schema}`,
-    `- assignee: ${body.assignee ?? 'unassigned'}`,
-    `- tags: ${body.tags.join(', ') || 'none'}`,
+    `- ${s.id}: ${body.id}`,
+    `- ${s.pid}: ${body.pid}`,
+    `- ${s.schema}: ${body.schema}`,
+    `- ${s.assignee}: ${body.assignee ?? s.unassigned}`,
+    `- ${s.tags}: ${body.tags.join(', ') || s.none}`,
   ]
 
   if (context.options.includeAssets) {
-    lines.push(`- assets: ${(body.assets ?? []).join(', ') || 'none'}`)
+    lines.push(`- ${s.assets}: ${(body.assets ?? []).join(', ') || s.none}`)
   }
   if (context.options.includeRelations) {
-    lines.push(`- relations: ${formatRelations(body.relations ?? [])}`)
+    lines.push(`- ${s.relations}: ${formatRelations(body.relations ?? [], s)}`)
   }
 
   const description = stringField(body.body, 'description')
   if (description) {
-    lines.push(`- description: ${markdownInline(description)}`)
+    lines.push(`- ${s.description}: ${markdownInline(description)}`)
   }
   if (context.options.includeContent) {
     const content = stringField(body.body, 'content')
@@ -441,8 +452,11 @@ function stringField(body: RecordBody, key: string): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined
 }
 
-function formatRelations(relations: RecordItem<RecordBody>['relations']): string {
-  if (!relations || relations.length === 0) return 'none'
+function formatRelations(
+  relations: RecordItem<RecordBody>['relations'],
+  s: ReturnType<typeof getContextPackStrings>
+): string {
+  if (!relations || relations.length === 0) return s.none
   return relations
     .map(
       (relation) =>

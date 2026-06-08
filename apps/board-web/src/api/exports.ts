@@ -12,6 +12,7 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
 export interface ExportRequestOptions {
   level?: BoardExportLevel
   profile?: AgentContextProfile
+  language?: string
   contextGoal?: string
   recordId?: string
   sprintTag?: string
@@ -60,6 +61,7 @@ function toParams(options: ExportRequestOptions): URLSearchParams {
   params.set('format', 'markdown')
   if (options.level) params.set('level', options.level)
   if (options.profile) params.set('profile', options.profile)
+  if (options.language) params.set('language', options.language)
   if (options.contextGoal) params.set('contextGoal', options.contextGoal)
   if (options.recordId) params.set('recordId', options.recordId)
   if (options.sprintTag) params.set('sprintTag', options.sprintTag)

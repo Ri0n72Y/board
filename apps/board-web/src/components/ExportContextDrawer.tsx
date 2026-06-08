@@ -56,7 +56,7 @@ export function ExportContextDrawer({
   draftSaveError = null,
   onClose,
 }: ExportContextDrawerProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [profile, setProfile] = useState<AgentContextProfile>('agent-full')
   const [contextGoal, setContextGoal] = useState('')
   const [recordId, setRecordId] = useState('')
@@ -147,6 +147,7 @@ export function ExportContextDrawer({
     void exportCurrentBoard(
       {
         profile,
+        language: i18n.language,
         contextGoal: contextGoal.trim() || undefined,
         recordId: recordId || undefined,
         sprintTag: sprintTag || undefined,
@@ -171,7 +172,7 @@ export function ExportContextDrawer({
         setIsPreviewLoading(false)
         previewAbortRef.current = null
       })
-  }, [profile, contextGoal, recordId, sprintTag, includeDiagnostics, includeRelations, includeAssets, includeContent, filters, profileDefinition])
+  }, [profile, contextGoal, recordId, sprintTag, includeDiagnostics, includeRelations, includeAssets, includeContent, filters, profileDefinition, i18n.language])
 
   const handleExportClick = useCallback(() => {
     clearPreview()
