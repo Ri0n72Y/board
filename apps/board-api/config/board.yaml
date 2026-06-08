@@ -27,6 +27,24 @@ tags:
     - id: priority
       displayName: Priority
       locked: true
+    - id: epic
+      displayName: Epic
+      locked: false
+    - id: sprint
+      displayName: Sprint
+      locked: false
+    - id: owner
+      displayName: Owner
+      locked: false
+    - id: scope
+      displayName: Scope
+      locked: false
+    - id: type
+      displayName: Type
+      locked: false
+    - id: milestone
+      displayName: Milestone
+      locked: false
     - id: asset
       displayName: Asset
       locked: true
@@ -47,13 +65,13 @@ tags:
   priority:
     defaults:
       - id: priority:p0
-        displayName: P0：重要紧急
+        displayName: P0
       - id: priority:p1
-        displayName: P1：重要不紧急
+        displayName: P1
       - id: priority:p2
-        displayName: P2：紧急不重要
+        displayName: P2
       - id: priority:p3
-        displayName: P3：不紧急不重要
+        displayName: P3
     custom: []
   asset:
     defaults:
@@ -72,8 +90,81 @@ tags:
         displayName: Manual
       - id: transaction:ai
         displayName: AI
+      - id: transaction:bulk
+        displayName: Bulk
     custom: []
-  custom: []
+  custom:
+    - id: type:user-story
+      displayName: User Story
+    - id: milestone:first-month
+      displayName: First Month
+    - id: epic:0
+      displayName: Epic 0
+    - id: epic:1
+      displayName: Epic 1
+    - id: epic:2
+      displayName: Epic 2
+    - id: epic:3
+      displayName: Epic 3
+    - id: epic:4
+      displayName: Epic 4
+    - id: epic:5
+      displayName: Epic 5
+    - id: epic:6
+      displayName: Epic 6
+    - id: epic:7
+      displayName: Epic 7
+    - id: epic:8
+      displayName: Epic 8
+    - id: sprint:0
+    - id: sprint:1
+    - id: sprint:2
+    - id: sprint:3
+    - id: sprint:4
+    - id: owner:program
+      displayName: Program
+    - id: owner:designer
+      displayName: Designer
+    - id: owner:po
+      displayName: PO
+    - id: owner:art
+      displayName: Art
+    - id: owner:team
+      displayName: Team
+    - id: scope:planning
+      displayName: Planning
+    - id: scope:combat
+      displayName: Combat
+    - id: scope:card
+      displayName: Card
+    - id: scope:monster
+      displayName: Monster
+    - id: scope:boss
+      displayName: Boss
+    - id: scope:map
+      displayName: Map
+    - id: scope:result
+      displayName: Result
+    - id: scope:reward
+      displayName: Reward
+    - id: scope:campfire
+      displayName: Campfire
+    - id: scope:event
+      displayName: Event
+    - id: scope:shop
+      displayName: Shop
+    - id: scope:ui
+      displayName: UI
+    - id: scope:build
+      displayName: Build
+    - id: scope:playtest
+      displayName: Playtest
+    - id: scope:retrospective
+      displayName: Retrospective
+    - id: scope:character
+      displayName: Character
+    - id: scope:scene
+      displayName: Scene
 relations:
   constraints:
     - blocks

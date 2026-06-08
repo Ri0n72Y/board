@@ -44,6 +44,7 @@ import { useBoardCurrentStore } from '../stores/boardCurrentStore'
 import { useBoardMetadataStore } from '../stores/boardMetadataStore'
 import {
   extractKnownTags,
+  getConfigOtherTags,
   getConfigPriorityTags,
   getConfigStatusTags,
   getProfileOptions,
@@ -132,6 +133,7 @@ export function BoardCurrentPage() {
   )
   const statusTags = useMemo(() => getConfigStatusTags(config), [config])
   const priorityTags = useMemo(() => getConfigPriorityTags(config), [config])
+  const configOtherTags = useMemo(() => getConfigOtherTags(config), [config])
   const profileOptions = useMemo(() => getProfileOptions(profiles), [profiles])
 
   const records = projection?.records ?? []
@@ -519,7 +521,7 @@ export function BoardCurrentPage() {
           open
           config={config}
           profiles={profiles}
-          knownTags={config ? knownTags : projectionKnownTags}
+          knownTags={configOtherTags}
           statusTags={statusTags}
           priorityTags={priorityTags}
           onClose={closeCreate}
@@ -534,6 +536,7 @@ export function BoardCurrentPage() {
           record={editRecord}
           profiles={profiles}
           knownTags={config ? knownTags : projectionKnownTags}
+          configOtherTags={configOtherTags}
           statusTags={statusTags}
           priorityTags={priorityTags}
           onClose={closeEdit}

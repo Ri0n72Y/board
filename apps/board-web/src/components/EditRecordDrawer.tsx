@@ -37,6 +37,7 @@ interface EditRecordDrawerProps {
   record: RecordResponse<RecordItem<RecordBody>>
   profiles: Profile[] | null
   knownTags: Tag[]
+  configOtherTags?: Tag[]
   statusTags: Tag[]
   priorityTags: Tag[]
   onClose: () => void
@@ -71,6 +72,7 @@ export function EditRecordDrawer({
   record,
   profiles,
   knownTags,
+  configOtherTags,
   statusTags,
   priorityTags,
   onClose,
@@ -90,11 +92,10 @@ export function EditRecordDrawer({
 
   const profileOptions = useMemo(() => getProfileOptions(profiles), [profiles])
   const otherTagOptions = useMemo(
-    () =>
-      knownTags.filter(
+    () => (configOtherTags ?? knownTags).filter(
         (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:'),
       ),
-    [knownTags],
+    [configOtherTags, knownTags],
   )
 
   function toggleOtherTag(tag: Tag) {

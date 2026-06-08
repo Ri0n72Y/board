@@ -94,6 +94,18 @@ export function getConfigPriorityTags(config: BoardConfig | null): Tag[] {
   return [...tags].sort()
 }
 
+/** Extract all configured non-status/non-priority tags for Create/Edit. */
+export function getConfigOtherTags(config: BoardConfig | null): Tag[] {
+  if (!config) return []
+  const tags = new Set<Tag>()
+  for (const def of config.tags.custom) tags.add(def.id)
+  for (const def of config.tags.asset.defaults) tags.add(def.id)
+  for (const def of config.tags.asset.custom) tags.add(def.id)
+  for (const def of config.tags.transaction.defaults) tags.add(def.id)
+  for (const def of config.tags.transaction.custom) tags.add(def.id)
+  return [...tags].sort()
+}
+
 /** Get display name for a tag from config definitions. */
 export function getTagDisplayFromConfig(
   tag: Tag,
