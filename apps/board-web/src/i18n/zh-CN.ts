@@ -211,6 +211,9 @@ const zhCN = {
     'export.exportFailed': '导出失败',
     'export.exportButton': '导出 Markdown',
     'export.exporting': '导出中...',
+    'export.previewButton': '预览 Markdown',
+    'export.previewTitle': 'Markdown 预览',
+    'export.previewEmpty': '暂无预览内容。请点击预览生成。',
     'export.draftSectionTitle': '保存为 Agent 草稿',
     'export.draftDescription': '将当前上下文包保存为静态 Agent 会话草稿，供人工审核后再交给 Agent。',
     'export.draftTitle': '草稿标题',
@@ -316,6 +319,8 @@ const zhCN = {
     'agent.response.downloadButton': '下载响应',
     'agent.response.copied': '已复制！',
     'agent.response.copyFailed': '复制失败',
+    'agent.response.showFull': '显示全部',
+    'agent.response.collapse': '收起',
 
     // ─── Formal Handoff Section ───
     'agent.handoff.sectionTitle': '正式移交',

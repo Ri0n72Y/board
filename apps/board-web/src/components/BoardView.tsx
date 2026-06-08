@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import type {
   BoardConfig,
   Profile,
@@ -42,10 +42,11 @@ export function BoardView({
   onMoveStatus,
 }: BoardViewProps) {
   const { t } = useTranslation()
+  const tagLabel = useCallback((tag: string) => formatTagLabel(tag, t), [t])
   const columns = useMemo(() => {
-    const statusColumns = getStatusColumns(config, records)
+    const statusColumns = getStatusColumns(config, records, tagLabel)
     return groupRecordsByStatus(records, statusColumns)
-  }, [config, records])
+  }, [config, records, tagLabel])
   const moveStatusOptions: MoveStatusOption[] = useMemo(
     () => getMoveStatusOptions(columns),
     [columns],

@@ -211,6 +211,9 @@ const enUS = {
     'export.exportFailed': 'Export failed',
     'export.exportButton': 'Export Markdown',
     'export.exporting': 'Exporting...',
+    'export.previewButton': 'Preview Markdown',
+    'export.previewTitle': 'Markdown Preview',
+    'export.previewEmpty': 'No preview content. Click Preview to generate.',
     'export.draftSectionTitle': 'Save as Agent Draft',
     'export.draftDescription': 'Save the current context pack as a static Agent Session Draft for human review before handing to an Agent.',
     'export.draftTitle': 'Draft title',
@@ -316,6 +319,8 @@ const enUS = {
     'agent.response.downloadButton': 'Download Response',
     'agent.response.copied': 'Copied!',
     'agent.response.copyFailed': 'Copy failed',
+    'agent.response.showFull': 'Show full',
+    'agent.response.collapse': 'Collapse',
 
     // ─── Formal Handoff Section ───
     'agent.handoff.sectionTitle': 'Formal Handoff',

@@ -8,7 +8,6 @@ import type {
 } from '@labour-board/shared'
 
 export const UNCATEGORIZED_STATUS_ID = '__uncategorized__'
-export const UNCATEGORIZED_STATUS_LABEL = 'Uncategorized'
 
 export interface BoardStatusColumn {
   id: string
@@ -23,21 +22,45 @@ interface StatusColumnSeed {
   tag: Tag | null
 }
 
+/**
+ * A function that converts a raw tag string into a display label.
+ * When provided, it overrides the built-in fallback formatter.
+ */
+export type TagLabelFormatter = (tag: string) => string
+
+function defaultTagLabel(tag: string): string {
+  if (tag === UNCATEGORIZED_STATUS_ID) return 'Uncategorized'
+  const value = tag.startsWith('status:') ? tag.slice('status:'.length) : tag
+  return value
+    .split(/[-_:]/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
 export function getRecordStatusTag(
   record: RecordResponse<RecordItem<RecordBody>>,
 ): Tag | null {
   return record.body.tags.find((tag) => tag.startsWith('status:')) ?? null
 }
 
+/**
+ * Build status columns from config + records.
+ *
+ * @param formatTag  Optional i18n-aware tag formatter. When provided, column labels
+ *                   will use it for display names. Falls back to English capitalization.
+ */
 export function getStatusColumns(
   config: BoardConfig | null,
   records: RecordResponse<RecordItem<RecordBody>>[],
+  formatTag?: TagLabelFormatter,
 ): BoardStatusColumn[] {
+  const labeler = formatTag ?? defaultTagLabel
   const seeds = new Map<string, StatusColumnSeed>()
 
   if (config) {
-    addConfigStatusDefinitions(seeds, config.tags.status.required)
-    addConfigStatusDefinitions(seeds, config.tags.status.custom)
+    addConfigStatusDefinitions(seeds, config.tags.status.required, labeler)
+    addConfigStatusDefinitions(seeds, config.tags.status.custom, labeler)
   }
 
   for (const record of records) {
@@ -45,16 +68,17 @@ export function getStatusColumns(
     if (statusTag && !seeds.has(statusTag)) {
       seeds.set(statusTag, {
         id: statusTag,
-        label: formatStatusLabel(statusTag),
+        label: labeler(statusTag),
         tag: statusTag,
       })
     }
   }
 
+  // Always keep uncategorized at the end
   if (!seeds.has(UNCATEGORIZED_STATUS_ID)) {
     seeds.set(UNCATEGORIZED_STATUS_ID, {
       id: UNCATEGORIZED_STATUS_ID,
-      label: UNCATEGORIZED_STATUS_LABEL,
+      label: labeler(UNCATEGORIZED_STATUS_ID),
       tag: null,
     })
   }
@@ -93,22 +117,14 @@ export function groupRecordsByStatus(
 function addConfigStatusDefinitions(
   seeds: Map<string, StatusColumnSeed>,
   definitions: TagDefinition[],
+  formatTag: TagLabelFormatter,
 ) {
   for (const definition of definitions) {
     if (seeds.has(definition.id)) continue
     seeds.set(definition.id, {
       id: definition.id,
-      label: definition.displayName || formatStatusLabel(definition.id),
+      label: definition.displayName || formatTag(definition.id),
       tag: definition.id,
     })
   }
-}
-
-function formatStatusLabel(tag: Tag): string {
-  const value = tag.startsWith('status:') ? tag.slice('status:'.length) : tag
-  return value
-    .split(/[-_:]/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
 }
