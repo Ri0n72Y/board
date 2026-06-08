@@ -28,7 +28,7 @@ import type { SubmitRecordPatchPayload } from '../api/patches'
 import { fetchRecordHead } from '../api/recordHead'
 import { cn } from '../lib/cn'
 import { getProfileOptions } from '../utils/board'
-import { TagChipRow } from './BoardFilters'
+import { formatTagLabel } from '../utils/tagDisplay'
 import { Button } from './ui/Button'
 import { TextInput } from './ui/TextInput'
 
@@ -45,11 +45,12 @@ interface EditRecordDrawerProps {
 
 interface FormState {
   title: string
-  description: string
-  content: string
+  summary: string
+  details: string
   statusTag: string
   priorityTag: string
-  otherTagsText: string
+  otherTags: Tag[]
+  unsupportedTags: Tag[]
   assignee: string
   assetsText: string
 }
@@ -75,7 +76,8 @@ export function EditRecordDrawer({
   onClose,
   onPatched,
 }: EditRecordDrawerProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
   const assigneeListId = useId()
   const current = record.body
   const [form, setForm] = useState<FormState>(() =>
@@ -87,6 +89,25 @@ export function EditRecordDrawer({
   const abortRef = useRef<AbortController | null>(null)
 
   const profileOptions = useMemo(() => getProfileOptions(profiles), [profiles])
+  const otherTagOptions = useMemo(
+    () =>
+      knownTags.filter(
+        (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:'),
+      ),
+    [knownTags],
+  )
+
+  function toggleOtherTag(tag: Tag) {
+    setForm((current) => {
+      const exists = current.otherTags.includes(tag)
+      return {
+        ...current,
+        otherTags: exists
+          ? current.otherTags.filter((t) => t !== tag)
+          : [...current.otherTags, tag],
+      }
+    })
+  }
 
   useEffect(() => {
     return () => abortEdit(requestIdRef, abortRef)
@@ -233,64 +254,128 @@ export function EditRecordDrawer({
             </div>
 
             <TextAreaField
-              label={t('edit.description')}
-              value={form.description}
+              label={t('edit.summary')}
+              value={form.summary}
               onChange={(value) =>
-                setForm((state) => ({ ...state, description: value }))
+                setForm((state) => ({ ...state, summary: value }))
               }
-              placeholder={t('edit.descriptionPlaceholder')}
+              placeholder={t('edit.summaryPlaceholder')}
               disabled={isSaving}
               rows={3}
             />
 
             <TextAreaField
-              label={t('edit.content')}
-              value={form.content}
+              label={t('edit.details')}
+              value={form.details}
               onChange={(value) =>
-                setForm((state) => ({ ...state, content: value }))
+                setForm((state) => ({ ...state, details: value }))
               }
-              placeholder={t('edit.contentPlaceholder')}
+              placeholder={t('edit.detailsPlaceholder')}
               disabled={isSaving}
               rows={5}
             />
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <TagInput
-                label={t('edit.statusTag')}
-                value={form.statusTag}
-                tags={statusTags}
-                fallbackTags={knownTags.filter((tag) => tag.startsWith('status:'))}
-                onChange={(value) =>
-                  setForm((state) => ({ ...state, statusTag: value }))
-                }
-                disabled={isSaving}
-                placeholder={t('edit.statusTagPlaceholder')}
-              />
-              <TagInput
-                label={t('edit.priorityTag')}
-                value={form.priorityTag}
-                tags={priorityTags}
-                fallbackTags={knownTags.filter((tag) => tag.startsWith('priority:'))}
-                onChange={(value) =>
-                  setForm((state) => ({ ...state, priorityTag: value }))
-                }
-                disabled={isSaving}
-                placeholder={t('edit.priorityTagPlaceholder')}
-                optional
-              />
+            {/* Status select-only chip grid */}
+            <div className="grid gap-2">
+              <label className="text-xs font-bold text-slate-500">
+                {t('edit.statusTag')}
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {statusTags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    className={
+                      form.statusTag === tag
+                        ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
+                        : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
+                    }
+                    onClick={() => setForm((c) => ({ ...c, statusTag: tag }))}
+                    disabled={isSaving}
+                  >
+                    {formatTagLabel(tag, lang)}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <TextAreaField
-              label={t('edit.otherTags')}
-              value={form.otherTagsText}
-              onChange={(value) =>
-                setForm((state) => ({ ...state, otherTagsText: value }))
-              }
-              placeholder={t('edit.otherTagsPlaceholder')}
-              disabled={isSaving}
-              rows={4}
-              hint={t('edit.otherTagsHint')}
-            />
+            {/* Priority select-only chip grid */}
+            <div className="grid gap-2">
+              <label className="text-xs font-bold text-slate-500">
+                {t('edit.priorityTag')}
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {priorityTags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    className={
+                      form.priorityTag === tag
+                        ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
+                        : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
+                    }
+                    onClick={() =>
+                      setForm((c) => ({
+                        ...c,
+                        priorityTag: c.priorityTag === tag ? '' : tag,
+                      }))
+                    }
+                    disabled={isSaving}
+                  >
+                    {formatTagLabel(tag, lang)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Other tags */}
+            {otherTagOptions.length > 0 && (
+              <div className="grid gap-2">
+                <label className="text-xs font-bold text-slate-500">
+                  {t('edit.otherTags')}
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {otherTagOptions.map((tag) => {
+                    const isActive = form.otherTags.includes(tag)
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        className={
+                          isActive
+                            ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
+                            : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
+                        }
+                        onClick={() => toggleOtherTag(tag)}
+                        disabled={isSaving}
+                      >
+                        {formatTagLabel(tag, lang)}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Unsupported existing tags (read-only) */}
+            {form.unsupportedTags.length > 0 && (
+              <div className="grid gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <label className="text-xs font-bold text-amber-800">
+                  {t('edit.unsupportedTags')}
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {form.unsupportedTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex min-h-[28px] max-w-full items-center rounded-full border border-amber-300 bg-amber-100 px-2.5 font-mono text-xs text-amber-800"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-xs text-amber-700">{t('edit.unsupportedHint')}</p>
+              </div>
+            )}
 
             <div className="grid gap-1.5">
               <label className="text-xs font-bold text-slate-500" htmlFor={assigneeListId}>
@@ -362,20 +447,26 @@ function initialFormState(
   const body = asEditableBody(record.body)
   const statusTag =
     record.tags.find((tag) => tag.startsWith('status:')) ??
-    getDefaultStatusTag(statusTags, knownTags)
+    (statusTags[0] ?? '')
   const priorityTag =
     record.tags.find((tag) => tag.startsWith('priority:')) ?? ''
   const otherTags = record.tags.filter(
     (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:'),
   )
+  // Detect unsupported tags: tags in record that are not in knownTags
+  const unsupportedTags = otherTags.filter(
+    (t) => !knownTags.includes(t),
+  )
+  const supportedOtherTags = otherTags.filter((t) => !unsupportedTags.includes(t))
 
   return {
     title: body.title,
-    description: body.description,
-    content: body.content,
+    summary: body.description,
+    details: body.content,
     statusTag,
     priorityTag,
-    otherTagsText: otherTags.join('\n'),
+    otherTags: supportedOtherTags,
+    unsupportedTags,
     assignee: record.assignee ?? '',
     assetsText: (record.assets ?? []).join('\n'),
   }
@@ -387,11 +478,8 @@ function buildPatchDraft(
   const title = form.title.trim()
   const statusTag = form.statusTag.trim() as Tag
   const priorityTag = form.priorityTag.trim() as Tag
-  const otherTags = lines(form.otherTagsText).filter(
-    (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:'),
-  ) as Tag[]
   const tags = uniqueValues(
-    [statusTag, priorityTag, ...otherTags].filter(Boolean) as Tag[],
+    [statusTag, priorityTag, ...form.otherTags, ...form.unsupportedTags].filter(Boolean) as Tag[],
   )
   const assets = uniqueValues(lines(form.assetsText)) as AssetRef[]
   const assignee = form.assignee.trim()
@@ -407,8 +495,8 @@ function buildPatchDraft(
       assets,
       body: {
         title,
-        description: nullableTrimmed(form.description),
-        content: nullableTrimmed(form.content),
+        description: nullableTrimmed(form.summary),
+        content: nullableTrimmed(form.details),
       },
     },
   }
@@ -450,13 +538,6 @@ function uniqueValues<T extends string>(values: T[]): T[] {
   return [...new Set(values)]
 }
 
-function getDefaultStatusTag(statusTags: Tag[], knownTags: Tag[]): string {
-  if (statusTags.includes('status:todo' as Tag) || knownTags.includes('status:todo' as Tag)) {
-    return 'status:todo'
-  }
-  return ''
-}
-
 function abortEdit(
   requestIdRef: MutableRefObject<number>,
   abortRef: MutableRefObject<AbortController | null>,
@@ -473,52 +554,6 @@ function ReadOnlyMeta({ label, value }: { label: string; value: string }) {
     <div className="grid min-w-0 gap-0.5 rounded-md bg-slate-100 p-2.5">
       <dt className="text-xs font-bold uppercase text-slate-500">{label}</dt>
       <dd className="m-0 wrap-break-word text-slate-950">{value}</dd>
-    </div>
-  )
-}
-
-function TagInput({
-  label,
-  value,
-  tags,
-  fallbackTags,
-  onChange,
-  disabled,
-  placeholder,
-  optional = false,
-}: {
-  label: string
-  value: string
-  tags: Tag[]
-  fallbackTags: Tag[]
-  onChange: (value: string) => void
-  disabled?: boolean
-  placeholder: string
-  optional?: boolean
-}) {
-  const listId = useId()
-  const options = tags.length > 0 ? tags : fallbackTags
-
-  return (
-    <div className="grid gap-2">
-      <TextInput
-        label={optional ? `${label} (optional)` : label}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        list={`${listId}-list`}
-        disabled={disabled}
-      />
-      {options.length > 0 && (
-        <>
-          <datalist id={`${listId}-list`}>
-            {options.map((tag) => (
-              <option key={tag} value={tag} />
-            ))}
-          </datalist>
-          <TagChipRow tags={options} onTagClick={onChange} />
-        </>
-      )}
     </div>
   )
 }

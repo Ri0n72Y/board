@@ -46,12 +46,14 @@ tags:
     custom: []
   priority:
     defaults:
-      - id: priority:low
-        displayName: Low
-      - id: priority:medium
-        displayName: Medium
-      - id: priority:high
-        displayName: High
+      - id: priority:p0
+        displayName: P0：重要紧急
+      - id: priority:p1
+        displayName: P1：重要不紧急
+      - id: priority:p2
+        displayName: P2：紧急不重要
+      - id: priority:p3
+        displayName: P3：不紧急不重要
     custom: []
   asset:
     defaults:

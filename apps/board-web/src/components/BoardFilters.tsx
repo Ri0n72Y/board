@@ -41,25 +41,17 @@ interface BoardFiltersProps {
   onAssigneeChange: (assignee: string) => void
   onAssetIdChange: (assetId: string) => void
   onRelationTargetChange: (relationTarget: string) => void
-  /** Open the advanced filters drawer. */
   onOpenAdvanced?: () => void
-  /** Clear all filters (q, tags, assignee, assetId, relationTarget, includeArchived). */
   onClearFilters?: () => void
 }
 
 export function BoardFilters({
   q,
   tags,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  tagMatch: _tagMatch,
   includeArchived,
   assignee,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  assetId: _assetId,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  relationTarget: _relationTarget,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  knownTags: _knownTags,
+  assetId,
+  relationTarget,
   statusTags = [],
   priorityTags = [],
   profileOptions = [],
@@ -68,16 +60,13 @@ export function BoardFilters({
   onQChange,
   onAddTag,
   onRemoveTag,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onTagMatchChange: _onTagMatchChange,
   onIncludeArchivedChange,
   onAssigneeChange,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onAssetIdChange: _onAssetIdChange,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onRelationTargetChange: _onRelationTargetChange,
+  onAssetIdChange,
+  onRelationTargetChange,
   onOpenAdvanced,
   onClearFilters,
+  // Rest unused in simplified main UI, retained for interface compat
 }: BoardFiltersProps) {
   const { t } = useTranslation()
   const assigneeListId = useId()
@@ -86,12 +75,11 @@ export function BoardFilters({
     metadataError && (metadataError.config || metadataError.profiles)
 
   const hasAnyFilter =
-    q.trim() || tags.length > 0 || assignee.trim() || includeArchived
+    q.trim() || tags.length > 0 || assignee.trim() || assetId.trim() || relationTarget.trim() || includeArchived
 
   return (
     <>
       <Panel className="p-4" aria-label="Board filters">
-        {/* Metadata loading / warning */}
         {metadataLoading && (
           <p className="mb-3 text-xs text-slate-400">
             {t('metadata.loading.all')}
@@ -111,7 +99,6 @@ export function BoardFilters({
           </div>
         )}
 
-        {/* Row 1: Search + Assignee + Include archived + buttons */}
         <div className="grid gap-3 lg:grid-cols-4">
           <TextInput
             label={t('filters.search')}
@@ -122,10 +109,7 @@ export function BoardFilters({
           />
 
           <div className="grid gap-1.5">
-            <label
-              className="text-xs font-bold text-slate-500"
-              htmlFor={assigneeListId}
-            >
+            <label className="text-xs font-bold text-slate-500" htmlFor={assigneeListId}>
               {t('filters.assignee')}
             </label>
             <input
@@ -214,6 +198,44 @@ export function BoardFilters({
             selected
             onTagClick={onRemoveTag}
           />
+        </Panel>
+      )}
+
+      {/* Active filter summary: assetId / relationTarget / assignee */}
+      {(assetId.trim() || relationTarget.trim() || assignee.trim()) && (
+        <Panel className="mt-3 px-4 py-3" aria-label="Active ID filters">
+          <div className="flex flex-wrap items-center gap-2">
+            {assignee.trim() && (
+              <button
+                className={chipClassName({ selected: true })}
+                type="button"
+                onClick={() => onAssigneeChange('')}
+                title={t('filters.removeFilter')}
+              >
+                {t('filters.assignee')}: {assignee}
+              </button>
+            )}
+            {assetId.trim() && (
+              <button
+                className={chipClassName({ selected: true })}
+                type="button"
+                onClick={() => onAssetIdChange('')}
+                title={t('filters.removeFilter')}
+              >
+                {t('filters.assetId')}: {assetId}
+              </button>
+            )}
+            {relationTarget.trim() && (
+              <button
+                className={chipClassName({ selected: true })}
+                type="button"
+                onClick={() => onRelationTargetChange('')}
+                title={t('filters.removeFilter')}
+              >
+                {t('filters.relationTarget')}: {relationTarget}
+              </button>
+            )}
+          </div>
         </Panel>
       )}
     </>

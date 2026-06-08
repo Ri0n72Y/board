@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
-import type { BoardConfig, Profile, SchemaName, Tag } from '@labour-board/shared'
+import type { BoardConfig, Profile, Tag } from '@labour-board/shared'
 import {
   ExclamationTriangleIcon,
   PlusIcon,
@@ -10,7 +10,7 @@ import axios from 'axios'
 import { createRecord, type CreateRecordPayload } from '../api/records'
 import { cn } from '../lib/cn'
 import { getProfileOptions } from '../utils/board'
-import { TagChipRow } from './BoardFilters'
+import { formatTagLabel } from '../utils/tagDisplay'
 import { Button } from './ui/Button'
 import { Select } from './ui/Select'
 import { TextInput } from './ui/TextInput'
@@ -18,7 +18,8 @@ import { TextInput } from './ui/TextInput'
 interface CreateRecordDrawerProps {
   open: boolean
   config: BoardConfig | null
-  profiles: Profile[] | null
+  /** Profile list for assignee datalist (future: full selector). */
+  profiles?: unknown[] | null
   knownTags: Tag[]
   statusTags: Tag[]
   priorityTags: Tag[]
@@ -29,10 +30,11 @@ interface CreateRecordDrawerProps {
 interface FormState {
   schema: string
   title: string
-  description: string
-  content: string
+  summary: string
+  details: string
   statusTag: string
   priorityTag: string
+  otherTags: Tag[]
   assignee: string
   assetsText: string
 }
@@ -49,18 +51,40 @@ export function CreateRecordDrawer({
   onClose,
   onCreated,
 }: CreateRecordDrawerProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
   const assigneeListId = useId()
   const [form, setForm] = useState<FormState>(() =>
-    initialFormState(config, knownTags, statusTags),
+    initialFormState(config, statusTags, priorityTags),
   )
   const [error, setError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const createRequestIdRef = useRef(0)
   const createAbortRef = useRef<AbortController | null>(null)
 
-  const schemaOptions = useMemo(() => getSchemaOptions(config), [config])
-  const profileOptions = useMemo(() => getProfileOptions(profiles), [profiles])
+  const schemaOptions = useMemo(() => {
+    function label(schema: string): string {
+      const key = SCHEMA_KEYS[schema] ?? schema
+      return t(key)
+    }
+    const SCHEMA_KEYS: Record<string, string> = {
+      CardBody: 'create.schemaCard',
+      AssetBody: 'create.schemaAsset',
+      TransactionBody: 'create.schemaTransaction',
+    }
+    const schemas = config?.records.schemas?.length ? config.records.schemas : [CARD_SCHEMA]
+    return schemas.map((s) => ({ value: s as string, label: label(s) }))
+  }, [config, t])
+  const profileOptions = useMemo(() => getProfileOptions(profiles as Profile[] | null), [profiles])
+
+  // Non-status/non-priority known tags for "other tags" section
+  const otherTagOptions = useMemo(
+    () =>
+      knownTags.filter(
+        (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:'),
+      ),
+    [knownTags],
+  )
 
   useEffect(() => {
     return () => abortCreate(createRequestIdRef, createAbortRef)
@@ -70,6 +94,18 @@ export function CreateRecordDrawer({
     abortCreate(createRequestIdRef, createAbortRef, setIsCreating)
     onClose()
   }, [onClose])
+
+  function toggleOtherTag(tag: Tag) {
+    setForm((current) => {
+      const exists = current.otherTags.includes(tag)
+      return {
+        ...current,
+        otherTags: exists
+          ? current.otherTags.filter((t) => t !== tag)
+          : [...current.otherTags, tag],
+      }
+    })
+  }
 
   async function submit() {
     const validation = buildPayload(form)
@@ -90,19 +126,12 @@ export function CreateRecordDrawer({
     try {
       await createRecord(validation.payload, controller.signal)
       if (createRequestIdRef.current !== requestId || controller.signal.aborted) return
-
       setIsCreating(false)
       createAbortRef.current = null
       onClose()
       await onCreated()
     } catch (caught) {
-      if (
-        createRequestIdRef.current !== requestId ||
-        controller.signal.aborted ||
-        axios.isCancel(caught)
-      ) {
-        return
-      }
+      if (createRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(caught)) return
       setError(caught instanceof Error ? caught.message : t('create.errorGeneral'))
       setIsCreating(false)
     } finally {
@@ -189,52 +218,116 @@ export function CreateRecordDrawer({
             </div>
 
             <TextAreaField
-              label={t('create.description')}
-              value={form.description}
+              label={t('create.summary')}
+              value={form.summary}
               onChange={(value) =>
-                setForm((current) => ({ ...current, description: value }))
+                setForm((current) => ({ ...current, summary: value }))
               }
-              placeholder={t('create.descriptionPlaceholder')}
+              placeholder={t('create.summaryPlaceholder')}
               disabled={isCreating}
               rows={3}
             />
 
             <TextAreaField
-              label={t('create.content')}
-              value={form.content}
+              label={t('create.details')}
+              value={form.details}
               onChange={(value) =>
-                setForm((current) => ({ ...current, content: value }))
+                setForm((current) => ({ ...current, details: value }))
               }
-              placeholder={t('create.contentPlaceholder')}
+              placeholder={t('create.detailsPlaceholder')}
               disabled={isCreating}
               rows={5}
             />
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <TagInput
-                label={t('create.statusTag')}
-                value={form.statusTag}
-                tags={statusTags}
-                fallbackTags={knownTags.filter((tag) => tag.startsWith('status:'))}
-                onChange={(value) =>
-                  setForm((current) => ({ ...current, statusTag: value }))
-                }
-                disabled={isCreating}
-                placeholder={t('create.statusTagPlaceholder')}
-              />
-              <TagInput
-                label={t('create.priorityTag')}
-                value={form.priorityTag}
-                tags={priorityTags}
-                fallbackTags={knownTags.filter((tag) => tag.startsWith('priority:'))}
-                onChange={(value) =>
-                  setForm((current) => ({ ...current, priorityTag: value }))
-                }
-                disabled={isCreating}
-                placeholder={t('create.priorityTagPlaceholder')}
-                optional
-              />
+            {/* Status select-only chip grid */}
+            <div className="grid gap-2">
+              <label className="text-xs font-bold text-slate-500">
+                {t('create.statusTag')}
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {statusTags.length > 0 ? (
+                  statusTags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      className={
+                        form.statusTag === tag
+                          ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
+                          : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
+                      }
+                      onClick={() => setForm((c) => ({ ...c, statusTag: tag }))}
+                      disabled={isCreating}
+                    >
+                      {formatTagLabel(tag, lang)}
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-400">{t('create.noConfigTags')}</p>
+                )}
+              </div>
             </div>
+
+            {/* Priority select-only chip grid */}
+            <div className="grid gap-2">
+              <label className="text-xs font-bold text-slate-500">
+                {t('create.priorityTag')}
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {priorityTags.length > 0 ? (
+                  priorityTags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      className={
+                        form.priorityTag === tag
+                          ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
+                          : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
+                      }
+                      onClick={() =>
+                        setForm((c) => ({
+                          ...c,
+                          priorityTag: c.priorityTag === tag ? '' : tag,
+                        }))
+                      }
+                      disabled={isCreating}
+                    >
+                      {formatTagLabel(tag, lang)}
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-400">{t('create.noConfigTags')}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Other tags */}
+            {otherTagOptions.length > 0 && (
+              <div className="grid gap-2">
+                <label className="text-xs font-bold text-slate-500">
+                  {t('create.otherTags')}
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {otherTagOptions.map((tag) => {
+                    const isActive = form.otherTags.includes(tag)
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        className={
+                          isActive
+                            ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
+                            : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
+                        }
+                        onClick={() => toggleOtherTag(tag)}
+                        disabled={isCreating}
+                      >
+                        {formatTagLabel(tag, lang)}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="grid gap-1.5">
               <label className="text-xs font-bold text-slate-500" htmlFor={assigneeListId}>
@@ -249,7 +342,7 @@ export function CreateRecordDrawer({
                 onChange={(event) =>
                   setForm((current) => ({ ...current, assignee: event.target.value }))
                 }
-                placeholder="public key"
+                placeholder={t('create.assigneePlaceholder')}
                 list={`${assigneeListId}-list`}
                 disabled={isCreating}
               />
@@ -297,39 +390,21 @@ export function CreateRecordDrawer({
 }
 
 function initialFormState(
-  config: BoardConfig | null,
-  knownTags: Tag[],
+  _config: BoardConfig | null,
   statusTags: Tag[],
+  priorityTags: Tag[],
 ): FormState {
   return {
-    schema: getDefaultSchema(config),
+    schema: CARD_SCHEMA,
     title: '',
-    description: '',
-    content: '',
-    statusTag: getDefaultStatusTag(statusTags, knownTags),
-    priorityTag: '',
+    summary: '',
+    details: '',
+    statusTag: statusTags[0] ?? '',
+    priorityTag: priorityTags[0] ?? '',
+    otherTags: [],
     assignee: '',
     assetsText: '',
   }
-}
-
-function getSchemaOptions(config: BoardConfig | null): { value: string; label: string }[] {
-  const schemas = config?.records.schemas?.length ? config.records.schemas : [CARD_SCHEMA]
-  return schemas.map((schema) => ({ value: schema, label: schema }))
-}
-
-function getDefaultSchema(config: BoardConfig | null): string {
-  const schemas = config?.records.schemas
-  if (!schemas || schemas.length === 0) return CARD_SCHEMA
-  if (schemas.includes(CARD_SCHEMA as SchemaName)) return CARD_SCHEMA
-  return schemas[0]
-}
-
-function getDefaultStatusTag(statusTags: Tag[], knownTags: Tag[]): string {
-  if (statusTags.includes('status:todo' as Tag) || knownTags.includes('status:todo' as Tag)) {
-    return 'status:todo'
-  }
-  return ''
 }
 
 function buildPayload(
@@ -340,9 +415,11 @@ function buildPayload(
   const statusTag = form.statusTag.trim() as Tag
   const priorityTag = form.priorityTag.trim() as Tag
   const assignee = form.assignee.trim()
-  const description = form.description.trim()
-  const content = form.content.trim()
-  const tags = uniqueValues([statusTag, priorityTag].filter(Boolean) as Tag[])
+  const description = form.summary.trim()
+  const content = form.details.trim()
+  const tags = uniqueValues(
+    [statusTag, priorityTag, ...form.otherTags].filter(Boolean) as Tag[],
+  )
   const assets = uniqueValues(
     form.assetsText
       .split(/\r?\n/)
@@ -384,52 +461,6 @@ function abortCreate(
   abortRef.current?.abort()
   abortRef.current = null
   setIsCreating?.(false)
-}
-
-function TagInput({
-  label,
-  value,
-  tags,
-  fallbackTags,
-  onChange,
-  disabled,
-  placeholder,
-  optional = false,
-}: {
-  label: string
-  value: string
-  tags: Tag[]
-  fallbackTags: Tag[]
-  onChange: (value: string) => void
-  disabled?: boolean
-  placeholder: string
-  optional?: boolean
-}) {
-  const listId = useId()
-  const options = tags.length > 0 ? tags : fallbackTags
-
-  return (
-    <div className="grid gap-2">
-      <TextInput
-        label={optional ? `${label} (optional)` : label}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        list={`${listId}-list`}
-        disabled={disabled}
-      />
-      {options.length > 0 && (
-        <>
-          <datalist id={`${listId}-list`}>
-            {options.map((tag) => (
-              <option key={tag} value={tag} />
-            ))}
-          </datalist>
-          <TagChipRow tags={options} onTagClick={onChange} />
-        </>
-      )}
-    </div>
-  )
 }
 
 function TextAreaField({
