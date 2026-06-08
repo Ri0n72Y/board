@@ -110,7 +110,7 @@ export function CreateRecordDrawer({
   async function submit() {
     const validation = buildPayload(form)
     if (!validation.ok) {
-      setError(validation.error)
+      setError(t(validation.error))
       return
     }
 
@@ -427,9 +427,9 @@ function buildPayload(
       .filter(Boolean),
   )
 
-  if (!schema) return { ok: false, error: 'Schema is required.' }
-  if (!title) return { ok: false, error: 'Title is required.' }
-  if (!statusTag) return { ok: false, error: 'Status tag is required.' }
+  if (!schema) return { ok: false, error: 'create.errorSchemaRequired' }
+  if (!title) return { ok: false, error: 'create.errorTitleRequired' }
+  if (!statusTag) return { ok: false, error: 'create.errorStatusTagRequired' }
 
   return {
     ok: true,

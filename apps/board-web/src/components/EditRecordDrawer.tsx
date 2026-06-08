@@ -121,7 +121,7 @@ export function EditRecordDrawer({
   async function submit() {
     const validation = buildPatchDraft(form)
     if (!validation.ok) {
-      setError(validation.error)
+      setError(t(validation.error))
       return
     }
 
@@ -240,7 +240,7 @@ export function EditRecordDrawer({
             )}
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <ReadOnlyMeta label={t('record.schema')} value={current.schema} />
+              <ReadOnlyMeta label={t('record.schema')} value={schemaLabel(current.schema, t)} />
               <TextInput
                 label={t('edit.titleField')}
                 value={form.title}
@@ -484,8 +484,8 @@ function buildPatchDraft(
   const assets = uniqueValues(lines(form.assetsText)) as AssetRef[]
   const assignee = form.assignee.trim()
 
-  if (!title) return { ok: false, error: 'Title is required.' }
-  if (!statusTag) return { ok: false, error: 'Status tag is required.' }
+  if (!title) return { ok: false, error: 'edit.errorTitleRequired' }
+  if (!statusTag) return { ok: false, error: 'edit.errorStatusTagRequired' }
 
   return {
     ok: true,
@@ -628,4 +628,14 @@ function ReadOnlyRelations({
       )}
     </section>
   )
+}
+
+function schemaLabel(schema: string, t: (key: string) => string): string {
+  const map: Record<string, string> = {
+    CardBody: 'create.schemaCard',
+    AssetBody: 'create.schemaAsset',
+    TransactionBody: 'create.schemaTransaction',
+  }
+  const key = map[schema]
+  return key ? t(key) : schema
 }

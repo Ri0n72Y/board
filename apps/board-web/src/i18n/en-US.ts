@@ -156,15 +156,15 @@ const enUS = {
     'edit.assetsHint':
       'One asset id per line. Saving replaces the record assets list.',
     'edit.cancel': 'Cancel',
+    'edit.errorGeneral': 'Edit failed',
+    'edit.errorTitleRequired': 'Title is required.',
+    'edit.errorStatusTagRequired': 'Status is required.',
     'edit.saving': 'Saving...',
     'edit.saveButton': 'Save patch',
     'edit.conflictError':
       'Record changed on the server. Refresh and try again.',
     'edit.headMissing':
       'Current record is not present in current head. Refresh current board and try again.',
-    'edit.errorGeneral': 'Save patch failed',
-    'edit.errorTitleRequired': 'Title is required.',
-    'edit.errorStatusTagRequired': 'Status tag is required.',
     'edit.optional': ' (optional)',
 
     // ─── Snapshot Drawer ───

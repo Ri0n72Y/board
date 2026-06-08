@@ -160,7 +160,7 @@ const zhCN = {
     'edit.headMissing': '当前记录不在当前 head 中。请刷新当前看板后重试。',
     'edit.errorGeneral': '保存补丁失败',
     'edit.errorTitleRequired': '标题为必填项。',
-    'edit.errorStatusTagRequired': '状态标签为必填项。',
+    'edit.errorStatusTagRequired': '状态为必填项。',
     'edit.optional': '（可选）',
 
     // ─── Snapshot Drawer ───
