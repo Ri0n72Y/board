@@ -82,12 +82,13 @@ export function BoardCurrentPage() {
   const historyController = useRecordHistoryController()
   const snapshotController = useSnapshotController()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [editRecord, setEditRecord] =
-    useState<RecordResponse<RecordItem<RecordBody>> | null>(null)
+  const [editRecord, setEditRecord] = useState<RecordResponse<
+    RecordItem<RecordBody>
+  > | null>(null)
   const [isContextExportOpen, setIsContextExportOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
-  const [viewMode, setViewMode] = useState<BoardViewMode>('list')
+  const [viewMode, setViewMode] = useState<BoardViewMode>('board')
 
   useEffect(() => {
     const controller = new AbortController()
@@ -114,7 +115,7 @@ export function BoardCurrentPage() {
       draftFilters.assignee,
       draftFilters.assetId,
       draftFilters.relationTarget,
-    ],
+    ]
   )
 
   useEffect(() => {
@@ -125,11 +126,11 @@ export function BoardCurrentPage() {
 
   const knownTags = useMemo(
     () => mergeKnownTags(projection, config),
-    [projection, config],
+    [projection, config]
   )
   const projectionKnownTags = useMemo(
     () => extractKnownTags(projection),
-    [projection],
+    [projection]
   )
   const statusTags = useMemo(() => getConfigStatusTags(config), [config])
   const priorityTags = useMemo(() => getConfigPriorityTags(config), [config])
@@ -173,7 +174,7 @@ export function BoardCurrentPage() {
       setIsCreateOpen(false)
       setEditRecord(record)
     },
-    [],
+    []
   )
 
   const closeEdit = useCallback(() => {
@@ -187,7 +188,7 @@ export function BoardCurrentPage() {
         historyController.loadHistory(historyController.historySelection)
       }
     },
-    [effectiveFilters, historyController, loadCurrentBoard],
+    [effectiveFilters, historyController, loadCurrentBoard]
   )
 
   const statusMoveController = useStatusMoveController({
@@ -381,8 +382,10 @@ export function BoardCurrentPage() {
         <EmptyState hasActiveFilters={active} hasIssues={hasIssues} />
       )}
 
-      {projection && projectionStatus !== 'blocked' && records.length > 0 && (
-        viewMode === 'board' ? (
+      {projection &&
+        projectionStatus !== 'blocked' &&
+        records.length > 0 &&
+        (viewMode === 'board' ? (
           <BoardView
             records={records}
             config={config}
@@ -405,8 +408,7 @@ export function BoardCurrentPage() {
               />
             ))}
           </section>
-        )
-      )}
+        ))}
 
       <IssuesPanel blockedRecords={blockedRecords} diagnostics={diagnostics} />
 
@@ -441,16 +443,20 @@ export function BoardCurrentPage() {
         onSelectSnapshot={snapshotController.loadSnapshotDetail}
         onRefreshList={snapshotController.loadSnapshots}
         onExportSnapshot={snapshotController.exportSelectedSnapshotMarkdown}
-        onExportSnapshotContext={snapshotController.exportSelectedSnapshotContext}
+        onExportSnapshotContext={
+          snapshotController.exportSelectedSnapshotContext
+        }
         onSaveSnapshotDraft={
           snapshotController.selectedSnapshot
             ? (title: string): Promise<void> => {
-                return agentDraftController.saveDraft({
-                  title,
-                  profile: 'agent-snapshot',
-                  source: 'snapshot',
-                  snapshotId: snapshotController.selectedSnapshot!.id,
-                }).then(() => undefined)
+                return agentDraftController
+                  .saveDraft({
+                    title,
+                    profile: 'agent-snapshot',
+                    source: 'snapshot',
+                    snapshotId: snapshotController.selectedSnapshot!.id,
+                  })
+                  .then(() => undefined)
               }
             : undefined
         }
