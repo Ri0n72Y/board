@@ -13,12 +13,12 @@ pid:
     CardBody: CARD
     AssetBody: ASSET
     TransactionBody: TX
-  nextNumber: 34
+  nextNumber: 35
   latest:
     CARD:
-      recordId: faaabc3b-fa62-5365-8486-c31590fad468
-      pid: CARD-33
-      number: 33
+      recordId: c9bb3e5b-3d47-43ca-bfa8-7cfd56cd0515
+      pid: CARD-34
+      number: 34
 tags:
   namespaces:
     - id: status
@@ -61,7 +61,13 @@ tags:
         displayName: Done
       - id: status:archived
         displayName: Archived
-    custom: []
+    custom:
+      - id: status:backlog
+        displayName: Backlog
+      - id: status:blocked
+        displayName: Blocked
+      - id: status:review
+        displayName: Review
   priority:
     defaults:
       - id: priority:p0
@@ -81,7 +87,59 @@ tags:
         displayName: Scene
       - id: asset:ui
         displayName: UI
-    custom: []
+    custom:
+      - id: asset:unity-project
+        displayName: Unity Project
+      - id: asset:board-config
+        displayName: Board Config
+      - id: asset:combat-scene
+        displayName: Combat Scene
+      - id: asset:deck-system
+        displayName: Deck System
+      - id: asset:card-system
+        displayName: Card System
+      - id: asset:energy-system
+        displayName: Energy System
+      - id: asset:monster-ai
+        displayName: Monster AI
+      - id: asset:battle-result
+        displayName: Battle Result
+      - id: asset:card-data
+        displayName: Card Data
+      - id: asset:monster-data
+        displayName: Monster Data
+      - id: asset:monster-ui
+        displayName: Monster UI
+      - id: asset:boss-data
+        displayName: Boss Data
+      - id: asset:map-scene
+        displayName: Map Scene
+      - id: asset:map-flow
+        displayName: Map Flow
+      - id: asset:result-screen
+        displayName: Result Screen
+      - id: asset:reward-screen
+        displayName: Reward Screen
+      - id: asset:run-state
+        displayName: Run State
+      - id: asset:campfire-ui
+        displayName: Campfire UI
+      - id: asset:event-text
+        displayName: Event Text
+      - id: asset:shop-placeholder
+        displayName: Shop Placeholder
+      - id: asset:combat-ui
+        displayName: Combat UI
+      - id: asset:card-text
+        displayName: Card Text
+      - id: asset:tutorial-copy
+        displayName: Tutorial Copy
+      - id: asset:demo-build
+        displayName: Demo Build
+      - id: asset:playtest-notes
+        displayName: Playtest Notes
+      - id: asset:retrospective-doc
+        displayName: Retrospective Doc
   transaction:
     defaults:
       - id: transaction:meeting

@@ -83,7 +83,7 @@ export function EditRecordDrawer({
   const assigneeListId = useId()
   const current = record.body
   const [form, setForm] = useState<FormState>(() =>
-    initialFormState(current, knownTags, statusTags),
+    initialFormState(current, knownTags, statusTags)
   )
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -92,10 +92,11 @@ export function EditRecordDrawer({
 
   const profileOptions = useMemo(() => getProfileOptions(profiles), [profiles])
   const otherTagOptions = useMemo(
-    () => (configOtherTags ?? knownTags).filter(
-        (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:'),
+    () =>
+      (configOtherTags ?? knownTags).filter(
+        (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:')
       ),
-    [configOtherTags, knownTags],
+    [configOtherTags, knownTags]
   )
 
   function toggleOtherTag(tag: Tag) {
@@ -137,7 +138,8 @@ export function EditRecordDrawer({
 
     try {
       const head = await fetchRecordHead(current.id, controller.signal)
-      if (requestIdRef.current !== requestId || controller.signal.aborted) return
+      if (requestIdRef.current !== requestId || controller.signal.aborted)
+        return
 
       if (!head.exists) {
         setError(t('edit.headMissing'))
@@ -156,7 +158,8 @@ export function EditRecordDrawer({
       }
 
       await submitRecordPatch(current.id, payload, controller.signal)
-      if (requestIdRef.current !== requestId || controller.signal.aborted) return
+      if (requestIdRef.current !== requestId || controller.signal.aborted)
+        return
 
       setIsSaving(false)
       abortRef.current = null
@@ -172,11 +175,11 @@ export function EditRecordDrawer({
       }
 
       if (caught instanceof RecordPatchConflictError) {
-        setError(
-          `${t('edit.conflictError')} ${caught.message}`,
-        )
+        setError(`${t('edit.conflictError')} ${caught.message}`)
       } else {
-        setError(caught instanceof Error ? caught.message : t('edit.errorGeneral'))
+        setError(
+          caught instanceof Error ? caught.message : t('edit.errorGeneral')
+        )
       }
       setIsSaving(false)
     } finally {
@@ -190,7 +193,7 @@ export function EditRecordDrawer({
 
   return (
     <div
-      className="fixed inset-0 z-[60] bg-slate-950/30"
+      className="fixed inset-0 z-60 bg-slate-950/30"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) close()
@@ -207,7 +210,10 @@ export function EditRecordDrawer({
             <p className="mb-1 break-all font-mono text-xs text-slate-500">
               {t('edit.subtitle', { pid: current.pid, id: current.id })}
             </p>
-            <h2 className="text-xl font-semibold leading-tight" id="edit-record-title">
+            <h2
+              className="text-xl font-semibold leading-tight"
+              id="edit-record-title"
+            >
               {t('edit.title')}
             </h2>
           </div>
@@ -241,7 +247,10 @@ export function EditRecordDrawer({
             )}
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <ReadOnlyMeta label={t('record.schema')} value={schemaLabel(current.schema, t)} />
+              <ReadOnlyMeta
+                label={t('record.schema')}
+                value={schemaLabel(current.schema, t)}
+              />
               <TextInput
                 label={t('edit.titleField')}
                 value={form.title}
@@ -288,8 +297,8 @@ export function EditRecordDrawer({
                     type="button"
                     className={
                       form.statusTag === tag
-                        ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
-                        : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
+                        ? 'inline-flex min-h-7 max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
+                        : 'inline-flex min-h-7 max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
                     }
                     onClick={() => setForm((c) => ({ ...c, statusTag: tag }))}
                     disabled={isSaving}
@@ -312,8 +321,8 @@ export function EditRecordDrawer({
                     type="button"
                     className={
                       form.priorityTag === tag
-                        ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
-                        : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
+                        ? 'inline-flex min-h-7 max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
+                        : 'inline-flex min-h-7 max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
                     }
                     onClick={() =>
                       setForm((c) => ({
@@ -344,8 +353,8 @@ export function EditRecordDrawer({
                         type="button"
                         className={
                           isActive
-                            ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
-                            : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
+                            ? 'inline-flex min-h-7 max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
+                            : 'inline-flex min-h-7 max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
                         }
                         onClick={() => toggleOtherTag(tag)}
                         disabled={isSaving}
@@ -368,28 +377,36 @@ export function EditRecordDrawer({
                   {form.unsupportedTags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex min-h-[28px] max-w-full items-center rounded-full border border-amber-300 bg-amber-100 px-2.5 font-mono text-xs text-amber-800"
+                      className="inline-flex min-h-7 max-w-full items-center rounded-full border border-amber-300 bg-amber-100 px-2.5 font-mono text-xs text-amber-800"
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
-                <p className="text-xs text-amber-700">{t('edit.unsupportedHint')}</p>
+                <p className="text-xs text-amber-700">
+                  {t('edit.unsupportedHint')}
+                </p>
               </div>
             )}
 
             <div className="grid gap-1.5">
-              <label className="text-xs font-bold text-slate-500" htmlFor={assigneeListId}>
+              <label
+                className="text-xs font-bold text-slate-500"
+                htmlFor={assigneeListId}
+              >
                 {t('edit.assignee')}
               </label>
               <input
                 id={assigneeListId}
                 className={cn(
-                  'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100',
+                  'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100'
                 )}
                 value={form.assignee}
                 onChange={(event) =>
-                  setForm((state) => ({ ...state, assignee: event.target.value }))
+                  setForm((state) => ({
+                    ...state,
+                    assignee: event.target.value,
+                  }))
                 }
                 placeholder="public key"
                 list={`${assigneeListId}-list`}
@@ -423,7 +440,12 @@ export function EditRecordDrawer({
         </div>
 
         <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 bg-white px-5 py-4">
-          <Button type="button" variant="ghost" onClick={close} disabled={isSaving}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={close}
+            disabled={isSaving}
+          >
             {t('edit.cancel')}
           </Button>
           <Button
@@ -443,22 +465,21 @@ export function EditRecordDrawer({
 function initialFormState(
   record: RecordItem<RecordBody>,
   knownTags: Tag[],
-  statusTags: Tag[],
+  statusTags: Tag[]
 ): FormState {
   const body = asEditableBody(record.body)
   const statusTag =
-    record.tags.find((tag) => tag.startsWith('status:')) ??
-    (statusTags[0] ?? '')
+    record.tags.find((tag) => tag.startsWith('status:')) ?? statusTags[0] ?? ''
   const priorityTag =
     record.tags.find((tag) => tag.startsWith('priority:')) ?? ''
   const otherTags = record.tags.filter(
-    (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:'),
+    (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:')
   )
   // Detect unsupported tags: tags in record that are not in knownTags
-  const unsupportedTags = otherTags.filter(
-    (t) => !knownTags.includes(t),
+  const unsupportedTags = otherTags.filter((t) => !knownTags.includes(t))
+  const supportedOtherTags = otherTags.filter(
+    (t) => !unsupportedTags.includes(t)
   )
-  const supportedOtherTags = otherTags.filter((t) => !unsupportedTags.includes(t))
 
   return {
     title: body.title,
@@ -474,13 +495,15 @@ function initialFormState(
 }
 
 function buildPatchDraft(
-  form: FormState,
+  form: FormState
 ): { ok: true; patch: PatchDraft } | { ok: false; error: string } {
   const title = form.title.trim()
   const statusTag = form.statusTag.trim() as Tag
   const priorityTag = form.priorityTag.trim() as Tag
   const tags = uniqueValues(
-    [statusTag, priorityTag, ...form.otherTags, ...form.unsupportedTags].filter(Boolean) as Tag[],
+    [statusTag, priorityTag, ...form.otherTags, ...form.unsupportedTags].filter(
+      Boolean
+    ) as Tag[]
   )
   const assets = uniqueValues(lines(form.assetsText)) as AssetRef[]
   const assignee = form.assignee.trim()
@@ -542,7 +565,7 @@ function uniqueValues<T extends string>(values: T[]): T[] {
 function abortEdit(
   requestIdRef: MutableRefObject<number>,
   abortRef: MutableRefObject<AbortController | null>,
-  setIsSaving?: (value: boolean) => void,
+  setIsSaving?: (value: boolean) => void
 ) {
   requestIdRef.current += 1
   abortRef.current?.abort()
@@ -606,7 +629,9 @@ function ReadOnlyRelations({
 
   return (
     <section className="grid gap-2 rounded-lg border border-slate-200 bg-white p-4">
-      <h3 className="text-sm font-semibold text-slate-500">{t('record.relations')}</h3>
+      <h3 className="text-sm font-semibold text-slate-500">
+        {t('record.relations')}
+      </h3>
       {relations && relations.length > 0 ? (
         <ul className="grid gap-1.5">
           {relations.map((relation) => (
