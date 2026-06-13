@@ -570,6 +570,49 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       const found = await service.findPatchById(result!.patch.body.id)
       expect(found!.body).not.toHaveProperty('snapshotVersion')
     })
+
+    it('atomically rejects concurrent patches with the same parent and currentVersion', async () => {
+      const service = createRecordService()
+      const envelope = await service.create({
+        schema: 'CardBody',
+        tags: ['status:todo'],
+        body: { title: 'Concurrent patch test' },
+      })
+      const head = await service.getRecordCurrentHead(envelope.body.id)
+      expect(head).not.toBeNull()
+
+      const submissions = await Promise.allSettled([
+        service.createRecordPatch(envelope.body.id, {
+          parentId: head!.lastPatchId,
+          currentVersion: head!.currentVersion,
+          body: { description: 'First concurrent patch' },
+        }),
+        service.createRecordPatch(envelope.body.id, {
+          parentId: head!.lastPatchId,
+          currentVersion: head!.currentVersion,
+          body: { content: 'Second concurrent patch' },
+        }),
+      ])
+
+      const fulfilled = submissions.filter(
+        (result): result is PromiseFulfilledResult<NonNullable<Awaited<ReturnType<RecordService['createRecordPatch']>>>> =>
+          result.status === 'fulfilled' && result.value !== null
+      )
+      const rejected = submissions.filter(
+        (result): result is PromiseRejectedResult => result.status === 'rejected'
+      )
+      expect(fulfilled).toHaveLength(1)
+      expect(rejected).toHaveLength(1)
+      expect(rejected[0].reason).toBeInstanceOf(CurrentHeadConflictError)
+
+      const patches = await service.listPatchesByTargetId(envelope.body.id)
+      expect(patches).toHaveLength(1)
+      expect(patches[0].body.id).toBe(fulfilled[0].value.patch.body.id)
+
+      const history = await service.getRecordHistory(envelope.body.id)
+      expect(history!.status).toBe('complete')
+      expect(history!.patches).toHaveLength(1)
+    })
   })
 
   describe('patch query helpers', () => {

@@ -257,26 +257,19 @@ describe('RecordService archive (delete)', () => {
     })
     const recordId = envelope.body.id
 
-    const r1 = await service.createRecordPatch(recordId, {
-      parentId: null,
-      snapshotVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
-    })
-    expect(r1).not.toBeNull()
-
     await repo.appendPatch(
-      makePatchDoc('injected-later', recordId, r1!.patch.body.id, {
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
+      makePatchDoc('injected-before-load', recordId, null, {
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       })
     )
 
     const archived = await service.delete(recordId)
     expect(archived!.body.tags).toEqual(
-      expect.arrayContaining(['status:done', 'status:archived'])
+      expect.arrayContaining(['status:wip', 'status:archived'])
     )
 
     const head = await service.getSnapshotHead()
-    expect(head.version).toBe(3)
-    expect(head.records[recordId]?.lastPatchId).not.toBe(r1!.patch.body.id)
+    expect(head.version).toBe(2)
+    expect(head.records[recordId]?.lastPatchId).not.toBe('injected-before-load')
   })
 })

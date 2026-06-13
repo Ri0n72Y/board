@@ -164,7 +164,6 @@ function HistoryContent({
     <div className="grid gap-4">
       <HistoryStatus history={history} />
       <BaseRecordDetails history={history} />
-      <CurrentRelations history={history} />
       <PatchList history={history} language={language} />
       <HistoryDebug history={history} />
     </div>
@@ -209,32 +208,6 @@ function BaseRecordDetails({ history }: { history: RecordHistoryResponse }) {
         <JsonBlock value={record.body} />
       </div>
     </details>
-  )
-}
-
-function CurrentRelations({ history }: { history: RecordHistoryResponse }) {
-  const { t } = useTranslation()
-  const relations = history.replay?.finalState.relations ?? history.record.body.relations
-  const items = formatRelations(
-    relations,
-    history.references,
-    (key, fallback) => t(key, { defaultValue: fallback }),
-    t('history.summarySeparator')
-  )
-
-  if (items.length === 0) return null
-
-  return (
-    <section className="grid gap-2 rounded-md border border-slate-200 bg-white p-4">
-      <h3 className="text-sm font-semibold uppercase text-slate-500">
-        {t('history.field.relations')}
-      </h3>
-      <ul className="grid gap-1.5 text-sm text-slate-900">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </section>
   )
 }
 
@@ -405,6 +378,8 @@ function useHistorySummaryCopy(): HistorySummaryCopy {
       itemCount: (count: number) => t('history.itemCount', { count }),
       fieldLabel: (namespace: string) =>
         t(`history.field.${namespace}`, { defaultValue: namespace }),
+      bodyFieldLabel: (field: string) =>
+        t(`history.bodyField.${field}`, { defaultValue: field }),
     }),
     [t]
   )

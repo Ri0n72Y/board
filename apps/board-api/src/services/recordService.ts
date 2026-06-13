@@ -138,6 +138,7 @@ export class RecordService {
       input,
       createdBy,
       repository: this.repository,
+      snapshotHeadRepository: this.snapshotHeadRepository,
       boardConfig: this.boardConfig,
     })
   }

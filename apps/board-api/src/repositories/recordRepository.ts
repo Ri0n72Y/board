@@ -24,7 +24,6 @@ export interface RecordRepository {
   findByIds(ids: string[]): Promise<StoredRecordDoc[]>
   findByPid(pid: string): Promise<StoredRecordDoc | null>
   create(record: StoredRecordDoc): Promise<StoredRecordDoc>
-  archive(id: string, tags: Tag[]): Promise<StoredRecordDoc | null>
   appendPatch(patch: StoredPatchDoc): Promise<StoredPatchDoc>
   findPatchById(id: string): Promise<StoredPatchDoc | null>
   findPatchesByTargetId(targetId: string): Promise<StoredPatchDoc[]>
@@ -129,22 +128,6 @@ export class MemoryRecordRepository implements RecordRepository {
     return structuredClone(clone)
   }
 
-  async archive(id: string, tags: Tag[]): Promise<StoredRecordDoc | null> {
-    const index = this.records.findIndex((record) => record.id === id)
-    if (index === -1) {
-      return null
-    }
-
-    const current = this.records[index]
-    const updated: StoredRecordDoc = {
-      ...current,
-      tags,
-    }
-
-    this.records[index] = updated
-    return structuredClone(updated)
-  }
-
   async appendPatch(patch: StoredPatchDoc): Promise<StoredPatchDoc> {
     const clone = structuredClone(patch)
     this.patches.push(clone)
@@ -211,25 +194,6 @@ export class MongoRecordRepository implements RecordRepository {
   async create(record: StoredRecordDoc): Promise<StoredRecordDoc> {
     await this.collection.insertOne(record as OptionalId<Document>)
     return record
-  }
-
-  async archive(id: string, tags: Tag[]): Promise<StoredRecordDoc | null> {
-    const current = await this.findById(id)
-    if (!current) {
-      return null
-    }
-
-    const updated: StoredRecordDoc = {
-      ...current,
-      tags,
-    }
-    const result = await this.collection.findOneAndReplace(
-      recordOnlyFilter({ id }),
-      updated,
-      { returnDocument: 'after' }
-    )
-
-    return result ? cleanRecord(result) : null
   }
 
   async appendPatch(patch: StoredPatchDoc): Promise<StoredPatchDoc> {

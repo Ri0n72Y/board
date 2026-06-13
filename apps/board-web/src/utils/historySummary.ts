@@ -24,6 +24,7 @@ export interface HistorySummaryCopy {
   modified: string
   itemCount: (count: number) => string
   fieldLabel: (namespace: string) => string
+  bodyFieldLabel: (field: string) => string
 }
 
 export interface HistoryReference {
@@ -208,7 +209,8 @@ function summarizeBodyPatch(
     return copy.modified
   }
   const keys = Object.keys(body)
-  return keys.length > 0 ? keys.join(tagDelimiter(undefined)) : copy.modified
+  if (keys.length === 0) return copy.modified
+  return `${keys.map((key) => copy.bodyFieldLabel(key)).join(tagDelimiter(undefined))} ${copy.modified}`
 }
 
 function tagDelimiter(language: string | undefined): string {

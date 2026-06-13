@@ -11,7 +11,11 @@ import type {
 import { applyRecordPatch, tagNamespace } from '@labour-board/shared'
 import { getConfiguredTags } from '../../config/boardConfigTools.js'
 import type { RecordRepository } from '../../repositories/recordRepository.js'
-import type { StoredPatchDoc } from '../../repositories/snapshotHeadRepository.js'
+import type {
+  AppendPatchResult,
+  SnapshotHeadRepository,
+  StoredPatchDoc,
+} from '../../repositories/snapshotHeadRepository.js'
 import { getRecordCurrentHead } from './recordCurrentHead.js'
 import { reconstructPatchChain, replayRecordHistory } from './recordHistory.js'
 import {
@@ -113,13 +117,21 @@ export interface SubmitRecordPatchParams {
   input: CreateRecordPatchInput<DeepPartial<RecordBody>>
   createdBy?: string
   repository: RecordRepository
+  snapshotHeadRepository: SnapshotHeadRepository
   boardConfig: BoardConfig
 }
 
 export async function submitRecordPatch(
   params: SubmitRecordPatchParams
 ): Promise<PatchResult | null> {
-  const { targetId, input, createdBy, repository, boardConfig } = params
+  const {
+    targetId,
+    input,
+    createdBy,
+    repository,
+    snapshotHeadRepository,
+    boardConfig,
+  } = params
 
   // ── Runtime input validation ──
   assertRecordPatchInputShape(input)
@@ -211,14 +223,56 @@ export async function submitRecordPatch(
     createdAt: now,
   }
 
-  await repository.appendPatch(patch)
-  const patchCount = (await repository.listPatches()).length
+  const expectedSnapshotVersion = await getExpectedSnapshotVersion(
+    input,
+    repository
+  )
+  const appendResult = await snapshotHeadRepository.appendPatchAndAdvanceHead({
+    targetId: targetId as RecordId,
+    patch,
+    expectedSnapshotVersion,
+    expectedParentId: input.parentId as RecordId | null,
+  })
+  const appendSuccess = await ensureAppendSucceeded(appendResult, repository)
 
   return {
     patch: toPatchResponse(patch),
     newCurrentVersion: head.currentVersion + 1,
-    newSnapshotVersion: patchCount,
+    newSnapshotVersion: appendSuccess.newSnapshotVersion,
   }
+}
+
+async function ensureAppendSucceeded(
+  result: AppendPatchResult,
+  repository: RecordRepository
+): Promise<Extract<AppendPatchResult, { ok: true }>> {
+  if (result.ok) return result
+
+  if (result.reason === 'snapshotVersionMismatch') {
+    const baseRecords = await repository.list({
+      includeArchived: true,
+      excludeTags: [],
+    })
+    throw new CurrentHeadConflictError(
+      `Current version mismatch: server has ${baseRecords.length + result.currentVersion}`
+    )
+  }
+
+  if (result.reason === 'parentMismatch') {
+    throw new CurrentHeadConflictError(
+      `Parent patch mismatch: server has ${result.currentParentId}`
+    )
+  }
+
+  if (result.reason === 'parentPatchMissing') {
+    throw new RecordValidationError(
+      `Parent patch ${result.parentId} does not exist`
+    )
+  }
+
+  throw new RecordValidationError(
+    `Parent patch ${result.parentId} belongs to record ${result.parentTargetId}`
+  )
 }
 
 async function assertRecordIsNotArchivedInCurrentState(params: {
@@ -374,6 +428,22 @@ async function getObservedCurrentVersion(
     excludeTags: [],
   })
   return baseRecords.length + (rawInput.snapshotVersion as number)
+}
+
+async function getExpectedSnapshotVersion(
+  input: CreateRecordPatchInput<DeepPartial<RecordBody>>,
+  repository: RecordRepository
+): Promise<number> {
+  const rawInput = input as unknown as Record<string, unknown>
+  if (typeof rawInput.snapshotVersion === 'number') {
+    return rawInput.snapshotVersion
+  }
+
+  const baseRecords = await repository.list({
+    includeArchived: true,
+    excludeTags: [],
+  })
+  return (rawInput.currentVersion as number) - baseRecords.length
 }
 
 function getRawObservedVersion(

@@ -24,7 +24,7 @@ const BASE_RECORD: StoredRecordDoc = {
 }
 
 describe('MemoryRecordRepository', () => {
-  it('creates, lists, finds, and archives records', async () => {
+  it('creates, lists, and finds records', async () => {
     const repository = new MemoryRecordRepository()
 
     await repository.create(BASE_RECORD)
@@ -38,14 +38,6 @@ describe('MemoryRecordRepository', () => {
     await expect(repository.findById(BASE_RECORD.id)).resolves.toEqual(
       BASE_RECORD
     )
-    await expect(
-      repository.archive(BASE_RECORD.id, ['status:archived'])
-    ).resolves.toMatchObject({
-      id: BASE_RECORD.id,
-      tags: ['status:archived'],
-      body: { title: 'Repository card' },
-    })
-    await expect(repository.archive('missing', ['status:archived'])).resolves.toBeNull()
   })
 
   it('filters excluded snapshot tags unless archived records are requested', async () => {
@@ -133,7 +125,7 @@ describe('MemoryRecordRepository', () => {
     expect(list).toEqual([BASE_RECORD])
   })
 
-  it('findById returns a clone 鈥?external mutations do not affect internal state', async () => {
+  it('findById returns a clone; external mutations do not affect internal state', async () => {
     const repository = new MemoryRecordRepository()
     await repository.create(BASE_RECORD)
 
@@ -145,7 +137,7 @@ describe('MemoryRecordRepository', () => {
     expect(refetch!.tags).toEqual(['status:todo'])
   })
 
-  it('findPatchesByTargetId returns clones 鈥?external mutations do not affect internal state', async () => {
+  it('findPatchesByTargetId returns clones; external mutations do not affect internal state', async () => {
     const repository = new MemoryRecordRepository()
     const patch: StoredPatchDoc = {
       id: 'p1', pid: 'X-1', schema: 'CardBody', targetId: 'r1',
@@ -192,9 +184,8 @@ describe('MongoRecordRepository', () => {
     ])
   })
 
-  it('creates, finds, and archives records through the collection', async () => {
+  it('creates and finds records through the collection', async () => {
     const inserted: unknown[] = []
-    const replacements: unknown[] = []
     const repository = new MongoRecordRepository(
       createCollectionStub({
         insertOne(record: unknown) {
@@ -203,13 +194,6 @@ describe('MongoRecordRepository', () => {
         },
         findOne() {
           return Promise.resolve({ ...BASE_RECORD, _id: 'mongo-id' })
-        },
-        findOneAndReplace(filter: unknown, replacement: unknown) {
-          replacements.push({ filter, replacement })
-          return Promise.resolve({
-            ...(replacement as StoredRecordDoc),
-            _id: 'mongo-id',
-          })
         },
       })
     )
@@ -220,11 +204,6 @@ describe('MongoRecordRepository', () => {
     await expect(repository.findById(BASE_RECORD.id)).resolves.toEqual(
       BASE_RECORD
     )
-
-    await expect(
-      repository.archive(BASE_RECORD.id, ['status:archived'])
-    ).resolves.toMatchObject({ tags: ['status:archived'] })
-    expect(replacements).toHaveLength(1)
   })
 
   it('creates patches through the collection', async () => {

@@ -26,6 +26,12 @@ const copy: HistorySummaryCopy = {
       priority: '优先级',
       scope: '范围',
     })[namespace] ?? namespace,
+  bodyFieldLabel: (field) =>
+    ({
+      title: '标题',
+      description: '摘要',
+      content: '详细内容',
+    })[field] ?? field,
 }
 
 let failures = 0
@@ -123,6 +129,61 @@ eq(addRemoveLines[0]?.label, '新增标签', 'add label')
 eq(addRemoveLines[0]?.value, '战斗、界面', 'add summary')
 eq(addRemoveLines[1]?.label, '删除标签', 'remove label')
 eq(addRemoveLines[1]?.value, '商店', 'remove summary')
+
+const bodyDescriptionLines = summarizePatch(
+  {
+    id: 'p-body-description',
+    pid: 'CARD-5',
+    schema: 'CardBody',
+    targetId: 'record-1',
+    parentId: null,
+    body: { description: 'x' },
+  },
+  { language: 'zh-CN', copy }
+)
+eq(bodyDescriptionLines[0]?.label, '正文', 'body description label')
+assert(
+  bodyDescriptionLines[0]?.value.includes('摘要') === true,
+  'body description summary is localized'
+)
+assert(
+  bodyDescriptionLines[0]?.value.includes('description') === false,
+  'body description summary does not show raw key'
+)
+
+const bodyTitleLines = summarizePatch(
+  {
+    id: 'p-body-title',
+    pid: 'CARD-5',
+    schema: 'CardBody',
+    targetId: 'record-1',
+    parentId: null,
+    body: { title: 'x' },
+  },
+  { language: 'zh-CN', copy }
+)
+assert(bodyTitleLines[0]?.value.includes('标题') === true, 'body title summary is localized')
+assert(bodyTitleLines[0]?.value.includes('title') === false, 'body title summary does not show raw key')
+
+const bodyContentLines = summarizePatch(
+  {
+    id: 'p-body-content',
+    pid: 'CARD-5',
+    schema: 'CardBody',
+    targetId: 'record-1',
+    parentId: null,
+    body: { content: 'x' },
+  },
+  { language: 'zh-CN', copy }
+)
+assert(
+  bodyContentLines[0]?.value.includes('详细内容') === true,
+  'body content summary is localized'
+)
+assert(
+  bodyContentLines[0]?.value.includes('content') === false,
+  'body content summary does not show raw key'
+)
 
 const emptyLines = summarizePatch(
   {

@@ -48,7 +48,7 @@ describe('createSnapshotHeadRoute', () => {
     })
   })
 
-  it('keeps an already loaded snapshot head static after later patch creation', async () => {
+  it('advances an already loaded snapshot head after later patch creation', async () => {
     const app = createApp()
     const recordId = await createRecord(app)
 
@@ -86,12 +86,13 @@ describe('createSnapshotHeadRoute', () => {
       }
     )
     expect(secondResponse.status).toBe(201)
+    const secondPayload = await secondResponse.json()
 
     const secondHeadResponse = await app.request('/api/v0/snapshot-head')
     const secondHeadPayload = await secondHeadResponse.json()
-    expect(secondHeadPayload.data.version).toBe(1)
+    expect(secondHeadPayload.data.version).toBe(2)
     expect(secondHeadPayload.data.records[recordId].lastPatchId).toBe(
-      firstPayload.data.patch.body.id
+      secondPayload.data.patch.body.id
     )
   })
 })
