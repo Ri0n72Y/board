@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+﻿import { Hono } from 'hono'
 import { DEFAULT_BOARD_CONFIG } from '@labour-board/shared'
 import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from '../../repositories/recordRepository.js'
@@ -76,7 +76,7 @@ describe('recordHeadRoute', () => {
         body: JSON.stringify({
           parentId: headBefore.data.lastPatchId,
           currentVersion: headBefore.data.currentVersion,
-          tags: ['status:wip'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
         }),
         headers: { 'content-type': 'application/json' },
       }

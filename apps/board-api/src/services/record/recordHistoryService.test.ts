@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 import { createServiceWithRepo, makePatchDoc } from './recordTestUtils.js'
 
 describe('RecordService history (getRecordHistory)', () => {
@@ -14,7 +14,7 @@ describe('RecordService history (getRecordHistory)', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
 
     const history = await service.getRecordHistory(recordId)
@@ -36,8 +36,8 @@ describe('RecordService history (getRecordHistory)', () => {
     })
     const recordId = envelope.body.id
 
-    await repo.appendPatch(makePatchDoc('patch-1', recordId, null, { tags: ['status:wip'] }))
-    await repo.appendPatch(makePatchDoc('patch-2', recordId, null, { tags: ['status:done'] }))
+    await repo.appendPatch(makePatchDoc('patch-1', recordId, null, { tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }))
+    await repo.appendPatch(makePatchDoc('patch-2', recordId, null, { tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] } }))
 
     const history = await service.getRecordHistory(recordId)
     expect(history).not.toBeNull()
@@ -139,7 +139,7 @@ describe('RecordService history (getRecordHistory)', () => {
     const r1 = await service.createRecordPatch(recordId, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
     const r2 = await service.createRecordPatch(recordId, {
       parentId: r1!.patch.body.id,
@@ -176,7 +176,7 @@ describe('RecordService history (getRecordHistory)', () => {
     const r1 = await service.createRecordPatch(recordId, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
     const r2 = await service.createRecordPatch(recordId, {
       parentId: r1!.patch.body.id,

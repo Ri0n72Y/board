@@ -35,7 +35,7 @@ export type {
 } from './export.js'
 export type { BoardConfig, PidPrefix } from './boardConfig.js'
 export type { Base58String, Identity } from './identity.js'
-export type { DeepPartial, PatchItem } from './patch.js'
+export type { DeepPartial, PatchItem, TagChange, TagChanges } from './patch.js'
 export type { Profile, ProfileMap } from './profile.js'
 export type {
   AssetBody,

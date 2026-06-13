@@ -74,7 +74,7 @@ function cleanPatch(doc: Document): StoredPatchDoc {
     schema: doc.schema,
     targetId: doc.targetId,
     parentId: doc.parentId ?? null,
-    tags: doc.tags,
+    tagChanges: doc.tagChanges,
     assignee: doc.assignee,
     body: doc.body,
     assets: doc.assets,
@@ -218,7 +218,7 @@ export class MongoRecordRepository implements RecordRepository {
   }
 
   async appendPatch(patch: StoredPatchDoc): Promise<StoredPatchDoc> {
-    await this.collection.insertOne(patch as OptionalId<Document>)
+    await this.collection.insertOne({ ...patch } as OptionalId<Document>)
     return patch
   }
 

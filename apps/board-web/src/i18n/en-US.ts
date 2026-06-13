@@ -159,6 +159,7 @@ const enUS = {
     'edit.errorGeneral': 'Edit failed',
     'edit.errorTitleRequired': 'Title is required.',
     'edit.errorStatusTagRequired': 'Status is required.',
+    'edit.errorNoChanges': 'No changes to save.',
     'edit.saving': 'Saving...',
     'edit.saveButton': 'Save patch',
     'edit.conflictError':

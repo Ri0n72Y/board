@@ -97,7 +97,9 @@ export async function archiveRecord(
     schema: record.schema,
     targetId: id as RecordId,
     parentId: expectedParentId,
-    tags: archiveTags,
+    tagChanges: {
+      add: ['status:archived'],
+    },
     createdBy: DEFAULT_ACTOR,
     createdAt: now,
   }

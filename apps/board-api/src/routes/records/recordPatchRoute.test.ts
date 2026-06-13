@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+﻿import { Hono } from 'hono'
 import { DEFAULT_BOARD_CONFIG } from '@labour-board/shared'
 import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from '../../repositories/recordRepository.js'
@@ -39,7 +39,7 @@ describe('recordPatchRoute', () => {
       body: JSON.stringify({
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
         body: { description: 'Patched via new route' },
         description: 'Route-level patch',
       }),
@@ -52,7 +52,7 @@ describe('recordPatchRoute', () => {
     expect(payload.data.patch.body).toMatchObject({
       targetId: recordId,
       parentId: null,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       description: 'Route-level patch',
     })
     expect(payload.data.patch.body).not.toHaveProperty('snapshotVersion')
@@ -72,7 +72,7 @@ describe('recordPatchRoute', () => {
         body: JSON.stringify({
           parentId: null,
           snapshotVersion: 0,
-          tags: ['status:wip'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
         }),
         headers: { 'content-type': 'application/json' },
       }
@@ -105,7 +105,7 @@ describe('recordPatchRoute', () => {
         targetId: recordId,
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -119,22 +119,22 @@ describe('recordPatchRoute', () => {
   it.each([
     {
       name: 'parentId is missing',
-      body: { snapshotVersion: 0, tags: ['status:wip'] },
+      body: { snapshotVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } },
       message: 'parentId is required',
     },
     {
       name: 'currentVersion is missing',
-      body: { parentId: null, tags: ['status:wip'] },
+      body: { parentId: null, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } },
       message: 'currentVersion is required',
     },
     {
       name: 'parentId has wrong type',
-      body: { parentId: 1, snapshotVersion: 0, tags: ['status:wip'] },
+      body: { parentId: 1, snapshotVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } },
       message: 'parentId must be a string or null',
     },
     {
       name: 'currentVersion has wrong type',
-      body: { parentId: null, currentVersion: '0', tags: ['status:wip'] },
+      body: { parentId: null, currentVersion: '0', tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } },
       message: 'currentVersion must be a number',
     },
   ])('POST /:id/patches returns 400 when $name', async ({ body, message }) => {
@@ -245,7 +245,9 @@ describe('recordPatchRoute', () => {
       body: JSON.stringify({
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:not-configured'],
+        tagChanges: {
+          add: ['status:not-configured'],
+        },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -311,7 +313,7 @@ describe('recordPatchRoute', () => {
       body: JSON.stringify({
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -343,7 +345,7 @@ describe('recordPatchRoute', () => {
       body: JSON.stringify({
         parentId: null,
         currentVersion: 5,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -372,13 +374,13 @@ describe('recordPatchRoute', () => {
 
     await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tags: ['status:wip'] }),
+      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
       headers: { 'content-type': 'application/json' },
     })
 
     const response = await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, snapshotVersion: 1, tags: ['status:done'] }),
+      body: JSON.stringify({ parentId: null, snapshotVersion: 1, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] } }),
       headers: { 'content-type': 'application/json' },
     })
     const payload = await response.json()
@@ -406,7 +408,7 @@ describe('recordPatchRoute', () => {
 
     const firstResponse = await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tags: ['status:wip'] }),
+      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
       headers: { 'content-type': 'application/json' },
     })
     const firstPayload = await firstResponse.json()
@@ -447,7 +449,7 @@ describe('recordPatchRoute', () => {
 
     const response = await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tags: ['status:wip'] }),
+      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
       headers: { 'content-type': 'application/json', 'x-actor-id': 'patcher-42' },
     })
     const payload = await response.json()

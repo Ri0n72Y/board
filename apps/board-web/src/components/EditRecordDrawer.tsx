@@ -15,6 +15,7 @@ import type {
   RecordItem,
   RecordResponse,
   Tag,
+  TagChanges,
 } from '@labour-board/shared'
 import {
   ExclamationTriangleIcon,
@@ -28,6 +29,7 @@ import type { SubmitRecordPatchPayload } from '../api/patches'
 import { fetchRecordHead } from '../api/recordHead'
 import { cn } from '../lib/cn'
 import { getProfileOptions } from '../utils/board'
+import { buildTagChanges } from '../utils/tagChanges'
 import { formatTagLabel } from '../utils/tagDisplay'
 import { Button } from './ui/Button'
 import { TextInput } from './ui/TextInput'
@@ -57,10 +59,10 @@ interface FormState {
 }
 
 interface PatchDraft {
-  tags: Tag[]
-  assignee: PublicKey | null
-  assets: AssetRef[]
-  body: {
+  tagChanges?: TagChanges
+  assignee?: PublicKey | null
+  assets?: AssetRef[]
+  body?: {
     title: string
     description: string | null
     content: string | null
@@ -121,7 +123,7 @@ export function EditRecordDrawer({
   }, [onClose])
 
   async function submit() {
-    const validation = buildPatchDraft(form)
+    const validation = buildPatchDraft(form, current)
     if (!validation.ok) {
       setError(t(validation.error))
       return
@@ -151,10 +153,7 @@ export function EditRecordDrawer({
       const payload: SubmitRecordPatchPayload = {
         parentId,
         currentVersion: head.currentVersion,
-        tags: validation.patch.tags,
-        assignee: validation.patch.assignee,
-        assets: validation.patch.assets,
-        body: validation.patch.body,
+        ...validation.patch,
       }
 
       await submitRecordPatch(current.id, payload, controller.signal)
@@ -495,7 +494,8 @@ function initialFormState(
 }
 
 function buildPatchDraft(
-  form: FormState
+  form: FormState,
+  current: RecordItem<RecordBody>
 ): { ok: true; patch: PatchDraft } | { ok: false; error: string } {
   const title = form.title.trim()
   const statusTag = form.statusTag.trim() as Tag
@@ -511,18 +511,42 @@ function buildPatchDraft(
   if (!title) return { ok: false, error: 'edit.errorTitleRequired' }
   if (!statusTag) return { ok: false, error: 'edit.errorStatusTagRequired' }
 
+  const patch: PatchDraft = {}
+  const tagChanges = buildTagChanges(current.tags, tags)
+  if (tagChanges) patch.tagChanges = tagChanges
+
+  const currentAssignee = current.assignee ?? null
+  const nextAssignee = assignee ? (assignee as PublicKey) : null
+  if (nextAssignee !== currentAssignee) {
+    patch.assignee = nextAssignee
+  }
+
+  if (!sameStringList(assets, current.assets ?? [])) {
+    patch.assets = assets
+  }
+
+  const currentBody = asEditableBody(current.body)
+  const nextBody = {
+    title,
+    description: nullableTrimmed(form.summary),
+    content: nullableTrimmed(form.details),
+  }
+  const currentComparableBody = {
+    title: currentBody.title,
+    description: nullableTrimmed(currentBody.description),
+    content: nullableTrimmed(currentBody.content),
+  }
+  if (!sameRecordBodyPatch(nextBody, currentComparableBody)) {
+    patch.body = nextBody
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return { ok: false, error: 'edit.errorNoChanges' }
+  }
+
   return {
     ok: true,
-    patch: {
-      tags,
-      assignee: assignee ? (assignee as PublicKey) : null,
-      assets,
-      body: {
-        title,
-        description: nullableTrimmed(form.summary),
-        content: nullableTrimmed(form.details),
-      },
-    },
+    patch,
   }
 }
 
@@ -560,6 +584,22 @@ function lines(value: string): string[] {
 
 function uniqueValues<T extends string>(values: T[]): T[] {
   return [...new Set(values)]
+}
+
+function sameStringList(left: readonly string[], right: readonly string[]) {
+  if (left.length !== right.length) return false
+  return left.every((value, index) => value === right[index])
+}
+
+function sameRecordBodyPatch(
+  left: NonNullable<PatchDraft['body']>,
+  right: NonNullable<PatchDraft['body']>
+) {
+  return (
+    left.title === right.title &&
+    left.description === right.description &&
+    left.content === right.content
+  )
 }
 
 function abortEdit(

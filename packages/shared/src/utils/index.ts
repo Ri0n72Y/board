@@ -1,7 +1,9 @@
 export {
   applyDeepPartial,
   applyRecordPatch,
+  applyTagChanges,
   shouldIncludeInSnapshot,
+  tagNamespace,
 } from './patch.js'
 export {
   getTagDisplayName,

@@ -85,7 +85,7 @@ function cleanPatch(doc: Document): StoredPatchDoc {
     schema: doc.schema,
     targetId: doc.targetId,
     parentId: doc.parentId ?? null,
-    tags: doc.tags,
+    tagChanges: doc.tagChanges,
     assignee: doc.assignee,
     body: doc.body,
     assets: doc.assets,
@@ -370,7 +370,7 @@ export class MongoSnapshotHeadRepository implements SnapshotHeadRepository {
     }
 
     await this.recordsCollection.insertOne(
-      params.patch as OptionalId<Document>,
+      { ...params.patch } as OptionalId<Document>,
       writeOptions
     )
     const nextHead = nextSnapshotHead(
@@ -401,7 +401,7 @@ export class MongoSnapshotHeadRepository implements SnapshotHeadRepository {
   private standalonePatchFacts(): PatchFactRepository {
     return {
       appendPatch: async (patch) => {
-        await this.recordsCollection.insertOne(patch as OptionalId<Document>)
+        await this.recordsCollection.insertOne({ ...patch } as OptionalId<Document>)
         return patch
       },
       findPatchById: async (id) => {
@@ -435,9 +435,10 @@ export class MongoSnapshotHeadRepository implements SnapshotHeadRepository {
   private mongoPatchFacts(session: ClientSession): PatchFactRepository {
     return {
       appendPatch: async (patch) => {
-        await this.recordsCollection.insertOne(patch as OptionalId<Document>, {
-          session,
-        })
+        await this.recordsCollection.insertOne(
+          { ...patch } as OptionalId<Document>,
+          { session }
+        )
         return patch
       },
       findPatchById: async (id) => {

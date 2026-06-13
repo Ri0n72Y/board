@@ -7,7 +7,7 @@ import type {
   RecordId,
   RecordResponse,
   RelationRef,
-  Tag,
+  TagChanges,
 } from '@labour-board/shared'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
@@ -26,7 +26,7 @@ export type NullableRecordBodyPatch = Record<string, unknown>
 export interface SubmitRecordPatchPayload {
   parentId: RecordId | null
   currentVersion: number
-  tags?: Tag[]
+  tagChanges?: TagChanges
   assignee?: PublicKey | null
   body?: NullableRecordBodyPatch
   assets?: AssetRef[]

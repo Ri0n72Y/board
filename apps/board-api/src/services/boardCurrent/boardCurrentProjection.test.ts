@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 import {
   projectRecordCurrent,
   isArchivedInCurrent,
@@ -22,7 +22,7 @@ async function createBaseRecord() {
 }
 
 describe('boardCurrentProjection', () => {
-  // ── Basic projection ──
+  // 鈹€鈹€ Basic projection 鈹€鈹€
 
   it('empty chain: current = base record', async () => {
     const { repo, recordId, stored } = await createBaseRecord()
@@ -46,7 +46,7 @@ describe('boardCurrentProjection', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       body: { description: 'Updated desc' },
     })
 
@@ -68,7 +68,7 @@ describe('boardCurrentProjection', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
 
     const patches = await repo.findPatchesByTargetId(recordId)
@@ -112,7 +112,7 @@ describe('boardCurrentProjection', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
     // Archive via delete (appends archive patch)
     await service.delete(recordId)
@@ -128,7 +128,7 @@ describe('boardCurrentProjection', () => {
     expect(ok.current.tags).not.toContain('status:todo')
   })
 
-  // ── Broken / conflicted ──
+  // 鈹€鈹€ Broken / conflicted 鈹€鈹€
 
   it('conflicted chain (multi-root): status=blocked, chainStatus=conflicted', async () => {
     const { repo, recordId, stored } = await createBaseRecord()
@@ -182,7 +182,7 @@ describe('boardCurrentProjection', () => {
     expect(result.diagnostics.some((d) => d.code === 'PARENT_MISSING')).toBe(true)
   })
 
-  // ── Immutability ──
+  // 鈹€鈹€ Immutability 鈹€鈹€
 
   it('does not mutate base record', async () => {
     const { repo, recordId, stored } = await createBaseRecord()
@@ -202,7 +202,7 @@ describe('boardCurrentProjection', () => {
     const { repo, recordId, stored } = await createBaseRecord()
 
     await repo.appendPatch(
-      makePatchDoc('p1', recordId, null, { tags: ['status:wip'] })
+      makePatchDoc('p1', recordId, null, { tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } })
     )
 
     const patchesBefore = structuredClone(
@@ -214,7 +214,7 @@ describe('boardCurrentProjection', () => {
     expect(patchesAfter).toEqual(patchesBefore)
   })
 
-  // ── Ordering ──
+  // 鈹€鈹€ Ordering 鈹€鈹€
 
   it('does not sort patches by createdAt', async () => {
     const { repo, recordId, stored } = await createBaseRecord()
@@ -225,13 +225,13 @@ describe('boardCurrentProjection', () => {
 
     await repo.appendPatch(
       makePatchDoc('p2', recordId, 'p1', {
-        tags: ['status:done'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
         createdAt: older,
       })
     )
     await repo.appendPatch(
       makePatchDoc('p1', recordId, null, {
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
         createdAt: newer,
       })
     )
@@ -246,7 +246,7 @@ describe('boardCurrentProjection', () => {
     expect(ok.current.tags).toEqual(['status:done'])
   })
 
-  // ── Archived detection ──
+  // 鈹€鈹€ Archived detection 鈹€鈹€
 
   it('isArchivedInCurrent: false for non-archived current', async () => {
     const { repo, recordId, stored } = await createBaseRecord()

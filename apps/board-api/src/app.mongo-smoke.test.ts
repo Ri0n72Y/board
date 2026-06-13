@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Mongo integration smoke test.
  *
  * **Disabled by default.** Set RUN_MONGO_SMOKE=true to enable.
@@ -7,7 +7,7 @@
  * (defaults to mongodb://localhost:27017).
  *
  * Uses a dedicated test database that is cleaned before and after each run.
- * The database name MUST contain "smoke" or "test" — refuses to run otherwise.
+ * The database name MUST contain "smoke" or "test" 鈥?refuses to run otherwise.
  */
 import { Hono } from 'hono'
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
@@ -19,7 +19,7 @@ import { ok } from './http/responses.js'
 import type { SnapshotHeadRepository } from './repositories/snapshotHeadRepository.js'
 import type { StoredPatchDoc } from './repositories/snapshotHeadRepository.js'
 
-// ─── Gating ───
+// 鈹€鈹€鈹€ Gating 鈹€鈹€鈹€
 
 const RUN_SMOKE = process.env.RUN_MONGO_SMOKE === 'true'
 
@@ -39,7 +39,7 @@ function assertSafeDbName(name: string): void {
   }
 }
 
-// ─── Helpers ───
+// 鈹€鈹€鈹€ Helpers 鈹€鈹€鈹€
 
 let _client: MongoClient | null = null
 
@@ -88,13 +88,13 @@ async function dropDatabase(): Promise<void> {
   await client.db(TEST_DB).dropDatabase()
 }
 
-// ─── Test suite ───
+// 鈹€鈹€鈹€ Test suite 鈹€鈹€鈹€
 
 describe('Mongo smoke', () => {
   // Gate the entire suite
   if (!RUN_SMOKE) {
     it.skip(
-      'Mongo smoke disabled — set RUN_MONGO_SMOKE=true to enable',
+      'Mongo smoke disabled 鈥?set RUN_MONGO_SMOKE=true to enable',
       () => {}
     )
     return
@@ -116,7 +116,7 @@ describe('Mongo smoke', () => {
     }
   }, 15000)
 
-  // ── 1. Health check + board current route mounted ──
+  // 鈹€鈹€ 1. Health check + board current route mounted 鈹€鈹€
 
   it('GET /health returns 200', async () => {
     const { app } = await createSmokeApp()
@@ -138,9 +138,9 @@ describe('Mongo smoke', () => {
     expect(payload.data.summary.projectionStatus).toBe('empty')
   })
 
-  // ── 2. Record → patch → board current ──
+  // 鈹€鈹€ 2. Record 鈫?patch 鈫?board current 鈹€鈹€
 
-  it('record → patch → board current shows replayed state', async () => {
+  it('record 鈫?patch 鈫?board current shows replayed state', async () => {
     const { app } = await createSmokeApp()
 
     // Create record
@@ -165,7 +165,7 @@ describe('Mongo smoke', () => {
         body: JSON.stringify({
           parentId: null,
           snapshotVersion: 0,
-          tags: ['status:done'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
           body: { description: 'Mongo patch' },
         }),
         headers: { 'content-type': 'application/json' },
@@ -188,7 +188,7 @@ describe('Mongo smoke', () => {
     expect(current.tags).not.toContain('status:todo')
   })
 
-  // ── 3. Snapshot head in Mongo ──
+  // 鈹€鈹€ 3. Snapshot head in Mongo 鈹€鈹€
 
   it('GET /api/v0/snapshot-head reflects patch advancement', async () => {
     const { app } = await createSmokeApp()
@@ -217,7 +217,7 @@ describe('Mongo smoke', () => {
         body: JSON.stringify({
           parentId: null,
           snapshotVersion: 0,
-          tags: ['status:done'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
         }),
         headers: { 'content-type': 'application/json' },
       }
@@ -242,7 +242,7 @@ describe('Mongo smoke', () => {
     expect(recordsCount).toBe(0)
   })
 
-  // ── 4. History replay in Mongo ──
+  // 鈹€鈹€ 4. History replay in Mongo 鈹€鈹€
 
   it('GET /api/v0/records/:id/history returns complete replay', async () => {
     const { app } = await createSmokeApp()
@@ -263,7 +263,7 @@ describe('Mongo smoke', () => {
       body: JSON.stringify({
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:done'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -280,7 +280,7 @@ describe('Mongo smoke', () => {
     expect(historyPayload.data.replay.finalState.tags).toEqual(['status:done'])
   })
 
-  // ── 5. Archive patch in Mongo ──
+  // 鈹€鈹€ 5. Archive patch in Mongo 鈹€鈹€
 
   it('DELETE archives record and board current reflects archived state', async () => {
     const { app } = await createSmokeApp()
@@ -302,7 +302,7 @@ describe('Mongo smoke', () => {
       body: JSON.stringify({
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:done'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -329,7 +329,7 @@ describe('Mongo smoke', () => {
     expect(tags).not.toContain('status:todo')
   })
 
-  // ── 6. Board current has no write side effects ──
+  // 鈹€鈹€ 6. Board current has no write side effects 鈹€鈹€
 
   it('GET /api/v0/board/current does not mutate snapshot head or records', async () => {
     const { app } = await createSmokeApp()
@@ -350,7 +350,7 @@ describe('Mongo smoke', () => {
       body: JSON.stringify({
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:done'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -380,10 +380,10 @@ describe('Mongo smoke', () => {
     expect(patchesAfterPayload.data.patches.length).toBe(patchesBeforeCount)
   })
 
-  // ── 7. stale snapshotVersion conflict ──
+  // 鈹€鈹€ 7. stale snapshotVersion conflict 鈹€鈹€
   //
   // Client A succeeds; Client B reuses the same snapshotVersion and
-  // fails at validation (parentId mismatch) — no insert, no orphan.
+  // fails at validation (parentId mismatch) 鈥?no insert, no orphan.
 
   it('stale snapshotVersion conflict does not append patch', async () => {
     const { app } = await createSmokeApp()
@@ -407,14 +407,14 @@ describe('Mongo smoke', () => {
         body: JSON.stringify({
           parentId: null,
           snapshotVersion: 0,
-          tags: ['status:done'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
         }),
         headers: { 'content-type': 'application/json' },
       }
     )
     expect(resA.status).toBe(201)
 
-    // Client B retries with same stale snapshotVersion → 409
+    // Client B retries with same stale snapshotVersion 鈫?409
     const resB = await app.request(
       `/api/v0/records/${recordId}/patches`,
       {
@@ -422,7 +422,7 @@ describe('Mongo smoke', () => {
         body: JSON.stringify({
           parentId: null,
           snapshotVersion: 0,
-          tags: ['status:done'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
         }),
         headers: { 'content-type': 'application/json' },
       }
@@ -438,7 +438,7 @@ describe('Mongo smoke', () => {
     expect(patches).toHaveLength(1)
   })
 
-  // ── 8. Deterministic CAS failure → orphan cleanup ──
+  // 鈹€鈹€ 8. Deterministic CAS failure 鈫?orphan cleanup 鈹€鈹€
   //
   // Uses a proxied collection so that findOneAndReplace returns null
   // (simulating a concurrent snapshot head update between validate and
@@ -466,7 +466,7 @@ describe('Mongo smoke', () => {
         body: JSON.stringify({
           parentId: null,
           snapshotVersion: 0,
-          tags: ['status:done'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
         }),
         headers: { 'content-type': 'application/json' },
       }
@@ -491,7 +491,7 @@ describe('Mongo smoke', () => {
       targetId: recordId,
       parentId: firstPatchId,
       schema: 'CardBody',
-      tags: ['status:done'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
 
@@ -545,7 +545,7 @@ describe('Mongo smoke', () => {
         expectedSnapshotVersion: headBefore!.version as number,
       })
 
-      // CAS failed → should return snapshotVersionMismatch
+      // CAS failed 鈫?should return snapshotVersionMismatch
       expect(result.ok).toBe(false)
       if (!result.ok) {
         expect(result.reason).toBe('snapshotVersionMismatch')
@@ -568,7 +568,7 @@ describe('Mongo smoke', () => {
     }
   })
 
-  // ── 9. Cleanup failure throws ──
+  // 鈹€鈹€ 9. Cleanup failure throws 鈹€鈹€
   //
   // Same proxy approach, but deleteOne also throws.  The repository
   // must propagate the cleanup error rather than returning a conflict
@@ -595,7 +595,7 @@ describe('Mongo smoke', () => {
         body: JSON.stringify({
           parentId: null,
           snapshotVersion: 0,
-          tags: ['status:done'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
         }),
         headers: { 'content-type': 'application/json' },
       }
@@ -614,7 +614,7 @@ describe('Mongo smoke', () => {
       targetId: recordId,
       parentId: firstPatchId,
       schema: 'CardBody',
-      tags: ['status:done'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
     } as any
 
     const repo = snapshotHeadRepository as unknown as {
@@ -656,7 +656,7 @@ describe('Mongo smoke', () => {
         expectedParentId: firstPatchId,
         expectedSnapshotVersion: headBefore!.version as number,
       })
-      // Must not reach here — cleanup should have thrown.
+      // Must not reach here 鈥?cleanup should have thrown.
       expect.unreachable('Expected cleanup error to be thrown')
     } catch (caught) {
       expect(String(caught)).toContain('Orphan patch cleanup failed')

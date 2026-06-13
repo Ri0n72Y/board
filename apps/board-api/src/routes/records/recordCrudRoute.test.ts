@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+﻿import { Hono } from 'hono'
 import { DEFAULT_BOARD_CONFIG } from '@labour-board/shared'
 import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from '../../repositories/recordRepository.js'
@@ -70,7 +70,7 @@ describe('recordCrudRoute', () => {
 
     const patchResponse = await app.request('/api/v0/records/missing', {
       method: 'PATCH',
-      body: JSON.stringify({ tags: ['status:wip'] }),
+      body: JSON.stringify({ tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
       headers: { 'content-type': 'application/json' },
     })
     expect(patchResponse.status).toBe(410)
@@ -185,7 +185,7 @@ describe('recordCrudRoute', () => {
 
     const patchResponse = await app.request(`/api/v0/records/${recordId}`, {
       method: 'PATCH',
-      body: JSON.stringify({ tags: ['status:wip'] }),
+      body: JSON.stringify({ tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
       headers: { 'content-type': 'application/json' },
     })
     const patchPayload = await patchResponse.json()
@@ -220,7 +220,7 @@ describe('recordCrudRoute', () => {
 
     const response = await app.request(`/api/v0/records/${recordId}`, {
       method: 'PATCH',
-      body: JSON.stringify({ targetId: recordId, tags: ['status:wip'] }),
+      body: JSON.stringify({ targetId: recordId, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
       headers: { 'content-type': 'application/json' },
     })
     const payload = await response.json()
@@ -247,7 +247,7 @@ describe('recordCrudRoute', () => {
 
     const response = await app.request(`/api/v0/records/${recordId}`, {
       method: 'PATCH',
-      body: JSON.stringify({ parentId: 'patch-1', tags: ['status:wip'] }),
+      body: JSON.stringify({ parentId: 'patch-1', tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
       headers: { 'content-type': 'application/json' },
     })
     const payload = await response.json()
@@ -276,7 +276,7 @@ describe('recordCrudRoute', () => {
       method: 'PATCH',
       body: JSON.stringify({
         snapshotVersion: 1,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -369,7 +369,7 @@ describe('recordCrudRoute', () => {
       body: JSON.stringify({
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })

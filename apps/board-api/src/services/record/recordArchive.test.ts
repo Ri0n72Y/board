@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 import { RecordService, SnapshotConflictError } from '../recordService.js'
 import {
   createRecordService,
@@ -44,7 +44,9 @@ describe('RecordService archive (delete)', () => {
     expect(history).not.toBeNull()
     expect(history!.status).toBe('complete')
     expect(history!.patches).toHaveLength(1)
-    expect(history!.patches[0].body.tags).toContain('status:archived')
+    expect(history!.patches[0].body.tagChanges).toEqual({
+      add: ['status:archived'],
+    })
     expect(history!.replay).toBeDefined()
     expect(history!.replay!.finalState.tags).toContain('status:archived')
   })
@@ -82,7 +84,7 @@ describe('RecordService archive (delete)', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
     const headBeforeArchive = await service.getSnapshotHead()
     expect(headBeforeArchive.version).toBe(1)
@@ -96,11 +98,12 @@ describe('RecordService archive (delete)', () => {
     expect(history).not.toBeNull()
     expect(history!.status).toBe('complete')
     expect(history!.patches).toHaveLength(2)
-    expect(history!.patches[0].body.tags).toEqual(['status:wip'])
-    expect(history!.patches[1].body.tags).toEqual(
-      expect.arrayContaining(['status:wip', 'status:archived'])
-    )
-    expect(history!.patches[1].body.tags).not.toContain('status:todo')
+    expect(history!.patches[0].body.tagChanges).toEqual({
+      change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }],
+    })
+    expect(history!.patches[1].body.tagChanges).toEqual({
+      add: ['status:archived'],
+    })
     expect(history!.patches[1].body.parentId).toBe(history!.patches[0].body.id)
     expect(history!.replay).toBeDefined()
     expect(history!.replay!.finalState.tags).toEqual(
@@ -109,7 +112,7 @@ describe('RecordService archive (delete)', () => {
     expect(history!.replay!.finalState.tags).not.toContain('status:todo')
   })
 
-  // ─── Broken / conflicted chain rejection ───
+  // 鈹€鈹€鈹€ Broken / conflicted chain rejection 鈹€鈹€鈹€
 
   it('rejects delete when patch chain has multiple roots', async () => {
     const { service, repo } = createServiceWithRepo()
@@ -123,8 +126,8 @@ describe('RecordService archive (delete)', () => {
     const headBefore = await service.getSnapshotHead()
     const patchCountBefore = (await service.listPatchesByTargetId(recordId)).length
 
-    await repo.appendPatch(makePatchDoc('p1', recordId, null, { tags: ['status:wip'] as any }))
-    await repo.appendPatch(makePatchDoc('p2', recordId, null, { tags: ['status:done'] as any }))
+    await repo.appendPatch(makePatchDoc('p1', recordId, null, { tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } as any }))
+    await repo.appendPatch(makePatchDoc('p2', recordId, null, { tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] } as any }))
 
     await expect(service.delete(recordId)).rejects.toThrow(SnapshotConflictError)
 
@@ -133,7 +136,7 @@ describe('RecordService archive (delete)', () => {
     const patchesAfter = await service.listPatchesByTargetId(recordId)
     expect(patchesAfter).toHaveLength(patchCountBefore + 2)
     for (const p of patchesAfter) {
-      expect(p.body.tags).not.toContain('status:archived')
+      expect(p.body.tagChanges?.add ?? []).not.toContain('status:archived')
     }
   })
 
@@ -208,9 +211,9 @@ describe('RecordService archive (delete)', () => {
     expect(patchCountAfter).toBe(patchCountBefore + 3)
   })
 
-  // ─── Consistency ───
+  // 鈹€鈹€鈹€ Consistency 鈹€鈹€鈹€
 
-  it('DELETE response tags match replay finalState — does not rollback current state', async () => {
+  it('DELETE response tags match replay finalState 鈥?does not rollback current state', async () => {
     const service = createRecordService()
     const envelope = await service.create({
       schema: 'CardBody',
@@ -222,7 +225,7 @@ describe('RecordService archive (delete)', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
 
     const archivedEnv = await service.delete(recordId)
@@ -257,13 +260,13 @@ describe('RecordService archive (delete)', () => {
     const r1 = await service.createRecordPatch(recordId, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
     expect(r1).not.toBeNull()
 
     await repo.appendPatch(
       makePatchDoc('injected-later', recordId, r1!.patch.body.id, {
-        tags: ['status:done'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       })
     )
 

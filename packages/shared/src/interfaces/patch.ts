@@ -19,6 +19,18 @@ export type DeepPartial<T> = T extends readonly unknown[]
       }
     : T
 
+export interface TagChange {
+  namespace: string
+  from: Tag | null
+  to: Tag | null
+}
+
+export interface TagChanges {
+  add?: Tag[]
+  remove?: Tag[]
+  change?: TagChange[]
+}
+
 export interface PatchItem<TBodyPatch = DeepPartial<RecordBody>> {
   id: RecordId
   pid: PublicId
@@ -26,7 +38,7 @@ export interface PatchItem<TBodyPatch = DeepPartial<RecordBody>> {
   targetId: RecordId
   /** Points to the previous patch; null for the first patch in the chain. */
   parentId: RecordId | null
-  tags?: Tag[]
+  tagChanges?: TagChanges
   assignee?: PublicKey | null
   body?: TBodyPatch
   assets?: AssetRef[]

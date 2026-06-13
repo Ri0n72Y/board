@@ -9,7 +9,7 @@ import type {
 import { RecordPatchConflictError, submitRecordPatch } from '../api/patches'
 import { fetchRecordHead } from '../api/recordHead'
 import {
-  buildMovedStatusTags,
+  buildMovedStatusTagChanges,
   isStatusMoveNoop,
 } from '../utils/statusMove'
 
@@ -64,14 +64,21 @@ export function useStatusMoveController({
           return
         }
 
-        const nextTags = buildMovedStatusTags(record.body.tags, targetStatusTag)
+        const change = buildMovedStatusTagChanges(
+          record.body.tags,
+          targetStatusTag,
+        )
+        if (!change.ok) {
+          throw new Error(change.error)
+        }
+
         await submitRecordPatch(
           recordId,
           {
             parentId: head.lastPatchId,
             currentVersion: head.currentVersion,
-            tags: nextTags,
-            description: `Move status to ${targetStatusTag}`,
+            tagChanges: change.tagChanges,
+            description: `Move ${change.from} -> ${targetStatusTag}`,
           },
           controller.signal,
         )

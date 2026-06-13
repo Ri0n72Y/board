@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from './recordRepository.js'
 import {
   MemorySnapshotHeadRepository,
@@ -22,7 +22,7 @@ function patch(
     schema: 'CardBody',
     targetId,
     parentId,
-    tags: ['status:wip'],
+    tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     createdBy: ACTOR,
     createdAt: NOW,
   }
@@ -181,7 +181,7 @@ describe('MongoSnapshotHeadRepository transaction abort', () => {
       schema: 'CardBody',
       targetId,
       parentId,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       createdBy: ACTOR,
       createdAt: NOW,
     }

@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+﻿import { Hono } from 'hono'
 import { DEFAULT_BOARD_CONFIG } from '@labour-board/shared'
 import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from '../repositories/recordRepository.js'
@@ -61,7 +61,7 @@ async function createPatchViaRecords(
 }
 
 describe('createPatchesRoute', () => {
-  // ── GET /api/v0/patches/:id ──
+  // 鈹€鈹€ GET /api/v0/patches/:id 鈹€鈹€
 
   it('returns a patch by id', async () => {
     const { app, service } = createFullApp()
@@ -69,7 +69,7 @@ describe('createPatchesRoute', () => {
     const { id } = await createCard(app)
 
     const { patchId } = await createPatchViaRecords(app, id, null, 0, {
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       description: 'Find me',
     })
 
@@ -110,7 +110,7 @@ describe('createPatchesRoute', () => {
     expect(payload.error.code).toBe('NOT_FOUND')
   })
 
-  // ── GET /api/v0/patches?targetId=xxx ──
+  // 鈹€鈹€ GET /api/v0/patches?targetId=xxx 鈹€鈹€
 
   it('returns patches for a given targetId', async () => {
     const { app, service } = createFullApp()
@@ -118,7 +118,7 @@ describe('createPatchesRoute', () => {
     const { id } = await createCard(app)
 
     const { patchId: firstId } = await createPatchViaRecords(app, id, null, 0, {
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
     await createPatchViaRecords(app, id, firstId, 1, {
       body: { description: 'Second' },
@@ -169,14 +169,14 @@ describe('createPatchesRoute', () => {
 
     const response = await app.request('/api/v0/patches', {
       method: 'POST',
-      body: JSON.stringify({ targetId: 'record-1', tags: ['status:wip'] }),
+      body: JSON.stringify({ targetId: 'record-1', tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
       headers: { 'content-type': 'application/json' },
     })
 
     expect(response.status).toBe(404)
   })
 
-  // ── Separation: record queries must not return patches ──
+  // 鈹€鈹€ Separation: record queries must not return patches 鈹€鈹€
 
   it('record queries do not return patches', async () => {
     const { app, service } = createFullApp()
@@ -184,7 +184,7 @@ describe('createPatchesRoute', () => {
     const { id } = await createCard(app)
 
     await createPatchViaRecords(app, id, null, 0, {
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
 
     // GET /api/v0/records/:id returns the record, not the patch
@@ -196,7 +196,7 @@ describe('createPatchesRoute', () => {
     expect(recordPayload.data.body).not.toHaveProperty('targetId')
   })
 
-  // ─── x-actor-id header tests ───
+  // 鈹€鈹€鈹€ x-actor-id header tests 鈹€鈹€鈹€
 
   it('uses x-actor-id header for patch createdBy', async () => {
     const { app, service } = createFullApp()
@@ -208,7 +208,7 @@ describe('createPatchesRoute', () => {
       body: JSON.stringify({
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       }),
       headers: {
         'content-type': 'application/json',
@@ -231,7 +231,7 @@ describe('createPatchesRoute', () => {
       body: JSON.stringify({
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       }),
       headers: {
         'content-type': 'application/json',
@@ -253,7 +253,7 @@ describe('createPatchesRoute', () => {
       body: JSON.stringify({
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       }),
       headers: {
         'content-type': 'application/json',

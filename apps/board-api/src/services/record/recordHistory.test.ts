@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 import type { RecordBody, RecordItem } from '@labour-board/shared'
 import type { StoredPatchDoc } from '../../repositories/snapshotHeadRepository.js'
 import { reconstructPatchChain, replayRecordHistory } from './recordHistory.js'
@@ -249,7 +249,7 @@ describe('replayRecordHistory', () => {
 
   it('one patch replay: tags update reflected in finalState', () => {
     const base = baseRecord()
-    const patch = makePatch('p1', TARGET, null, { tags: ['status:wip'] })
+    const patch = makePatch('p1', TARGET, null, { tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } })
     const result = replayRecordHistory(base, [patch])
     expect(result.states).toHaveLength(1)
     expect(result.states[0].tags).toEqual(['status:wip'])
@@ -260,7 +260,7 @@ describe('replayRecordHistory', () => {
 
   it('two patch replay: both patches accumulate', () => {
     const base = baseRecord()
-    const p1 = makePatch('p1', TARGET, null, { tags: ['status:wip'] })
+    const p1 = makePatch('p1', TARGET, null, { tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } })
     const p2 = makePatch('p2', TARGET, 'p1', { body: { description: 'Updated desc' }, tags: undefined })
     const result = replayRecordHistory(base, [p1, p2])
     expect(result.states).toHaveLength(2)
@@ -306,7 +306,7 @@ describe('replayRecordHistory', () => {
   it('description does not enter finalState', () => {
     const base = baseRecord()
     const patch = makePatch('p1', TARGET, null, {
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       description: 'Patch meta comment',
     })
     const result = replayRecordHistory(base, [patch])
@@ -316,7 +316,7 @@ describe('replayRecordHistory', () => {
 
   it('targetId / parentId do not enter finalState', () => {
     const base = baseRecord()
-    const patch = makePatch('p1', TARGET, null, { tags: ['status:wip'] })
+    const patch = makePatch('p1', TARGET, null, { tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } })
     const result = replayRecordHistory(base, [patch])
     expect(result.finalState).not.toHaveProperty('targetId')
     expect(result.finalState).not.toHaveProperty('parentId')
@@ -325,14 +325,14 @@ describe('replayRecordHistory', () => {
   it('replay does not mutate base record', () => {
     const base = baseRecord()
     const original = structuredClone(base)
-    const patch = makePatch('p1', TARGET, null, { tags: ['status:wip'] })
+    const patch = makePatch('p1', TARGET, null, { tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } })
     replayRecordHistory(base, [patch])
     expect(base).toEqual(original)
   })
 
   it('replay does not mutate patch objects', () => {
     const base = baseRecord()
-    const patch = makePatch('p1', TARGET, null, { tags: ['status:wip'] })
+    const patch = makePatch('p1', TARGET, null, { tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } })
     const patchClone = structuredClone(patch)
     replayRecordHistory(base, [patch])
     expect(patch).toEqual(patchClone)

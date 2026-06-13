@@ -1,4 +1,4 @@
-import type { Tag } from '@labour-board/shared'
+import type { Tag, TagChanges } from '@labour-board/shared'
 import type { BoardStatusColumn } from './boardView'
 
 export interface MoveStatusOption {
@@ -27,6 +27,34 @@ export function buildMovedStatusTags(
   const nextTags = currentTags.filter((tag) => !tag.startsWith('status:'))
   nextTags.unshift(targetStatusTag)
   return dedupeTags(nextTags)
+}
+
+export function buildMovedStatusTagChanges(
+  currentTags: Tag[],
+  targetStatusTag: Tag,
+): { ok: true; tagChanges: TagChanges; from: Tag } | { ok: false; error: string } {
+  if (!targetStatusTag.startsWith('status:')) {
+    return { ok: false, error: `Target status is not a status tag: ${targetStatusTag}` }
+  }
+
+  const from = currentTags.find((tag) => tag.startsWith('status:'))
+  if (!from) {
+    return { ok: false, error: 'Current status tag is missing' }
+  }
+
+  return {
+    ok: true,
+    from,
+    tagChanges: {
+      change: [
+        {
+          namespace: 'status',
+          from,
+          to: targetStatusTag,
+        },
+      ],
+    },
+  }
 }
 
 export function isStatusMoveNoop(

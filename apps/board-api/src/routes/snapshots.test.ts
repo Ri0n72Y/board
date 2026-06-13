@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+﻿import { Hono } from 'hono'
 import { DEFAULT_BOARD_CONFIG } from '@labour-board/shared'
 import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from '../repositories/recordRepository.js'
@@ -97,7 +97,7 @@ describe('createSnapshotsRoute', () => {
     await postPatch(app, record.id, {
       parentId: null,
       currentVersion: 2,
-      tags: ['status:done'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       body: { title: 'Static after' },
     })
 
@@ -208,7 +208,7 @@ describe('createSnapshotsRoute', () => {
     const patchResponse = await postPatch(app, record.id, {
       parentId: headAfterSnapshot?.lastPatchId ?? null,
       currentVersion: headAfterSnapshot?.currentVersion,
-      tags: ['status:done'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
     })
     expect(patchResponse.status).toBe(201)
   })

@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+﻿import { Hono } from 'hono'
 import { DEFAULT_BOARD_CONFIG } from '@labour-board/shared'
 import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from '../../repositories/recordRepository.js'
@@ -76,7 +76,7 @@ describe('recordHistoryRoute', () => {
 
     await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tags: ['status:wip'], description: 'First change' }),
+      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] }, description: 'First change' }),
       headers: { 'content-type': 'application/json' },
     })
 
@@ -87,7 +87,9 @@ describe('recordHistoryRoute', () => {
     expect(payload.data.status).toBe('complete')
     expect(payload.data.patches).toHaveLength(1)
     expect(payload.data.patches[0].body.parentId).toBeNull()
-    expect(payload.data.patches[0].body.tags).toEqual(['status:wip'])
+    expect(payload.data.patches[0].body.tagChanges).toEqual({
+      change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }],
+    })
   })
 
   it('returns ordered patches in parent chain order', async () => {
@@ -140,7 +142,7 @@ describe('recordHistoryRoute', () => {
 
     await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tags: ['status:wip'] }),
+      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
       headers: { 'content-type': 'application/json' },
     })
 
@@ -163,7 +165,7 @@ describe('recordHistoryRoute', () => {
 
     await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tags: ['status:wip'] }),
+      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
       headers: { 'content-type': 'application/json' },
     })
 
@@ -213,7 +215,7 @@ describe('recordHistoryRoute', () => {
 
     const p1Res = await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tags: ['status:wip'] }),
+      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
       headers: { 'content-type': 'application/json' },
     })
     const p1Payload = await p1Res.json()
@@ -297,7 +299,9 @@ describe('recordHistoryRoute', () => {
     expect(payload.data.status).toBe('complete')
     expect(payload.data.patches).toHaveLength(1)
     expect(payload.data.patches[0].body.parentId).toBeNull()
-    expect(payload.data.patches[0].body.tags).toContain('status:archived')
+    expect(payload.data.patches[0].body.tagChanges).toEqual({
+      add: ['status:archived'],
+    })
     expect(payload.data.replay).toBeDefined()
     expect(payload.data.replay.finalState.tags).toContain('status:archived')
   })

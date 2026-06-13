@@ -1,4 +1,4 @@
-import type { DeepPartial, PatchItem } from '../interfaces/patch.js'
+import type { DeepPartial, PatchItem, TagChanges } from '../interfaces/patch.js'
 import type { RecordItem } from '../interfaces/record.js'
 import type { Tag } from '../interfaces/tag.js'
 import { DEFAULT_BOARD_CONFIG } from '../constants/boardConfig.js'
@@ -47,7 +47,9 @@ export function applyRecordPatch<TBody>(
   if (assignee === undefined) assignee = record.assignee
   return {
     ...record,
-    tags: patch.tags ?? record.tags,
+    tags: patch.tagChanges
+      ? applyTagChanges(record.tags, patch.tagChanges)
+      : record.tags,
     assignee,
     body:
       patch.body === undefined
@@ -56,6 +58,38 @@ export function applyRecordPatch<TBody>(
     assets: patch.assets ?? record.assets,
     relations: patch.relations ?? record.relations,
   }
+}
+
+export function applyTagChanges(
+  currentTags: readonly Tag[],
+  tagChanges: TagChanges
+): Tag[] {
+  const next = new Set<Tag>(currentTags)
+
+  for (const tag of tagChanges.remove ?? []) {
+    next.delete(tag)
+  }
+
+  for (const change of tagChanges.change ?? []) {
+    for (const tag of [...next]) {
+      if (tagNamespace(tag) === change.namespace) {
+        next.delete(tag)
+      }
+    }
+    if (change.to !== null) {
+      next.add(change.to)
+    }
+  }
+
+  for (const tag of tagChanges.add ?? []) {
+    next.add(tag)
+  }
+
+  return [...next]
+}
+
+export function tagNamespace(tag: Tag): string {
+  return tag.slice(0, tag.indexOf(':'))
 }
 
 export function shouldIncludeInSnapshot(

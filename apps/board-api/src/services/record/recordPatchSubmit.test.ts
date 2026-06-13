@@ -1,10 +1,15 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 import {
   CurrentHeadConflictError,
   RecordService,
   RecordValidationError,
 } from '../recordService.js'
-import { createRecordService } from './recordTestUtils.js'
+import { MemoryRecordRepository } from '../../repositories/recordRepository.js'
+import { MemorySnapshotHeadRepository } from '../../repositories/snapshotHeadRepository.js'
+import {
+  cloneDefaultBoardConfig,
+  createRecordService,
+} from './recordTestUtils.js'
 
 describe('RecordService patch submission (createRecordPatch)', () => {
   describe('basic flow', () => {
@@ -20,7 +25,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       const result = await service.createRecordPatch(record.id, {
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
         body: { description: 'Patched description' },
         description: 'Moving to wip',
       })
@@ -31,7 +36,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       expect(result!.patch.body).toMatchObject({
         targetId: record.id,
         parentId: null,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
         body: { description: 'Patched description' },
         description: 'Moving to wip',
       })
@@ -46,7 +51,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
         service.createRecordPatch('missing', {
           parentId: null,
           snapshotVersion: 0,
-          tags: ['status:wip'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
         })
       ).resolves.toBeNull()
     })
@@ -62,7 +67,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       await service.createRecordPatch(envelope.body.id, {
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       })
 
       const list = await service.list({})
@@ -90,7 +95,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
         service.createRecordPatch(envelope.body.id, {
           parentId: null,
           snapshotVersion: 0,
-          tags: ['status:wip'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
         })
       ).rejects.toThrow(`Cannot patch archived record ${envelope.body.id}`)
     })
@@ -107,7 +112,9 @@ describe('RecordService patch submission (createRecordPatch)', () => {
         service.createRecordPatch(envelope.body.id, {
           parentId: null,
           snapshotVersion: 0,
-          tags: ['status:not-configured'],
+          tagChanges: {
+            add: ['status:not-configured'],
+          },
         })
       ).rejects.toThrow('Unsupported tag: status:not-configured')
     })
@@ -143,7 +150,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
           snapshotVersion: 0,
         })
       ).rejects.toThrow(
-        'Patch must contain at least one change: body, tags, assignee, assets, relations, or description'
+        'Patch must contain at least one change: body, tagChanges, assignee, assets, relations, or description'
       )
     })
 
@@ -244,7 +251,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       expect(result!.patch.body.relations).toEqual([])
     })
 
-    it('allows tags: [] as valid patch content', async () => {
+    it('rejects full tags array patch content', async () => {
       const service = createRecordService()
       const envelope = await service.create({
         schema: 'CardBody',
@@ -252,14 +259,147 @@ describe('RecordService patch submission (createRecordPatch)', () => {
         body: { title: 'Tags clear test' },
       })
 
+      await expect(
+        service.createRecordPatch(envelope.body.id, {
+          parentId: null,
+          snapshotVersion: 0,
+          tags: [],
+        } as any)
+      ).rejects.toThrow(
+        'tags must not be provided in patch records; use tagChanges instead'
+      )
+    })
+  })
+
+  describe('tagChanges semantics', () => {
+    it('persists priority change as tagChanges.change without full tags', async () => {
+      const service = createConfiguredTagService()
+      const envelope = await service.create({
+        schema: 'CardBody',
+        tags: ['status:todo', 'priority:p3'],
+        body: { title: 'Priority change' },
+      })
+
       const result = await service.createRecordPatch(envelope.body.id, {
         parentId: null,
         snapshotVersion: 0,
-        tags: [],
+        tagChanges: {
+          change: [
+            { namespace: 'priority', from: 'priority:p3', to: 'priority:p0' },
+          ],
+        },
       })
 
-      expect(result).not.toBeNull()
-      expect(result!.patch.body.tags).toEqual([])
+      expect(result!.patch.body.tagChanges).toEqual({
+        change: [
+          { namespace: 'priority', from: 'priority:p3', to: 'priority:p0' },
+        ],
+      })
+      expect(result!.patch.body).not.toHaveProperty('tags')
+    })
+
+    it('persists epic change as tagChanges.change', async () => {
+      const service = createConfiguredTagService()
+      const envelope = await service.create({
+        schema: 'CardBody',
+        tags: ['status:todo', 'epic:1'],
+        body: { title: 'Epic change' },
+      })
+
+      const result = await service.createRecordPatch(envelope.body.id, {
+        parentId: null,
+        snapshotVersion: 0,
+        tagChanges: {
+          change: [{ namespace: 'epic', from: 'epic:1', to: 'epic:2' }],
+        },
+      })
+
+      expect(result!.patch.body.tagChanges).toEqual({
+        change: [{ namespace: 'epic', from: 'epic:1', to: 'epic:2' }],
+      })
+    })
+
+    it('persists scope add and remove as tagChanges.add/remove', async () => {
+      const service = createConfiguredTagService()
+      const envelope = await service.create({
+        schema: 'CardBody',
+        tags: ['status:todo', 'scope:shop'],
+        body: { title: 'Scope change' },
+      })
+
+      const result = await service.createRecordPatch(envelope.body.id, {
+        parentId: null,
+        snapshotVersion: 0,
+        tagChanges: {
+          add: ['scope:combat'],
+          remove: ['scope:shop'],
+        },
+      })
+
+      expect(result!.patch.body.tagChanges).toEqual({
+        add: ['scope:combat'],
+        remove: ['scope:shop'],
+      })
+    })
+
+    it('rejects unknown add tag epic:999', async () => {
+      const service = createConfiguredTagService()
+      const envelope = await service.create({
+        schema: 'CardBody',
+        tags: ['status:todo'],
+        body: { title: 'Unknown add' },
+      })
+
+      await expect(
+        service.createRecordPatch(envelope.body.id, {
+          parentId: null,
+          snapshotVersion: 0,
+          tagChanges: { add: ['epic:999'] },
+        })
+      ).rejects.toThrow('Unsupported tag: epic:999')
+    })
+
+    it('rejects unknown change target status:unknown', async () => {
+      const service = createConfiguredTagService()
+      const envelope = await service.create({
+        schema: 'CardBody',
+        tags: ['status:todo'],
+        body: { title: 'Unknown status' },
+      })
+
+      await expect(
+        service.createRecordPatch(envelope.body.id, {
+          parentId: null,
+          snapshotVersion: 0,
+          tagChanges: {
+            change: [
+              { namespace: 'status', from: 'status:todo', to: 'status:unknown' },
+            ],
+          },
+        })
+      ).rejects.toThrow('Unsupported tag: status:unknown')
+    })
+
+    it('rejects tagChanges conflicts with a clear error', async () => {
+      const service = createConfiguredTagService()
+      const envelope = await service.create({
+        schema: 'CardBody',
+        tags: ['status:todo', 'scope:shop'],
+        body: { title: 'Conflict' },
+      })
+
+      await expect(
+        service.createRecordPatch(envelope.body.id, {
+          parentId: null,
+          snapshotVersion: 0,
+          tagChanges: {
+            add: ['scope:shop'],
+            remove: ['scope:shop'],
+          },
+        })
+      ).rejects.toThrow(
+        'Tag change conflict: scope:shop appears in both add and remove'
+      )
     })
   })
 
@@ -275,7 +415,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       const result = await service.createRecordPatch(envelope.body.id, {
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       })
 
       expect(result).not.toBeNull()
@@ -301,7 +441,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       const r1 = await service.createRecordPatch(envelope.body.id, {
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       })
 
       const r2 = await service.createRecordPatch(envelope.body.id, {
@@ -334,7 +474,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
         service.createRecordPatch(envelope.body.id, {
           parentId: null,
           snapshotVersion: 5,
-          tags: ['status:wip'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
         })
       ).rejects.toThrow(CurrentHeadConflictError)
 
@@ -342,7 +482,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
         service.createRecordPatch(envelope.body.id, {
           parentId: null,
           snapshotVersion: 5,
-          tags: ['status:wip'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
         })
       ).rejects.toThrow('Current version mismatch')
     })
@@ -358,14 +498,14 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       await service.createRecordPatch(envelope.body.id, {
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       })
 
       await expect(
         service.createRecordPatch(envelope.body.id, {
           parentId: null,
           snapshotVersion: 1,
-          tags: ['status:done'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
         })
       ).rejects.toThrow(CurrentHeadConflictError)
 
@@ -373,7 +513,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
         service.createRecordPatch(envelope.body.id, {
           parentId: null,
           snapshotVersion: 1,
-          tags: ['status:done'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
         })
       ).rejects.toThrow('Parent patch mismatch')
     })
@@ -389,14 +529,14 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       await service.createRecordPatch(envelope.body.id, {
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       })
 
       await expect(
         service.createRecordPatch(envelope.body.id, {
           parentId: 'missing-patch-id',
           snapshotVersion: 1,
-          tags: ['status:done'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
         })
       ).rejects.toThrow(CurrentHeadConflictError)
 
@@ -404,7 +544,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
         service.createRecordPatch(envelope.body.id, {
           parentId: 'missing-patch-id',
           snapshotVersion: 1,
-          tags: ['status:done'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
         })
       ).rejects.toThrow('Parent patch mismatch')
     })
@@ -420,7 +560,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       const result = await service.createRecordPatch(envelope.body.id, {
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       })
 
       expect(result!.patch.body).not.toHaveProperty('snapshotVersion')
@@ -442,7 +582,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       const result = await service.createRecordPatch(envelope.body.id, {
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       })
       const patch = result!.patch
 
@@ -469,7 +609,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       const r1 = await service.createRecordPatch(envelope.body.id, {
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       })
       const r2 = await service.createRecordPatch(envelope.body.id, {
         parentId: r1!.patch.body.id,
@@ -556,7 +696,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
         {
           parentId: null,
           snapshotVersion: 0,
-          tags: ['status:wip'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
         },
         'reviewer-key'
       )
@@ -625,7 +765,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       await service.createRecordPatch(created.body.id, {
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       })
 
       const list = await service.listPatchesByTargetId(created.body.id)
@@ -665,7 +805,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       const result = await service.createRecordPatch(envelope.body.id, {
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         createdAt: '2020-01-01T00:00:00.000Z',
       } as any)
@@ -682,3 +822,26 @@ describe('RecordService patch submission (createRecordPatch)', () => {
     })
   })
 })
+
+function createConfiguredTagService(): RecordService {
+  const repository = new MemoryRecordRepository()
+  const config = cloneDefaultBoardConfig()
+  config.tags.status.custom = [
+    { id: 'status:doing', displayName: 'doing' },
+  ]
+  config.tags.priority.custom = [
+    { id: 'priority:p0', displayName: 'P0' },
+    { id: 'priority:p3', displayName: 'P3' },
+  ]
+  config.tags.custom = [
+    { id: 'epic:1', displayName: 'Epic 1' },
+    { id: 'epic:2', displayName: 'Epic 2' },
+    { id: 'scope:combat', displayName: 'Combat' },
+    { id: 'scope:shop', displayName: 'Shop' },
+  ]
+  return new RecordService(
+    repository,
+    new MemorySnapshotHeadRepository(repository),
+    config
+  )
+}

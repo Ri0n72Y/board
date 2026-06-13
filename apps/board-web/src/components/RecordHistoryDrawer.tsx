@@ -6,6 +6,8 @@ import type {
   RecordHistoryResponse,
   RecordItem,
   RecordResponse,
+  Tag,
+  TagChanges,
 } from '@labour-board/shared'
 import {
   ExclamationTriangleIcon,
@@ -16,6 +18,8 @@ import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
 import { TagChipRow } from './BoardFilters'
 import { lookupProfile } from '../utils/board'
+import { formatTagLabel } from '../utils/tagDisplay'
+import { useTranslation } from 'react-i18next'
 
 interface RecordHistoryDrawerProps {
   open: boolean
@@ -126,12 +130,12 @@ export function RecordHistoryDrawer({
                 finalState={history.replay?.finalState}
                 profiles={profiles}
               />
+              <PatchList patches={history.patches} />
               <RecordSnapshot
                 title="Base record"
                 record={history.record.body}
                 profiles={profiles}
               />
-              <PatchList patches={history.patches} />
               <FinalState finalState={history.replay?.finalState} />
               <Diagnostics diagnostics={history.diagnostics ?? []} />
             </div>
@@ -251,6 +255,10 @@ function PatchList({
 }: {
   patches: RecordResponse<PatchItem<DeepPartial<RecordBody>>>[]
 }) {
+  const { i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
+  const visiblePatches = [...patches].reverse()
+
   return (
     <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -264,7 +272,7 @@ function PatchList({
         <p className="text-slate-500">No patches for this record.</p>
       ) : (
         <ol className="grid gap-3">
-          {patches.map((patch, index) => (
+          {visiblePatches.map((patch, index) => (
             <li
               className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-4"
               key={patch.body.id}
@@ -288,16 +296,129 @@ function PatchList({
                   value={patch.body.description ?? 'None'}
                 />
               </dl>
-              {patch.body.tags && patch.body.tags.length > 0 && (
-                <TagChipRow tags={patch.body.tags} readonly />
-              )}
-              <JsonBlock value={patch.body} />
+              <PatchSummary patch={patch.body} lang={lang} />
+              <details className="grid gap-2">
+                <summary className="cursor-pointer text-sm font-semibold text-slate-600">
+                  查看原始 patch
+                </summary>
+                <JsonBlock value={patch.body} />
+              </details>
             </li>
           ))}
         </ol>
       )}
     </section>
   )
+}
+
+function PatchSummary({
+  patch,
+  lang,
+}: {
+  patch: PatchItem<DeepPartial<RecordBody>>
+  lang?: string
+}) {
+  const items = buildPatchSummaryItems(patch, lang)
+
+  if (items.length === 0) {
+    return <p className="text-slate-500">无可显示的字段修改。</p>
+  }
+
+  return (
+    <div className="grid gap-2 rounded-md border border-slate-200 bg-white p-3">
+      {items.map((item) => (
+        <div className="grid gap-1" key={item.label}>
+          <span className="text-xs font-bold uppercase text-slate-500">
+            {item.label}
+          </span>
+          <span className="wrap-break-word text-sm text-slate-950">
+            {item.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function buildPatchSummaryItems(
+  patch: PatchItem<DeepPartial<RecordBody>>,
+  lang?: string
+): { label: string; value: string }[] {
+  const items: { label: string; value: string }[] = []
+  items.push(...tagChangeSummaryItems(patch.tagChanges, lang))
+
+  if ('assignee' in patch) {
+    items.push({ label: '负责人', value: patch.assignee ?? '未分配' })
+  }
+  if (patch.body !== undefined) {
+    items.push({ label: '正文', value: summarizeBodyPatch(patch.body) })
+  }
+  if (patch.assets !== undefined) {
+    items.push({ label: '资产', value: `${patch.assets.length} 项` })
+  }
+  if (patch.relations !== undefined) {
+    items.push({ label: '关系', value: `${patch.relations.length} 项` })
+  }
+
+  return items
+}
+
+function tagChangeSummaryItems(
+  tagChanges: TagChanges | undefined,
+  lang?: string
+): { label: string; value: string }[] {
+  if (!tagChanges) return []
+  const items: { label: string; value: string }[] = []
+
+  for (const change of tagChanges.change ?? []) {
+    items.push({
+      label: namespaceLabel(change.namespace),
+      value: `${formatNullableTag(change.from, lang)} -> ${formatNullableTag(change.to, lang)}`,
+    })
+  }
+
+  if (tagChanges.add && tagChanges.add.length > 0) {
+    items.push({
+      label: '新增标签',
+      value: tagChanges.add.map((tag) => formatTagLabel(tag, lang)).join('、'),
+    })
+  }
+
+  if (tagChanges.remove && tagChanges.remove.length > 0) {
+    items.push({
+      label: '删除标签',
+      value: tagChanges.remove
+        .map((tag) => formatTagLabel(tag, lang))
+        .join('、'),
+    })
+  }
+
+  return items
+}
+
+function formatNullableTag(tag: Tag | null, lang?: string): string {
+  return tag ? formatTagLabel(tag, lang) : '无'
+}
+
+function namespaceLabel(namespace: string): string {
+  const labels: Record<string, string> = {
+    status: '状态',
+    priority: '优先级',
+    epic: 'Epic',
+    sprint: 'Sprint',
+    owner: '负责人标签',
+    type: '类型',
+    milestone: '里程碑',
+  }
+  return labels[namespace] ?? namespace
+}
+
+function summarizeBodyPatch(body: DeepPartial<RecordBody>): string {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return '已修改'
+  }
+  const keys = Object.keys(body)
+  return keys.length > 0 ? keys.join('、') : '已修改'
 }
 
 function FinalState({
@@ -311,7 +432,14 @@ function FinalState({
         Final state
       </h3>
       {finalState ? (
-        <JsonBlock value={finalState} />
+        <details>
+          <summary className="cursor-pointer text-sm font-semibold text-slate-600">
+            查看最终状态
+          </summary>
+          <div className="mt-2">
+            <JsonBlock value={finalState} />
+          </div>
+        </details>
       ) : (
         <p className="text-amber-800">
           Final state is unavailable for this history status.

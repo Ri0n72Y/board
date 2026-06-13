@@ -1,4 +1,4 @@
-import type { DeepPartial, PatchItem } from './patch.js'
+import type { DeepPartial, PatchItem, TagChanges } from './patch.js'
 import type { Profile } from './profile.js'
 import type {
   AssetRef,
@@ -77,7 +77,7 @@ export interface CreateRecordPatchInput<TBodyPatch = DeepPartial<RecordBody>> {
   currentVersion?: number
   /** Deprecated compatibility alias for currentVersion. */
   snapshotVersion?: number
-  tags?: Tag[]
+  tagChanges?: TagChanges
   assignee?: PublicKey | null
   body?: TBodyPatch
   assets?: AssetRef[]

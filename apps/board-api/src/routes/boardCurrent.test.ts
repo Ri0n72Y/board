@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+﻿import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
 import { createBoardCurrentRoute } from './boardCurrent.js'
 import { createServiceWithRepo, makePatchDoc } from '../services/record/recordTestUtils.js'
@@ -19,7 +19,7 @@ function createAppWithRoute(): {
 }
 
 describe('GET /api/v0/board/current', () => {
-  // ── Empty board ──
+  // 鈹€鈹€ Empty board 鈹€鈹€
 
   it('empty board returns 200 with empty projection', async () => {
     const { app } = createAppWithRoute()
@@ -36,7 +36,7 @@ describe('GET /api/v0/board/current', () => {
     expect(payload.data.diagnostics).toBeUndefined()
   })
 
-  // ── Basic current record ──
+  // 鈹€鈹€ Basic current record 鈹€鈹€
 
   it('returns current record for base record without patches', async () => {
     const { app, service } = createAppWithRoute()
@@ -64,7 +64,7 @@ describe('GET /api/v0/board/current', () => {
     expect(payload.data.summary.projectionStatus).toBe('clean')
   })
 
-  // ── Complete patch chain ──
+  // 鈹€鈹€ Complete patch chain 鈹€鈹€
 
   it('returns replayed current state after patches', async () => {
     const { app, service } = createAppWithRoute()
@@ -79,7 +79,7 @@ describe('GET /api/v0/board/current', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       body: { description: 'Updated via patch' },
     })
 
@@ -107,7 +107,7 @@ describe('GET /api/v0/board/current', () => {
     await service.createRecordPatch(envelope.body.id, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
 
     const wipRes = await app.request(
@@ -160,7 +160,7 @@ describe('GET /api/v0/board/current', () => {
     await service.createRecordPatch(envelope.body.id, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       assignee: 'member-current',
       assets: [target.body.id],
       relations: [{ constraint: 'blocks', target: target.body.id }],
@@ -181,7 +181,7 @@ describe('GET /api/v0/board/current', () => {
     expect(payload.data.summary.visibleCurrentRecords).toBe(1)
   })
 
-  // ── Archived ──
+  // 鈹€鈹€ Archived 鈹€鈹€
 
   it('hides archived current records by default', async () => {
     const { app, service } = createAppWithRoute()
@@ -225,7 +225,7 @@ describe('GET /api/v0/board/current', () => {
   it('archived tags come from replay current, not base', async () => {
     const { app, service } = createAppWithRoute()
 
-    // base: status:todo → patch: status:wip → archive
+    // base: status:todo 鈫?patch: status:wip 鈫?archive
     const envelope = await service.create({
       schema: 'CardBody',
       tags: ['status:todo'],
@@ -236,7 +236,7 @@ describe('GET /api/v0/board/current', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
     await service.delete(recordId)
 
@@ -254,7 +254,7 @@ describe('GET /api/v0/board/current', () => {
     expect(tags).not.toContain('status:todo')
   })
 
-  // ── Broken / conflicted ──
+  // 鈹€鈹€ Broken / conflicted 鈹€鈹€
 
   it('conflicted record enters blockedRecords, not records', async () => {
     const { app, service, repo } = createAppWithRoute()
@@ -284,7 +284,7 @@ describe('GET /api/v0/board/current', () => {
     expect(payload.data.summary.blockedRecords).toBe(1)
   })
 
-  // ── Corrupted snapshot head ──
+  // 鈹€鈹€ Corrupted snapshot head 鈹€鈹€
 
   it('corrupted head with no base records returns 200 with diagnostics', async () => {
     const { service, repo, head } = createServiceWithRepo()
@@ -339,7 +339,7 @@ describe('GET /api/v0/board/current', () => {
     expect(payload.data.summary.projectionStatus).not.toBe('clean')
   })
 
-  // ── Side-effect-free ──
+  // 鈹€鈹€ Side-effect-free 鈹€鈹€
 
   it('route does not modify snapshot head', async () => {
     const { app, service } = createAppWithRoute()
@@ -353,7 +353,7 @@ describe('GET /api/v0/board/current', () => {
     await service.createRecordPatch(envelope.body.id, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
 
     const headBefore = structuredClone(await service.getSnapshotHead())

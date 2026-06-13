@@ -161,6 +161,7 @@ const zhCN = {
     'edit.errorGeneral': '保存补丁失败',
     'edit.errorTitleRequired': '标题为必填项。',
     'edit.errorStatusTagRequired': '状态为必填项。',
+    'edit.errorNoChanges': '没有需要保存的修改。',
     'edit.optional': '（可选）',
 
     // ─── Snapshot Drawer ───

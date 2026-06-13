@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 import { getBoardCurrentProjection } from './boardCurrentService.js'
 import { createServiceWithRepo, makePatchDoc } from '../record/recordTestUtils.js'
 
 describe('boardCurrentService', () => {
-  // ── Empty board ──
+  // 鈹€鈹€ Empty board 鈹€鈹€
 
   it('empty board: projectionStatus = empty, no diagnostics', async () => {
     const { service, repo, head } = createServiceWithRepo()
@@ -26,7 +26,7 @@ describe('boardCurrentService', () => {
     })
   })
 
-  // ── Basic current records ──
+  // 鈹€鈹€ Basic current records 鈹€鈹€
 
   it('base record without patches appears in current', async () => {
     const { service, repo, head } = createServiceWithRepo()
@@ -68,7 +68,7 @@ describe('boardCurrentService', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       body: { description: 'Updated via patch' },
     })
 
@@ -100,7 +100,11 @@ describe('boardCurrentService', () => {
     await service.createRecordPatch(envelope.body.id, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip', 'priority:urgent-important'],
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
     })
 
     const wipBoard = await getBoardCurrentProjection({
@@ -134,7 +138,7 @@ describe('boardCurrentService', () => {
     await service.createRecordPatch(first.body.id, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
 
     await service.create({
@@ -280,7 +284,7 @@ describe('boardCurrentService', () => {
     }
   })
 
-  // ── Archived records ──
+  // 鈹€鈹€ Archived records 鈹€鈹€
 
   it('archived current record is hidden by default', async () => {
     const { service, repo, head } = createServiceWithRepo()
@@ -361,7 +365,7 @@ describe('boardCurrentService', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       snapshotVersion: 0,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
     await service.delete(recordId)
 
@@ -379,7 +383,7 @@ describe('boardCurrentService', () => {
     expect(tags).not.toContain('status:todo')
   })
 
-  // ── Blocked records ──
+  // 鈹€鈹€ Blocked records 鈹€鈹€
 
   it('conflicted record enters blocked diagnostics with top-level head error', async () => {
     const { service, repo, head } = createServiceWithRepo()
@@ -399,7 +403,7 @@ describe('boardCurrentService', () => {
       snapshotHeadRepository: head,
     })
 
-    // Head is corrupted by the multi-root patches — top-level diagnostics
+    // Head is corrupted by the multi-root patches 鈥?top-level diagnostics
     expect(board.snapshotHeadVersion).toBe(-1)
     expect(board.diagnostics).toBeDefined()
     expect(board.diagnostics!.some(
@@ -416,7 +420,7 @@ describe('boardCurrentService', () => {
       (d) => d.code === 'MULTIPLE_ROOTS'
     )).toBe(true)
     expect(board.summary.blockedRecords).toBe(1)
-    // Has blocked records + corrupted head → blocked
+    // Has blocked records + corrupted head 鈫?blocked
     expect(board.summary.projectionStatus).toBe('blocked')
   })
 
@@ -448,7 +452,7 @@ describe('boardCurrentService', () => {
     )).toBe(true)
   })
 
-  // ── Snapshot head integrity error ──
+  // 鈹€鈹€ Snapshot head integrity error 鈹€鈹€
 
   it('corrupted head with no base records: projectionStatus = blocked, not empty', async () => {
     const { repo, head } = createServiceWithRepo()
@@ -470,7 +474,7 @@ describe('boardCurrentService', () => {
     )).toBe(true)
     expect(board.records).toEqual([])
     expect(board.blockedRecords).toEqual([])
-    // No base records + corrupted head → blocked, not empty
+    // No base records + corrupted head 鈫?blocked, not empty
     expect(board.summary.projectionStatus).toBe('blocked')
     expect(board.summary.totalBaseRecords).toBe(0)
   })
@@ -503,7 +507,7 @@ describe('boardCurrentService', () => {
     // Surviving record still visible
     expect(board.records).toHaveLength(1)
     expect(board.records[0].body.body.title).toBe('Surviving record')
-    // Has visible records but head corrupted → partial, not clean
+    // Has visible records but head corrupted 鈫?partial, not clean
     expect(board.summary.projectionStatus).toBe('partial')
     expect(board.summary.visibleCurrentRecords).toBe(1)
   })
@@ -518,7 +522,7 @@ describe('boardCurrentService', () => {
     })
     const recordId = envelope.body.id
 
-    // Injected broken patches for this record → both per-record blocked
+    // Injected broken patches for this record 鈫?both per-record blocked
     // AND top-level head corruption
     await repo.appendPatch(makePatchDoc('p1', recordId, null))
     await repo.appendPatch(makePatchDoc('p2', recordId, null))
@@ -540,7 +544,7 @@ describe('boardCurrentService', () => {
     )).toBe(true)
   })
 
-  // ── Side-effect-free ──
+  // 鈹€鈹€ Side-effect-free 鈹€鈹€
 
   it('board current does not modify snapshot head', async () => {
     const { service, repo, head } = createServiceWithRepo()
@@ -610,7 +614,7 @@ describe('boardCurrentService', () => {
     expect(recordAfter).toEqual(recordBefore)
   })
 
-  // ── Summary counts ──
+  // 鈹€鈹€ Summary counts 鈹€鈹€
 
   it('filter-empty healthy projection keeps projectionStatus as global health, not filter emptiness', async () => {
     const { service, repo, head } = createServiceWithRepo()
@@ -733,8 +737,7 @@ describe('boardCurrentService', () => {
     expect(board.summary.visibleCurrentRecords).toBe(2)
     expect(board.summary.archivedRecords).toBe(1)
     expect(board.summary.blockedRecords).toBe(1)
-    // Head was cached before broken patches were injected —
-    // the dedicated "corrupted head" tests cover the integrity error path.
+    // Head was cached before broken patches were injected 鈥?    // the dedicated "corrupted head" tests cover the integrity error path.
     expect(board.summary.projectionStatus).toBe('partial')
   })
 })

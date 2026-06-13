@@ -1,4 +1,4 @@
-import type { Collection, Document } from 'mongodb'
+﻿import type { Collection, Document } from 'mongodb'
 import { describe, expect, it } from 'vitest'
 import {
   MemoryRecordRepository,
@@ -84,7 +84,7 @@ describe('MemoryRecordRepository', () => {
       schema: BASE_RECORD.schema,
       targetId: BASE_RECORD.id,
       parentId: null,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       body: { description: 'In progress' },
       createdBy: ACTOR,
       createdAt: NOW,
@@ -110,7 +110,7 @@ describe('MemoryRecordRepository', () => {
       schema: BASE_RECORD.schema,
       targetId: BASE_RECORD.id,
       parentId: null,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       body: { description: 'In progress' },
       createdBy: ACTOR,
       createdAt: NOW,
@@ -133,7 +133,7 @@ describe('MemoryRecordRepository', () => {
     expect(list).toEqual([BASE_RECORD])
   })
 
-  it('findById returns a clone — external mutations do not affect internal state', async () => {
+  it('findById returns a clone 鈥?external mutations do not affect internal state', async () => {
     const repository = new MemoryRecordRepository()
     await repository.create(BASE_RECORD)
 
@@ -145,20 +145,22 @@ describe('MemoryRecordRepository', () => {
     expect(refetch!.tags).toEqual(['status:todo'])
   })
 
-  it('findPatchesByTargetId returns clones — external mutations do not affect internal state', async () => {
+  it('findPatchesByTargetId returns clones 鈥?external mutations do not affect internal state', async () => {
     const repository = new MemoryRecordRepository()
     const patch: StoredPatchDoc = {
       id: 'p1', pid: 'X-1', schema: 'CardBody', targetId: 'r1',
-      parentId: null, tags: ['status:wip'], createdBy: ACTOR, createdAt: NOW,
+      parentId: null, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] }, createdBy: ACTOR, createdAt: NOW,
     }
     await repository.appendPatch(patch)
 
     const patches = await repository.findPatchesByTargetId('r1')
     expect(patches).toHaveLength(1)
-    patches[0].tags = ['status:corrupted' as any]
+    patches[0].tagChanges = { add: ['status:archived'] }
 
     const refetch = await repository.findPatchesByTargetId('r1')
-    expect(refetch[0].tags).toEqual(['status:wip'])
+    expect(refetch[0].tagChanges).toEqual({
+      change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }],
+    })
   })
 })
 
@@ -248,7 +250,7 @@ describe('MongoRecordRepository', () => {
       schema: BASE_RECORD.schema,
       targetId: BASE_RECORD.id,
       parentId: null,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       body: { description: 'In progress' },
       createdBy: ACTOR,
       createdAt: NOW,
@@ -290,7 +292,7 @@ describe('MongoRecordRepository', () => {
       schema: BASE_RECORD.schema,
       targetId: BASE_RECORD.id,
       parentId: null,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       assignee: 'member-1',
       body: { description: 'In progress' },
       assets: ['asset-ref-1', 'asset-ref-2'],
@@ -315,7 +317,7 @@ describe('MongoRecordRepository', () => {
         schema: BASE_RECORD.schema,
         targetId: BASE_RECORD.id,
         parentId: null,
-        tags: ['status:wip'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
         assignee: 'member-1',
         body: { description: 'In progress' },
         assets: ['asset-ref-1', 'asset-ref-2'],
@@ -334,7 +336,7 @@ describe('MongoRecordRepository', () => {
       pid: BASE_RECORD.pid,
       schema: BASE_RECORD.schema,
       targetId: BASE_RECORD.id,
-      tags: ['status:wip'],
+      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       createdBy: ACTOR,
       createdAt: NOW,
     }

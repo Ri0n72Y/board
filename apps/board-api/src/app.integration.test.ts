@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+﻿import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
 import { ok } from './http/responses.js'
 import { loadApiEnv } from './config/env.js'
@@ -19,7 +19,7 @@ async function createTestApp(): Promise<Hono> {
 }
 
 describe('app integration smoke', () => {
-  // ── Health check ──
+  // 鈹€鈹€ Health check 鈹€鈹€
 
   it('GET /health returns 200', async () => {
     const app = await createTestApp()
@@ -30,7 +30,7 @@ describe('app integration smoke', () => {
     expect(payload.data.status).toBe('ok')
   })
 
-  // ── Board current route is mounted ──
+  // 鈹€鈹€ Board current route is mounted 鈹€鈹€
 
   it('GET /api/v0/board/current returns 200 with empty projection', async () => {
     const app = await createTestApp()
@@ -45,9 +45,9 @@ describe('app integration smoke', () => {
     expect(payload.data.summary.projectionStatus).toBe('empty')
   })
 
-  // ── Record → patch → board current ──
+  // 鈹€鈹€ Record 鈫?patch 鈫?board current 鈹€鈹€
 
-  it('record → patch → board current shows replayed state', async () => {
+  it('record 鈫?patch 鈫?board current shows replayed state', async () => {
     const app = await createTestApp()
 
     // Create record
@@ -72,7 +72,7 @@ describe('app integration smoke', () => {
         body: JSON.stringify({
           parentId: null,
           snapshotVersion: 0,
-          tags: ['status:done'],
+          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
           body: { description: 'Patched in integration' },
         }),
         headers: { 'content-type': 'application/json' },
@@ -96,12 +96,12 @@ describe('app integration smoke', () => {
     expect(current.tags).not.toContain('status:todo')
   })
 
-  // ── Archive → board current hidden / includeArchived ──
+  // 鈹€鈹€ Archive 鈫?board current hidden / includeArchived 鈹€鈹€
 
   it('archive hides record from board current by default', async () => {
     const app = await createTestApp()
 
-    // Create → patch → archive
+    // Create 鈫?patch 鈫?archive
     const createRes = await app.request('/api/v0/records', {
       method: 'POST',
       body: JSON.stringify({
@@ -118,7 +118,7 @@ describe('app integration smoke', () => {
       body: JSON.stringify({
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:done'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -151,7 +151,7 @@ describe('app integration smoke', () => {
       body: JSON.stringify({
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:done'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -171,7 +171,7 @@ describe('app integration smoke', () => {
     expect(tags).not.toContain('status:todo')
   })
 
-  // ── History ↔ board current consistency ──
+  // 鈹€鈹€ History 鈫?board current consistency 鈹€鈹€
 
   it('history replay finalState.tags matches board current body.tags for archived record', async () => {
     const app = await createTestApp()
@@ -192,7 +192,7 @@ describe('app integration smoke', () => {
       body: JSON.stringify({
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:done'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -225,7 +225,7 @@ describe('app integration smoke', () => {
     expect(boardTags).toEqual(historyTags)
   })
 
-  // ── No write side effects ──
+  // 鈹€鈹€ No write side effects 鈹€鈹€
 
   it('GET /api/v0/board/current does not change snapshot head', async () => {
     const app = await createTestApp()
@@ -247,7 +247,7 @@ describe('app integration smoke', () => {
       body: JSON.stringify({
         parentId: null,
         snapshotVersion: 0,
-        tags: ['status:done'],
+        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
