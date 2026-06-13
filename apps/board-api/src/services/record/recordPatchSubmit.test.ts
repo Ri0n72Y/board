@@ -77,7 +77,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       const found = await service.findById(envelope.body.id)
       expect(found).not.toBeNull()
       expect(found!.body.id).toBe(envelope.body.id)
-      expect(found!.body.tags).toEqual(['status:todo'])
+      expect(found!.body.tags).toEqual(['status:wip'])
     })
   })
 
@@ -90,11 +90,13 @@ describe('RecordService patch submission (createRecordPatch)', () => {
         body: { title: 'Archived patch test' },
       })
       await service.delete(envelope.body.id)
+      const head = await service.getRecordCurrentHead(envelope.body.id)
+      expect(head).not.toBeNull()
 
       await expect(
         service.createRecordPatch(envelope.body.id, {
-          parentId: null,
-          snapshotVersion: 0,
+          parentId: head!.lastPatchId,
+          currentVersion: head!.currentVersion,
           tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
         })
       ).rejects.toThrow(`Cannot patch archived record ${envelope.body.id}`)

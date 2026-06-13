@@ -1,4 +1,4 @@
-import type { RecordId, Tag } from '@labour-board/shared'
+import type { RecordBody, RecordId, RecordItem, Tag } from '@labour-board/shared'
 import type { RecordRepository } from '../../repositories/recordRepository.js'
 import type {
   SnapshotHead,
@@ -31,19 +31,13 @@ export async function archiveRecord(
     return null
   }
 
-  // Already archived — return current state without appending another patch
-  if (record.tags.includes('status:archived')) {
-    return toRecordResponse(record)
-  }
-
-  // ── 1. Load snapshot head FIRST to establish expected state ──
   let head: SnapshotHead
   try {
     head = await snapshotHeadRepository.loadSnapshotHead()
   } catch (caught) {
     if (caught instanceof SnapshotHeadIntegrityError) {
       throw new SnapshotConflictError(
-        `Cannot archive record ${id}: snapshot head is corrupted — ${caught.message}`
+        `Cannot archive record ${id}: snapshot head is corrupted - ${caught.message}`
       )
     }
     throw caught
@@ -52,7 +46,6 @@ export async function archiveRecord(
   const expectedParentId =
     (head.records[id as RecordId]?.lastPatchId as RecordId | null) ?? null
 
-  // ── 2. Replay patch chain to get current state ──
   const patches = await repository.findPatchesByTargetId(id)
   const { orderedPatches, status } = reconstructPatchChain(
     patches,
@@ -60,15 +53,15 @@ export async function archiveRecord(
   )
 
   const { createdBy: _cb, createdAt: _ca, ...baseItem } = record
+  let currentState: RecordItem<RecordBody>
 
-  let currentTags: Tag[]
   if (status === 'empty') {
     if (expectedParentId !== null) {
       throw new SnapshotConflictError(
         `Cannot archive record ${id}: expected no patches but snapshot head has lastPatchId ${expectedParentId}`
       )
     }
-    currentTags = record.tags
+    currentState = baseItem
   } else if (status === 'complete') {
     const lastPatchId = orderedPatches[orderedPatches.length - 1].id
     if (lastPatchId !== expectedParentId) {
@@ -76,20 +69,25 @@ export async function archiveRecord(
         `Cannot archive record ${id}: replayed chain ends at patch ${lastPatchId} but snapshot head has lastPatchId ${expectedParentId}`
       )
     }
-    const { finalState } = replayRecordHistory(baseItem, orderedPatches)
-    currentTags = finalState.tags
+    currentState = replayRecordHistory(baseItem, orderedPatches).finalState
   } else {
     throw new SnapshotConflictError(
       `Cannot archive record ${id}: patch chain is ${status}`
     )
   }
 
-  // ── 3. Generate archive tags from current (replayed) state ──
-  const archiveTags: Tag[] = Array.from(
-    new Set([...currentTags, 'status:archived'])
-  )
+  if (currentState.tags.includes('status:archived')) {
+    return toRecordResponse({
+      ...record,
+      ...currentState,
+      createdBy: record.createdBy,
+      createdAt: record.createdAt,
+    })
+  }
 
-  // ── 4. Append archive patch through snapshot head ──
+  const archiveTags: Tag[] = Array.from(
+    new Set([...currentState.tags, 'status:archived'])
+  )
   const now = new Date().toISOString()
   const archivePatch: StoredPatchDoc = {
     id: crypto.randomUUID() as RecordId,
@@ -112,13 +110,11 @@ export async function archiveRecord(
   })
   assertAppendPatchResult(append, expectedSnapshotVersion, expectedParentId)
 
-  // ── 5. Update base record with same archiveTags for backwards compatibility
-  //     (P3 current projection will remove this base-record mutation) ──
-  const updated = await repository.archive(id, archiveTags)
-  if (!updated) {
-    throw new Error(
-      `Archive patch appended but base record update returned null for ${id}`
-    )
-  }
-  return toRecordResponse(updated)
+  return toRecordResponse({
+    ...record,
+    ...currentState,
+    tags: archiveTags,
+    createdBy: record.createdBy,
+    createdAt: record.createdAt,
+  })
 }

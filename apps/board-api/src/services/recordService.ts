@@ -27,6 +27,10 @@ import { submitRecordPatch } from './record/recordPatchSubmit.js'
 import { archiveRecord } from './record/recordArchive.js'
 import { getRecordHistory } from './record/recordHistoryService.js'
 import { getRecordCurrentHead } from './record/recordCurrentHead.js'
+import {
+  isArchivedInCurrent,
+  projectRecordCurrent,
+} from './boardCurrent/boardCurrentProjection.js'
 
 // ─── Re-exports for external consumers ───
 
@@ -75,19 +79,15 @@ export class RecordService {
   // ─── Record CRUD ───
 
   async list(query: RecordQuery): Promise<BoardRecordResponse[]> {
-    const records = await this.repository.list({
-      includeArchived: query.includeArchived,
-      excludeTags: this.boardConfig.snapshot.excludeTags,
-    })
-
+    const records = await this.listProjectedRecords(query.includeArchived === true)
     const filtered = filterRecords(records, query, this.boardConfig)
     return filtered.map(toRecordResponse)
   }
 
   async findById(id: string): Promise<BoardRecordResponse | null> {
-    const record = await this.repository.findById(id)
-    const filtered =
-      filterRecords(record ? [record] : [], {}, this.boardConfig)[0] ?? null
+    const record = await this.projectRecordById(id)
+    if (!record) return null
+    const filtered = filterRecords([record], {}, this.boardConfig)[0] ?? null
     return filtered ? toRecordResponse(filtered) : null
   }
 
@@ -177,6 +177,53 @@ export class RecordService {
   }
 
   // ─── Private helpers ───
+
+  private async listProjectedRecords(
+    includeArchived: boolean
+  ): Promise<StoredRecordDoc[]> {
+    const records = await this.repository.list({
+      includeArchived: true,
+      excludeTags: [],
+    })
+    const projected: StoredRecordDoc[] = []
+    for (const record of records) {
+      const current = await this.projectRecord(record)
+      if (!current) continue
+      if (!includeArchived && isArchivedInCurrent({ status: 'ok', current })) {
+        continue
+      }
+      projected.push({
+        ...record,
+        ...current,
+        createdBy: record.createdBy,
+        createdAt: record.createdAt,
+      })
+    }
+    return projected
+  }
+
+  private async projectRecordById(
+    id: string
+  ): Promise<StoredRecordDoc | null> {
+    const record = await this.repository.findById(id)
+    if (!record) return null
+    const current = await this.projectRecord(record)
+    if (!current) return null
+    return {
+      ...record,
+      ...current,
+      createdBy: record.createdBy,
+      createdAt: record.createdAt,
+    }
+  }
+
+  private async projectRecord(
+    record: StoredRecordDoc
+  ): Promise<RecordItem<RecordBody> | null> {
+    const patches = await this.repository.findPatchesByTargetId(record.id)
+    const projection = projectRecordCurrent(record, patches)
+    return projection.status === 'ok' ? projection.current : null
+  }
 
   private resolvePidPrefix(input: CreateRecordInput<RecordBody>): string {
     const preferredPrefix =

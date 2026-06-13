@@ -157,6 +157,12 @@ export async function submitRecordPatch(
     )
   }
 
+  await assertRecordIsNotArchivedInCurrentState({
+    targetId,
+    repository,
+    target,
+  })
+
   if (input.parentId !== null) {
     const parentPatch = await repository.findPatchById(input.parentId)
     if (!parentPatch) {
@@ -212,6 +218,31 @@ export async function submitRecordPatch(
     patch: toPatchResponse(patch),
     newCurrentVersion: head.currentVersion + 1,
     newSnapshotVersion: patchCount,
+  }
+}
+
+async function assertRecordIsNotArchivedInCurrentState(params: {
+  targetId: string
+  repository: RecordRepository
+  target: Awaited<ReturnType<RecordRepository['findById']>>
+}): Promise<void> {
+  const { targetId, repository, target } = params
+  if (!target) return
+
+  const chain = reconstructPatchChain(
+    await repository.findPatchesByTargetId(targetId),
+    targetId as RecordId
+  )
+  if (chain.status === 'broken' || chain.status === 'conflicted') {
+    throw new RecordValidationError(
+      `Cannot apply patch because patch chain is ${chain.status}`
+    )
+  }
+  const current = replayRecordHistory(target, chain.orderedPatches).finalState
+  if (current.tags.includes('status:archived')) {
+    throw new RecordValidationError(
+      `Cannot patch archived record ${targetId}`
+    )
   }
 }
 

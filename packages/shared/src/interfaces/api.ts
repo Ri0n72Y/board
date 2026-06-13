@@ -96,8 +96,15 @@ export interface RecordHistoryResponse {
   record: RecordResponse<RecordItem<RecordBody>>
   status: 'empty' | 'complete' | 'broken' | 'conflicted'
   patches: RecordResponse<PatchItem<DeepPartial<RecordBody>>>[]
+  references?: Record<RecordId, RecordHistoryReference>
   diagnostics?: RecordHistoryDiagnostic[]
   replay?: RecordHistoryReplay
+}
+
+export interface RecordHistoryReference {
+  pid: string
+  title: string
+  schema: SchemaName
 }
 
 export interface RecordHistoryDiagnostic {

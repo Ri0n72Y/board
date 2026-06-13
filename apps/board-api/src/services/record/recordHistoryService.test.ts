@@ -127,6 +127,29 @@ describe('RecordService history (getRecordHistory)', () => {
     expect(history!.replay!.finalState).toMatchObject(envelope.body)
   })
 
+  it('returns readable references for relation targets', async () => {
+    const { service } = createServiceWithRepo()
+    const target = await service.create({
+      schema: 'CardBody',
+      tags: ['status:todo'],
+      body: { title: 'Map loading' },
+    })
+    const source = await service.create({
+      schema: 'CardBody',
+      tags: ['status:todo'],
+      relations: [{ constraint: 'dependsOn', target: target.body.id }],
+      body: { title: 'Draw cards' },
+    })
+
+    const history = await service.getRecordHistory(source.body.id)
+    expect(history).not.toBeNull()
+    expect(history!.references?.[target.body.id]).toEqual({
+      pid: target.body.pid,
+      title: 'Map loading',
+      schema: 'CardBody',
+    })
+  })
+
   it('complete chain replay: steps count matches patches, finalState reflects all patches', async () => {
     const { service } = createServiceWithRepo()
     const envelope = await service.create({

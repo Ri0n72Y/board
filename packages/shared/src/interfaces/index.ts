@@ -6,6 +6,7 @@ export type {
   CreateRecordPatchInput,
   RecordCurrentHeadResponse,
   RecordHistoryDiagnostic,
+  RecordHistoryReference,
   RecordHistoryReplay,
   RecordHistoryReplayStep,
   RecordHistoryResponse,

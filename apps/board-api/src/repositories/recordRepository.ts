@@ -21,6 +21,7 @@ export interface RecordRepository {
     }
   ): Promise<StoredRecordDoc[]>
   findById(id: string): Promise<StoredRecordDoc | null>
+  findByIds(ids: string[]): Promise<StoredRecordDoc[]>
   findByPid(pid: string): Promise<StoredRecordDoc | null>
   create(record: StoredRecordDoc): Promise<StoredRecordDoc>
   archive(id: string, tags: Tag[]): Promise<StoredRecordDoc | null>
@@ -111,6 +112,12 @@ export class MemoryRecordRepository implements RecordRepository {
     return record ? structuredClone(record) : null
   }
 
+  async findByIds(ids: string[]): Promise<StoredRecordDoc[]> {
+    const wanted = new Set(ids)
+    const matches = this.records.filter((record) => wanted.has(record.id))
+    return structuredClone(matches)
+  }
+
   async findByPid(pid: string): Promise<StoredRecordDoc | null> {
     const record = this.records.find((record) => record.pid === pid) ?? null
     return record ? structuredClone(record) : null
@@ -186,6 +193,14 @@ export class MongoRecordRepository implements RecordRepository {
   async findById(id: string): Promise<StoredRecordDoc | null> {
     const doc = await this.collection.findOne(recordOnlyFilter({ id }))
     return doc ? cleanRecord(doc) : null
+  }
+
+  async findByIds(ids: string[]): Promise<StoredRecordDoc[]> {
+    if (ids.length === 0) return []
+    const docs = await this.collection
+      .find(recordOnlyFilter({ id: { $in: ids } }))
+      .toArray()
+    return docs.map(cleanRecord)
   }
 
   async findByPid(pid: string): Promise<StoredRecordDoc | null> {

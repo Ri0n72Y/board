@@ -3,8 +3,13 @@ import type {
   RecordHistoryReplayStep,
   RecordHistoryResponse,
   RecordId,
+  RecordItem,
+  RecordBody,
 } from '@labour-board/shared'
-import type { RecordRepository } from '../../repositories/recordRepository.js'
+import type {
+  RecordRepository,
+} from '../../repositories/recordRepository.js'
+import type { StoredPatchDoc } from '../../repositories/snapshotHeadRepository.js'
 import { reconstructPatchChain, replayRecordHistory } from './recordHistory.js'
 import { toRecordResponse, toPatchResponse } from './recordResponses.js'
 
@@ -64,5 +69,70 @@ export async function getRecordHistory(
     response.replay = { finalState, steps } as RecordHistoryReplay
   }
 
+  const references = await buildHistoryReferences({
+    repository,
+    base: record,
+    patches: orderedPatches,
+    replay: response.replay,
+  })
+  if (Object.keys(references).length > 0) {
+    response.references = references
+  }
+
   return response
+}
+
+async function buildHistoryReferences({
+  repository,
+  base,
+  patches,
+  replay,
+}: {
+  repository: RecordRepository
+  base: RecordItem<RecordBody>
+  patches: StoredPatchDoc[]
+  replay?: RecordHistoryReplay
+}): Promise<NonNullable<RecordHistoryResponse['references']>> {
+  const targetIds = new Set<string>()
+  collectRelationTargets(base, targetIds)
+  for (const patch of patches) {
+    for (const relation of patch.relations ?? []) {
+      targetIds.add(relation.target)
+    }
+  }
+  if (replay) {
+    collectRelationTargets(replay.finalState, targetIds)
+    for (const step of replay.steps) {
+      collectRelationTargets(step.state, targetIds)
+    }
+  }
+  targetIds.delete(base.id)
+  if (targetIds.size === 0) return {}
+
+  const records = await repository.findByIds([...targetIds])
+  return Object.fromEntries(
+    records.map((record) => [
+      record.id,
+      {
+        pid: record.pid,
+        title: titleFromBody(record.body) ?? record.pid,
+        schema: record.schema,
+      },
+    ])
+  )
+}
+
+function collectRelationTargets(
+  record: Pick<RecordItem<RecordBody>, 'relations'>,
+  targetIds: Set<string>
+): void {
+  for (const relation of record.relations ?? []) {
+    targetIds.add(relation.target)
+  }
+}
+
+function titleFromBody(body: RecordBody): string | undefined {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return undefined
+  const value = (body as Record<string, unknown>).title
+  return typeof value === 'string' && value.trim() ? value : undefined
 }

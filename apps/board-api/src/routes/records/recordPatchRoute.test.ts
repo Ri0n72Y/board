@@ -307,12 +307,14 @@ describe('recordPatchRoute', () => {
     const recordId = createPayload.data.body.id as string
 
     await app.request(`/api/v0/records/${recordId}`, { method: 'DELETE' })
+    const headResponse = await app.request(`/api/v0/records/${recordId}/head`)
+    const headPayload = await headResponse.json()
 
     const response = await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
       body: JSON.stringify({
-        parentId: null,
-        snapshotVersion: 0,
+        parentId: headPayload.data.lastPatchId,
+        currentVersion: headPayload.data.currentVersion,
         tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       }),
       headers: { 'content-type': 'application/json' },
