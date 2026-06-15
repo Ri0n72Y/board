@@ -30,7 +30,6 @@ import { AgentDraftsDrawer } from '../components/AgentDraftsDrawer'
 import { AppSettingsDrawer } from '../components/AppSettingsDrawer'
 import { AdvancedFiltersDrawer } from '../components/AdvancedFiltersDrawer'
 import { StatusBadge } from '../components/StatusBadge'
-import { SummaryBar } from '../components/SummaryBar'
 import {
   ViewModeToggle,
   type BoardViewMode,
@@ -51,12 +50,21 @@ import {
   hasEffectiveFilters,
   mergeKnownTags,
 } from '../utils/board'
+import { getStatusColumns } from '../utils/boardView'
+import {
+  getUncategorizedColumnLabel,
+  readVisibleColumnPreference,
+  resolveVisibleColumnIds,
+  writeVisibleColumnPreference,
+} from '../utils/boardViewColumns'
+import { formatTagLabel } from '../utils/tagDisplay'
 import { useDebouncedValue } from '../utils/useDebounce'
 
 const Q_DEBOUNCE_MS = 300
+const EMPTY_RECORDS: RecordResponse<RecordItem<RecordBody>>[] = []
 
 export function BoardCurrentPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const draftFilters = useBoardCurrentStore((s) => s.filters)
   const lastAppliedFilters = useBoardCurrentStore((s) => s.lastAppliedFilters)
   const projection = useBoardCurrentStore((s) => s.projection)
@@ -89,6 +97,9 @@ export function BoardCurrentPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
   const [viewMode, setViewMode] = useState<BoardViewMode>('board')
+  const [storedVisibleColumnIds, setStoredVisibleColumnIds] = useState<
+    string[] | null
+  >(() => readVisibleColumnPreference())
 
   useEffect(() => {
     const controller = new AbortController()
@@ -137,7 +148,7 @@ export function BoardCurrentPage() {
   const configOtherTags = useMemo(() => getConfigOtherTags(config), [config])
   const profileOptions = useMemo(() => getProfileOptions(profiles), [profiles])
 
-  const records = projection?.records ?? []
+  const records = projection?.records ?? EMPTY_RECORDS
   const blockedRecords = projection?.blockedRecords ?? []
   const diagnostics = projection?.diagnostics ?? []
   const projectionStatus = projection?.summary.projectionStatus
@@ -150,6 +161,31 @@ export function BoardCurrentPage() {
 
   const boardExportController = useBoardExportController({ appliedFilters })
   const agentDraftController = useAgentDraftController()
+  const boardColumnOptions = useMemo(() => {
+    const lang = i18n.resolvedLanguage
+    const tagLabel = (tag: string) => formatTagLabel(tag, lang)
+    return getStatusColumns(config, records, tagLabel, {
+      uncategorizedLabel: getUncategorizedColumnLabel(lang),
+    })
+  }, [config, records, i18n.resolvedLanguage])
+  const boardColumnIds = useMemo(
+    () => boardColumnOptions.map((column) => column.id),
+    [boardColumnOptions],
+  )
+  const visibleBoardColumnIds = useMemo(
+    () => resolveVisibleColumnIds(boardColumnIds, storedVisibleColumnIds),
+    [boardColumnIds, storedVisibleColumnIds],
+  )
+  const updateVisibleBoardColumnIds = useCallback(
+    (nextColumnIds: string[]) => {
+      const normalized = writeVisibleColumnPreference(
+        boardColumnIds,
+        nextColumnIds,
+      )
+      setStoredVisibleColumnIds(normalized)
+    },
+    [boardColumnIds],
+  )
 
   function refresh() {
     void loadCurrentBoard(effectiveFilters)
@@ -310,8 +346,6 @@ export function BoardCurrentPage() {
         }}
       />
 
-      {projection && <SummaryBar projection={projection} />}
-
       {isInitialError && (
         <section
           className="mt-4 grid gap-1.5 rounded-lg border-2 border-red-300 bg-red-50 p-5 text-red-800"
@@ -392,6 +426,7 @@ export function BoardCurrentPage() {
             profiles={profiles}
             movingRecordId={statusMoveController.movingRecordId}
             moveErrors={statusMoveController.moveErrors}
+            visibleColumnIds={visibleBoardColumnIds}
             onHistoryClick={historyController.openHistory}
             onEditClick={openEdit}
             onMoveStatus={statusMoveController.moveRecordStatus}
@@ -552,10 +587,14 @@ export function BoardCurrentPage() {
 
       <AppSettingsDrawer
         open={isSettingsOpen}
+        visibleColumnOptions={boardColumnOptions}
+        visibleColumnIds={visibleBoardColumnIds}
+        onVisibleColumnIdsChange={updateVisibleBoardColumnIds}
         onClose={() => setIsSettingsOpen(false)}
       />
       <AdvancedFiltersDrawer
         open={isAdvancedFiltersOpen}
+        projection={projection}
         knownTags={config ? knownTags : projectionKnownTags}
         tags={draftFilters.tags}
         tagMatch={draftFilters.tagMatch}

@@ -167,25 +167,21 @@ export function BoardFilters({
         </div>
       </Panel>
 
-      {/* Status quick-select */}
-      {statusTags.length > 0 && (
-        <Panel className="mt-3 px-4 py-3" aria-label="Status quick filter">
-          <TagChipRow
-            label={t('filters.statusOptions')}
-            tags={statusTags}
-            onTagClick={onAddTag}
-          />
-        </Panel>
-      )}
-
-      {/* Priority quick-select */}
-      {priorityTags.length > 0 && (
-        <Panel className="mt-3 px-4 py-3" aria-label="Priority quick filter">
-          <TagChipRow
-            label={t('filters.priorityOptions')}
-            tags={priorityTags}
-            onTagClick={onAddTag}
-          />
+      {/* Status / priority quick-select */}
+      {(statusTags.length > 0 || priorityTags.length > 0) && (
+        <Panel className="mt-3 px-4 py-3" aria-label="Status and priority quick filters">
+          <div className="grid gap-2 lg:grid-cols-2 lg:items-start">
+            <TagChipRow
+              label={t('filters.statusOptions')}
+              tags={statusTags}
+              onTagClick={onAddTag}
+            />
+            <TagChipRow
+              label={t('filters.priorityOptions')}
+              tags={priorityTags}
+              onTagClick={onAddTag}
+            />
+          </div>
         </Panel>
       )}
 

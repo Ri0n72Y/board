@@ -3,13 +3,13 @@ import type { TagLabelDictionary } from '../utils/tagDisplay'
 
 export const zhCNTagLabels: TagLabelDictionary = {
   status: {
-    backlog: '待整理',
+    backlog: '待规划',
     todo: '待办',
     doing: '进行中',
     wip: '进行中',
     review: '审核中',
     done: '已完成',
-    blocked: '阻塞',
+    blocked: '已阻塞',
     archived: '已归档',
   },
   priority: {

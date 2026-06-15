@@ -1,16 +1,22 @@
 import { useMemo } from 'react'
-import type { BoardCurrentTagMatch, Tag } from '@labour-board/shared'
+import type {
+  BoardCurrentProjection,
+  BoardCurrentTagMatch,
+  Tag,
+} from '@labour-board/shared'
 import { useTranslation } from 'react-i18next'
 import { AnimatedDrawer } from './ui/AnimatedDrawer'
 import { TextInput } from './ui/TextInput'
 import { Select } from './ui/Select'
 import { TagChipRow } from './BoardFilters'
+import { SummaryBar } from './SummaryBar'
 import { formatTagLabel } from '../utils/tagDisplay'
 import { groupTagsByNamespace, TAG_GROUP_I18N_KEYS } from '../utils/tagGroups'
 import { HashtagIcon, LinkIcon } from '@heroicons/react/20/solid'
 
 interface AdvancedFiltersDrawerProps {
   open: boolean
+  projection?: BoardCurrentProjection | null
   knownTags: Tag[]
   tags: Tag[]
   tagMatch: BoardCurrentTagMatch
@@ -26,6 +32,7 @@ interface AdvancedFiltersDrawerProps {
 
 export function AdvancedFiltersDrawer({
   open,
+  projection,
   knownTags,
   tags,
   tagMatch,
@@ -60,6 +67,15 @@ export function AdvancedFiltersDrawer({
       closeLabel={t('filters.close')}
     >
       <div className="grid content-start gap-4">
+        {projection && (
+          <details className="rounded-lg border border-slate-200 bg-white p-4">
+            <summary className="cursor-pointer text-xs font-bold uppercase text-slate-500">
+              {t('filters.projectionSummary')}
+            </summary>
+            <SummaryBar projection={projection} compact />
+          </details>
+        )}
+
         {/* Active tags */}
         {tags.length > 0 && (
           <section className="grid gap-2 rounded-lg border border-slate-200 bg-white p-4">

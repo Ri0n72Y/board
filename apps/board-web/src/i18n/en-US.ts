@@ -23,6 +23,10 @@ const enUS = {
     'settings.language.enUS': 'English',
     'settings.language.zhCN': '中文',
     'settings.close': 'Close',
+    'settings.visibleColumns': 'Visible columns',
+    'settings.visibleColumnsHint': 'Choose which board status columns are shown.',
+    'settings.visibleColumnsEmptyFallback':
+      'Clearing every column restores the default columns.',
 
     // ─── Board Filters ───
     'filters.search': 'Search current text',
@@ -54,6 +58,15 @@ const enUS = {
     'filters.close': 'Close',
     'filters.clearFilters': 'Clear filters',
     'filters.noKnownTags': 'No known tags.',
+    'filters.projectionSummary': 'Projection summary',
+    'board.horizontalScrollHint':
+      'Scroll horizontally in this area to see more columns.',
+    'board.hiddenColumnsNotice_one':
+      '{{columns}} status column is hidden, containing {{records}} records.',
+    'board.hiddenColumnsNotice_other':
+      '{{columns}} status columns are hidden, containing {{records}} records.',
+    'board.hiddenUncategorizedNotice':
+      '{{count}} records are in the hidden Uncategorized column',
     // ─── Tag groups ───
     'filters.group.status': 'Status',
     'filters.group.priority': 'Priority',

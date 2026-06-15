@@ -54,6 +54,7 @@ export function getStatusColumns(
   config: BoardConfig | null,
   records: RecordResponse<RecordItem<RecordBody>>[],
   formatTag?: TagLabelFormatter,
+  options?: { uncategorizedLabel?: string },
 ): BoardStatusColumn[] {
   const labeler = formatTag ?? defaultTagLabel
   const seeds = new Map<string, StatusColumnSeed>()
@@ -78,7 +79,7 @@ export function getStatusColumns(
   if (!seeds.has(UNCATEGORIZED_STATUS_ID)) {
     seeds.set(UNCATEGORIZED_STATUS_ID, {
       id: UNCATEGORIZED_STATUS_ID,
-      label: labeler(UNCATEGORIZED_STATUS_ID),
+      label: options?.uncategorizedLabel ?? labeler(UNCATEGORIZED_STATUS_ID),
       tag: null,
     })
   }

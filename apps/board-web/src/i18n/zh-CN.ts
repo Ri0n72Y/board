@@ -23,6 +23,9 @@ const zhCN = {
     'settings.language.enUS': 'English',
     'settings.language.zhCN': '中文',
     'settings.close': '关闭',
+    'settings.visibleColumns': '配置显示列',
+    'settings.visibleColumnsHint': '选择当前看板显示哪些状态列。',
+    'settings.visibleColumnsEmptyFallback': '清空所有列时会自动恢复默认三列。',
 
     // ─── Board Filters ───
     'filters.search': '搜索当前文本',
@@ -54,6 +57,10 @@ const zhCN = {
     'filters.close': '关闭',
     'filters.clearFilters': '清空筛选',
     'filters.noKnownTags': '无已知标签。',
+    'filters.projectionSummary': '投影摘要',
+    'board.horizontalScrollHint': '在此区域横向滚动以查看其他列。',
+    'board.hiddenColumnsNotice_other': '已隐藏 {{columns}} 个状态列，包含 {{records}} 条记录。',
+    'board.hiddenUncategorizedNotice': '有 {{count}} 条记录位于隐藏的未分类列',
     // ─── Tag groups ───
     'filters.group.status': '状态',
     'filters.group.priority': '优先级',
