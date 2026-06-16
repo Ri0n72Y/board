@@ -118,9 +118,17 @@ export function EditRecordDrawer({
     () => profileOptions.map((option) => ({ ...option, meta: option.value })),
     [profileOptions],
   )
+  const recordReferenceCopy = useMemo(
+    () => ({
+      unknownAsset: t('recordReference.unknownAsset'),
+      unknownRecord: t('recordReference.unknownRecord'),
+      rawId: t('recordReference.rawId'),
+    }),
+    [t],
+  )
   const selectableAssetOptions = useMemo(
-    () => ensureReferenceOptions(assetOptions, form.assets, 'asset'),
-    [assetOptions, form.assets],
+    () => ensureReferenceOptions(assetOptions, form.assets, 'asset', recordReferenceCopy),
+    [assetOptions, form.assets, recordReferenceCopy],
   )
 
   useEffect(() => {

@@ -5,7 +5,21 @@ import type {
 } from '@labour-board/shared'
 import type { SearchSelectOption } from './searchSelect'
 
-export type RecordReferenceOption = SearchSelectOption
+export interface RecordReferenceOption extends SearchSelectOption {
+  referenceState?: 'resolved' | 'unknown-asset' | 'unknown-record'
+}
+
+export interface RecordReferenceCopy {
+  unknownAsset: string
+  unknownRecord: string
+  rawId: string
+}
+
+export const DEFAULT_RECORD_REFERENCE_COPY: RecordReferenceCopy = {
+  unknownAsset: 'Unknown asset',
+  unknownRecord: 'Unknown record',
+  rawId: 'Raw ID',
+}
 
 type CurrentRecord = RecordResponse<RecordItem<RecordBody>>
 type UnknownReferenceKind = 'asset' | 'record'
@@ -18,6 +32,7 @@ export function buildRecordReferenceOptions(
 
 export function buildAssetReferenceOptions(
   records: CurrentRecord[],
+  copy: RecordReferenceCopy = DEFAULT_RECORD_REFERENCE_COPY,
 ): RecordReferenceOption[] {
   const recordById = buildRecordMap(records)
   const resolved = new Map<string, RecordReferenceOption>()
@@ -36,7 +51,7 @@ export function buildAssetReferenceOptions(
         resolved.set(assetId, formatRecordReference(target))
         unknown.delete(assetId)
       } else if (!resolved.has(assetId) && !unknown.has(assetId)) {
-        unknown.set(assetId, formatUnknownReference(assetId, 'asset'))
+        unknown.set(assetId, formatUnknownReference(assetId, 'asset', copy))
       }
     }
   }
@@ -49,6 +64,7 @@ export function buildAssetReferenceOptions(
 
 export function buildRelationTargetOptions(
   records: CurrentRecord[],
+  copy: RecordReferenceCopy = DEFAULT_RECORD_REFERENCE_COPY,
 ): RecordReferenceOption[] {
   const recordById = buildRecordMap(records)
   const resolved = new Map<string, RecordReferenceOption>()
@@ -65,7 +81,7 @@ export function buildRelationTargetOptions(
         resolved.set(relation.target, formatRecordReference(target))
         unknown.delete(relation.target)
       } else if (!resolved.has(relation.target) && !unknown.has(relation.target)) {
-        unknown.set(relation.target, formatUnknownReference(relation.target, 'record'))
+        unknown.set(relation.target, formatUnknownReference(relation.target, 'record', copy))
       }
     }
   }
@@ -91,18 +107,22 @@ export function formatRecordReference(
     label,
     description: assignee ? `${record.body.schema} / ${assignee}` : record.body.schema,
     meta: id,
+    referenceState: 'resolved',
   }
 }
 
 export function formatUnknownReference(
   id: string,
   kind: UnknownReferenceKind = 'record',
+  copy: RecordReferenceCopy = DEFAULT_RECORD_REFERENCE_COPY,
 ): RecordReferenceOption {
+  const referenceState = kind === 'asset' ? 'unknown-asset' : 'unknown-record'
   return {
     value: id,
     label: shortReferenceId(id),
-    description: kind === 'asset' ? 'Unknown asset' : 'Unknown record',
+    description: kind === 'asset' ? copy.unknownAsset : copy.unknownRecord,
     meta: id,
+    referenceState,
   }
 }
 
@@ -110,11 +130,12 @@ export function ensureReferenceOptions(
   options: RecordReferenceOption[],
   selectedValues: readonly string[],
   kind: UnknownReferenceKind = 'record',
+  copy: RecordReferenceCopy = DEFAULT_RECORD_REFERENCE_COPY,
 ): RecordReferenceOption[] {
   const byValue = new Map(options.map((option) => [option.value, option]))
   const missing = selectedValues
     .filter((value) => value && !byValue.has(value))
-    .map((value) => formatUnknownReference(value, kind))
+    .map((value) => formatUnknownReference(value, kind, copy))
 
   return missing.length > 0 ? [...options, ...missing] : options
 }
@@ -160,7 +181,7 @@ function titleFromBody(body: RecordBody): string | undefined {
 }
 
 function isUnknownOption(option: RecordReferenceOption): boolean {
-  return option.description === 'Unknown asset' || option.description === 'Unknown record'
+  return option.referenceState === 'unknown-asset' || option.referenceState === 'unknown-record'
 }
 
 function compareResolvedOptions(

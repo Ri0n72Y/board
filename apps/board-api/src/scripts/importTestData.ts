@@ -160,6 +160,7 @@ async function main() {
 
   const db = client.db(dbName)
   const collection = db.collection('records')
+  const snapshotsCollection = db.collection('snapshots')
 
   // ─── Check existing data ───
   const existingCount = await collection.countDocuments()
@@ -179,6 +180,15 @@ async function main() {
     console.log(`  Clearing ${existingCount} existing records...`)
     await collection.deleteMany({})
     console.log('  ✓ Collection cleared')
+  }
+
+  if (reset) {
+    const snapshotCount = await snapshotsCollection.countDocuments()
+    if (snapshotCount > 0) {
+      console.log(`  Clearing ${snapshotCount} existing snapshot heads...`)
+      await snapshotsCollection.deleteMany({})
+      console.log('  Snapshot collection cleared')
+    }
   }
 
   // ─── Create index on id for record query ───

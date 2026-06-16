@@ -157,20 +157,28 @@ export function BoardCurrentPage() {
   const priorityTags = useMemo(() => getConfigPriorityTags(config), [config])
   const configOtherTags = useMemo(() => getConfigOtherTags(config), [config])
   const profileOptions = useMemo(() => getProfileOptions(profiles), [profiles])
+  const recordReferenceCopy = useMemo(
+    () => ({
+      unknownAsset: t('recordReference.unknownAsset'),
+      unknownRecord: t('recordReference.unknownRecord'),
+      rawId: t('recordReference.rawId'),
+    }),
+    [t],
+  )
 
   const records = projection?.records ?? EMPTY_RECORDS
   const assetOptions = useMemo(() => {
-    const currentOptions = buildAssetReferenceOptions(records)
+    const currentOptions = buildAssetReferenceOptions(records, recordReferenceCopy)
     return selectedAssetOption
       ? mergeReferenceOptions(currentOptions, [selectedAssetOption])
       : currentOptions
-  }, [records, selectedAssetOption])
+  }, [records, recordReferenceCopy, selectedAssetOption])
   const relationTargetOptions = useMemo(() => {
-    const currentOptions = buildRelationTargetOptions(records)
+    const currentOptions = buildRelationTargetOptions(records, recordReferenceCopy)
     return selectedRelationTargetOption
       ? mergeReferenceOptions(currentOptions, [selectedRelationTargetOption])
       : currentOptions
-  }, [records, selectedRelationTargetOption])
+  }, [records, recordReferenceCopy, selectedRelationTargetOption])
 
   const updateAssetId = useCallback((assetId: string) => {
     setAssetId(assetId)

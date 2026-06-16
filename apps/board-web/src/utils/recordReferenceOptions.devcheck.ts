@@ -12,7 +12,9 @@ import {
   buildAssetReferenceOptions,
   buildRecordReferenceOptions,
   buildRelationTargetOptions,
+  DEFAULT_RECORD_REFERENCE_COPY,
   ensureReferenceOptions,
+  formatUnknownReference,
   getReferenceDisplayLabel,
   mergeReferenceOptions,
 } from './recordReferenceOptions'
@@ -75,6 +77,12 @@ const cardWithoutPid = record(
 )
 
 const records = [cardWithRefs, assetRecord, cardWithoutTitle, cardWithoutPid]
+const zhCopy = {
+  unknownAsset: '未知资产',
+  unknownRecord: '未知记录',
+  rawId: '原始 ID',
+}
+const enCopy = DEFAULT_RECORD_REFERENCE_COPY
 
 const recordOptions = buildRecordReferenceOptions(records)
 eq(
@@ -101,6 +109,7 @@ eq(
 )
 
 const assetOptions = buildAssetReferenceOptions(records)
+const zhAssetOptions = buildAssetReferenceOptions(records, zhCopy)
 eq(
   assetOptions.find((option) => option.value === 'asset-alpha-id')?.label,
   'ASSET-1 - Battle scene',
@@ -122,6 +131,18 @@ eq(
   'observed unknown asset ref gets unknown fallback',
 )
 eq(
+  zhAssetOptions.find((option) => option.value === 'asset-zeta-missing')?.description,
+  '未知资产',
+  'observed unknown asset ref gets localized zh fallback',
+)
+eq(
+  buildAssetReferenceOptions(records, enCopy).find(
+    (option) => option.value === 'asset-zeta-missing',
+  )?.description,
+  'Unknown asset',
+  'observed unknown asset ref gets localized en fallback',
+)
+eq(
   assetOptions.filter((option) => option.value === 'asset-alpha-id').length,
   1,
   'asset options dedupe same id',
@@ -133,6 +154,7 @@ eq(
 )
 
 const relationOptions = buildRelationTargetOptions(records)
+const zhRelationOptions = buildRelationTargetOptions(records, zhCopy)
 eq(
   relationOptions.some((option) => option.value === 'card-alpha-id'),
   true,
@@ -149,6 +171,11 @@ eq(
   'unknown relation target gets fallback',
 )
 eq(
+  zhRelationOptions.find((option) => option.value === 'record-missing-target')?.description,
+  '未知记录',
+  'unknown relation target gets localized zh fallback',
+)
+eq(
   relationOptions.filter((option) => option.value === 'card-beta-id').length,
   1,
   'relation target options dedupe same id',
@@ -159,11 +186,11 @@ eq(
   'raw id value is not replaced by label',
 )
 eq(
-  ensureReferenceOptions(assetOptions, ['legacy-asset-id'], 'asset').find(
+  ensureReferenceOptions(assetOptions, ['legacy-asset-id'], 'asset', zhCopy).find(
     (option) => option.value === 'legacy-asset-id',
   )?.description,
-  'Unknown asset',
-  'selected unknown asset fallback option can be preserved',
+  '未知资产',
+  'selected unknown asset fallback option can be preserved with localized copy',
 )
 eq(
   getReferenceDisplayLabel(assetOptions, 'asset-alpha-id'),
@@ -173,7 +200,7 @@ eq(
 eq(
   mergeReferenceOptions(
     relationOptions,
-    [{ value: 'card-beta-id', label: 'card-bet...a-id', description: 'Unknown record', meta: 'card-beta-id' }],
+    [formatUnknownReference('card-beta-id', 'record', zhCopy)],
   ).find((option) => option.value === 'card-beta-id')?.label,
   'CARD-2',
   'resolved option is not replaced by later unknown fallback',
