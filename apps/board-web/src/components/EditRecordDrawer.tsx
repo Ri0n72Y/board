@@ -389,7 +389,7 @@ export function EditRecordDrawer({
                 setForm((state) => ({ ...state, assignee: next ?? '' }))
               }
               options={assigneeOptions}
-              placeholder="public key"
+              placeholder={t('edit.assigneePlaceholder')}
               allowCustomValue
               disabled={isSaving}
             />

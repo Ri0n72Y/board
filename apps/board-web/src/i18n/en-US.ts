@@ -32,6 +32,7 @@ const enUS = {
     'filters.search': 'Search current text',
     'filters.searchPlaceholder': 'title, description, content',
     'filters.tag': 'Tag',
+    'filters.tagSearch': 'Tag filter',
     'filters.tagPlaceholder': 'status:todo',
     'filters.tagAdd': 'Add',
     'filters.tagMatch': 'Tag match',
@@ -175,6 +176,7 @@ const enUS = {
     'edit.unsupportedTags': 'Unsupported tags (read-only)',
     'edit.unsupportedHint': 'These tags are not in the current config. They will be preserved but cannot be added.',
     'edit.assignee': 'Assignee',
+    'edit.assigneePlaceholder': 'public key',
     'edit.assets': 'Assets',
     'edit.assetsPlaceholder': 'asset-record-id-1\nasset-record-id-2',
     'edit.assetsHint':

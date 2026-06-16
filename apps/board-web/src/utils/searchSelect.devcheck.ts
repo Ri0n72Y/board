@@ -50,6 +50,21 @@ const options: SearchSelectOption[] = [
   },
 ]
 
+const customCandidates: SearchSelectOption[] = [
+  {
+    value: 'member-programmer',
+    label: 'Programmer',
+    description: 'Gameplay owner',
+    meta: 'public-key-programmer',
+  },
+  {
+    value: 'member-designer',
+    label: 'Designer',
+    description: 'Card design',
+    meta: 'public-key-designer',
+  },
+]
+
 eq(
   filterSearchSelectOptions({ mode: 'option', query: 'combat', options })[0]?.value,
   'rec-1',
@@ -110,6 +125,80 @@ const customAllowed = filterSearchSelectOptions({
 })
 eq(customAllowed[0]?.value, 'new-public-key', 'allowCustomValue=true generates custom option')
 eq(Boolean(customAllowed[0]?.custom), true, 'generated custom option is marked custom')
+
+const labelMatchWithCustom = filterSearchSelectOptions({
+  mode: 'option',
+  query: 'Programmer',
+  options: customCandidates,
+  allowCustomValue: true,
+})
+eq(
+  labelMatchWithCustom[0]?.value,
+  'member-programmer',
+  'query matches label with allowCustomValue keeps matched option first',
+)
+eq(
+  Boolean(labelMatchWithCustom[0]?.custom),
+  false,
+  'query matches label with allowCustomValue does not prioritize custom option',
+)
+
+const metaMatchWithCustom = filterSearchSelectOptions({
+  mode: 'option',
+  query: 'public-key-designer',
+  options: customCandidates,
+  allowCustomValue: true,
+})
+eq(
+  metaMatchWithCustom[0]?.value,
+  'member-designer',
+  'query matches meta with allowCustomValue keeps matched option first',
+)
+
+const descriptionMatchWithCustom = filterSearchSelectOptions({
+  mode: 'option',
+  query: 'Gameplay',
+  options: customCandidates,
+  allowCustomValue: true,
+})
+eq(
+  descriptionMatchWithCustom[0]?.value,
+  'member-programmer',
+  'query matches description with allowCustomValue keeps matched option first',
+)
+
+const noMatchWithCustom = filterSearchSelectOptions({
+  mode: 'option',
+  query: 'custom-member-key',
+  options: customCandidates,
+  allowCustomValue: true,
+})
+eq(noMatchWithCustom[0]?.value, 'custom-member-key', 'no matches puts custom option first')
+eq(Boolean(noMatchWithCustom[0]?.custom), true, 'no matches custom option is marked custom')
+
+const exactValueWithCustom = filterSearchSelectOptions({
+  mode: 'option',
+  query: 'member-programmer',
+  options: customCandidates,
+  allowCustomValue: true,
+})
+eq(
+  exactValueWithCustom.some((option) => option.custom === true),
+  false,
+  'exact value does not generate custom option',
+)
+
+const exactLabelWithCustom = filterSearchSelectOptions({
+  mode: 'option',
+  query: 'Programmer',
+  options: customCandidates,
+  allowCustomValue: true,
+})
+eq(
+  exactLabelWithCustom.some((option) => option.custom === true),
+  false,
+  'exact label does not generate custom option',
+)
 
 const customBlocked = filterSearchSelectOptions({
   mode: 'option',

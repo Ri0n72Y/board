@@ -89,7 +89,7 @@ export function AdvancedFiltersDrawer({
         <section className="grid gap-2 rounded-lg border border-slate-200 bg-white p-4">
           <SearchSelect
             mode="tag"
-            label={t('filters.activeTag')}
+            label={t('filters.tagSearch')}
             options={tagOptions}
             values={tags}
             multiple

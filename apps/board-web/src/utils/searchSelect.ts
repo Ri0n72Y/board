@@ -42,19 +42,25 @@ export function filterSearchSelectOptions({
   if (!allowCustomValue || !query.trim()) return matched
 
   const customValue = query.trim()
-  const hasExactValue = options.some(
-    (option) => normalizeSearchText(option.value) === normalizeSearchText(customValue),
+  const normalizedCustomValue = normalizeSearchText(customValue)
+  const hasExactValueOrLabel = options.some(
+    (option) =>
+      normalizeSearchText(option.value) === normalizedCustomValue ||
+      normalizeSearchText(option.label) === normalizedCustomValue,
   )
-  if (hasExactValue) return matched
+  if (hasExactValueOrLabel) return matched
+
+  const customOption: SearchSelectChoice = {
+    value: customValue,
+    label: customValue,
+    meta: customValue,
+    custom: true,
+  }
+
+  if (matched.length > 0) return [...matched, customOption]
 
   return [
-    {
-      value: customValue,
-      label: customValue,
-      meta: customValue,
-      custom: true,
-    },
-    ...matched,
+    customOption,
   ]
 }
 

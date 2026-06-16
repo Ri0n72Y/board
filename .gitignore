@@ -38,3 +38,5 @@ changes_*.md
 .pnpm-store
 board.yaml
 /test-data
+.evolver
+/memory
