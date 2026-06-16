@@ -6,13 +6,12 @@ import type {
 } from '@labour-board/shared'
 import { useTranslation } from 'react-i18next'
 import { AnimatedDrawer } from './ui/AnimatedDrawer'
-import { TextInput } from './ui/TextInput'
 import { Select } from './ui/Select'
 import { SearchSelect } from './ui/SearchSelect'
 import { SummaryBar } from './SummaryBar'
 import { formatTagLabel } from '../utils/tagDisplay'
 import { groupTagsByNamespace, TAG_GROUP_I18N_KEYS } from '../utils/tagGroups'
-import { HashtagIcon, LinkIcon } from '@heroicons/react/20/solid'
+import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
 
 interface AdvancedFiltersDrawerProps {
   open: boolean
@@ -22,6 +21,8 @@ interface AdvancedFiltersDrawerProps {
   tagMatch: BoardCurrentTagMatch
   assetId: string
   relationTarget: string
+  assetOptions: RecordReferenceOption[]
+  relationTargetOptions: RecordReferenceOption[]
   onAddTag: (tag: string) => void
   onRemoveTag: (tag: Tag) => void
   onTagMatchChange: (tagMatch: BoardCurrentTagMatch) => void
@@ -38,6 +39,8 @@ export function AdvancedFiltersDrawer({
   tagMatch,
   assetId,
   relationTarget,
+  assetOptions,
+  relationTargetOptions,
   onAddTag,
   onRemoveTag,
   onTagMatchChange,
@@ -119,19 +122,25 @@ export function AdvancedFiltersDrawer({
 
         {/* Asset ID / Relation target */}
         <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
-          <TextInput
-            label={t('filters.assetId')}
-            value={assetId}
-            onChange={(event) => onAssetIdChange(event.target.value)}
-            placeholder={t('filters.assetIdPlaceholder')}
-            icon={<HashtagIcon className="h-4 w-4" />}
+          <SearchSelect
+            mode="option"
+            label={t('filters.assetSelector')}
+            value={assetId || null}
+            onChange={(next) => onAssetIdChange(next ?? '')}
+            options={assetOptions}
+            placeholder={t('searchSelect.searchPlaceholder')}
+            emptyText={t('filters.noAssetOptions')}
+            allowCustomValue={false}
           />
-          <TextInput
-            label={t('filters.relationTarget')}
-            value={relationTarget}
-            onChange={(event) => onRelationTargetChange(event.target.value)}
-            placeholder={t('filters.relationTargetPlaceholder')}
-            icon={<LinkIcon className="h-4 w-4" />}
+          <SearchSelect
+            mode="option"
+            label={t('filters.relationTargetSelector')}
+            value={relationTarget || null}
+            onChange={(next) => onRelationTargetChange(next ?? '')}
+            options={relationTargetOptions}
+            placeholder={t('searchSelect.searchPlaceholder')}
+            emptyText={t('filters.noRelationTargetOptions')}
+            allowCustomValue={false}
           />
         </section>
 

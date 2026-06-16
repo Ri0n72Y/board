@@ -28,6 +28,10 @@ import { submitRecordPatch, RecordPatchConflictError } from '../api/patches'
 import type { SubmitRecordPatchPayload } from '../api/patches'
 import { fetchRecordHead } from '../api/recordHead'
 import { getProfileOptions } from '../utils/board'
+import {
+  ensureReferenceOptions,
+  type RecordReferenceOption,
+} from '../utils/recordReferenceOptions'
 import { buildTagChanges } from '../utils/tagChanges'
 import { formatTagLabel } from '../utils/tagDisplay'
 import { Button } from './ui/Button'
@@ -42,6 +46,7 @@ interface EditRecordDrawerProps {
   configOtherTags?: Tag[]
   statusTags: Tag[]
   priorityTags: Tag[]
+  assetOptions: RecordReferenceOption[]
   onClose: () => void
   onPatched: (recordId: string) => Promise<void> | void
 }
@@ -55,7 +60,7 @@ interface FormState {
   otherTags: Tag[]
   unsupportedTags: Tag[]
   assignee: string
-  assetsText: string
+  assets: string[]
 }
 
 interface PatchDraft {
@@ -77,6 +82,7 @@ export function EditRecordDrawer({
   configOtherTags,
   statusTags,
   priorityTags,
+  assetOptions,
   onClose,
   onPatched,
 }: EditRecordDrawerProps) {
@@ -111,6 +117,10 @@ export function EditRecordDrawer({
   const assigneeOptions = useMemo(
     () => profileOptions.map((option) => ({ ...option, meta: option.value })),
     [profileOptions],
+  )
+  const selectableAssetOptions = useMemo(
+    () => ensureReferenceOptions(assetOptions, form.assets, 'asset'),
+    [assetOptions, form.assets],
   )
 
   useEffect(() => {
@@ -394,16 +404,20 @@ export function EditRecordDrawer({
               disabled={isSaving}
             />
 
-            <TextAreaField
-              label={t('edit.assets')}
-              value={form.assetsText}
-              onChange={(value) =>
-                setForm((state) => ({ ...state, assetsText: value }))
+            <SearchSelect
+              mode="option"
+              label={t('edit.assetSelector')}
+              options={selectableAssetOptions}
+              values={form.assets}
+              multiple
+              onChangeMany={(assets) =>
+                setForm((state) => ({ ...state, assets }))
               }
-              placeholder={t('edit.assetsPlaceholder')}
+              placeholder={t('searchSelect.searchPlaceholder')}
+              selectedLabel={t('edit.assets')}
+              emptyText={t('filters.noAssetOptions')}
+              allowCustomValue={false}
               disabled={isSaving}
-              rows={4}
-              hint={t('edit.assetsHint')}
             />
 
             <ReadOnlyRelations relations={current.relations ?? []} />
@@ -461,7 +475,7 @@ function initialFormState(
     otherTags: supportedOtherTags,
     unsupportedTags,
     assignee: record.assignee ?? '',
-    assetsText: (record.assets ?? []).join('\n'),
+    assets: [...(record.assets ?? [])],
   }
 }
 
@@ -477,7 +491,7 @@ function buildPatchDraft(
       Boolean
     ) as Tag[]
   )
-  const assets = uniqueValues(lines(form.assetsText)) as AssetRef[]
+  const assets = uniqueValues(form.assets.map((asset) => asset.trim()).filter(Boolean)) as AssetRef[]
   const assignee = form.assignee.trim()
 
   if (!title) return { ok: false, error: 'edit.errorTitleRequired' }
@@ -545,13 +559,6 @@ function stringValue(source: object, key: string): string {
 function nullableTrimmed(value: string): string | null {
   const trimmed = value.trim()
   return trimmed ? trimmed : null
-}
-
-function lines(value: string): string[] {
-  return value
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
 }
 
 function uniqueValues<T extends string>(values: T[]): T[] {

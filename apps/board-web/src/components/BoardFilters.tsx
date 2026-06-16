@@ -13,6 +13,10 @@ import { Panel } from './ui/Panel'
 import { SearchSelect } from './ui/SearchSelect'
 import { cn } from '../lib/cn'
 import { formatTagLabel } from '../utils/tagDisplay'
+import {
+  getReferenceDisplayLabel,
+  type RecordReferenceOption,
+} from '../utils/recordReferenceOptions'
 
 interface MetadataErrorState {
   config: string | null
@@ -30,6 +34,8 @@ interface BoardFiltersProps {
   knownTags: Tag[]
   statusTags?: Tag[]
   priorityTags?: Tag[]
+  assetOptions?: RecordReferenceOption[]
+  relationTargetOptions?: RecordReferenceOption[]
   profileOptions?: { value: string; label: string }[]
   metadataLoading?: boolean
   metadataError?: MetadataErrorState
@@ -54,6 +60,8 @@ export function BoardFilters({
   relationTarget,
   statusTags = [],
   priorityTags = [],
+  assetOptions = [],
+  relationTargetOptions = [],
   profileOptions = [],
   metadataLoading = false,
   metadataError,
@@ -75,6 +83,8 @@ export function BoardFilters({
 
   const hasAnyFilter =
     q.trim() || tags.length > 0 || assignee.trim() || assetId.trim() || relationTarget.trim() || includeArchived
+  const assetIdLabel = getReferenceDisplayLabel(assetOptions, assetId)
+  const relationTargetLabel = getReferenceDisplayLabel(relationTargetOptions, relationTarget)
 
   return (
     <>
@@ -205,7 +215,7 @@ export function BoardFilters({
                 onClick={() => onAssetIdChange('')}
                 title={t('filters.removeFilter')}
               >
-                {t('filters.assetId')}: {assetId}
+                {t('filters.assetId')}: {assetIdLabel}
               </button>
             )}
             {relationTarget.trim() && (
@@ -215,7 +225,7 @@ export function BoardFilters({
                 onClick={() => onRelationTargetChange('')}
                 title={t('filters.removeFilter')}
               >
-                {t('filters.relationTarget')}: {relationTarget}
+                {t('filters.relationTarget')}: {relationTargetLabel}
               </button>
             )}
           </div>

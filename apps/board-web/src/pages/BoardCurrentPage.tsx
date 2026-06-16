@@ -57,6 +57,12 @@ import {
   resolveVisibleColumnIds,
   writeVisibleColumnPreference,
 } from '../utils/boardViewColumns'
+import {
+  buildAssetReferenceOptions,
+  buildRelationTargetOptions,
+  mergeReferenceOptions,
+  type RecordReferenceOption,
+} from '../utils/recordReferenceOptions'
 import { formatTagLabel } from '../utils/tagDisplay'
 import { useDebouncedValue } from '../utils/useDebounce'
 
@@ -97,6 +103,10 @@ export function BoardCurrentPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
   const [viewMode, setViewMode] = useState<BoardViewMode>('board')
+  const [selectedAssetOption, setSelectedAssetOption] =
+    useState<RecordReferenceOption | null>(null)
+  const [selectedRelationTargetOption, setSelectedRelationTargetOption] =
+    useState<RecordReferenceOption | null>(null)
   const [storedVisibleColumnIds, setStoredVisibleColumnIds] = useState<
     string[] | null
   >(() => readVisibleColumnPreference())
@@ -149,6 +159,36 @@ export function BoardCurrentPage() {
   const profileOptions = useMemo(() => getProfileOptions(profiles), [profiles])
 
   const records = projection?.records ?? EMPTY_RECORDS
+  const assetOptions = useMemo(() => {
+    const currentOptions = buildAssetReferenceOptions(records)
+    return selectedAssetOption
+      ? mergeReferenceOptions(currentOptions, [selectedAssetOption])
+      : currentOptions
+  }, [records, selectedAssetOption])
+  const relationTargetOptions = useMemo(() => {
+    const currentOptions = buildRelationTargetOptions(records)
+    return selectedRelationTargetOption
+      ? mergeReferenceOptions(currentOptions, [selectedRelationTargetOption])
+      : currentOptions
+  }, [records, selectedRelationTargetOption])
+
+  const updateAssetId = useCallback((assetId: string) => {
+    setAssetId(assetId)
+    setSelectedAssetOption(
+      assetId
+        ? assetOptions.find((option) => option.value === assetId) ?? null
+        : null,
+    )
+  }, [assetOptions, setAssetId])
+
+  const updateRelationTarget = useCallback((relationTarget: string) => {
+    setRelationTarget(relationTarget)
+    setSelectedRelationTargetOption(
+      relationTarget
+        ? relationTargetOptions.find((option) => option.value === relationTarget) ?? null
+        : null,
+    )
+  }, [relationTargetOptions, setRelationTarget])
   const blockedRecords = projection?.blockedRecords ?? []
   const diagnostics = projection?.diagnostics ?? []
   const projectionStatus = projection?.summary.projectionStatus
@@ -324,6 +364,8 @@ export function BoardCurrentPage() {
         knownTags={config ? knownTags : projectionKnownTags}
         statusTags={statusTags}
         priorityTags={priorityTags}
+        assetOptions={assetOptions}
+        relationTargetOptions={relationTargetOptions}
         profileOptions={profileOptions}
         metadataLoading={metadataLoading}
         metadataError={metadataError}
@@ -333,15 +375,15 @@ export function BoardCurrentPage() {
         onTagMatchChange={setTagMatch}
         onIncludeArchivedChange={setIncludeArchived}
         onAssigneeChange={setAssignee}
-        onAssetIdChange={setAssetId}
-        onRelationTargetChange={setRelationTarget}
+        onAssetIdChange={updateAssetId}
+        onRelationTargetChange={updateRelationTarget}
         onOpenAdvanced={() => setIsAdvancedFiltersOpen(true)}
         onClearFilters={() => {
           setQ('')
           draftFilters.tags.forEach((t) => removeTag(t))
           setAssignee('')
-          setAssetId('')
-          setRelationTarget('')
+          updateAssetId('')
+          updateRelationTarget('')
           setIncludeArchived(false)
         }}
       />
@@ -565,6 +607,7 @@ export function BoardCurrentPage() {
           knownTags={configOtherTags}
           statusTags={statusTags}
           priorityTags={priorityTags}
+          assetOptions={assetOptions}
           onClose={closeCreate}
           onCreated={refreshAfterCreate}
         />
@@ -580,6 +623,7 @@ export function BoardCurrentPage() {
           configOtherTags={configOtherTags}
           statusTags={statusTags}
           priorityTags={priorityTags}
+          assetOptions={assetOptions}
           onClose={closeEdit}
           onPatched={refreshAfterPatch}
         />
@@ -600,11 +644,13 @@ export function BoardCurrentPage() {
         tagMatch={draftFilters.tagMatch}
         assetId={draftFilters.assetId}
         relationTarget={draftFilters.relationTarget}
+        assetOptions={assetOptions}
+        relationTargetOptions={relationTargetOptions}
         onAddTag={addTag}
         onRemoveTag={removeTag}
         onTagMatchChange={setTagMatch}
-        onAssetIdChange={setAssetId}
-        onRelationTargetChange={setRelationTarget}
+        onAssetIdChange={updateAssetId}
+        onRelationTargetChange={updateRelationTarget}
         onClose={() => setIsAdvancedFiltersOpen(false)}
       />
     </main>

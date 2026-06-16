@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { createRecord, type CreateRecordPayload } from '../api/records'
 import { getProfileOptions } from '../utils/board'
+import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
 import { formatTagLabel } from '../utils/tagDisplay'
 import { Button } from './ui/Button'
 import { Select } from './ui/Select'
@@ -23,6 +24,7 @@ interface CreateRecordDrawerProps {
   knownTags: Tag[]
   statusTags: Tag[]
   priorityTags: Tag[]
+  assetOptions: RecordReferenceOption[]
   onClose: () => void
   onCreated: () => Promise<void> | void
 }
@@ -36,7 +38,7 @@ interface FormState {
   priorityTag: string
   otherTags: Tag[]
   assignee: string
-  assetsText: string
+  assets: string[]
 }
 
 const CARD_SCHEMA = 'CardBody'
@@ -48,6 +50,7 @@ export function CreateRecordDrawer({
   knownTags,
   statusTags,
   priorityTags,
+  assetOptions,
   onClose,
   onCreated,
 }: CreateRecordDrawerProps) {
@@ -340,16 +343,20 @@ export function CreateRecordDrawer({
               disabled={isCreating}
             />
 
-            <TextAreaField
-              label={t('create.assets')}
-              value={form.assetsText}
-              onChange={(value) =>
-                setForm((current) => ({ ...current, assetsText: value }))
+            <SearchSelect
+              mode="option"
+              label={t('create.assetSelector')}
+              options={assetOptions}
+              values={form.assets}
+              multiple
+              onChangeMany={(assets) =>
+                setForm((current) => ({ ...current, assets }))
               }
-              placeholder={t('create.assetsPlaceholder')}
+              placeholder={t('searchSelect.searchPlaceholder')}
+              selectedLabel={t('create.assets')}
+              emptyText={t('filters.noAssetOptions')}
+              allowCustomValue={false}
               disabled={isCreating}
-              rows={4}
-              hint={t('create.assetsHint')}
             />
           </form>
         </div>
@@ -386,7 +393,7 @@ function initialFormState(
     priorityTag: priorityTags[0] ?? '',
     otherTags: [],
     assignee: '',
-    assetsText: '',
+    assets: [],
   }
 }
 
@@ -405,12 +412,7 @@ function buildPayload(
   const tags = uniqueValues(
     [statusTag, priorityTag, ...form.otherTags].filter(Boolean) as Tag[],
   )
-  const assets = uniqueValues(
-    form.assetsText
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter(Boolean),
-  )
+  const assets = uniqueValues(form.assets.map((asset) => asset.trim()).filter(Boolean))
 
   if (!schema) return { ok: false, error: 'create.errorSchemaRequired' }
   if (!title) return { ok: false, error: 'create.errorTitleRequired' }
