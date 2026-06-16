@@ -74,6 +74,17 @@ const zhCN = {
     'filters.group.transaction': '事务',
     'filters.group.other': '其他',
 
+    // Search Select
+    'searchSelect.searchPlaceholder': '搜索...',
+    'searchSelect.empty': '无匹配选项',
+    'searchSelect.clear': '清除',
+    'searchSelect.remove': '移除',
+    'searchSelect.useCustomValue': '使用当前输入',
+    'searchSelect.selected': '已选择',
+    'searchSelect.open': '打开选项',
+    'searchSelect.close': '关闭选项',
+    'searchSelect.noOptions': '无可选项',
+
     // ─── Status / Alerts ───
     'status.loading': '正在加载当前看板...',
     'status.loadError': '加载当前看板失败',

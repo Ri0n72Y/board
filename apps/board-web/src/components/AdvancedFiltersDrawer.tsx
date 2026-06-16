@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { AnimatedDrawer } from './ui/AnimatedDrawer'
 import { TextInput } from './ui/TextInput'
 import { Select } from './ui/Select'
-import { TagChipRow } from './BoardFilters'
+import { SearchSelect } from './ui/SearchSelect'
 import { SummaryBar } from './SummaryBar'
 import { formatTagLabel } from '../utils/tagDisplay'
 import { groupTagsByNamespace, TAG_GROUP_I18N_KEYS } from '../utils/tagGroups'
@@ -49,6 +49,15 @@ export function AdvancedFiltersDrawer({
   const lang = i18n.resolvedLanguage
 
   const tagGroups = useMemo(() => groupTagsByNamespace(knownTags), [knownTags])
+  const tagOptions = useMemo(
+    () =>
+      knownTags.map((tag) => ({
+        value: tag,
+        label: formatTagLabel(tag, lang),
+        meta: tag,
+      })),
+    [knownTags, lang],
+  )
 
   const tagMatchOptions = useMemo(
     () => [
@@ -77,12 +86,26 @@ export function AdvancedFiltersDrawer({
         )}
 
         {/* Active tags */}
-        {tags.length > 0 && (
-          <section className="grid gap-2 rounded-lg border border-slate-200 bg-white p-4">
-            <h3 className="text-xs font-bold uppercase text-slate-500">{t('filters.activeTag')}</h3>
-            <TagChipRow tags={tags} selected onTagClick={onRemoveTag} />
-          </section>
-        )}
+        <section className="grid gap-2 rounded-lg border border-slate-200 bg-white p-4">
+          <SearchSelect
+            mode="tag"
+            label={t('filters.activeTag')}
+            options={tagOptions}
+            values={tags}
+            multiple
+            onChangeMany={(nextTags) => {
+              for (const tag of tags) {
+                if (!nextTags.includes(tag)) onRemoveTag(tag)
+              }
+              for (const tag of nextTags) {
+                if (!tags.includes(tag as Tag)) onAddTag(tag)
+              }
+            }}
+            placeholder={t('filters.tagPlaceholder')}
+            selectedLabel={t('filters.activeTag')}
+            emptyText={t('filters.noKnownTags')}
+          />
+        </section>
 
         {/* Tag match */}
         <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">

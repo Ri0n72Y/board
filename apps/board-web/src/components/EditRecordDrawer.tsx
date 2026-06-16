@@ -27,11 +27,11 @@ import axios from 'axios'
 import { submitRecordPatch, RecordPatchConflictError } from '../api/patches'
 import type { SubmitRecordPatchPayload } from '../api/patches'
 import { fetchRecordHead } from '../api/recordHead'
-import { cn } from '../lib/cn'
 import { getProfileOptions } from '../utils/board'
 import { buildTagChanges } from '../utils/tagChanges'
 import { formatTagLabel } from '../utils/tagDisplay'
 import { Button } from './ui/Button'
+import { SearchSelect } from './ui/SearchSelect'
 import { TextInput } from './ui/TextInput'
 
 interface EditRecordDrawerProps {
@@ -82,10 +82,9 @@ export function EditRecordDrawer({
 }: EditRecordDrawerProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
-  const assigneeListId = useId()
   const current = record.body
   const [form, setForm] = useState<FormState>(() =>
-    initialFormState(current, knownTags, statusTags)
+    initialFormState(current, configOtherTags ?? knownTags, statusTags)
   )
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -100,18 +99,19 @@ export function EditRecordDrawer({
       ),
     [configOtherTags, knownTags]
   )
-
-  function toggleOtherTag(tag: Tag) {
-    setForm((current) => {
-      const exists = current.otherTags.includes(tag)
-      return {
-        ...current,
-        otherTags: exists
-          ? current.otherTags.filter((t) => t !== tag)
-          : [...current.otherTags, tag],
-      }
-    })
-  }
+  const otherTagSelectOptions = useMemo(
+    () =>
+      otherTagOptions.map((tag) => ({
+        value: tag,
+        label: formatTagLabel(tag, lang),
+        meta: tag,
+      })),
+    [otherTagOptions, lang]
+  )
+  const assigneeOptions = useMemo(
+    () => profileOptions.map((option) => ({ ...option, meta: option.value })),
+    [profileOptions],
+  )
 
   useEffect(() => {
     return () => abortEdit(requestIdRef, abortRef)
@@ -339,31 +339,24 @@ export function EditRecordDrawer({
 
             {/* Other tags */}
             {otherTagOptions.length > 0 && (
-              <div className="grid gap-2">
-                <label className="text-xs font-bold text-slate-500">
-                  {t('edit.otherTags')}
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {otherTagOptions.map((tag) => {
-                    const isActive = form.otherTags.includes(tag)
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        className={
-                          isActive
-                            ? 'inline-flex min-h-7 max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
-                            : 'inline-flex min-h-7 max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
-                        }
-                        onClick={() => toggleOtherTag(tag)}
-                        disabled={isSaving}
-                      >
-                        {formatTagLabel(tag, lang)}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
+              <SearchSelect
+                mode="tag"
+                label={t('edit.otherTags')}
+                options={otherTagSelectOptions}
+                values={form.otherTags}
+                multiple
+                onChangeMany={(nextTags) =>
+                  setForm((current) => ({
+                    ...current,
+                    otherTags: nextTags.filter((tag) =>
+                      otherTagOptions.includes(tag as Tag),
+                    ) as Tag[],
+                  }))
+                }
+                placeholder={t('searchSelect.searchPlaceholder')}
+                selectedLabel={t('edit.otherTags')}
+                disabled={isSaving}
+              />
             )}
 
             {/* Unsupported existing tags (read-only) */}
@@ -388,39 +381,18 @@ export function EditRecordDrawer({
               </div>
             )}
 
-            <div className="grid gap-1.5">
-              <label
-                className="text-xs font-bold text-slate-500"
-                htmlFor={assigneeListId}
-              >
-                {t('edit.assignee')}
-              </label>
-              <input
-                id={assigneeListId}
-                className={cn(
-                  'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100'
-                )}
-                value={form.assignee}
-                onChange={(event) =>
-                  setForm((state) => ({
-                    ...state,
-                    assignee: event.target.value,
-                  }))
-                }
-                placeholder="public key"
-                list={`${assigneeListId}-list`}
-                disabled={isSaving}
-              />
-              {profileOptions.length > 0 && (
-                <datalist id={`${assigneeListId}-list`}>
-                  {profileOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </datalist>
-              )}
-            </div>
+            <SearchSelect
+              mode="option"
+              label={t('edit.assignee')}
+              value={form.assignee || null}
+              onChange={(next) =>
+                setForm((state) => ({ ...state, assignee: next ?? '' }))
+              }
+              options={assigneeOptions}
+              placeholder="public key"
+              allowCustomValue
+              disabled={isSaving}
+            />
 
             <TextAreaField
               label={t('edit.assets')}

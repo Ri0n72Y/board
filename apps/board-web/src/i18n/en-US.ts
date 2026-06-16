@@ -80,6 +80,17 @@ const enUS = {
     'filters.group.transaction': 'Transaction',
     'filters.group.other': 'Other',
 
+    // Search Select
+    'searchSelect.searchPlaceholder': 'Search...',
+    'searchSelect.empty': 'No options found',
+    'searchSelect.clear': 'Clear',
+    'searchSelect.remove': 'Remove',
+    'searchSelect.useCustomValue': 'Use current input',
+    'searchSelect.selected': 'Selected',
+    'searchSelect.open': 'Open options',
+    'searchSelect.close': 'Close options',
+    'searchSelect.noOptions': 'No options',
+
     // ─── Status / Alerts ───
     'status.loading': 'Loading current board...',
     'status.loadError': 'Failed to load current board',

@@ -8,17 +8,17 @@ import {
 import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { createRecord, type CreateRecordPayload } from '../api/records'
-import { cn } from '../lib/cn'
 import { getProfileOptions } from '../utils/board'
 import { formatTagLabel } from '../utils/tagDisplay'
 import { Button } from './ui/Button'
 import { Select } from './ui/Select'
+import { SearchSelect } from './ui/SearchSelect'
 import { TextInput } from './ui/TextInput'
 
 interface CreateRecordDrawerProps {
   open: boolean
   config: BoardConfig | null
-  /** Profile list for assignee datalist (future: full selector). */
+  /** Profile list for assignee selector. */
   profiles?: unknown[] | null
   knownTags: Tag[]
   statusTags: Tag[]
@@ -53,7 +53,6 @@ export function CreateRecordDrawer({
 }: CreateRecordDrawerProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
-  const assigneeListId = useId()
   const [form, setForm] = useState<FormState>(() =>
     initialFormState(config, statusTags, priorityTags),
   )
@@ -85,6 +84,19 @@ export function CreateRecordDrawer({
       ),
     [knownTags],
   )
+  const otherTagSelectOptions = useMemo(
+    () =>
+      otherTagOptions.map((tag) => ({
+        value: tag,
+        label: formatTagLabel(tag, lang),
+        meta: tag,
+      })),
+    [otherTagOptions, lang],
+  )
+  const assigneeOptions = useMemo(
+    () => profileOptions.map((option) => ({ ...option, meta: option.value })),
+    [profileOptions],
+  )
 
   useEffect(() => {
     return () => abortCreate(createRequestIdRef, createAbortRef)
@@ -98,18 +110,6 @@ export function CreateRecordDrawer({
     abortCreate(createRequestIdRef, createAbortRef, setIsCreating)
     onClose()
   }, [onClose])
-
-  function toggleOtherTag(tag: Tag) {
-    setForm((current) => {
-      const exists = current.otherTags.includes(tag)
-      return {
-        ...current,
-        otherTags: exists
-          ? current.otherTags.filter((t) => t !== tag)
-          : [...current.otherTags, tag],
-      }
-    })
-  }
 
   async function submit() {
     const validation = buildPayload(form, effectiveStatusTag, effectivePriorityTag)
@@ -306,60 +306,39 @@ export function CreateRecordDrawer({
 
             {/* Other tags */}
             {otherTagOptions.length > 0 && (
-              <div className="grid gap-2">
-                <label className="text-xs font-bold text-slate-500">
-                  {t('create.otherTags')}
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {otherTagOptions.map((tag) => {
-                    const isActive = form.otherTags.includes(tag)
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        className={
-                          isActive
-                            ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
-                            : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
-                        }
-                        onClick={() => toggleOtherTag(tag)}
-                        disabled={isCreating}
-                      >
-                        {formatTagLabel(tag, lang)}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="grid gap-1.5">
-              <label className="text-xs font-bold text-slate-500" htmlFor={assigneeListId}>
-                {t('create.assignee')}
-              </label>
-              <input
-                id={assigneeListId}
-                className={cn(
-                  'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100',
-                )}
-                value={form.assignee}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, assignee: event.target.value }))
+              <SearchSelect
+                mode="tag"
+                label={t('create.otherTags')}
+                options={otherTagSelectOptions}
+                values={form.otherTags}
+                multiple
+                onChangeMany={(nextTags) =>
+                  setForm((current) => ({
+                    ...current,
+                    otherTags: nextTags.filter((tag) =>
+                      otherTagOptions.includes(tag as Tag),
+                    ) as Tag[],
+                  }))
                 }
-                placeholder={t('create.assigneePlaceholder')}
-                list={`${assigneeListId}-list`}
+                placeholder={t('searchSelect.searchPlaceholder')}
+                selectedLabel={t('create.otherTags')}
+                emptyText={t('create.noConfigTags')}
                 disabled={isCreating}
               />
-              {profileOptions.length > 0 && (
-                <datalist id={`${assigneeListId}-list`}>
-                  {profileOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </datalist>
-              )}
-            </div>
+            )}
+
+            <SearchSelect
+              mode="option"
+              label={t('create.assignee')}
+              value={form.assignee || null}
+              onChange={(next) =>
+                setForm((current) => ({ ...current, assignee: next ?? '' }))
+              }
+              options={assigneeOptions}
+              placeholder={t('create.assigneePlaceholder')}
+              allowCustomValue
+              disabled={isCreating}
+            />
 
             <TextAreaField
               label={t('create.assets')}

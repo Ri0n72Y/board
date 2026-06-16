@@ -26,6 +26,7 @@ import { AnimatedDrawer } from './ui/AnimatedDrawer'
 import { MarkdownPreview } from './ui/MarkdownPreview'
 import { Button } from './ui/Button'
 import { Select } from './ui/Select'
+import { SearchSelect } from './ui/SearchSelect'
 import { SwitchField } from './ui/SwitchField'
 import { TextInput } from './ui/TextInput'
 
@@ -99,24 +100,31 @@ export function ExportContextDrawer({
   )
 
   const recordOptions = useMemo(
-    () => [
-      { value: '', label: t('export.recordPlaceholder') },
-      ...records.map((record) => ({
+    () =>
+      records.map((record) => ({
         value: record.body.id,
         label: `${record.body.pid} - ${titleFromBody(record.body.body) ?? record.body.pid}`,
+        description: record.body.schema,
+        meta: [
+          record.body.assignee,
+          record.body.tags.find((tag) => tag.startsWith('status:')),
+        ]
+          .filter(Boolean)
+          .join(' / '),
       })),
-    ],
-    [records, t],
+    [records],
   )
   const sprintOptions = useMemo(
-    () => [
-      { value: '', label: t('export.sprintTag') },
-      ...knownTags
+    () =>
+      knownTags
         .filter((tag) => tag.startsWith('sprint:'))
         .sort((a, b) => a.localeCompare(b))
-        .map((tag) => ({ value: tag, label: formatTagLabel(tag, lang) })),
-    ],
-    [knownTags, lang, t],
+        .map((tag) => ({
+          value: tag,
+          label: formatTagLabel(tag, lang),
+          meta: tag,
+        })),
+    [knownTags, lang],
   )
 
   const needsRecord = profileDefinition.requiresRecord
@@ -298,22 +306,26 @@ export function ExportContextDrawer({
         {(needsRecord || needsSprint) && (
           <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
             {needsRecord && (
-              <Select
+              <SearchSelect
+                mode="option"
                 label={t('export.record')}
-                value={recordId}
-                onChange={(event) => setRecordId(event.target.value)}
+                value={recordId || null}
+                onChange={(next) => setRecordId(next ?? '')}
                 options={recordOptions}
+                placeholder={t('export.recordPlaceholder')}
               />
             )}
-            {needsSprint && sprintOptions.length > 1 ? (
-              <Select
+            {needsSprint && sprintOptions.length > 0 ? (
+              <SearchSelect
+                mode="tag"
                 label={t('export.sprintTag')}
-                value={sprintTag}
-                onChange={(event) => setSprintTag(event.target.value)}
+                value={sprintTag || null}
+                onChange={(next) => setSprintTag(next ?? '')}
                 options={sprintOptions}
+                placeholder={t('export.sprintTagPlaceholder')}
               />
             ) : null}
-            {needsSprint && sprintOptions.length <= 1 ? (
+            {needsSprint && sprintOptions.length === 0 ? (
               <TextInput
                 label={t('export.sprintTag')}
                 value={sprintTag}

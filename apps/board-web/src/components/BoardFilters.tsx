@@ -1,4 +1,3 @@
-import { useId } from 'react'
 import type { BoardCurrentTagMatch, Tag } from '@labour-board/shared'
 import {
   MagnifyingGlassIcon,
@@ -11,6 +10,7 @@ import { Button } from './ui/Button'
 import { TextInput } from './ui/TextInput'
 import { SwitchField } from './ui/SwitchField'
 import { Panel } from './ui/Panel'
+import { SearchSelect } from './ui/SearchSelect'
 import { cn } from '../lib/cn'
 import { formatTagLabel } from '../utils/tagDisplay'
 
@@ -69,7 +69,6 @@ export function BoardFilters({
   // Rest unused in simplified main UI, retained for interface compat
 }: BoardFiltersProps) {
   const { t } = useTranslation()
-  const assigneeListId = useId()
 
   const hasMetadataWarning =
     metadataError && (metadataError.config || metadataError.profiles)
@@ -108,30 +107,18 @@ export function BoardFilters({
             icon={<MagnifyingGlassIcon className="h-4 w-4" />}
           />
 
-          <div className="grid gap-1.5">
-            <label className="text-xs font-bold text-slate-500" htmlFor={assigneeListId}>
-              {t('filters.assignee')}
-            </label>
-            <input
-              id={assigneeListId}
-              className={cn(
-                'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100',
-              )}
-              value={assignee}
-              onChange={(event) => onAssigneeChange(event.target.value)}
-              placeholder={t('filters.assigneePlaceholder')}
-              list={`${assigneeListId}-list`}
-            />
-            {profileOptions.length > 0 && (
-              <datalist id={`${assigneeListId}-list`}>
-                {profileOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </datalist>
-            )}
-          </div>
+          <SearchSelect
+            mode="option"
+            label={t('filters.assignee')}
+            value={assignee || null}
+            onChange={(next) => onAssigneeChange(next ?? '')}
+            options={profileOptions.map((option) => ({
+              ...option,
+              meta: option.value,
+            }))}
+            placeholder={t('filters.assigneePlaceholder')}
+            allowCustomValue
+          />
 
           <div className="flex flex-col justify-end gap-3 lg:col-span-2">
             <div className="flex flex-wrap items-center gap-2">
