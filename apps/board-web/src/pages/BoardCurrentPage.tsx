@@ -479,6 +479,7 @@ export function BoardCurrentPage() {
             records={records}
             config={config}
             profiles={profiles}
+            assetOptions={assetOptions}
             relationTargetOptions={relationTargetOptions}
             movingRecordId={statusMoveController.movingRecordId}
             moveErrors={statusMoveController.moveErrors}
@@ -494,6 +495,7 @@ export function BoardCurrentPage() {
                 key={record.body.id}
                 record={record}
                 profiles={profiles}
+                assetOptions={assetOptions}
                 relationTargetOptions={relationTargetOptions}
                 onHistoryClick={historyController.openHistory}
                 onEditClick={openEdit}
@@ -513,6 +515,7 @@ export function BoardCurrentPage() {
         isLoading={historyController.isHistoryLoading}
         error={historyController.historyError}
         profiles={profiles}
+        assetOptions={assetOptions}
         onClose={historyController.closeHistory}
         onEditClick={openEdit}
       />

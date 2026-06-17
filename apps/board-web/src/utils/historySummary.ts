@@ -14,6 +14,8 @@ import {
   relationTargetOptionsFromReferences,
   type RelationTranslator,
 } from './relationDisplay'
+import { formatReferenceList } from './referenceDisplay'
+import type { RecordReferenceOption } from './recordReferenceOptions'
 import { formatTagLabel } from './tagDisplay'
 
 export type HistoryLanguage = 'en-US' | 'zh-CN'
@@ -27,6 +29,7 @@ export interface HistorySummaryCopy {
   unassigned: string
   body: string
   assets: string
+  assetListEmpty: string
   relations: string
   modified: string
   itemCount: (count: number) => string
@@ -59,6 +62,7 @@ export function buildPatchTimeline(
     language: string | undefined
     copy: HistorySummaryCopy
     references?: Record<string, HistoryReference>
+    assetOptions?: RecordReferenceOption[]
   }
 ): PatchTimelineItem[] {
   return [...patches]
@@ -77,10 +81,12 @@ export function summarizePatch(
     language,
     copy,
     references,
+    assetOptions = [],
   }: {
     language: string | undefined
     copy: HistorySummaryCopy
     references?: Record<string, HistoryReference>
+    assetOptions?: RecordReferenceOption[]
   }
 ): PatchSummaryLine[] {
   const lines: PatchSummaryLine[] = []
@@ -130,9 +136,10 @@ export function summarizePatch(
   }
 
   if (patch.assets !== undefined) {
+    const assetSummary = formatAssets(patch.assets, assetOptions, language)
     lines.push({
       label: copy.assets,
-      value: copy.itemCount(patch.assets.length),
+      value: assetSummary || copy.assetListEmpty || copy.itemCount(0),
     })
   }
 
@@ -194,6 +201,16 @@ export function formatRelations(
       ? `${constraint}${separator}${target} (${description})`
       : `${constraint}${separator}${target}`
   })
+}
+
+export function formatAssets(
+  assets: readonly string[] | undefined,
+  assetOptions: readonly RecordReferenceOption[],
+  language: string | undefined,
+): string {
+  return formatReferenceList(assets, assetOptions)
+    .map((item) => item.label)
+    .join(relationListDelimiter(language))
 }
 
 export function debugInitiallyOpen(): false {

@@ -16,12 +16,17 @@ import {
   type RelationTranslator,
 } from '../utils/relationDisplay'
 import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
+import {
+  summarizeReferenceList,
+  type ReferenceDisplayItem,
+} from '../utils/referenceDisplay'
 import type { MoveStatusOption } from '../utils/statusMove'
 
 interface RecordCardProps {
   record: RecordResponse<RecordItem<RecordBody>>
   /** Profiles for assignee name resolution. */
   profiles?: Profile[] | null
+  assetOptions: RecordReferenceOption[]
   relationTargetOptions: RecordReferenceOption[]
   compact?: boolean
   moveStatusOptions?: MoveStatusOption[]
@@ -38,6 +43,7 @@ interface RecordCardProps {
 export function RecordCard({
   record,
   profiles,
+  assetOptions,
   relationTargetOptions,
   compact = false,
   moveStatusOptions = [],
@@ -102,9 +108,18 @@ export function RecordCard({
           <p className="text-sm text-slate-500">{t('record.noTags')}</p>
         )}
 
+        <ReferenceList
+          label={t('record.assets')}
+          values={current.assets ?? []}
+          options={assetOptions}
+          maxVisible={2}
+          compact
+        />
+
         <RelationsList
           relations={current.relations ?? []}
           relationTargetOptions={relationTargetOptions}
+          maxVisible={2}
           compact
         />
 
@@ -178,10 +193,16 @@ export function RecordCard({
         <p className="text-slate-500">{t('record.noTags')}</p>
       )}
 
-      <ReferenceList label={t('record.assets')} values={current.assets ?? []} />
+      <ReferenceList
+        label={t('record.assets')}
+        values={current.assets ?? []}
+        options={assetOptions}
+        maxVisible={3}
+      />
       <RelationsList
         relations={current.relations ?? []}
         relationTargetOptions={relationTargetOptions}
+        maxVisible={3}
       />
     </article>
   )
@@ -196,38 +217,65 @@ function MetaItem({ label, value }: { label: string; value: string }) {
   )
 }
 
-function ReferenceList({ label, values }: { label: string; values: string[] }) {
+function ReferenceList({
+  label,
+  values,
+  options,
+  maxVisible,
+  compact = false,
+}: {
+  label: string
+  values: string[]
+  options: RecordReferenceOption[]
+  maxVisible: number
+  compact?: boolean
+}) {
   const { t } = useTranslation()
+  const summary = summarizeReferenceList(values, options, maxVisible)
+  if (compact && summary.visible.length === 0) return null
 
   return (
-    <section className="grid gap-2">
+    <section className={compact ? 'grid gap-1.5' : 'grid gap-2'}>
       <h3 className="text-sm font-semibold text-slate-500">{label}</h3>
-      {values.length > 0 ? (
+      {summary.visible.length > 0 ? (
         <ul className="grid gap-1.5">
-          {values.map((value) => (
-            <li className="break-all font-mono text-xs" key={value}>
-              {value}
-            </li>
+          {summary.visible.map((item, index) => (
+            <ReferenceListItem item={item} key={`${item.value}:${index}`} />
           ))}
+          {summary.hiddenCount > 0 && (
+            <li className="text-xs font-medium text-slate-500">
+              {t('record.moreAssets', { count: summary.hiddenCount })}
+            </li>
+          )}
         </ul>
       ) : (
-        <p className="text-slate-500">{t('record.none')}</p>
+        <p className="text-slate-500">{t('history.assetListEmpty')}</p>
       )}
     </section>
+  )
+}
+
+function ReferenceListItem({ item }: { item: ReferenceDisplayItem }) {
+  return (
+    <li className="min-w-0 wrap-break-word text-xs text-slate-700" title={item.meta}>
+      {item.label}
+    </li>
   )
 }
 
 function RelationsList({
   relations,
   relationTargetOptions,
+  maxVisible,
   compact = false,
 }: {
   relations: RecordItem<RecordBody>['relations']
   relationTargetOptions: RecordReferenceOption[]
+  maxVisible: number
   compact?: boolean
 }) {
   const { t } = useTranslation()
-  const visibleRelations = (relations ?? []).slice(0, 3)
+  const visibleRelations = (relations ?? []).slice(0, maxVisible)
   const hiddenCount = Math.max((relations?.length ?? 0) - visibleRelations.length, 0)
   const translate: RelationTranslator = (key, options) =>
     t(key, { defaultValue: options?.defaultValue ?? key })
@@ -238,10 +286,10 @@ function RelationsList({
       <h3 className="text-sm font-semibold text-slate-500">{t('record.relations')}</h3>
       {relations && relations.length > 0 ? (
         <ul className="grid gap-1.5">
-          {visibleRelations.map((relation) => (
+          {visibleRelations.map((relation, index) => (
             <li
               className="min-w-0 wrap-break-word text-xs text-slate-700"
-              key={`${relation.constraint}:${relation.target}`}
+              key={`${relation.constraint}:${relation.target}:${index}`}
               title={relation.target}
             >
               {formatRelationLine(relation, relationTargetOptions, translate)}
@@ -249,7 +297,7 @@ function RelationsList({
           ))}
           {hiddenCount > 0 && (
             <li className="text-xs font-medium text-slate-500">
-              {t('relations.more', { count: hiddenCount })}
+              {t('record.moreRelations', { count: hiddenCount })}
             </li>
           )}
         </ul>

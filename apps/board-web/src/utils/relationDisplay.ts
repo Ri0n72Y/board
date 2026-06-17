@@ -5,11 +5,8 @@ import type {
   RecordResponse,
   RelationRef,
 } from '@labour-board/shared'
-import {
-  getReferenceDisplayLabel,
-  shortReferenceId,
-  type RecordReferenceOption,
-} from './recordReferenceOptions'
+import { shortReferenceId, type RecordReferenceOption } from './recordReferenceOptions'
+import { formatReferenceLabel } from './referenceDisplay'
 
 export type Relation = RelationRef
 
@@ -84,7 +81,7 @@ export function formatRelationTarget(
 ): string {
   const target = targetId.trim()
   if (!target) return ''
-  return getReferenceDisplayLabel(relationTargetOptions, target) || shortReferenceId(target)
+  return formatReferenceLabel(target, relationTargetOptions)
 }
 
 export function formatRelationLine(

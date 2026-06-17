@@ -22,6 +22,7 @@ const copy: HistorySummaryCopy = {
   unassigned: 'Unassigned',
   body: 'Body',
   assets: 'Assets',
+  assetListEmpty: 'No assets',
   relations: 'Relations',
   modified: 'Modified',
   itemCount: (count) => `${count} items`,
@@ -171,6 +172,63 @@ const emptyLines = summarizePatch(
 )
 eq(emptyLines[0]?.value, 'No visible field changes', 'unmodified fields are hidden')
 eq(debugInitiallyOpen(), false, 'raw JSON is collapsed by default')
+
+const assetOptions = [
+  {
+    value: 'asset-1',
+    label: 'ASSET-1 - Battle scene',
+    meta: 'asset-1',
+    referenceState: 'resolved' as const,
+  },
+]
+
+const assetLines = summarizePatch(
+  {
+    id: 'p-assets',
+    pid: 'CARD-5',
+    schema: 'CardBody',
+    targetId: 'record-1',
+    parentId: null,
+    assets: ['asset-1'],
+  },
+  { language: 'en-US', copy, assetOptions },
+)
+eq(assetLines[0]?.label, 'Assets', 'asset summary label')
+eq(
+  assetLines[0]?.value,
+  'ASSET-1 - Battle scene',
+  'patch.assets displays readable label',
+)
+
+const unknownAssetLines = summarizePatch(
+  {
+    id: 'p-assets-unknown',
+    pid: 'CARD-5',
+    schema: 'CardBody',
+    targetId: 'record-1',
+    parentId: null,
+    assets: ['unknown-asset-reference-1234567890'],
+  },
+  { language: 'en-US', copy, assetOptions },
+)
+eq(
+  unknownAssetLines[0]?.value,
+  'unknown-...7890',
+  'patch.assets unknown fallback short id',
+)
+
+const emptyAssetLines = summarizePatch(
+  {
+    id: 'p-assets-empty',
+    pid: 'CARD-5',
+    schema: 'CardBody',
+    targetId: 'record-1',
+    parentId: null,
+    assets: [],
+  },
+  { language: 'en-US', copy, assetOptions },
+)
+eq(emptyAssetLines[0]?.value, 'No assets', 'patch.assets empty uses copy')
 
 const references = {
   'target-1': { pid: 'CARD-4', title: 'Enter battle', schema: 'CardBody' },

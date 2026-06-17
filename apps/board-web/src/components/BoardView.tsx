@@ -27,6 +27,7 @@ interface BoardViewProps {
   records: RecordResponse<RecordItem<RecordBody>>[]
   config: BoardConfig | null
   profiles?: Profile[] | null
+  assetOptions: RecordReferenceOption[]
   relationTargetOptions: RecordReferenceOption[]
   onHistoryClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
   onEditClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
@@ -43,6 +44,7 @@ export function BoardView({
   records,
   config,
   profiles,
+  assetOptions,
   relationTargetOptions,
   onHistoryClick,
   onEditClick,
@@ -139,6 +141,7 @@ export function BoardView({
                       key={record.body.id}
                       record={record}
                       profiles={profiles}
+                      assetOptions={assetOptions}
                       relationTargetOptions={relationTargetOptions}
                       compact
                       moveStatusOptions={moveStatusOptions}

@@ -21,6 +21,7 @@ import {
   titleFromBody,
   type HistorySummaryCopy,
 } from '../utils/historySummary'
+import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
 
 interface RecordHistoryDrawerProps {
   open: boolean
@@ -31,6 +32,7 @@ interface RecordHistoryDrawerProps {
   isLoading: boolean
   error: string | null
   profiles?: Profile[] | null
+  assetOptions: RecordReferenceOption[]
   onClose: () => void
   onEditClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
 }
@@ -43,6 +45,7 @@ export function RecordHistoryDrawer({
   history,
   isLoading,
   error,
+  assetOptions,
   onClose,
   onEditClick,
 }: RecordHistoryDrawerProps) {
@@ -136,7 +139,11 @@ export function RecordHistoryDrawer({
           )}
 
           {!isLoading && !error && history && (
-            <HistoryContent history={history} language={language} />
+            <HistoryContent
+              history={history}
+              language={language}
+              assetOptions={assetOptions}
+            />
           )}
 
           {!isLoading && !error && !history && (
@@ -153,15 +160,17 @@ export function RecordHistoryDrawer({
 function HistoryContent({
   history,
   language,
+  assetOptions,
 }: {
   history: RecordHistoryResponse
   language?: string
+  assetOptions: RecordReferenceOption[]
 }) {
   return (
     <div className="grid gap-4">
       <HistoryStatus history={history} />
       <BaseRecordDetails history={history} />
-      <PatchList history={history} language={language} />
+      <PatchList history={history} language={language} assetOptions={assetOptions} />
       <HistoryDebug history={history} />
     </div>
   )
@@ -211,9 +220,11 @@ function BaseRecordDetails({ history }: { history: RecordHistoryResponse }) {
 function PatchList({
   history,
   language,
+  assetOptions,
 }: {
   history: RecordHistoryResponse
   language?: string
+  assetOptions: RecordReferenceOption[]
 }) {
   const { t } = useTranslation()
   const copy = useHistorySummaryCopy()
@@ -223,8 +234,9 @@ function PatchList({
         language,
         copy,
         references: history.references,
+        assetOptions,
       }),
-    [history.patches, language, copy, history.references]
+    [history.patches, language, copy, history.references, assetOptions]
   )
 
   return (
@@ -345,6 +357,7 @@ function useHistorySummaryCopy(): HistorySummaryCopy {
       unassigned: t('history.unassigned'),
       body: t('history.field.body'),
       assets: t('history.field.assets'),
+      assetListEmpty: t('history.assetListEmpty'),
       relations: t('history.field.relations'),
       modified: t('history.modified'),
       itemCount: (count: number) => t('history.itemCount', { count }),
