@@ -7,6 +7,13 @@ import type {
   RelationRef,
   Tag,
 } from '@labour-board/shared'
+import {
+  formatRelationConstraint as formatSharedRelationConstraint,
+  formatRelationLine,
+  formatRelationTarget as formatSharedRelationTarget,
+  relationTargetOptionsFromReferences,
+  type RelationTranslator,
+} from './relationDisplay'
 import { formatTagLabel } from './tagDisplay'
 
 export type HistoryLanguage = 'en-US' | 'zh-CN'
@@ -25,6 +32,7 @@ export interface HistorySummaryCopy {
   itemCount: (count: number) => string
   fieldLabel: (namespace: string) => string
   bodyFieldLabel: (field: string) => string
+  relationConstraintLabel: (constraint: string) => string
 }
 
 export interface HistoryReference {
@@ -50,6 +58,7 @@ export function buildPatchTimeline(
   options: {
     language: string | undefined
     copy: HistorySummaryCopy
+    references?: Record<string, HistoryReference>
   }
 ): PatchTimelineItem[] {
   return [...patches]
@@ -67,9 +76,11 @@ export function summarizePatch(
   {
     language,
     copy,
+    references,
   }: {
     language: string | undefined
     copy: HistorySummaryCopy
+    references?: Record<string, HistoryReference>
   }
 ): PatchSummaryLine[] {
   const lines: PatchSummaryLine[] = []
@@ -126,9 +137,17 @@ export function summarizePatch(
   }
 
   if (patch.relations !== undefined) {
+    const targetOptions = relationTargetOptionsFromReferences(references)
+    const relationSummary = patch.relations
+      .map((relation) =>
+        formatRelationLine(relation, targetOptions, (key, options) =>
+          relationLabelFromKey(key, options?.defaultValue, copy),
+        ),
+      )
+      .join(relationListDelimiter(language))
     lines.push({
       label: copy.relations,
-      value: copy.itemCount(patch.relations.length),
+      value: relationSummary || copy.itemCount(patch.relations.length),
     })
   }
 
@@ -141,18 +160,16 @@ export function formatRelationConstraint(
   constraint: string,
   translate: (key: string, fallback: string) => string
 ): string {
-  return translate(`history.relation.${constraint}`, constraint)
+  return formatSharedRelationConstraint(constraint, (key, options) =>
+    translate(key, options?.defaultValue ?? constraint),
+  )
 }
 
 export function formatRelationTarget(
   target: string,
   references: Record<string, HistoryReference> | undefined
 ): string {
-  const reference = references?.[target]
-  if (reference) {
-    return `${reference.pid} ${reference.title}`.trim()
-  }
-  return shortRecordId(target)
+  return formatSharedRelationTarget(target, relationTargetOptionsFromReferences(references))
 }
 
 export function shortRecordId(id: string): string {
@@ -166,11 +183,15 @@ export function formatRelations(
   translate: (key: string, fallback: string) => string,
   separator = ': '
 ): string[] {
+  const targetOptions = relationTargetOptionsFromReferences(references)
+  const relationTranslate: RelationTranslator = (key, options) =>
+    translate(key, options?.defaultValue ?? key)
   return (relations ?? []).map((relation) => {
-    const constraint = formatRelationConstraint(relation.constraint, translate)
-    const target = formatRelationTarget(relation.target, references)
-    return relation.description
-      ? `${constraint}${separator}${target} (${relation.description})`
+    const constraint = formatSharedRelationConstraint(relation.constraint, relationTranslate)
+    const target = formatSharedRelationTarget(relation.target, targetOptions)
+    const description = relation.description?.trim()
+    return description
+      ? `${constraint}${separator}${target} (${description})`
       : `${constraint}${separator}${target}`
   })
 }
@@ -215,4 +236,24 @@ function summarizeBodyPatch(
 
 function tagDelimiter(language: string | undefined): string {
   return language === 'zh-CN' ? '\u3001' : ', '
+}
+
+function relationListDelimiter(language: string | undefined): string {
+  return language === 'zh-CN' ? '\uff1b' : '; '
+}
+
+function relationLabelFromKey(
+  key: string,
+  fallback: string | undefined,
+  copy: HistorySummaryCopy,
+): string {
+  const relationPrefix = 'relations.constraint.'
+  const historyPrefix = 'history.relation.'
+  if (key.startsWith(relationPrefix)) {
+    return copy.relationConstraintLabel(key.slice(relationPrefix.length))
+  }
+  if (key.startsWith(historyPrefix)) {
+    return copy.relationConstraintLabel(key.slice(historyPrefix.length))
+  }
+  return fallback ?? key
 }

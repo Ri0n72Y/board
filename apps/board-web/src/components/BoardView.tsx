@@ -21,11 +21,13 @@ import {
 import { getMoveStatusOptions } from '../utils/statusMove'
 import type { MoveStatusOption } from '../utils/statusMove'
 import { formatTagLabel } from '../utils/tagDisplay'
+import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
 
 interface BoardViewProps {
   records: RecordResponse<RecordItem<RecordBody>>[]
   config: BoardConfig | null
   profiles?: Profile[] | null
+  relationTargetOptions: RecordReferenceOption[]
   onHistoryClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
   onEditClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
   movingRecordId?: string | null
@@ -41,6 +43,7 @@ export function BoardView({
   records,
   config,
   profiles,
+  relationTargetOptions,
   onHistoryClick,
   onEditClick,
   movingRecordId,
@@ -136,6 +139,7 @@ export function BoardView({
                       key={record.body.id}
                       record={record}
                       profiles={profiles}
+                      relationTargetOptions={relationTargetOptions}
                       compact
                       moveStatusOptions={moveStatusOptions}
                       isMovingStatus={movingRecordId === record.body.id}

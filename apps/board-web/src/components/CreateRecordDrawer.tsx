@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
-import type { BoardConfig, Profile, Tag } from '@labour-board/shared'
+import type { BoardConfig, Profile, RelationRef, Tag } from '@labour-board/shared'
 import {
   ExclamationTriangleIcon,
   PlusIcon,
@@ -9,8 +9,11 @@ import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { createRecord, type CreateRecordPayload } from '../api/records'
 import { getProfileOptions } from '../utils/board'
+import type { RelationConstraintOption } from '../utils/relationDisplay'
+import { normalizeRelationDrafts } from '../utils/relationDisplay'
 import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
 import { formatTagLabel } from '../utils/tagDisplay'
+import { RelationEditor } from './RelationEditor'
 import { Button } from './ui/Button'
 import { Select } from './ui/Select'
 import { SearchSelect } from './ui/SearchSelect'
@@ -25,6 +28,8 @@ interface CreateRecordDrawerProps {
   statusTags: Tag[]
   priorityTags: Tag[]
   assetOptions: RecordReferenceOption[]
+  relationTargetOptions: RecordReferenceOption[]
+  relationConstraintOptions: RelationConstraintOption[]
   onClose: () => void
   onCreated: () => Promise<void> | void
 }
@@ -39,6 +44,7 @@ interface FormState {
   otherTags: Tag[]
   assignee: string
   assets: string[]
+  relations: RelationRef[]
 }
 
 const CARD_SCHEMA = 'CardBody'
@@ -51,6 +57,8 @@ export function CreateRecordDrawer({
   statusTags,
   priorityTags,
   assetOptions,
+  relationTargetOptions,
+  relationConstraintOptions,
   onClose,
   onCreated,
 }: CreateRecordDrawerProps) {
@@ -358,6 +366,17 @@ export function CreateRecordDrawer({
               allowCustomValue={false}
               disabled={isCreating}
             />
+
+            <RelationEditor
+              label={t('relations.title')}
+              value={form.relations}
+              targetOptions={relationTargetOptions}
+              constraintOptions={relationConstraintOptions}
+              onChange={(relations) =>
+                setForm((current) => ({ ...current, relations }))
+              }
+              disabled={isCreating}
+            />
           </form>
         </div>
 
@@ -394,6 +413,7 @@ function initialFormState(
     otherTags: [],
     assignee: '',
     assets: [],
+    relations: [],
   }
 }
 
@@ -413,6 +433,7 @@ function buildPayload(
     [statusTag, priorityTag, ...form.otherTags].filter(Boolean) as Tag[],
   )
   const assets = uniqueValues(form.assets.map((asset) => asset.trim()).filter(Boolean))
+  const relations = normalizeRelationDrafts(form.relations)
 
   if (!schema) return { ok: false, error: 'create.errorSchemaRequired' }
   if (!title) return { ok: false, error: 'create.errorTitleRequired' }
@@ -430,7 +451,7 @@ function buildPayload(
         ...(content ? { content } : {}),
       },
       assets,
-      relations: [],
+      relations,
     },
   }
 }

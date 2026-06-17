@@ -11,12 +11,18 @@ import { Button } from './ui/Button'
 import { TagChipRow } from './BoardFilters'
 import { MoveStatusControl } from './MoveStatusControl'
 import { lookupProfile } from '../utils/board'
+import {
+  formatRelationLine,
+  type RelationTranslator,
+} from '../utils/relationDisplay'
+import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
 import type { MoveStatusOption } from '../utils/statusMove'
 
 interface RecordCardProps {
   record: RecordResponse<RecordItem<RecordBody>>
   /** Profiles for assignee name resolution. */
   profiles?: Profile[] | null
+  relationTargetOptions: RecordReferenceOption[]
   compact?: boolean
   moveStatusOptions?: MoveStatusOption[]
   moveStatusError?: string | null
@@ -32,6 +38,7 @@ interface RecordCardProps {
 export function RecordCard({
   record,
   profiles,
+  relationTargetOptions,
   compact = false,
   moveStatusOptions = [],
   moveStatusError,
@@ -94,6 +101,12 @@ export function RecordCard({
         ) : (
           <p className="text-sm text-slate-500">{t('record.noTags')}</p>
         )}
+
+        <RelationsList
+          relations={current.relations ?? []}
+          relationTargetOptions={relationTargetOptions}
+          compact
+        />
 
         {onMoveStatus && moveStatusOptions.length > 0 && (
           <MoveStatusControl
@@ -166,7 +179,10 @@ export function RecordCard({
       )}
 
       <ReferenceList label={t('record.assets')} values={current.assets ?? []} />
-      <RelationsList relations={current.relations ?? []} />
+      <RelationsList
+        relations={current.relations ?? []}
+        relationTargetOptions={relationTargetOptions}
+      />
     </article>
   )
 }
@@ -203,33 +219,42 @@ function ReferenceList({ label, values }: { label: string; values: string[] }) {
 
 function RelationsList({
   relations,
+  relationTargetOptions,
+  compact = false,
 }: {
   relations: RecordItem<RecordBody>['relations']
+  relationTargetOptions: RecordReferenceOption[]
+  compact?: boolean
 }) {
   const { t } = useTranslation()
+  const visibleRelations = (relations ?? []).slice(0, 3)
+  const hiddenCount = Math.max((relations?.length ?? 0) - visibleRelations.length, 0)
+  const translate: RelationTranslator = (key, options) =>
+    t(key, { defaultValue: options?.defaultValue ?? key })
+  if (compact && (!relations || relations.length === 0)) return null
 
   return (
-    <section className="grid gap-2">
+    <section className={compact ? 'grid gap-1.5' : 'grid gap-2'}>
       <h3 className="text-sm font-semibold text-slate-500">{t('record.relations')}</h3>
       {relations && relations.length > 0 ? (
         <ul className="grid gap-1.5">
-          {relations.map((relation) => (
+          {visibleRelations.map((relation) => (
             <li
-              className="flex min-w-0 flex-wrap gap-2 break-all font-mono text-xs"
+              className="min-w-0 wrap-break-word text-xs text-slate-700"
               key={`${relation.constraint}:${relation.target}`}
+              title={relation.target}
             >
-              <strong>{relation.constraint}</strong>
-              <span>{relation.target}</span>
-              {relation.description && (
-                <em className="font-sans text-slate-500">
-                  {relation.description}
-                </em>
-              )}
+              {formatRelationLine(relation, relationTargetOptions, translate)}
             </li>
           ))}
+          {hiddenCount > 0 && (
+            <li className="text-xs font-medium text-slate-500">
+              {t('relations.more', { count: hiddenCount })}
+            </li>
+          )}
         </ul>
       ) : (
-        <p className="text-slate-500">{t('record.none')}</p>
+        !compact && <p className="text-slate-500">{t('relations.none')}</p>
       )}
     </section>
   )

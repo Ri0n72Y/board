@@ -14,6 +14,7 @@ import type {
   RecordBody,
   RecordItem,
   RecordResponse,
+  RelationRef,
   Tag,
   TagChanges,
 } from '@labour-board/shared'
@@ -32,8 +33,14 @@ import {
   ensureReferenceOptions,
   type RecordReferenceOption,
 } from '../utils/recordReferenceOptions'
+import {
+  normalizeRelationDrafts,
+  sameRelations,
+  type RelationConstraintOption,
+} from '../utils/relationDisplay'
 import { buildTagChanges } from '../utils/tagChanges'
 import { formatTagLabel } from '../utils/tagDisplay'
+import { RelationEditor } from './RelationEditor'
 import { Button } from './ui/Button'
 import { SearchSelect } from './ui/SearchSelect'
 import { TextInput } from './ui/TextInput'
@@ -47,6 +54,8 @@ interface EditRecordDrawerProps {
   statusTags: Tag[]
   priorityTags: Tag[]
   assetOptions: RecordReferenceOption[]
+  relationTargetOptions: RecordReferenceOption[]
+  relationConstraintOptions: RelationConstraintOption[]
   onClose: () => void
   onPatched: (recordId: string) => Promise<void> | void
 }
@@ -61,12 +70,14 @@ interface FormState {
   unsupportedTags: Tag[]
   assignee: string
   assets: string[]
+  relations: RelationRef[]
 }
 
 interface PatchDraft {
   tagChanges?: TagChanges
   assignee?: PublicKey | null
   assets?: AssetRef[]
+  relations?: RelationRef[]
   body?: {
     title: string
     description: string | null
@@ -83,6 +94,8 @@ export function EditRecordDrawer({
   statusTags,
   priorityTags,
   assetOptions,
+  relationTargetOptions,
+  relationConstraintOptions,
   onClose,
   onPatched,
 }: EditRecordDrawerProps) {
@@ -129,6 +142,16 @@ export function EditRecordDrawer({
   const selectableAssetOptions = useMemo(
     () => ensureReferenceOptions(assetOptions, form.assets, 'asset', recordReferenceCopy),
     [assetOptions, form.assets, recordReferenceCopy],
+  )
+  const selectableRelationTargetOptions = useMemo(
+    () =>
+      ensureReferenceOptions(
+        relationTargetOptions,
+        form.relations.map((relation) => relation.target),
+        'record',
+        recordReferenceCopy,
+      ),
+    [form.relations, recordReferenceCopy, relationTargetOptions],
   )
 
   useEffect(() => {
@@ -428,7 +451,17 @@ export function EditRecordDrawer({
               disabled={isSaving}
             />
 
-            <ReadOnlyRelations relations={current.relations ?? []} />
+            <RelationEditor
+              label={t('relations.title')}
+              value={form.relations}
+              targetOptions={selectableRelationTargetOptions}
+              constraintOptions={relationConstraintOptions}
+              currentRecordId={current.id}
+              onChange={(relations) =>
+                setForm((state) => ({ ...state, relations }))
+              }
+              disabled={isSaving}
+            />
           </form>
         </div>
 
@@ -484,6 +517,7 @@ function initialFormState(
     unsupportedTags,
     assignee: record.assignee ?? '',
     assets: [...(record.assets ?? [])],
+    relations: (record.relations ?? []).map((relation) => ({ ...relation })),
   }
 }
 
@@ -501,6 +535,7 @@ function buildPatchDraft(
   )
   const assets = uniqueValues(form.assets.map((asset) => asset.trim()).filter(Boolean)) as AssetRef[]
   const assignee = form.assignee.trim()
+  const relations = normalizeRelationDrafts(form.relations)
 
   if (!title) return { ok: false, error: 'edit.errorTitleRequired' }
   if (!statusTag) return { ok: false, error: 'edit.errorStatusTagRequired' }
@@ -517,6 +552,10 @@ function buildPatchDraft(
 
   if (!sameStringList(assets, current.assets ?? [])) {
     patch.assets = assets
+  }
+
+  if (!sameRelations(relations, current.relations ?? [])) {
+    patch.relations = relations
   }
 
   const currentBody = asEditableBody(current.body)
@@ -644,42 +683,6 @@ function TextAreaField({
       />
       {hint && <p className="text-xs text-slate-500">{hint}</p>}
     </div>
-  )
-}
-
-function ReadOnlyRelations({
-  relations,
-}: {
-  relations: RecordItem<RecordBody>['relations']
-}) {
-  const { t } = useTranslation()
-
-  return (
-    <section className="grid gap-2 rounded-lg border border-slate-200 bg-white p-4">
-      <h3 className="text-sm font-semibold text-slate-500">
-        {t('record.relations')}
-      </h3>
-      {relations && relations.length > 0 ? (
-        <ul className="grid gap-1.5">
-          {relations.map((relation) => (
-            <li
-              className="flex min-w-0 flex-wrap gap-2 break-all font-mono text-xs"
-              key={`${relation.constraint}:${relation.target}`}
-            >
-              <strong>{relation.constraint}</strong>
-              <span>{relation.target}</span>
-              {relation.description && (
-                <em className="font-sans text-slate-500">
-                  {relation.description}
-                </em>
-              )}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-slate-500">{t('record.none')}</p>
-      )}
-    </section>
   )
 }
 

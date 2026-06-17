@@ -63,6 +63,7 @@ import {
   mergeReferenceOptions,
   type RecordReferenceOption,
 } from '../utils/recordReferenceOptions'
+import { buildRelationConstraintOptions } from '../utils/relationDisplay'
 import { formatTagLabel } from '../utils/tagDisplay'
 import { useDebouncedValue } from '../utils/useDebounce'
 
@@ -179,6 +180,10 @@ export function BoardCurrentPage() {
       ? mergeReferenceOptions(currentOptions, [selectedRelationTargetOption])
       : currentOptions
   }, [records, recordReferenceCopy, selectedRelationTargetOption])
+  const relationConstraintOptions = useMemo(
+    () => buildRelationConstraintOptions(records, t, config),
+    [records, t, config],
+  )
 
   const updateAssetId = useCallback((assetId: string) => {
     setAssetId(assetId)
@@ -474,6 +479,7 @@ export function BoardCurrentPage() {
             records={records}
             config={config}
             profiles={profiles}
+            relationTargetOptions={relationTargetOptions}
             movingRecordId={statusMoveController.movingRecordId}
             moveErrors={statusMoveController.moveErrors}
             visibleColumnIds={visibleBoardColumnIds}
@@ -488,6 +494,7 @@ export function BoardCurrentPage() {
                 key={record.body.id}
                 record={record}
                 profiles={profiles}
+                relationTargetOptions={relationTargetOptions}
                 onHistoryClick={historyController.openHistory}
                 onEditClick={openEdit}
               />
@@ -616,6 +623,8 @@ export function BoardCurrentPage() {
           statusTags={statusTags}
           priorityTags={priorityTags}
           assetOptions={assetOptions}
+          relationTargetOptions={relationTargetOptions}
+          relationConstraintOptions={relationConstraintOptions}
           onClose={closeCreate}
           onCreated={refreshAfterCreate}
         />
@@ -632,6 +641,8 @@ export function BoardCurrentPage() {
           statusTags={statusTags}
           priorityTags={priorityTags}
           assetOptions={assetOptions}
+          relationTargetOptions={relationTargetOptions}
+          relationConstraintOptions={relationConstraintOptions}
           onClose={closeEdit}
           onPatched={refreshAfterPatch}
         />

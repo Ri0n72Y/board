@@ -1,6 +1,4 @@
 import type {
-  DeepPartial,
-  PatchItem,
   Profile,
   RecordBody,
   RecordHistoryResponse,
@@ -19,7 +17,6 @@ import { Button } from './ui/Button'
 import {
   buildPatchTimeline,
   debugInitiallyOpen,
-  formatRelations,
   statusSummaryText,
   titleFromBody,
   type HistorySummaryCopy,
@@ -221,8 +218,13 @@ function PatchList({
   const { t } = useTranslation()
   const copy = useHistorySummaryCopy()
   const timeline = useMemo(
-    () => buildPatchTimeline(history.patches, { language, copy }),
-    [history.patches, language, copy]
+    () =>
+      buildPatchTimeline(history.patches, {
+        language,
+        copy,
+        references: history.references,
+      }),
+    [history.patches, language, copy, history.references]
   )
 
   return (
@@ -244,7 +246,6 @@ function PatchList({
             <PatchCard
               item={item}
               key={item.patch.body.id}
-              references={history.references}
             />
           ))}
         </ol>
@@ -255,10 +256,8 @@ function PatchList({
 
 function PatchCard({
   item,
-  references,
 }: {
   item: ReturnType<typeof buildPatchTimeline>[number]
-  references: RecordHistoryResponse['references']
 }) {
   const { t } = useTranslation()
   const patch = item.patch
@@ -285,8 +284,6 @@ function PatchCard({
         ))}
       </div>
 
-      <PatchRelations patch={patch.body} references={references} />
-
       <details open={item.rawInitiallyOpen} className="grid gap-2">
         <summary className="cursor-pointer text-sm font-semibold text-slate-600">
           {t('history.rawPatch')}
@@ -296,31 +293,6 @@ function PatchCard({
         </div>
       </details>
     </li>
-  )
-}
-
-function PatchRelations({
-  patch,
-  references,
-}: {
-  patch: PatchItem<DeepPartial<RecordBody>>
-  references: RecordHistoryResponse['references']
-}) {
-  const { t } = useTranslation()
-  if (patch.relations === undefined) return null
-
-  const items = formatRelations(patch.relations, references, (key, fallback) =>
-    t(key, { defaultValue: fallback }),
-    t('history.summarySeparator')
-  )
-  if (items.length === 0) return null
-
-  return (
-    <ul className="grid gap-1 rounded-md bg-slate-50 p-3 text-sm text-slate-800">
-      {items.map((item) => (
-        <li key={item}>{item}</li>
-      ))}
-    </ul>
   )
 }
 
@@ -380,6 +352,12 @@ function useHistorySummaryCopy(): HistorySummaryCopy {
         t(`history.field.${namespace}`, { defaultValue: namespace }),
       bodyFieldLabel: (field: string) =>
         t(`history.bodyField.${field}`, { defaultValue: field }),
+      relationConstraintLabel: (constraint: string) =>
+        t(`relations.constraint.${constraint}`, {
+          defaultValue: t(`history.relation.${constraint}`, {
+            defaultValue: constraint,
+          }),
+        }),
     }),
     [t]
   )
