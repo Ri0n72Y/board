@@ -8,6 +8,12 @@ import type {
   Tag,
 } from '../interfaces/index.js'
 import { getContextPackStrings } from './contextPackI18n.js'
+import {
+  buildExportReferenceMap,
+  formatExportReference,
+  formatExportRelation,
+  type ExportReference,
+} from './exportReferenceDisplay.js'
 
 type BoardRecord = RecordResponse<RecordItem<RecordBody>>
 
@@ -22,6 +28,7 @@ interface ExportContext {
     BoardExportOptions
   generatedAt: string
   records: BoardRecord[]
+  references: Map<string, ExportReference>
 }
 
 export function buildBoardMarkdownExport(
@@ -39,11 +46,13 @@ export function buildBoardMarkdownExport(
     includeRelations: options.includeRelations ?? true,
   }
   const records = selectRecordsForLevel(projection.records, normalized)
+  const sortedRecords = sortRecords(records)
   const context: ExportContext = {
     projection,
     options: normalized,
     generatedAt,
-    records: sortRecords(records),
+    records: sortedRecords,
+    references: buildExportReferenceMap(sortedRecords),
   }
   const filename = makeBoardExportFilename(normalized, generatedAt)
   const content = buildMarkdown(context)
@@ -221,17 +230,25 @@ function buildSprintSection(context: ExportContext): string {
 function buildRelationsSection(context: ExportContext): string {
   const s = getContextPackStrings(context.options.language)
   const lines = [s.relationsGraph]
-  const byId = new Map(context.records.map((record) => [record.body.id, record]))
   let count = 0
 
   for (const record of context.records) {
     for (const relation of record.body.relations ?? []) {
-      if (!byId.has(relation.target)) continue
+      const source = formatExportReference(record.body.id, context.references)
+      const formatted = formatExportRelation(
+        relation,
+        context.references,
+        s.relationConstraintLabels
+      )
       count += 1
       lines.push(
-        `- ${record.body.pid} ${relation.constraint} ${relation.target}` +
-          `${relation.description ? ` - ${relation.description}` : ''}`
+        `- ${source.label} -> ${formatted.label}`,
+        `  ${s.constraint}: ${relation.constraint}`,
+        `  ${s.targetId}: ${formatted.target.rawId}`
       )
+      if (relation.description) {
+        lines.push(`  ${s.relationDescription}: ${markdownInline(relation.description)}`)
+      }
     }
   }
 
@@ -257,7 +274,8 @@ function buildAssetsIndexSection(context: ExportContext): string {
   }
 
   for (const [asset, pids] of [...assets.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-    lines.push(`- ${asset}`)
+    const reference = formatExportReference(asset, context.references)
+    lines.push(`- ${reference.label}`, `  ${s.rawId}: ${reference.rawId}`)
     for (const pid of pids.sort()) {
       lines.push(`  - ${pid}`)
     }
@@ -302,10 +320,10 @@ function buildRecordMarkdown(record: BoardRecord, context: ExportContext): strin
   ]
 
   if (context.options.includeAssets) {
-    lines.push(`- ${s.assets}: ${(body.assets ?? []).join(', ') || s.none}`)
+    lines.push(...formatRecordAssets(body.assets ?? [], context, s))
   }
   if (context.options.includeRelations) {
-    lines.push(`- ${s.relations}: ${formatRelations(body.relations ?? [], s)}`)
+    lines.push(...formatRecordRelations(body.relations ?? [], context, s))
   }
 
   const description = stringField(body.body, 'description')
@@ -452,18 +470,43 @@ function stringField(body: RecordBody, key: string): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined
 }
 
-function formatRelations(
-  relations: RecordItem<RecordBody>['relations'],
+function formatRecordAssets(
+  assets: RecordItem<RecordBody>['assets'],
+  context: ExportContext,
   s: ReturnType<typeof getContextPackStrings>
-): string {
-  if (!relations || relations.length === 0) return s.none
-  return relations
-    .map(
-      (relation) =>
-        `${relation.constraint}:${relation.target}` +
-        `${relation.description ? ` (${relation.description})` : ''}`
+): string[] {
+  if (!assets || assets.length === 0) return [`- ${s.assets}: ${s.none}`]
+  const lines = [`- ${s.assets}:`]
+  for (const asset of assets) {
+    const reference = formatExportReference(asset, context.references)
+    lines.push(`  - ${reference.label}`, `    ${s.rawId}: ${reference.rawId}`)
+  }
+  return lines
+}
+
+function formatRecordRelations(
+  relations: RecordItem<RecordBody>['relations'],
+  context: ExportContext,
+  s: ReturnType<typeof getContextPackStrings>
+): string[] {
+  if (!relations || relations.length === 0) return [`- ${s.relations}: ${s.none}`]
+  const lines = [`- ${s.relations}:`]
+  for (const relation of relations) {
+    const formatted = formatExportRelation(
+      relation,
+      context.references,
+      s.relationConstraintLabels
     )
-    .join('; ')
+    lines.push(
+      `  - ${formatted.label}`,
+      `    ${s.constraint}: ${relation.constraint}`,
+      `    ${s.targetId}: ${formatted.target.rawId}`
+    )
+    if (relation.description) {
+      lines.push(`    ${s.relationDescription}: ${markdownInline(relation.description)}`)
+    }
+  }
+  return lines
 }
 
 function markdownInline(value: string): string {

@@ -16,6 +16,16 @@ export {
 export { buildBoardMarkdownExport } from './boardExport.js'
 export { buildBoardContextPack } from './boardContextPack.js'
 export {
+  buildExportReferenceMap,
+  formatExportReference,
+  formatExportRelation,
+  formatExportRelationConstraint,
+  shortExportReferenceId,
+  type ExportReference,
+  type ExportReferenceDisplay,
+  type ExportRelationDisplay,
+} from './exportReferenceDisplay.js'
+export {
   getContextPackStrings,
   type ContextPackLocale,
 } from './contextPackI18n.js'

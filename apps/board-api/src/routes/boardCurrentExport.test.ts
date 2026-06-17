@@ -40,7 +40,9 @@ describe('GET /api/v0/board/current/export', () => {
     expect(payload.data.content).toContain(relatedSource?.id)
     expect(payload.data.content).toContain('status:doing')
     expect(payload.data.content).toContain('asset:deck-system')
-    expect(payload.data.content).toContain(`dependsOn:${relatedTarget?.id}`)
+    expect(payload.data.content).toContain('Depends on CARD-4')
+    expect(payload.data.content).toContain('constraint: dependsOn')
+    expect(payload.data.content).toContain(`target id: ${relatedTarget?.id}`)
     expect(payload.data.content).toContain('战斗开始抽固定数量手牌')
     expect(payload.data.content).not.toMatch(/\\u[0-9a-fA-F]{4}/)
     expect(payload.data.content).not.toContain('dependsOn:US-')
@@ -113,10 +115,9 @@ describe('GET /api/v0/board/current/export', () => {
     expect(related.status).toBe(200)
     expect(relatedPayload.data.content).toContain('CARD-5')
     expect(relatedPayload.data.content).toContain('CARD-4')
-    expect(relatedPayload.data.content).toContain(
-      `CARD-5 dependsOn ${target?.id}`
-    )
-    expect(relatedPayload.data.content).toContain(`dependsOn:${target?.id}`)
+    expect(relatedPayload.data.content).toContain('Depends on CARD-4')
+    expect(relatedPayload.data.content).toContain('constraint: dependsOn')
+    expect(relatedPayload.data.content).toContain(`target id: ${target?.id}`)
     expect(relatedPayload.data.content).not.toContain('CARD-5 dependsOn US-')
 
     const meta = await app.request('/api/v0/board/current/export?level=meta')
@@ -143,6 +144,7 @@ describe('GET /api/v0/board/current/export', () => {
     expect(fullPayload.data.content).toContain('## Board Summary')
     expect(fullPayload.data.content).toContain('## Records By Status')
     expect(fullPayload.data.content).toContain('asset:deck-system')
+    expect(fullPayload.data.content).toContain('raw id: asset:deck-system')
 
     const filtered = await app.request(
       '/api/v0/board/current/export?profile=agent-filtered&q=%E7%8E%A9%E5%AE%B6%E6%8A%BD%E7%89%8C'
@@ -172,8 +174,9 @@ describe('GET /api/v0/board/current/export', () => {
     expect(related.status).toBe(200)
     expect(relatedPayload.data.content).toContain('CARD-5')
     expect(relatedPayload.data.content).toContain('CARD-4')
-    expect(relatedPayload.data.content).toContain(`dependsOn:${target?.id}`)
-    expect(relatedPayload.data.content).toContain(`CARD-5 dependsOn ${target?.id}`)
+    expect(relatedPayload.data.content).toContain('Depends on CARD-4')
+    expect(relatedPayload.data.content).toContain(`target id: ${target?.id}`)
+    expect(relatedPayload.data.content).toContain('constraint: dependsOn')
     expect(relatedPayload.data.content).not.toContain('dependsOn:CARD-')
 
     const sprint = await app.request(
@@ -276,6 +279,95 @@ describe('GET /api/v0/board/current/export', () => {
     })
 
     expect(projection).toEqual(before)
+  })
+
+  it('renders readable reference labels and preserves raw ids in markdown', () => {
+    const projection: BoardCurrentProjection = {
+      snapshotHeadVersion: 0,
+      records: [
+        {
+          createdBy: 'local',
+          createdAt: '2026-06-05T00:00:00.000Z',
+          body: {
+            id: 'asset-record-1',
+            pid: 'ASSET-1',
+            schema: 'AssetBody',
+            body: { title: 'Battle Scene' },
+            tags: ['status:todo'],
+            assets: [],
+            relations: [],
+          },
+        },
+        {
+          createdBy: 'local',
+          createdAt: '2026-06-05T00:01:00.000Z',
+          body: {
+            id: 'card-record-1',
+            pid: 'CARD-1',
+            schema: 'CardBody',
+            body: { title: 'Uses asset and relation' },
+            tags: ['status:todo'],
+            assets: ['asset-record-1', 'unknown-asset-reference-1234567890'],
+            relations: [
+              {
+                constraint: 'dependsOn',
+                target: 'asset-record-1',
+                description: 'Needs source art.',
+              },
+              {
+                constraint: 'blocks',
+                target: 'unknown-relation-target-1234567890',
+              },
+            ],
+          },
+        },
+      ],
+      blockedRecords: [],
+      summary: {
+        totalBaseRecords: 2,
+        visibleCurrentRecords: 2,
+        archivedRecords: 0,
+        blockedRecords: 0,
+        projectionStatus: 'clean',
+      },
+    }
+
+    const exported = buildBoardMarkdownExport(projection, {
+      source: 'current-board',
+      level: 'full',
+      format: 'markdown',
+      generatedAt: '2026-06-05T00:00:00.000Z',
+    })
+
+    expect(exported.content).toContain('- ASSET-1 - Battle Scene')
+    expect(exported.content).toContain('raw id: asset-record-1')
+    expect(exported.content).toContain('unknown-...567890')
+    expect(exported.content).toContain('raw id: unknown-asset-reference-1234567890')
+    expect(exported.content).toContain('Depends on ASSET-1 - Battle Scene')
+    expect(exported.content).toContain('constraint: dependsOn')
+    expect(exported.content).toContain('target id: asset-record-1')
+    expect(exported.content).toContain('description: Needs source art.')
+    expect(exported.content).toContain('Blocks unknown-...567890')
+
+    const withoutAssets = buildBoardMarkdownExport(projection, {
+      source: 'current-board',
+      level: 'full',
+      format: 'markdown',
+      generatedAt: '2026-06-05T00:00:00.000Z',
+      includeAssets: false,
+    })
+    expect(withoutAssets.content).not.toContain('- assets:')
+    expect(withoutAssets.content).not.toContain('## Assets Index')
+
+    const withoutRelations = buildBoardMarkdownExport(projection, {
+      source: 'current-board',
+      level: 'full',
+      format: 'markdown',
+      generatedAt: '2026-06-05T00:00:00.000Z',
+      includeRelations: false,
+    })
+    expect(withoutRelations.content).not.toContain('- relations:')
+    expect(withoutRelations.content).not.toContain('## Relations / Requirement Graph')
   })
 })
 

@@ -9,6 +9,21 @@ const PROJECTION: BoardCurrentProjection = {
       createdBy: 'local',
       createdAt: '2026-06-05T00:00:00.000Z',
       body: {
+        id: 'asset-record-1',
+        pid: 'ASSET-1',
+        schema: 'AssetBody',
+        body: {
+          title: 'Deck System',
+        },
+        tags: ['status:todo'],
+        assets: [],
+        relations: [],
+      },
+    },
+    {
+      createdBy: 'local',
+      createdAt: '2026-06-05T00:01:00.000Z',
+      body: {
         id: '11111111-1111-5111-8111-111111111111',
         pid: 'CARD-1',
         schema: 'CardBody',
@@ -17,7 +32,7 @@ const PROJECTION: BoardCurrentProjection = {
           content: 'Full content stays here.',
         },
         tags: ['status:todo', 'sprint:1'],
-        assets: ['asset:deck-system'],
+        assets: ['asset-record-1', 'asset:deck-system'],
         relations: [
           {
             constraint: 'dependsOn',
@@ -27,12 +42,27 @@ const PROJECTION: BoardCurrentProjection = {
         ],
       },
     },
+    {
+      createdBy: 'local',
+      createdAt: '2026-06-05T00:02:00.000Z',
+      body: {
+        id: '22222222-2222-5222-8222-222222222222',
+        pid: 'CARD-2',
+        schema: 'CardBody',
+        body: {
+          title: 'Related Target',
+        },
+        tags: ['status:todo'],
+        assets: [],
+        relations: [],
+      },
+    },
   ],
   blockedRecords: [],
   diagnostics: [{ code: 'PROJECTION_NOTE', message: 'Diagnostics available' }],
   summary: {
-    totalBaseRecords: 1,
-    visibleCurrentRecords: 1,
+    totalBaseRecords: 3,
+    visibleCurrentRecords: 3,
     archivedRecords: 0,
     blockedRecords: 0,
     projectionStatus: 'clean',
@@ -67,8 +97,14 @@ describe('buildBoardContextPack', () => {
       generatedAt: '2026-06-05T00:00:00.000Z',
     })
 
+    expect(exported.content).toContain('ASSET-1 - Deck System')
+    expect(exported.content).toContain('raw id: asset-record-1')
     expect(exported.content).toContain('asset:deck-system')
-    expect(exported.content).toContain('dependsOn:22222222-2222-5222-8222-222222222222')
+    expect(exported.content).toContain('raw id: asset:deck-system')
+    expect(exported.content).toContain('Depends on CARD-2 - Related Target')
+    expect(exported.content).toContain('constraint: dependsOn')
+    expect(exported.content).toContain('target id: 22222222-2222-5222-8222-222222222222')
+    expect(exported.content).toContain('description: Related card')
     expect(exported.content).toContain('Full content stays here.')
     expect(exported.content).toContain('## Diagnostics')
   })

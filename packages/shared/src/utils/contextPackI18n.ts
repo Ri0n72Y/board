@@ -90,6 +90,10 @@ interface ContextPackStrings {
   assets: string
   relations: string
   description: string
+  rawId: string
+  constraint: string
+  targetId: string
+  relationDescription: string
   content: string
   unassigned: string
   none: string
@@ -101,6 +105,7 @@ interface ContextPackStrings {
   recordNotFound: string
   noRelationsExported: string
   uncategorized: string
+  relationConstraintLabels: Record<string, string>
 }
 
 const EN: ContextPackStrings = {
@@ -172,6 +177,10 @@ const EN: ContextPackStrings = {
   assets: 'assets',
   relations: 'relations',
   description: 'description',
+  rawId: 'raw id',
+  constraint: 'constraint',
+  targetId: 'target id',
+  relationDescription: 'description',
   content: 'content',
   unassigned: 'unassigned',
   none: 'none',
@@ -183,6 +192,19 @@ const EN: ContextPackStrings = {
   recordNotFound: 'Record not found.',
   noRelationsExported: 'No relations in exported records.',
   uncategorized: 'uncategorized',
+  relationConstraintLabels: {
+    dependsOn: 'Depends on',
+    blocks: 'Blocks',
+    blockedBy: 'Blocked by',
+    relatedTo: 'Related to',
+    relatesTo: 'Relates to',
+    duplicates: 'Duplicates',
+    parentOf: 'Parent of',
+    childOf: 'Child of',
+    contains: 'Contains',
+    supports: 'Supports',
+    implementedBy: 'Implemented by',
+  },
 }
 
 const ZH: ContextPackStrings = {
@@ -254,6 +276,10 @@ const ZH: ContextPackStrings = {
   assets: '资产',
   relations: '关联',
   description: '描述',
+  rawId: '原始 ID',
+  constraint: '约束',
+  targetId: '目标 ID',
+  relationDescription: '说明',
   content: '内容',
   unassigned: '未分配',
   none: '无',
@@ -265,6 +291,19 @@ const ZH: ContextPackStrings = {
   recordNotFound: '未找到记录。',
   noRelationsExported: '导出记录中无关联。',
   uncategorized: '未分类',
+  relationConstraintLabels: {
+    dependsOn: '依赖',
+    blocks: '阻塞',
+    blockedBy: '被阻塞',
+    relatedTo: '相关',
+    relatesTo: '相关',
+    duplicates: '重复',
+    parentOf: '父级',
+    childOf: '子级',
+    contains: '包含',
+    supports: '支持',
+    implementedBy: '实现于',
+  },
 }
 
 const STRINGS: Record<ContextPackLocale, ContextPackStrings> = {

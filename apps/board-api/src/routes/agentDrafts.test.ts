@@ -312,6 +312,118 @@ describe('Agent Drafts route', () => {
 
   // ── Create draft does not create record/patch/snapshot ──
 
+  it('current-board draft contextMarkdown renders readable asset and relation references', async () => {
+    const app = await createTestApp()
+    const asset = await createRecord(app, {
+      schema: 'AssetBody',
+      tags: ['status:todo'],
+      body: { title: 'Draft Asset' },
+    })
+    const target = await createRecord(app, {
+      schema: 'CardBody',
+      tags: ['status:todo'],
+      body: { title: 'Draft Target' },
+    })
+    await createRecord(app, {
+      schema: 'CardBody',
+      tags: ['status:todo'],
+      body: { title: 'Draft Source' },
+      assets: [asset.id],
+      relations: [
+        {
+          constraint: 'dependsOn',
+          target: target.id,
+          description: 'Draft relation note.',
+        },
+      ],
+    })
+
+    const createRes = await app.request('/api/v0/agent/drafts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Readable current draft',
+        profile: 'agent-full',
+        source: 'current-board',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    expect(createRes.status).toBe(201)
+    const createPayload = await createRes.json()
+    const markdown = createPayload.data.draft.contextMarkdown as string
+
+    expect(markdown).toContain('ASSET-1 - Draft Asset')
+    expect(markdown).toContain(`raw id: ${asset.id}`)
+    expect(markdown).toContain('Depends on CARD-')
+    expect(markdown).toContain('Draft Target')
+    expect(markdown).toContain('constraint: dependsOn')
+    expect(markdown).toContain(`target id: ${target.id}`)
+    expect(markdown).toContain('description: Draft relation note.')
+    expect(markdown).not.toContain(`dependsOn:${target.id}`)
+
+    const listRes = await app.request('/api/v0/agent/drafts')
+    const listPayload = await listRes.json()
+    const summary = listPayload.data.drafts.find(
+      (draft: { id: string }) => draft.id === createPayload.data.draft.id,
+    )
+    expect(summary).toBeDefined()
+    expect('contextMarkdown' in summary).toBe(false)
+
+    const detailRes = await app.request(
+      `/api/v0/agent/drafts/${createPayload.data.draft.id}`,
+    )
+    const detailPayload = await detailRes.json()
+    expect(detailPayload.data.draft.contextMarkdown).toBe(markdown)
+  })
+
+  it('snapshot draft contextMarkdown renders readable static references', async () => {
+    const app = await createTestApp()
+    const asset = await createRecord(app, {
+      schema: 'AssetBody',
+      tags: ['status:todo'],
+      body: { title: 'Snapshot Asset' },
+    })
+    const target = await createRecord(app, {
+      schema: 'CardBody',
+      tags: ['status:todo'],
+      body: { title: 'Snapshot Target' },
+    })
+    await createRecord(app, {
+      schema: 'CardBody',
+      tags: ['status:todo'],
+      body: { title: 'Snapshot Source' },
+      assets: [asset.id],
+      relations: [{ constraint: 'blocks', target: target.id }],
+    })
+    const snapshot = await createSnapshot(app, 'Readable snapshot draft')
+
+    await createRecord(app, {
+      schema: 'CardBody',
+      tags: ['status:todo'],
+      body: { title: 'Created after snapshot draft' },
+    })
+
+    const createRes = await app.request('/api/v0/agent/drafts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Readable snapshot draft',
+        profile: 'agent-snapshot',
+        source: 'snapshot',
+        snapshotId: snapshot.id,
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    expect(createRes.status).toBe(201)
+    const markdown = (await createRes.json()).data.draft.contextMarkdown as string
+
+    expect(markdown).toContain('ASSET-1 - Snapshot Asset')
+    expect(markdown).toContain(`raw id: ${asset.id}`)
+    expect(markdown).toContain('Blocks CARD-')
+    expect(markdown).toContain('Snapshot Target')
+    expect(markdown).toContain(`target id: ${target.id}`)
+    expect(markdown).toContain('static checkpoint')
+    expect(markdown).not.toContain('Created after snapshot draft')
+  })
+
   it('creating draft does not create records, patches, or snapshots', async () => {
     const app = await createTestApp()
     const beforeBoard = await app.request('/api/v0/board/current')
@@ -907,3 +1019,30 @@ describe('buildAgentDraftHandoffMarkdown (shared purity)', () => {
     expect(result.content).toContain('Do not claim any patch was applied')
   })
 })
+
+async function createRecord(app: Hono, input: Record<string, unknown>) {
+  const response = await app.request('/api/v0/records', {
+    method: 'POST',
+    body: JSON.stringify(input),
+    headers: { 'content-type': 'application/json' },
+  })
+  const payload = await response.json()
+  expect(response.status).toBe(201)
+  return payload.data.body as {
+    id: string
+    pid: string
+  }
+}
+
+async function createSnapshot(app: Hono, reason: string) {
+  const response = await app.request('/api/v0/snapshots', {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+    headers: { 'content-type': 'application/json' },
+  })
+  const payload = await response.json()
+  expect(response.status).toBe(201)
+  return payload.data.snapshot as {
+    id: string
+  }
+}
