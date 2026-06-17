@@ -14,7 +14,6 @@ import {
 import { ok, error } from '../http/responses.js'
 import type { SnapshotService } from '../services/snapshot/snapshotService.js'
 import {
-  applyExportFilters,
   BoardExportQueryError,
   parseBoardExportOptions,
 } from './boardExportQuery.js'
@@ -67,11 +66,10 @@ export function createSnapshotsRoute(snapshotService: SnapshotService): Hono {
         createdAt: snapshot.createdAt,
         reason: snapshot.reason,
       })
-      const projection = applyExportFilters(snapshot.projection, options.filters ?? {})
       const exported =
         'profile' in options
-          ? buildBoardContextPack(projection, options)
-          : buildBoardMarkdownExport(projection, options)
+          ? buildBoardContextPack(snapshot.projection, options)
+          : buildBoardMarkdownExport(snapshot.projection, options)
       return c.json<ApiResponse<BoardExportResult>>(ok(exported))
     } catch (caught) {
       if (caught instanceof BoardExportQueryError) {

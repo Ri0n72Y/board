@@ -21,7 +21,6 @@ import type { RecordRepository } from '../../repositories/recordRepository.js'
 import type { SnapshotHeadRepository } from '../../repositories/snapshotHeadRepository.js'
 import type { SnapshotRepository } from '../../repositories/snapshotRepository.js'
 import { getBoardCurrentProjection } from '../boardCurrent/boardCurrentService.js'
-import { filterBoardCurrentRecords } from '../boardCurrent/boardCurrentFilter.js'
 import { resolveActor } from '../record/recordResponses.js'
 
 export class AgentDraftService {
@@ -88,7 +87,6 @@ export class AgentDraftService {
     }
 
     let projection: Awaited<ReturnType<typeof getBoardCurrentProjection>>
-    let recordCount: number
 
     if (input.source === 'current-board') {
       // getBoardCurrentProjection internally applies filterBoardCurrentRecords
@@ -96,10 +94,7 @@ export class AgentDraftService {
       projection = await getBoardCurrentProjection({
         repository: this.recordRepository,
         snapshotHeadRepository: this.snapshotHeadRepository,
-        query: input.filters,
       })
-
-      recordCount = projection.records.length
     } else {
       // Snapshot source
       if (!input.snapshotId) {
@@ -116,23 +111,6 @@ export class AgentDraftService {
 
       projection = snapshot.projection
 
-      // Apply filters if any
-      if (input.filters) {
-        const filteredRecords = filterBoardCurrentRecords(
-          projection.records,
-          input.filters,
-        )
-        projection = {
-          ...projection,
-          records: filteredRecords,
-          summary: {
-            ...projection.summary,
-            visibleCurrentRecords: filteredRecords.length,
-          },
-        }
-      }
-
-      recordCount = projection.records.length
       snapshotId = snapshot.id
 
       contextPackOptions.snapshotId = snapshot.id
@@ -143,6 +121,7 @@ export class AgentDraftService {
     }
 
     const contextPack = buildBoardContextPack(projection, contextPackOptions)
+    const recordCount = contextPack.meta.recordCount
 
     const draft: AgentDraftDetail = {
       id: crypto.randomUUID(),

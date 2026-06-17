@@ -52,7 +52,7 @@ export function buildBoardMarkdownExport(
     options: normalized,
     generatedAt,
     records: sortedRecords,
-    references: buildExportReferenceMap(sortedRecords),
+    references: buildExportReferenceMap(projection.records),
   }
   const filename = makeBoardExportFilename(normalized, generatedAt)
   const content = buildMarkdown(context)
@@ -344,16 +344,17 @@ function selectRecordsForLevel(
   records: BoardRecord[],
   options: BoardExportOptions
 ): BoardRecord[] {
+  const filteredRecords = filterRecordsForExport(records, options.filters)
   if (options.level === 'card') {
-    return records.filter((record) => record.body.id === options.recordId)
+    return filteredRecords.filter((record) => record.body.id === options.recordId)
   }
   if (options.level === 'related' && options.recordId) {
-    return selectRelatedRecords(records, options.recordId)
+    return selectRelatedRecords(filteredRecords, options.recordId)
   }
   if (options.level === 'related') {
-    return records.filter((record) => {
+    return filteredRecords.filter((record) => {
       const outgoing = (record.body.relations ?? []).length > 0
-      const incoming = records.some((other) =>
+      const incoming = filteredRecords.some((other) =>
         (other.body.relations ?? []).some((relation) => relation.target === record.body.id)
       )
       return outgoing || incoming
@@ -362,10 +363,51 @@ function selectRecordsForLevel(
   if (options.level === 'sprint') {
     const sprintTag = options.sprintTag ?? inferSingleSprintTag(options.filters?.tags)
     return sprintTag
-      ? records.filter((record) => record.body.tags.includes(sprintTag as Tag))
+      ? filteredRecords.filter((record) => record.body.tags.includes(sprintTag as Tag))
       : []
   }
-  return records
+  return filteredRecords
+}
+
+function filterRecordsForExport(
+  records: BoardRecord[],
+  filters: BoardExportOptions['filters']
+): BoardRecord[] {
+  if (!filters) return records
+  return records.filter((record) => matchesExportFilters(record, filters))
+}
+
+function matchesExportFilters(
+  record: BoardRecord,
+  filters: NonNullable<BoardExportOptions['filters']>
+): boolean {
+  const body = record.body
+  if (filters.assignee && body.assignee !== filters.assignee) return false
+  if (filters.assetId && !body.assets?.includes(filters.assetId)) return false
+  if (
+    filters.relationTarget &&
+    !body.relations?.some((relation) => relation.target === filters.relationTarget)
+  ) {
+    return false
+  }
+  if (filters.tags?.length) {
+    const matchesTags =
+      filters.tagMatch === 'any'
+        ? filters.tags.some((tag) => body.tags.includes(tag))
+        : filters.tags.every((tag) => body.tags.includes(tag))
+    if (!matchesTags) return false
+  }
+  if (filters.q && !matchesExportText(record, filters.q)) return false
+  return true
+}
+
+function matchesExportText(record: BoardRecord, query: string): boolean {
+  const normalized = query.trim().toLowerCase()
+  if (!normalized) return true
+  return ['title', 'description', 'content'].some((key) => {
+    const value = stringField(record.body.body, key)
+    return value?.toLowerCase().includes(normalized) === true
+  })
 }
 
 function selectRelatedRecords(records: BoardRecord[], recordId: string): BoardRecord[] {

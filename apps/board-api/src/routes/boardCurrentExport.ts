@@ -8,7 +8,6 @@ import { ok, error } from '../http/responses.js'
 import type { RecordRepository } from '../repositories/recordRepository.js'
 import type { SnapshotHeadRepository } from '../repositories/snapshotHeadRepository.js'
 import { getBoardCurrentProjection } from '../services/boardCurrent/boardCurrentService.js'
-import { parseBoardCurrentQuery } from './boardCurrentQuery.js'
 import {
   BoardExportQueryError,
   parseBoardExportOptions,
@@ -23,11 +22,9 @@ export function createBoardCurrentExportRoute(
   route.get('/current/export', async (c) => {
     const searchParams = new URL(c.req.url).searchParams
     try {
-      const query = parseBoardCurrentQuery(searchParams)
       const projection = await getBoardCurrentProjection({
         repository,
         snapshotHeadRepository,
-        query,
       })
       const options = parseBoardExportOptions(searchParams, 'current-board')
       const exported =

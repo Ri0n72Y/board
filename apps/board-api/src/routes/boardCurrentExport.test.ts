@@ -369,8 +369,126 @@ describe('GET /api/v0/board/current/export', () => {
     expect(withoutRelations.content).not.toContain('- relations:')
     expect(withoutRelations.content).not.toContain('## Relations / Requirement Graph')
   })
+
+  it('resolves card export references from records outside the selected card', () => {
+    const projection = makeReferenceScopeProjection()
+
+    const exported = buildBoardMarkdownExport(projection, {
+      source: 'current-board',
+      level: 'card',
+      recordId: 'card-record-1',
+      format: 'markdown',
+      generatedAt: '2026-06-05T00:00:00.000Z',
+    })
+
+    expect(exported.meta.recordCount).toBe(1)
+    expect(exported.content).toContain('#### CARD-1 - Match Source')
+    expect(exported.content).toContain('ASSET-1 - Outside Asset')
+    expect(exported.content).toContain('raw id: asset-record-1')
+    expect(exported.content).toContain('Depends on CARD-2 - Outside Target')
+    expect(exported.content).toContain('target id: card-record-2')
+    expect(exported.content).not.toContain('#### ASSET-1 - Outside Asset')
+    expect(exported.content).not.toContain('#### CARD-2 - Outside Target')
+  })
+
+  it('resolves filtered export references from records outside the filtered result', () => {
+    const projection = makeReferenceScopeProjection()
+
+    const exported = buildBoardMarkdownExport(projection, {
+      source: 'current-board',
+      level: 'filtered',
+      format: 'markdown',
+      generatedAt: '2026-06-05T00:00:00.000Z',
+      filters: { q: 'match-source' },
+    })
+
+    expect(exported.meta.recordCount).toBe(1)
+    expect(exported.content).toContain('#### CARD-1 - Match Source')
+    expect(exported.content).toContain('Depends on CARD-2 - Outside Target')
+    expect(exported.content).toContain('target id: card-record-2')
+    expect(exported.content).not.toContain('#### CARD-2 - Outside Target')
+  })
+
+  it('resolves agent-card context references from records outside the selected card', () => {
+    const projection = makeReferenceScopeProjection()
+
+    const exported = buildBoardContextPack(projection, {
+      source: 'current-board',
+      profile: 'agent-card',
+      recordId: 'card-record-1',
+      format: 'markdown',
+      generatedAt: '2026-06-05T00:00:00.000Z',
+    })
+
+    expect(exported.meta.recordCount).toBe(1)
+    expect(exported.content).toContain('#### CARD-1 - Match Source')
+    expect(exported.content).toContain('ASSET-1 - Outside Asset')
+    expect(exported.content).toContain('raw id: asset-record-1')
+    expect(exported.content).toContain('Depends on CARD-2 - Outside Target')
+    expect(exported.content).toContain('target id: card-record-2')
+    expect(exported.content).not.toContain('#### ASSET-1 - Outside Asset')
+    expect(exported.content).not.toContain('#### CARD-2 - Outside Target')
+  })
 })
 
 async function seedBoard(repo: MemoryRecordRepository) {
   await seedLegalMockBoard(repo)
+}
+
+function makeReferenceScopeProjection(): BoardCurrentProjection {
+  return {
+    snapshotHeadVersion: 0,
+    records: [
+      {
+        createdBy: 'local',
+        createdAt: '2026-06-05T00:00:00.000Z',
+        body: {
+          id: 'asset-record-1',
+          pid: 'ASSET-1',
+          schema: 'AssetBody',
+          body: { title: 'Outside Asset' },
+          tags: ['status:todo'],
+          assets: [],
+          relations: [],
+        },
+      },
+      {
+        createdBy: 'local',
+        createdAt: '2026-06-05T00:01:00.000Z',
+        body: {
+          id: 'card-record-1',
+          pid: 'CARD-1',
+          schema: 'CardBody',
+          body: {
+            title: 'Match Source',
+            description: 'match-source',
+          },
+          tags: ['status:todo'],
+          assets: ['asset-record-1'],
+          relations: [{ constraint: 'dependsOn', target: 'card-record-2' }],
+        },
+      },
+      {
+        createdBy: 'local',
+        createdAt: '2026-06-05T00:02:00.000Z',
+        body: {
+          id: 'card-record-2',
+          pid: 'CARD-2',
+          schema: 'CardBody',
+          body: { title: 'Outside Target' },
+          tags: ['status:todo'],
+          assets: [],
+          relations: [],
+        },
+      },
+    ],
+    blockedRecords: [],
+    summary: {
+      totalBaseRecords: 3,
+      visibleCurrentRecords: 3,
+      archivedRecords: 0,
+      blockedRecords: 0,
+      projectionStatus: 'clean',
+    },
+  }
 }

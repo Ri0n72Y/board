@@ -199,11 +199,14 @@ const EN: ContextPackStrings = {
     relatedTo: 'Related to',
     relatesTo: 'Relates to',
     duplicates: 'Duplicates',
+    duplicate: 'Duplicate',
     parentOf: 'Parent of',
     childOf: 'Child of',
     contains: 'Contains',
     supports: 'Supports',
     implementedBy: 'Implemented by',
+    'asset:completion-of': 'Completion asset for',
+    'progress:contributes-to': 'Contributes to progress of',
   },
 }
 
@@ -298,11 +301,14 @@ const ZH: ContextPackStrings = {
     relatedTo: '相关',
     relatesTo: '相关',
     duplicates: '重复',
+    duplicate: '重复',
     parentOf: '父级',
     childOf: '子级',
     contains: '包含',
     supports: '支持',
     implementedBy: '实现于',
+    'asset:completion-of': '完成资产',
+    'progress:contributes-to': '进度贡献',
   },
 }
 

@@ -1,9 +1,11 @@
 import type { BoardCurrentProjection } from '../interfaces/index.js'
 import { buildBoardMarkdownExport } from './boardExport.js'
+import { getContextPackStrings } from './contextPackI18n.js'
 import {
   buildExportReferenceMap,
   formatExportReference,
   formatExportRelation,
+  formatExportRelationConstraint,
   shortExportReferenceId,
 } from './exportReferenceDisplay.js'
 
@@ -55,6 +57,14 @@ const projection: BoardCurrentProjection = {
             constraint: 'customConstraint',
             target: 'unknown-relation-target-1234567890',
           },
+          {
+            constraint: 'asset:completion-of',
+            target: 'asset-record-1',
+          },
+          {
+            constraint: 'progress:contributes-to',
+            target: 'asset-record-1',
+          },
         ],
       },
     },
@@ -101,6 +111,39 @@ eq(
   'relation label combines constraint and target label'
 )
 
+eq(
+  formatExportRelationConstraint('asset:completion-of', {
+    'asset:completion-of': 'Completion asset for',
+  }),
+  'Completion asset for',
+  'asset completion constraint label is supported'
+)
+eq(
+  formatExportRelationConstraint('progress:contributes-to', {
+    'progress:contributes-to': 'Contributes to progress of',
+  }),
+  'Contributes to progress of',
+  'progress contribution constraint label is supported'
+)
+eq(
+  formatExportRelationConstraint('unknown:constraint', {}),
+  'unknown:constraint',
+  'unknown constraint falls back to raw value'
+)
+
+const en = getContextPackStrings('en-US')
+eq(en.relationConstraintLabels.duplicate, 'Duplicate', 'duplicate copy is available')
+eq(
+  en.relationConstraintLabels['asset:completion-of'],
+  'Completion asset for',
+  'asset completion copy is available'
+)
+eq(
+  en.relationConstraintLabels['progress:contributes-to'],
+  'Contributes to progress of',
+  'progress contribution copy is available'
+)
+
 const exported = buildBoardMarkdownExport(projection, {
   source: 'current-board',
   level: 'full',
@@ -117,6 +160,15 @@ assert(
 assert(exported.content.includes('constraint: dependsOn'), 'raw constraint is exported')
 assert(exported.content.includes('target id: asset-record-1'), 'raw target id is exported')
 assert(exported.content.includes('description: Needs the card data.'), 'relation description is exported')
+assert(exported.content.includes('customConstraint'), 'unknown raw constraint is exported')
+assert(
+  exported.content.includes('Completion asset for ASSET-1 - Deck System'),
+  'asset completion constraint label is exported'
+)
+assert(
+  exported.content.includes('Contributes to progress of ASSET-1 - Deck System'),
+  'progress contribution constraint label is exported'
+)
 assert(
   exported.content.includes(shortExportReferenceId('unknown-asset-reference-1234567890')),
   'unknown asset fallback is exported'
