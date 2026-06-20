@@ -1,204 +1,226 @@
 # API Contract
 
-本文档是前端接入前的开发者可读 contract，不是完整 OpenAPI。所有成功响应都遵循共享结构：
+This document freezes the Phase 1 HTTP contract as implemented in the current
+codebase. It is a developer-facing contract, not a full OpenAPI document.
+
+All successful JSON responses use the shared envelope:
 
 ```ts
 type ApiResponse<T> = { ok: true; data: T } | { ok: false; error: ApiError }
 ```
 
-## 接口分类
+## Phase 1 Read Routes
 
-- 事实接口：读取或写入 base record、patch facts、profiles、config、snapshot head cache。
-- Projection 接口：读取 replay 后的当前看板视图，不写事实。当前只有 `GET /api/v0/board/current`。
+- `GET /api/v0/config` - read normalized YAML-backed board config.
+- `GET /api/v0/profiles` - list profiles.
+- `GET /api/v0/profiles/:profileKey` - read one profile.
+- `GET /api/v0/records` - legacy/base record list. This is not the current board projection.
+- `GET /api/v0/records/:id` - read one base record.
+- `GET /api/v0/records/:id/head` - read the current patch head for one record. This is the canonical frontend source for `parentId` and `currentVersion` before edit/status-move patch submit.
+- `GET /api/v0/records/:id/history` - read one record's replay/history.
+- `GET /api/v0/patches?targetId=...` - read patch facts for debugging/history support.
+- `GET /api/v0/patches/:id` - read one patch fact.
+- `GET /api/v0/snapshot-head` - backend compatibility/current-head cache route. Board-web must not call this route.
+- `GET /api/v0/board/current` - read the current board projection.
+- `GET /api/v0/board/current/export` - export the current board as Markdown or Context Pack.
+- `GET /api/v0/snapshots` - list saved snapshots.
+- `GET /api/v0/snapshots/:id` - read one saved snapshot.
+- `GET /api/v0/snapshots/:id/export` - export a saved snapshot from its stored projection.
+- `GET /api/v0/agent/drafts` - list Agent Draft summaries. Summaries do not include `contextMarkdown`.
+- `GET /api/v0/agent/drafts/:id` - read one Agent Draft detail, including `contextMarkdown`.
+- `GET /api/v0/agent/drafts/:id/handoff` - generate formal handoff Markdown for a reviewed draft.
+- `GET /api/v0/agent/drafts/:id/responses` - list manual response summaries for one draft.
+- `GET /api/v0/agent/responses/:responseId` - read one manual response detail.
 
-## Config
+## Phase 1 Write Routes
 
-### `GET /api/v0/config`
+These routes exist in code. Board-web Phase 1 uses only the allowed subset
+called out below.
 
-- 用途：读取 yaml config 归一化后的当前配置。
-- 前端直接使用：可以。最小看板展示可先不依赖 config；但标签选项、状态列、关系类型、创建表单应读取 config。
-- 请求方式：`GET`。
-- 关键 query / body：无。
-- 返回核心结构：`BoardConfig`。
-- 常见错误：当前路由无显式业务错误。
-- 类型：事实配置读取接口。config 来源是 yaml，不是 Mongo config collection。
+- `POST /api/v0/records` - create a base record.
+- `POST /api/v0/records/:id/patches` - append a patch to one record. This is the canonical record update/status-move route.
+- `POST /api/v0/snapshots` - create a manual snapshot checkpoint.
+- `POST /api/v0/agent/drafts` - create an Agent Draft review-queue item with static `contextMarkdown`.
+- `PATCH /api/v0/agent/drafts/:id/review` - update draft review metadata only. It is not a board mutation.
+- `POST /api/v0/agent/drafts/:id/responses` - create a manual response artifact pasted by a human. It is not a board mutation and does not apply a patch.
+- `POST /api/v0/profiles` and `PATCH /api/v0/profiles/:profileKey` - profile management routes exist, but board-web Phase 1 does not expose profile management.
+- `PATCH /api/v0/records/:id` - legacy direct PATCH route exists only to return `410 Gone`; clients must not use it.
+- `DELETE /api/v0/records/:id` - backend archive route exists. It is not used by board-web Phase 1 and is not part of the board-web write whitelist.
 
-## Profiles
+Board-web Phase 1 write whitelist:
 
-### `GET /api/v0/profiles`
+```text
+POST  /api/v0/records
+POST  /api/v0/records/:id/patches
+POST  /api/v0/snapshots
+POST  /api/v0/agent/drafts
+POST  /api/v0/agent/drafts/:id/responses
+PATCH /api/v0/agent/drafts/:id/review
+```
 
-- 用途：读取 profile 列表。
-- 前端直接使用：可以用于后续 assignee 展开；第一阶段 `/board/current` 不会自动聚合 profiles。
-- 请求方式：`GET`。
-- 关键 query / body：无。
-- 返回核心结构：`Profile[]`。
-- 常见错误：当前路由无显式业务错误。
-- 类型：事实接口。
+## Routes That Do Not Exist
 
-### `POST /api/v0/profiles`
+The following routes must remain absent unless a later PRD explicitly changes
+the contract:
 
-- 用途：创建 profile。
-- 前端直接使用：后续 profile 管理可用；看板第一阶段不建议优先做。
-- 请求方式：`POST`。
-- 关键 body：`CreateProfileInput`，当前等同 `Profile`。
-- 返回核心结构：创建后的 `Profile`。
-- 常见错误：`400 INVALID_PROFILE`、`409 PROFILE_EXISTS`。
-- 类型：事实接口。
+```text
+POST /api/v0/agent/run
+POST /api/v0/agent/apply
+POST /api/v0/agent/execute
+POST /api/v0/patches
+POST /api/v0/agent/responses/manual
+PUT *
+```
 
-### `GET /api/v0/profiles/:profileKey`
+`DELETE *` cannot be documented as fully absent because
+`DELETE /api/v0/records/:id` currently exists as a backend archive route.
 
-- 用途：读取单个 profile。
-- 前端直接使用：可以。
-- 请求方式：`GET`。
-- 关键 path：`:profileKey`，表示 profile key / public key。
-- 返回核心结构：`Profile`。
-- 常见错误：`404 NOT_FOUND`。
-- 类型：事实接口。
+## Board Current Filter Contract
 
-### `PATCH /api/v0/profiles/:profileKey`
+Canonical query shape:
 
-- 用途：更新 profile 的 `name` / `extra`。
-- 前端直接使用：后续 profile 管理可用。
-- 请求方式：`PATCH`。
-- 关键 body：`UpdateProfileInput`，包括可选 `name` 和 `extra`。
-- 返回核心结构：更新后的 `Profile`。
-- 常见错误：`400 INVALID_PROFILE`、`404 NOT_FOUND`。
-- 类型：事实接口。
+```ts
+type BoardCurrentQuery = {
+  q?: string
+  tags?: Tag[]
+  tagMatch?: 'all' | 'any'
+  includeArchived?: boolean
+  assignee?: string
+  assetId?: string
+  relationTarget?: string
+}
+```
 
-## Records
+- `includeArchived !== true` excludes records whose current state has `status:archived`.
+- `includeArchived === true` includes archived current records.
+- Missing `tagMatch` defaults to `all`.
+- `tags`, `assignee`, `assetId`, `relationTarget`, and `q` combine with AND semantics.
+- Filters run against replayed current state, not base-record state.
+- Current Board, Current Board export, Context Pack export, and filtered Agent Draft creation share the same shared board filter semantics.
 
-### `GET /api/v0/records`
+`q` searches:
 
-- 用途：查询 base records / legacy list。
-- 前端直接使用：不推荐作为当前看板入口；当前看板必须使用 `/api/v0/board/current`。
-- 请求方式：`GET`。
-- 关键 query：`id`、`pid`、`schema`、`tags`、`tagMatch=all|any`、`assignee`、`assetId`、`relationTarget`、`includeArchived`、`q`、`limit`。该接口的 `q` 会搜索 base record 的 id、pid、schema、assignee、tags 和正文展示字段。
-- 返回核心结构：`RecordResponse<RecordItem<RecordBody>>[]`。
-- 常见错误：当前 list 路由无显式业务错误。
-- 类型：事实接口。它不 replay patches。
+```text
+pid
+id
+tags
+assignee
+assets
+relation.constraint
+relation.target
+body.title
+body.description
+body.content
+```
 
-### `POST /api/v0/records`
+`q` does not search:
 
-- 用途：创建 base record。
-- 前端直接使用：可以作为后续 create record 入口；第一阶段可先预留。
-- 请求方式：`POST`。
-- 关键 header：可选 `x-actor-id`，缺省 actor 为 `local`。
-- 关键 body：`CreateRecordInput`，包括 `pidPrefix`、`schema`、`tags`、`assignee`、`body`、`assets`、`relations`。
-- 返回核心结构：创建后的 `RecordResponse<RecordItem<RecordBody>>`，HTTP 201。
-- 常见错误：`400 INVALID_RECORD`。
-- 类型：事实接口。
+```text
+schema
+createdBy
+createdAt
+patch descriptions
+old body state
+```
 
-### `GET /api/v0/records/:id`
+## Patch Contract
 
-- 用途：按 id 读取单条 base record。
-- 前端直接使用：可以用于调试或 base fact 读取；当前看板展示不要用它替代 `/board/current`。
-- 请求方式：`GET`。
-- 关键 path：`:id`。
-- 返回核心结构：`RecordResponse<RecordItem<RecordBody>>`。
-- 常见错误：`404 NOT_FOUND`。
-- 类型：事实接口。它不 replay patches。
+Canonical patch submission:
 
-### `DELETE /api/v0/records/:id`
+```http
+GET  /api/v0/records/:id/head
+POST /api/v0/records/:id/patches
+```
 
-- 用途：归档 record。当前会 append archive patch，并兼容性更新 base record tags。
-- 前端直接使用：后续可用；第一阶段只建议展示 archived 语义和 includeArchived 切换。
-- 请求方式：`DELETE`。
-- 关键 path：`:id`。
-- 返回核心结构：归档后的 `RecordResponse<RecordItem<RecordBody>>`。
-- 常见错误：`404 NOT_FOUND`、`409 CONFLICT`。
-- 类型：事实接口。长期应由 current projection 统一表达归档状态。
+Canonical request body fields:
 
-### `PATCH /api/v0/records/:id`
+```ts
+type CreateRecordPatchInput<TBodyPatch = DeepPartial<RecordBody>> = {
+  parentId: RecordId | null
+  currentVersion?: number
+  tagChanges?: {
+    add?: Tag[]
+    remove?: Tag[]
+    change?: {
+      namespace: string
+      from: Tag | null
+      to: Tag | null
+    }[]
+  }
+  assignee?: PublicKey | null
+  body?: TBodyPatch
+  assets?: AssetRef[]
+  relations?: RelationRef[]
+  description?: string
+}
+```
 
-- 用途：legacy direct record PATCH。
-- 前端直接使用：禁止。
-- 请求方式：`PATCH`。
-- 关键 body：无意义，不应发送。
-- 返回核心结构：固定错误响应。
-- 常见错误：固定 `410 GONE`，错误信息要求使用 `POST /api/v0/records/:id/patches`。
-- 类型：禁用的 legacy 入口。
+The backend still accepts `snapshotVersion` as a deprecated compatibility alias
+for `currentVersion`; board-web must use `currentVersion`.
 
-## Patches
+Patch semantics:
 
-### `POST /api/v0/records/:id/patches`
+- Patch no longer uses full `tags` as the canonical tag mutation field.
+- Tag mutation uses `tagChanges`.
+- Move status is encoded as a namespace change:
 
-- 用途：向指定 record append patch，是当前更新 record 的唯一推荐入口。
-- 前端直接使用：后续 create patch / edit flow 应使用它。
-- 请求方式：`POST`。
-- 关键 header：可选 `x-actor-id`，缺省 actor 为 `local`。
-- 关键 path：`:id` 是 targetId。
-- 关键 body：`CreateRecordPatchInput`，包括 `parentId`、`snapshotVersion`，以及可选 `tags`、`assignee`、`body`、`assets`、`relations`、`description`。body 中禁止提供 `targetId`，targetId 来自 path。
-- 返回核心结构：`{ patch, newSnapshotVersion }`，HTTP 201。
-- 常见错误：`400 INVALID_PATCH`、`404 NOT_FOUND`、`409 CONFLICT`。
-- 类型：事实接口。
+```json
+{
+  "tagChanges": {
+    "change": [
+      {
+        "namespace": "status",
+        "from": "status:todo",
+        "to": "status:doing"
+      }
+    ]
+  }
+}
+```
 
-旧 `POST /api/v0/patches` 创建入口不存在，前端不要使用。
+- Patch body should contain only changed fields. Do not submit unchanged nulls.
+- Patch edit/status-move uses `GET /api/v0/records/:id/head` for `parentId` and `currentVersion`.
+- Frontend patch edit/status-move must not use `/api/v0/snapshot-head`.
+- `POST /api/v0/patches` is not a write entrypoint.
 
-### `GET /api/v0/patches/:id`
+## Export / Context Pack Contract
 
-- 用途：按 id 读取单条 patch fact。
-- 前端直接使用：可以用于调试或 history 细节；普通看板展示不需要优先调用。
-- 请求方式：`GET`。
-- 关键 path：`:id`。
-- 返回核心结构：`RecordResponse<PatchItem<DeepPartial<RecordBody>>>`。
-- 常见错误：`404 NOT_FOUND`。
-- 类型：事实接口。
+- Current Board export and Context Pack use the shared board filter.
+- `context.records` is the selected/exported record set.
+- The reference map is built from the full `projection.records` so readable labels can resolve outside the selected export slice.
+- Asset output includes a readable label and raw id.
+- Relation output includes the constraint label, target readable label, and raw target id.
+- Snapshot export uses the stored snapshot projection. It does not read back the current board.
+- Agent Draft `contextMarkdown` is static content captured at draft creation time.
+- Agent Draft list summaries do not return `contextMarkdown`.
+- Agent Draft detail returns `contextMarkdown`.
+- Export Markdown and Context Pack Markdown do not authorize execution or board mutation.
 
-### `GET /api/v0/patches?targetId=xxx`
+## Agent Boundary Contract
 
-- 用途：读取某条 record 的 patch facts 列表。
-- 前端直接使用：可以用于调试；普通 history 展示优先使用 `/records/:id/history`。
-- 请求方式：`GET`。
-- 关键 query：必填 `targetId`。
-- 返回核心结构：`RecordResponse<PatchItem<DeepPartial<RecordBody>>>[]`。
-- 常见错误：`400 INVALID_QUERY`。
-- 类型：事实接口。
+Agent Draft:
 
-## History
+- Is a Review Queue item.
+- Stores static `contextMarkdown`.
+- Does not call real AI.
+- Does not use `AGENT_API_KEY`.
+- Does not generate a patch.
+- Does not execute a patch.
+- Does not mutate the board.
 
-### `GET /api/v0/records/:id/history`
+Review:
 
-- 用途：展示单条 record 从 base record 到 patches replay 后的演化。
-- 前端直接使用：推荐用于单条 record history 详情。
-- 请求方式：`GET`。
-- 关键 path：`:id`。
-- 返回核心结构：`RecordHistoryResponse`，包括 `record`、`status`、`patches`、可选 `diagnostics` 和 `replay`。
-- 常见错误：`404 NOT_FOUND`。
-- 类型：事实 + replay 读取接口。它展示单条 record 演化，不是 board-level projection。
+- `PATCH /api/v0/agent/drafts/:id/review` only changes draft review status/note metadata.
+- It does not create a record, patch, or snapshot.
 
-## Snapshot Head
+Handoff:
 
-### `GET /api/v0/snapshot-head`
+- `GET /api/v0/agent/drafts/:id/handoff` only generates formal handoff Markdown for a reviewed draft.
+- It does not call AI, execute work, or write board state.
 
-- 用途：读取当前 patch head cache。
-- 前端直接使用：普通看板展示不需要；创建 patch 前可用于取得 `snapshotVersion` 和 lastPatchId。
-- 请求方式：`GET`。
-- 关键 query / body：无。
-- 返回核心结构：`{ version, records }`。
-- 常见错误：当前路由无显式业务错误；snapshot head integrity error 可能由底层抛出。
-- 类型：并发控制 cache 读取接口，不是完整当前态事实。
+Manual Agent Response:
 
-## Board Current
-
-### `GET /api/v0/board/current`
-
-- 用途：读取前端当前看板主视图。
-- 前端直接使用：强烈推荐作为 board-web 第一阶段初始化主入口。
-- 请求方式：`GET`。
-- 关键 query：见下列筛选接口。
-- 返回核心结构：`BoardCurrentProjection`，包括 `snapshotHeadVersion`、`records`、`blockedRecords`、`summary`、可选 `diagnostics`。
-- 常见错误：当前路由无显式业务错误；projection 问题通过 `blockedRecords`、`summary.projectionStatus` 或 top-level `diagnostics` 表达。
-- 类型：只读 projection 接口。它不写入数据库，不是新的事实来源。
-
-支持的 query：
-
-- `GET /api/v0/board/current?includeArchived=true`：包含 current state 中带 `status:archived` 的 records。
-- `GET /api/v0/board/current?tag=...`：兼容单 tag 查询。
-- `GET /api/v0/board/current?tags=...`：可重复传递多个 `tags` 参数。
-- `GET /api/v0/board/current?tagMatch=all|any`：默认为 `all`；只有显式 `any` 才使用 any。
-- `GET /api/v0/board/current?assignee=...`
-- `GET /api/v0/board/current?assetId=...`
-- `GET /api/v0/board/current?relationTarget=...`
-- `GET /api/v0/board/current?q=...`
-
-`/board/current` 的 filter 发生在 replay 后 current state，不使用 base record 筛选；`schema` 当前不作为用户筛选项。
+- `POST /api/v0/agent/drafts/:id/responses` stores a human-pasted artifact.
+- It does not prove an AI executed.
+- It does not mean a patch proposal was applied.
+- It does not automatically write board state.

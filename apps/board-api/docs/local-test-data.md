@@ -110,6 +110,10 @@ If you can see records in MongoDB Compass but `GET /api/v0/board/current` return
 pnpm --filter @labour-board/api import:test-data -- --reset
 ```
 
+`--reset` clears imported test records and snapshot state before reimporting
+the local fixture data. This prevents stale snapshot/head data from affecting
+patch or current-board checks after a reset.
+
 ## Memory Repository Note
 
 The board-api uses `MemoryRecordRepository` when `MONGODB_URI` is not set. Memory repositories cannot persist data across restarts. For local smoke testing with persistent data, always configure `MONGODB_URI` in `.env`.

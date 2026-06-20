@@ -1,5 +1,4 @@
 import type {
-  BoardCurrentProjection,
   BoardCurrentQuery,
   AgentContextProfile,
   BoardContextPackOptions,
@@ -9,7 +8,6 @@ import type {
   Tag,
 } from '@labour-board/shared'
 import {
-  filterBoardRecords,
   getAgentContextProfileDefinition,
   getBoardExportLevelForProfile,
   validateAgentContextProfileOptions,
@@ -125,21 +123,6 @@ export function parseBoardExportOptions(
   }
 
   return base as BoardExportOptions | BoardContextPackOptions
-}
-
-export function applyExportFilters(
-  projection: BoardCurrentProjection,
-  filters: BoardCurrentQuery
-): BoardCurrentProjection {
-  const records = filterBoardRecords(projection.records, filters)
-  return {
-    ...projection,
-    records,
-    summary: {
-      ...projection.summary,
-      visibleCurrentRecords: records.length,
-    },
-  }
 }
 
 function parseBoolean(

@@ -1,89 +1,28 @@
 # Frontend Context
 
-本文档给 board-web 第一阶段接入使用。当前前端目标是展示后端已经提供的 current board projection，不实现新的后端能力。
+This document records the Phase 1 board-web integration contract. It describes
+the existing backend capabilities that board-web may call; it does not authorize
+new backend capabilities.
 
-## 首要入口
-
-前端当前看板初始化应优先调用：
+## Primary Read Entry
 
 ```http
 GET /api/v0/board/current
 ```
 
-不要把 `GET /api/v0/records` 当作当前看板状态。`GET /records` 是 base records / facts 查询，不是 replay 后 current view。
+Use `/board/current` as the current board source of truth. Do not use
+`GET /api/v0/records` as the current board projection; it is a base
+record/fact list.
 
-展示当前看板时，以 `/board/current` 响应里的 `data.records[].body` 为准。
-
-## 第一阶段建议
-
-第一版 board-web 建议只做：
-
-- 读取 `/api/v0/board/current`。
-- 展示 records。
-- 展示 tags。
-- 展示 title / description / content。
-- 展示 assignee。
-- 展示 assets / relations 的基础信息。
-- 展示 `blockedRecords`、top-level `diagnostics` 和 `summary.projectionStatus`。
-- 支持 `/board/current` 的基础筛选 query：`tags`、`tagMatch`、`assignee`、`assetId`、`relationTarget`、`q`。
-- 支持 `includeArchived` 切换。
-- 支持查看单条 record history：`GET /api/v0/records/:id/history`。
-- 为后续 create record / create patch 做接口准备。
-
-最小展示可先不依赖 config；但标签选项、状态列、关系类型、创建表单应读取 `GET /api/v0/config`。
-
-第一阶段暂时不要做：
-
-- 登录。
-- 权限。
-- 链上签名。
-- transaction。
-- AI 批量 apply。
-- full snapshot 管理。
-- schema 用户筛选。
-- profiles/config 聚合展示假设。
-
-## 状态关系
-
-前端需要理解当前后端状态关系：
+Display current records from:
 
 ```text
-records collection 保存 base record 和 patch facts
-snapshot head 保存 patch head cache
-history 展示单条 record 演化
-board current 展示当前看板投影
+response.data.records[].body
 ```
 
-更具体地说：
+## Filters
 
-- base record 是创建时事实。
-- patch facts 是更新事实来源。
-- snapshot head 是 append patch 的 optimistic concurrency cache。
-- history 是单条 record 的 replay 解释。
-- board current 是 board-level replay projection。
-
-## Current Record 展示准则
-
-`/board/current.records[]` 中每条记录的 envelope 形状是：
-
-```ts
-{
-  createdBy: string
-  createdAt: string
-  body: RecordItem<RecordBody>
-}
-```
-
-其中：
-
-- `createdBy` / `createdAt` 来自 base record envelope。
-- `body` 是 replay 后 current state。
-- `body.id`、`body.pid`、`body.schema`、`body.tags`、`body.assignee`、`body.assets`、`body.relations` 和 `body.body` 用于当前看板展示。
-- `body.body.title`、`body.body.description`、`body.body.content` 是当前 `q` 搜索覆盖的正文展示字段。
-
-## Filter 使用
-
-前端可组合使用：
+Board-web may combine:
 
 ```http
 GET /api/v0/board/current?tags=status:todo&tags=type:card&tagMatch=all
@@ -95,61 +34,111 @@ GET /api/v0/board/current?q=...
 GET /api/v0/board/current?includeArchived=true
 ```
 
-注意：
+Rules:
 
-- `tags` 可以重复；`tag` 是单 tag 兼容参数。
-- `tagMatch` 默认是 `all`。
-- `schema` 当前不作为用户筛选项。
-- filter 基于 replay 后 current state。
-- `q` 只搜索当前正文展示文本，不搜索 tags、assignee、asset、relation 或历史 patch。
+- `tags` is repeatable; `tag` is a single-tag compatibility parameter.
+- `tagMatch` defaults to `all`.
+- Missing `includeArchived` excludes `status:archived`.
+- Filters run on replayed current state.
+- `q` searches pid, id, tags, assignee, assets, relation constraint/target,
+  title, description, and content.
+- `q` does not search schema, createdBy, createdAt, patch descriptions, or old body state.
 
-## 后续写入接口准备
+## Write Interface Whitelist
 
-创建 record：
+Board-web Phase 1 may call only these write routes:
 
-```http
-POST /api/v0/records
+```text
+POST  /api/v0/records
+POST  /api/v0/records/:id/patches
+POST  /api/v0/snapshots
+POST  /api/v0/agent/drafts
+POST  /api/v0/agent/drafts/:id/responses
+PATCH /api/v0/agent/drafts/:id/review
 ```
 
-更新 record：
+`PATCH /api/v0/agent/drafts/:id/review` updates review metadata only.
+`POST /api/v0/agent/drafts/:id/responses` stores a human-pasted manual response artifact only.
+
+Board-web must not call:
+
+```text
+PATCH /api/v0/records/:id
+POST /api/v0/patches
+GET /api/v0/snapshot-head
+POST /api/v0/agent/run
+POST /api/v0/agent/apply
+POST /api/v0/agent/execute
+POST /api/v0/agent/responses/manual
+```
+
+## Patch Edit / Status Move Flow
+
+Before submitting an edit or status move:
+
+```http
+GET /api/v0/records/:id/head
+```
+
+Use the returned `parentId` and `currentVersion` when submitting:
 
 ```http
 POST /api/v0/records/:id/patches
 ```
 
-创建 patch 时，前端需要提供：
+Canonical payload:
 
-- `parentId`：客户端观察到的上一条 patch id；第一条 patch 为 `null`。
-- `snapshotVersion`：客户端观察到的 snapshot head version。
-- 需要变更的 `tags`、`assignee`、`body`、`assets`、`relations` 或 `description`。
-
-创建 patch 前，前端应先读取：
-
-```http
-GET /api/v0/snapshot-head
+```ts
+{
+  parentId: RecordId | null
+  currentVersion: number
+  tagChanges?: TagChanges
+  assignee?: PublicKey | null
+  body?: Record<string, unknown>
+  assets?: AssetRef[]
+  relations?: RelationRef[]
+  description?: string
+}
 ```
 
-然后按目标 record id 取值：
+Use `tagChanges` for tag mutation. Do not submit full `tags` as the patch
+tag mutation field, and do not submit unchanged null body fields.
 
-- 使用 snapshot head 的 `version` 作为 `snapshotVersion`。
-- 使用 `records[recordId].lastPatchId` 作为 `parentId`。
-- 如果没有 `records[recordId]` 或没有 `lastPatchId`，则 `parentId` 为 `null`。
-- 如果提交 patch 返回 `409 CONFLICT`，应重新读取 `/api/v0/board/current` 和 `/api/v0/snapshot-head`，用最新 current/head 重新计算后再重试。
+Status move example:
 
-不要使用：
-
-```http
-PATCH /api/v0/records/:id
-POST /api/v0/patches
+```json
+{
+  "tagChanges": {
+    "change": [
+      {
+        "namespace": "status",
+        "from": "status:todo",
+        "to": "status:doing"
+      }
+    ]
+  }
+}
 ```
 
-前者固定 410，后者作为创建入口不存在。
+The backend accepts `snapshotVersion` only as a deprecated compatibility alias.
+Board-web must use `currentVersion` and must not read `/api/v0/snapshot-head`
+for patch edit or move status.
 
-## 当前不能假设的能力
+## Export / Context Pack
 
-- `/api/v0/snapshots/latest` 不存在。
-- full snapshot persistence 尚未实现。
-- transaction / dryrun / apply 尚未实现。
-- 权限 / 登录尚未实现。
-- signature / hash / protocolHash 尚未实现。
-- `/board/current` 尚未聚合 profiles / config。
+- Current Board export and Agent Context Pack use the shared board filter.
+- Exported/selected records are distinct from reference lookup scope.
+- Asset and relation output may show readable labels, but stored payloads remain raw ids.
+- Snapshot export uses the saved snapshot projection, not a current-board readback.
+- Agent Draft `contextMarkdown` is captured at draft creation and is static.
+
+## Agent Boundary
+
+Phase 1 Agent workflow is manual and non-executing:
+
+- No AI call is made by LabourBoard.
+- `AGENT_API_KEY` must not appear in board-web source.
+- Agent Draft is a Review Queue item, not an execution request.
+- Handoff is formal Markdown for a reviewed draft, not execution authorization.
+- Manual Agent Response is a pasted artifact, not proof of execution and not an applied patch.
+- No board mutation passes through the Agent workflow.
