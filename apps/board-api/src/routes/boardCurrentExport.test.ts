@@ -102,6 +102,137 @@ describe('GET /api/v0/board/current/export', () => {
     expect(filteredPayload.data.content).not.toContain('CARD-1')
   })
 
+  it('applies unified filters to current-board export', async () => {
+    const projection = makeFilterSemanticsProjection()
+
+    const defaultArchive = buildBoardMarkdownExport(projection, {
+      source: 'current-board',
+      level: 'filtered',
+      format: 'markdown',
+      generatedAt: '2026-06-17T00:00:00.000Z',
+      filters: { q: 'Archived Title' },
+    })
+    expect(defaultArchive.meta.recordCount).toBe(0)
+    expect(defaultArchive.content).not.toContain('#### CARD-3')
+
+    const includeArchive = buildBoardMarkdownExport(projection, {
+      source: 'current-board',
+      level: 'filtered',
+      format: 'markdown',
+      generatedAt: '2026-06-17T00:00:00.000Z',
+      filters: { q: 'Archived Title', includeArchived: true },
+    })
+    expect(includeArchive.meta.recordCount).toBe(1)
+    expect(includeArchive.content).toContain('#### CARD-3 - Archived Title')
+
+    const asset = buildBoardMarkdownExport(projection, {
+      source: 'current-board',
+      level: 'filtered',
+      format: 'markdown',
+      generatedAt: '2026-06-17T00:00:00.000Z',
+      filters: { assetId: 'asset-record-1' },
+    })
+    expect(asset.meta.recordCount).toBe(1)
+    expect(asset.content).toContain('#### CARD-1 - Match Source')
+    expect(asset.content).not.toContain('#### CARD-2 - Outside Target')
+
+    const relation = buildBoardMarkdownExport(projection, {
+      source: 'current-board',
+      level: 'filtered',
+      format: 'markdown',
+      generatedAt: '2026-06-17T00:00:00.000Z',
+      filters: { relationTarget: 'card-record-2' },
+    })
+    expect(relation.meta.recordCount).toBe(1)
+    expect(relation.content).toContain('#### CARD-1 - Match Source')
+    expect(relation.content).not.toContain('#### CARD-2 - Outside Target')
+
+    for (const q of [
+      'CARD-1',
+      'card-record-1',
+      'status:wip',
+      'member-visible',
+      'dependsOn',
+    ]) {
+      const exported = buildBoardMarkdownExport(projection, {
+        source: 'current-board',
+        level: 'filtered',
+        format: 'markdown',
+        generatedAt: '2026-06-17T00:00:00.000Z',
+        filters: { q },
+      })
+      expect(exported.meta.recordCount).toBe(1)
+      expect(exported.content).toContain('#### CARD-1 - Match Source')
+      expect(exported.content).not.toContain('#### CARD-2 - Outside Target')
+    }
+
+    const byAssetText = buildBoardMarkdownExport(projection, {
+      source: 'current-board',
+      level: 'filtered',
+      format: 'markdown',
+      generatedAt: '2026-06-17T00:00:00.000Z',
+      filters: { q: 'asset-record-1' },
+    })
+    expect(byAssetText.meta.recordCount).toBe(2)
+    expect(byAssetText.content).toContain('#### ASSET-1 - Outside Asset')
+    expect(byAssetText.content).toContain('#### CARD-1 - Match Source')
+
+    const byRelationTargetText = buildBoardMarkdownExport(projection, {
+      source: 'current-board',
+      level: 'filtered',
+      format: 'markdown',
+      generatedAt: '2026-06-17T00:00:00.000Z',
+      filters: { q: 'card-record-2' },
+    })
+    expect(byRelationTargetText.meta.recordCount).toBe(2)
+    expect(byRelationTargetText.content).toContain('#### CARD-1 - Match Source')
+    expect(byRelationTargetText.content).toContain('#### CARD-2 - Outside Target')
+  })
+
+  it('routes current-board export includeArchived through unified filters', async () => {
+    const { app, repo } = createAppWithSeededBoard()
+    await repo.create({
+      id: 'record-visible',
+      pid: 'CARD-1',
+      schema: 'CardBody',
+      tags: ['status:todo'],
+      assignee: 'member-visible',
+      assets: [],
+      relations: [],
+      body: { title: 'Visible Title' },
+      createdBy: 'test',
+      createdAt: '2026-06-17T00:00:00.000Z',
+    })
+    await repo.create({
+      id: 'record-archived',
+      pid: 'CARD-2',
+      schema: 'CardBody',
+      tags: ['status:archived'],
+      assignee: 'member-archived',
+      assets: [],
+      relations: [],
+      body: { title: 'Archived Title' },
+      createdBy: 'test',
+      createdAt: '2026-06-17T00:01:00.000Z',
+    })
+
+    const excluded = await app.request(
+      '/api/v0/board/current/export?level=filtered&q=Archived%20Title'
+    )
+    const excludedPayload = await excluded.json()
+    expect(excluded.status).toBe(200)
+    expect(excludedPayload.data.meta.recordCount).toBe(0)
+    expect(excludedPayload.data.content).not.toContain('#### CARD-2 - Archived Title')
+
+    const included = await app.request(
+      '/api/v0/board/current/export?level=filtered&q=Archived%20Title&includeArchived=true'
+    )
+    const includedPayload = await included.json()
+    expect(included.status).toBe(200)
+    expect(includedPayload.data.meta.recordCount).toBe(1)
+    expect(includedPayload.data.content).toContain('#### CARD-2 - Archived Title')
+  })
+
   it('exports related records and meta level', async () => {
     const { app, repo } = createAppWithSeededBoard()
     await seedBoard(repo)
@@ -489,6 +620,79 @@ function makeReferenceScopeProjection(): BoardCurrentProjection {
       archivedRecords: 0,
       blockedRecords: 0,
       projectionStatus: 'clean',
+    },
+  }
+}
+
+function makeFilterSemanticsProjection(): BoardCurrentProjection {
+  return {
+    snapshotHeadVersion: 0,
+    records: [
+      {
+        createdBy: 'local',
+        createdAt: '2026-06-05T00:00:00.000Z',
+        body: {
+          id: 'asset-record-1',
+          pid: 'ASSET-1',
+          schema: 'AssetBody',
+          body: { title: 'Outside Asset' },
+          tags: ['status:todo'],
+          assets: [],
+          relations: [],
+        },
+      },
+      {
+        createdBy: 'local',
+        createdAt: '2026-06-05T00:01:00.000Z',
+        body: {
+          id: 'card-record-1',
+          pid: 'CARD-1',
+          schema: 'CardBody',
+          body: {
+            title: 'Match Source',
+            description: 'match-source',
+            content: 'source body content',
+          },
+          tags: ['status:wip'],
+          assignee: 'member-visible',
+          assets: ['asset-record-1'],
+          relations: [{ constraint: 'dependsOn', target: 'card-record-2' }],
+        },
+      },
+      {
+        createdBy: 'local',
+        createdAt: '2026-06-05T00:02:00.000Z',
+        body: {
+          id: 'card-record-2',
+          pid: 'CARD-2',
+          schema: 'CardBody',
+          body: { title: 'Outside Target' },
+          tags: ['status:todo'],
+          assets: [],
+          relations: [],
+        },
+      },
+      {
+        createdBy: 'local',
+        createdAt: '2026-06-05T00:03:00.000Z',
+        body: {
+          id: 'card-record-3',
+          pid: 'CARD-3',
+          schema: 'CardBody',
+          body: { title: 'Archived Title' },
+          tags: ['status:archived'],
+          assets: [],
+          relations: [],
+        },
+      },
+    ],
+    blockedRecords: [],
+    summary: {
+      totalBaseRecords: 4,
+      visibleCurrentRecords: 4,
+      archivedRecords: 1,
+      blockedRecords: 0,
+      projectionStatus: 'partial',
     },
   }
 }

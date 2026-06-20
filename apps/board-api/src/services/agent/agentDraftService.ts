@@ -89,11 +89,12 @@ export class AgentDraftService {
     let projection: Awaited<ReturnType<typeof getBoardCurrentProjection>>
 
     if (input.source === 'current-board') {
-      // getBoardCurrentProjection internally applies filterBoardCurrentRecords
-      // when query is provided – no need for a second filter pass.
+      // Only widen archived visibility here; context pack export applies the
+      // full shared filter set so current/export/draft semantics stay aligned.
       projection = await getBoardCurrentProjection({
         repository: this.recordRepository,
         snapshotHeadRepository: this.snapshotHeadRepository,
+        query: { includeArchived: input.filters?.includeArchived },
       })
     } else {
       // Snapshot source

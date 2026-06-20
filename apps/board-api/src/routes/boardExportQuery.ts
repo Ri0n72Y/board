@@ -9,11 +9,11 @@ import type {
   Tag,
 } from '@labour-board/shared'
 import {
+  filterBoardRecords,
   getAgentContextProfileDefinition,
   getBoardExportLevelForProfile,
   validateAgentContextProfileOptions,
 } from '@labour-board/shared'
-import { filterBoardCurrentRecords } from '../services/boardCurrent/boardCurrentFilter.js'
 import { parseBoardCurrentQuery } from './boardCurrentQuery.js'
 
 const LEVELS: readonly BoardExportLevel[] = [
@@ -131,7 +131,7 @@ export function applyExportFilters(
   projection: BoardCurrentProjection,
   filters: BoardCurrentQuery
 ): BoardCurrentProjection {
-  const records = filterBoardCurrentRecords(projection.records, filters)
+  const records = filterBoardRecords(projection.records, filters)
   return {
     ...projection,
     records,

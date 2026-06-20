@@ -375,6 +375,102 @@ describe('Agent Drafts route', () => {
     expect(detailPayload.data.draft.contextMarkdown).toBe(markdown)
   })
 
+  it('agent-filtered draft uses unified filters and keeps full reference labels', async () => {
+    const app = await createTestApp()
+    const asset = await createRecord(app, {
+      schema: 'AssetBody',
+      tags: ['status:todo'],
+      body: { title: 'Filtered Draft Asset' },
+    })
+    const target = await createRecord(app, {
+      schema: 'CardBody',
+      tags: ['status:todo'],
+      body: { title: 'Filtered Draft Target' },
+    })
+    const source = await createRecord(app, {
+      schema: 'CardBody',
+      tags: ['status:todo'],
+      body: {
+        title: 'Filtered Draft Source',
+        description: 'filtered draft source description',
+      },
+      assets: [asset.id],
+      relations: [
+        {
+          constraint: 'dependsOn',
+          target: target.id,
+          description: 'Filtered relation note.',
+        },
+      ],
+    })
+    await createRecord(app, {
+      schema: 'CardBody',
+      tags: ['status:todo'],
+      body: { title: 'Unmatched Draft Record' },
+    })
+
+    const byQ = await createAgentFilteredDraft(app, {
+      q: source.pid,
+    })
+    expect(byQ.recordCount).toBe(1)
+    expect(byQ.contextMarkdown).toContain('Filtered Draft Source')
+    expect(byQ.contextMarkdown).not.toContain('Unmatched Draft Record')
+
+    const byAsset = await createAgentFilteredDraft(app, {
+      assetId: asset.id,
+    })
+    expect(byAsset.recordCount).toBe(1)
+    expect(byAsset.contextMarkdown).toContain('Filtered Draft Source')
+    expect(byAsset.contextMarkdown).toContain('Filtered Draft Asset')
+    expect(byAsset.contextMarkdown).toContain(`raw id: ${asset.id}`)
+    expect(byAsset.contextMarkdown).toContain('Filtered Draft Target')
+    expect(byAsset.contextMarkdown).toContain(`target id: ${target.id}`)
+    expect(byAsset.contextMarkdown).not.toContain('#### ASSET-')
+    expect(byAsset.contextMarkdown).not.toContain('#### CARD-1 - Filtered Draft Target')
+    expect(byAsset.contextMarkdown).not.toContain('Unmatched Draft Record')
+
+    const byRelation = await createAgentFilteredDraft(app, {
+      relationTarget: target.id,
+    })
+    expect(byRelation.recordCount).toBe(1)
+    expect(byRelation.contextMarkdown).toContain('Filtered Draft Source')
+    expect(byRelation.contextMarkdown).not.toContain('Unmatched Draft Record')
+
+    const listRes = await app.request('/api/v0/agent/drafts')
+    const listPayload = await listRes.json()
+    const summary = listPayload.data.drafts.find(
+      (draft: { id: string }) => draft.id === byAsset.id,
+    )
+    expect(summary).toBeDefined()
+    expect('contextMarkdown' in summary).toBe(false)
+
+    const detailRes = await app.request(`/api/v0/agent/drafts/${byAsset.id}`)
+    const detailPayload = await detailRes.json()
+    expect(detailPayload.data.draft.contextMarkdown).toBe(byAsset.contextMarkdown)
+  })
+
+  it('agent-filtered draft includeArchived can include archived records', async () => {
+    const app = await createTestApp()
+    await createRecord(app, {
+      schema: 'CardBody',
+      tags: ['status:archived'],
+      body: { title: 'Archived Draft Source' },
+    })
+
+    const excluded = await createAgentFilteredDraft(app, {
+      q: 'Archived Draft Source',
+    })
+    expect(excluded.recordCount).toBe(0)
+    expect(excluded.contextMarkdown).not.toContain('#### CARD-1 - Archived Draft Source')
+
+    const included = await createAgentFilteredDraft(app, {
+      q: 'Archived Draft Source',
+      includeArchived: true,
+    })
+    expect(included.recordCount).toBe(1)
+    expect(included.contextMarkdown).toContain('Archived Draft Source')
+  })
+
   it('snapshot draft contextMarkdown renders readable static references', async () => {
     const app = await createTestApp()
     const asset = await createRecord(app, {
@@ -1027,10 +1123,33 @@ async function createRecord(app: Hono, input: Record<string, unknown>) {
     headers: { 'content-type': 'application/json' },
   })
   const payload = await response.json()
-  expect(response.status).toBe(201)
+  expect(response.status, JSON.stringify(payload)).toBe(201)
   return payload.data.body as {
     id: string
     pid: string
+  }
+}
+
+async function createAgentFilteredDraft(
+  app: Hono,
+  filters: Record<string, unknown>,
+) {
+  const response = await app.request('/api/v0/agent/drafts', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: `Filtered ${crypto.randomUUID()}`,
+      profile: 'agent-filtered',
+      source: 'current-board',
+      filters,
+    }),
+    headers: { 'content-type': 'application/json' },
+  })
+  const payload = await response.json()
+  expect(response.status).toBe(201)
+  return payload.data.draft as {
+    id: string
+    recordCount: number
+    contextMarkdown: string
   }
 }
 

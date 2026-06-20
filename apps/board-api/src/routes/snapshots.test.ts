@@ -188,6 +188,59 @@ describe('createSnapshotsRoute', () => {
     expect(contextPayload.data.content).not.toContain('Snapshot export after')
   })
 
+  it('applies unified filters to snapshot export while preserving full reference scope', async () => {
+    const { app } = createApp()
+    const asset = await createCard(app, 'Snapshot Outside Asset', ['status:todo'])
+    const target = await createCard(app, 'Snapshot Outside Target', ['status:todo'])
+    await app.request('/api/v0/records', {
+      method: 'POST',
+      body: JSON.stringify({
+        schema: 'CardBody',
+        tags: ['status:wip'],
+        assignee: 'member-visible',
+        assets: [asset.id],
+        relations: [{ constraint: 'dependsOn', target: target.id }],
+        body: {
+          title: 'Snapshot Filter Source',
+          description: 'snapshot-filter-source',
+        },
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const snapshot = await createSnapshot(app, 'Filtered snapshot export')
+
+    const byAsset = await app.request(
+      `/api/v0/snapshots/${snapshot.id}/export?level=filtered&assetId=${asset.id}`
+    )
+    const byAssetPayload = await byAsset.json()
+    expect(byAsset.status).toBe(200)
+    expect(byAssetPayload.data.meta.recordCount).toBe(1)
+    expect(byAssetPayload.data.content).toContain('Snapshot Filter Source')
+    expect(byAssetPayload.data.content).toContain('Snapshot Outside Asset')
+    expect(byAssetPayload.data.content).toContain(`raw id: ${asset.id}`)
+    expect(byAssetPayload.data.content).toContain('Snapshot Outside Target')
+    expect(byAssetPayload.data.content).toContain(`target id: ${target.id}`)
+    expect(byAssetPayload.data.content).not.toContain('#### CARD-1 - Snapshot Outside Asset')
+    expect(byAssetPayload.data.content).not.toContain('#### CARD-2 - Snapshot Outside Target')
+
+    const byRelation = await app.request(
+      `/api/v0/snapshots/${snapshot.id}/export?level=filtered&relationTarget=${target.id}`
+    )
+    const byRelationPayload = await byRelation.json()
+    expect(byRelation.status).toBe(200)
+    expect(byRelationPayload.data.meta.recordCount).toBe(1)
+    expect(byRelationPayload.data.content).toContain('Snapshot Filter Source')
+
+    const byQ = await app.request(
+      `/api/v0/snapshots/${snapshot.id}/export?level=filtered&q=${target.id}`
+    )
+    const byQPayload = await byQ.json()
+    expect(byQ.status).toBe(200)
+    expect(byQPayload.data.meta.recordCount).toBe(2)
+    expect(byQPayload.data.content).toContain('Snapshot Filter Source')
+    expect(byQPayload.data.content).toContain('Snapshot Outside Target')
+  })
+
   it('snapshot export returns 404 and validates export query', async () => {
     const { app } = createApp()
     const missing = await app.request('/api/v0/snapshots/missing/export')

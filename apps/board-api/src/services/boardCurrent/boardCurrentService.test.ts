@@ -261,17 +261,36 @@ describe('boardCurrentService', () => {
     }
 
     for (const q of [
-      'Old title',
-      'Old description',
       'asset:image',
       'member-hidden',
       'asset-hidden',
-      target.body.id,
-      'CardBody',
       envelope.body.id,
       envelope.body.pid,
+    ]) {
+      const board = await getBoardCurrentProjection({
+        repository: repo,
+        snapshotHeadRepository: head,
+        query: { q },
+      })
+      expect(board.records.map((record) => record.body.id)).toEqual([
+        envelope.body.id,
+      ])
+    }
+
+    const targetMatch = await getBoardCurrentProjection({
+      repository: repo,
+      snapshotHeadRepository: head,
+      query: { q: target.body.id },
+    })
+    expect(targetMatch.records.map((record) => record.body.id).sort()).toEqual(
+      [target.body.id, envelope.body.id].sort()
+    )
+
+    for (const q of [
+      'Old title',
+      'Old description',
+      'CardBody',
       'hidden patch description',
-      firstPatch!.patch.body.targetId,
       secondPatch!.patch.body.parentId!,
       'hidden second patch description',
     ]) {

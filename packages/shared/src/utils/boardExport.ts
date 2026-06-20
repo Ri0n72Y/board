@@ -7,6 +7,7 @@ import type {
   RecordResponse,
   Tag,
 } from '../interfaces/index.js'
+import { filterBoardRecords } from './boardFilter.js'
 import { getContextPackStrings } from './contextPackI18n.js'
 import {
   buildExportReferenceMap,
@@ -344,7 +345,7 @@ function selectRecordsForLevel(
   records: BoardRecord[],
   options: BoardExportOptions
 ): BoardRecord[] {
-  const filteredRecords = filterRecordsForExport(records, options.filters)
+  const filteredRecords = filterBoardRecords(records, options.filters)
   if (options.level === 'card') {
     return filteredRecords.filter((record) => record.body.id === options.recordId)
   }
@@ -367,47 +368,6 @@ function selectRecordsForLevel(
       : []
   }
   return filteredRecords
-}
-
-function filterRecordsForExport(
-  records: BoardRecord[],
-  filters: BoardExportOptions['filters']
-): BoardRecord[] {
-  if (!filters) return records
-  return records.filter((record) => matchesExportFilters(record, filters))
-}
-
-function matchesExportFilters(
-  record: BoardRecord,
-  filters: NonNullable<BoardExportOptions['filters']>
-): boolean {
-  const body = record.body
-  if (filters.assignee && body.assignee !== filters.assignee) return false
-  if (filters.assetId && !body.assets?.includes(filters.assetId)) return false
-  if (
-    filters.relationTarget &&
-    !body.relations?.some((relation) => relation.target === filters.relationTarget)
-  ) {
-    return false
-  }
-  if (filters.tags?.length) {
-    const matchesTags =
-      filters.tagMatch === 'any'
-        ? filters.tags.some((tag) => body.tags.includes(tag))
-        : filters.tags.every((tag) => body.tags.includes(tag))
-    if (!matchesTags) return false
-  }
-  if (filters.q && !matchesExportText(record, filters.q)) return false
-  return true
-}
-
-function matchesExportText(record: BoardRecord, query: string): boolean {
-  const normalized = query.trim().toLowerCase()
-  if (!normalized) return true
-  return ['title', 'description', 'content'].some((key) => {
-    const value = stringField(record.body.body, key)
-    return value?.toLowerCase().includes(normalized) === true
-  })
 }
 
 function selectRelatedRecords(records: BoardRecord[], recordId: string): BoardRecord[] {

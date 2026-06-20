@@ -48,6 +48,38 @@ function ids(records: BoardRecordResponse[]): string[] {
 }
 
 describe('filterBoardCurrentRecords', () => {
+  it('excludes archived records unless includeArchived is true', () => {
+    const archivedRecords: BoardRecordResponse[] = [
+      ...currentRecords,
+      {
+        createdBy: 'creator-archived',
+        createdAt: '2026-06-04T09:00:00.000Z',
+        body: {
+          id: 'record-archived',
+          pid: 'CARD-3',
+          schema: 'CardBody',
+          tags: ['status:archived'],
+          assignee: 'member-archived',
+          assets: ['asset-archived'],
+          relations: [{ constraint: 'duplicates', target: 'archived-target' }],
+          body: {
+            title: 'Archived title',
+            description: 'Archived description',
+            content: 'Archived content',
+          },
+        },
+      },
+    ]
+
+    expect(ids(filterBoardCurrentRecords(archivedRecords, {}))).toEqual([
+      'record-visible',
+      'record-other',
+    ])
+    expect(
+      ids(filterBoardCurrentRecords(archivedRecords, { includeArchived: true }))
+    ).toEqual(['record-visible', 'record-other', 'record-archived'])
+  })
+
   it('filters tags with all and any semantics', () => {
     expect(
       ids(filterBoardCurrentRecords(currentRecords, {
@@ -96,7 +128,7 @@ describe('filterBoardCurrentRecords', () => {
     }
   })
 
-  it('does not match q against structural or envelope fields', () => {
+  it('matches q against current structural filter fields', () => {
     for (const q of [
       'status:wip',
       'priority:urgent-important',
@@ -106,6 +138,15 @@ describe('filterBoardCurrentRecords', () => {
       'blocks',
       'record-visible',
       'CARD-1',
+    ]) {
+      expect(ids(filterBoardCurrentRecords(currentRecords, { q }))).toEqual([
+        'record-visible',
+      ])
+    }
+  })
+
+  it('does not match q against schema or envelope fields', () => {
+    for (const q of [
       'CardBody',
       'creator-visible',
       '2026-06-04T07:00:00.000Z',

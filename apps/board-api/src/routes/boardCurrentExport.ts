@@ -22,11 +22,12 @@ export function createBoardCurrentExportRoute(
   route.get('/current/export', async (c) => {
     const searchParams = new URL(c.req.url).searchParams
     try {
+      const options = parseBoardExportOptions(searchParams, 'current-board')
       const projection = await getBoardCurrentProjection({
         repository,
         snapshotHeadRepository,
+        query: { includeArchived: options.filters?.includeArchived },
       })
-      const options = parseBoardExportOptions(searchParams, 'current-board')
       const exported =
         'profile' in options
           ? buildBoardContextPack(projection, options)

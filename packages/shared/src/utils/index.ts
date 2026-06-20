@@ -16,6 +16,13 @@ export {
 export { buildBoardMarkdownExport } from './boardExport.js'
 export { buildBoardContextPack } from './boardContextPack.js'
 export {
+  filterBoardRecords,
+  normalizeBoardFilterQuery,
+  recordMatchesBoardFilter,
+  type BoardFilterQuery,
+  type NormalizedBoardFilterQuery,
+} from './boardFilter.js'
+export {
   buildExportReferenceMap,
   formatExportReference,
   formatExportRelation,
