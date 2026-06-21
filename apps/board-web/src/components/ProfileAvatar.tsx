@@ -1,4 +1,5 @@
-import { useState } from 'react'
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useState } from 'react'
 import { avatarColor, profileInitials } from '../utils/profileDisplay'
 
 interface ProfileAvatarProps {
@@ -23,6 +24,12 @@ export function ProfileAvatar({
   className = '',
 }: ProfileAvatarProps) {
   const [hasImgError, setHasImgError] = useState(false)
+
+  // Reset error state when avatarUrl changes so a new URL retries loading
+  useEffect(() => {
+    setHasImgError(false)
+  }, [avatarUrl])
+
   const showImg = avatarUrl && !hasImgError
   const initials = profileInitials(name, pk)
   const color = avatarColor(pk)

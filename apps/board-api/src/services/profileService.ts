@@ -148,12 +148,29 @@ function assertCreateProfileShape(input: CreateProfileInput): void {
   if (typeof input.name !== 'string') {
     throw new ProfileValidationError('Profile name must be a string')
   }
+  if (
+    input.avatarUrl !== undefined &&
+    input.avatarUrl !== null &&
+    typeof input.avatarUrl !== 'string'
+  ) {
+    throw new ProfileValidationError('avatarUrl must be a string URL or null')
+  }
   assertNoSensitiveKeys(input as unknown as Record<string, unknown>)
 }
 
 function assertUpdateProfileShape(input: UpdateProfileInput): void {
+  if (input.pk !== undefined && typeof input.pk !== 'string') {
+    throw new ProfileValidationError('Profile pk must be a string')
+  }
   if (input.name !== undefined && typeof input.name !== 'string') {
     throw new ProfileValidationError('Profile name must be a string')
+  }
+  if (
+    input.avatarUrl !== undefined &&
+    input.avatarUrl !== null &&
+    typeof input.avatarUrl !== 'string'
+  ) {
+    throw new ProfileValidationError('avatarUrl must be a string URL or null')
   }
   assertNoSensitiveKeys(input as unknown as Record<string, unknown>)
 }

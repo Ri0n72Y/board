@@ -252,4 +252,40 @@ describe('ProfileService', () => {
       }),
     ).rejects.toThrow(ProfileValidationError)
   })
+
+  // ─── Malformed input tests ───
+
+  it('create rejects non-string avatarUrl with ProfileValidationError', async () => {
+    const service = createService()
+
+    await expect(
+      service.create({
+        pk: 'member-1',
+        name: 'Ada',
+        avatarUrl: 123 as unknown as string,
+      }),
+    ).rejects.toThrow(ProfileValidationError)
+  })
+
+  it('update rejects non-string pk with ProfileValidationError', async () => {
+    const service = createService()
+    await service.create({ pk: 'member-a', name: 'Alice' })
+
+    await expect(
+      service.update('member-a', {
+        pk: 123 as unknown as string,
+      }),
+    ).rejects.toThrow(ProfileValidationError)
+  })
+
+  it('update rejects non-string avatarUrl with ProfileValidationError', async () => {
+    const service = createService()
+    await service.create({ pk: 'member-a', name: 'Alice' })
+
+    await expect(
+      service.update('member-a', {
+        avatarUrl: 456 as unknown as string,
+      }),
+    ).rejects.toThrow(ProfileValidationError)
+  })
 })

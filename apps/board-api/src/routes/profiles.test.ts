@@ -190,4 +190,51 @@ describe('createProfilesRoute', () => {
     })
     expect(response2.status).toBe(400)
   })
+
+  it('POST /profiles with avatarUrl number returns 400', async () => {
+    const app = createApp()
+
+    const response = await app.request('/api/v0/profiles', {
+      method: 'POST',
+      body: JSON.stringify({
+        pk: 'member-1',
+        name: 'Ada',
+        avatarUrl: 123,
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    expect(response.status).toBe(400)
+  })
+
+  it('PATCH /profiles/:pk with body.pk number returns 400', async () => {
+    const app = createApp()
+    await app.request('/api/v0/profiles', {
+      method: 'POST',
+      body: JSON.stringify({ pk: 'member-a', name: 'Alice' }),
+      headers: { 'content-type': 'application/json' },
+    })
+
+    const response = await app.request('/api/v0/profiles/member-a', {
+      method: 'PATCH',
+      body: JSON.stringify({ pk: 123 }),
+      headers: { 'content-type': 'application/json' },
+    })
+    expect(response.status).toBe(400)
+  })
+
+  it('PATCH /profiles/:pk with avatarUrl number returns 400', async () => {
+    const app = createApp()
+    await app.request('/api/v0/profiles', {
+      method: 'POST',
+      body: JSON.stringify({ pk: 'member-a', name: 'Alice' }),
+      headers: { 'content-type': 'application/json' },
+    })
+
+    const response = await app.request('/api/v0/profiles/member-a', {
+      method: 'PATCH',
+      body: JSON.stringify({ avatarUrl: 456 }),
+      headers: { 'content-type': 'application/json' },
+    })
+    expect(response.status).toBe(400)
+  })
 })

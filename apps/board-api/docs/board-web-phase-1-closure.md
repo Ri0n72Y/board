@@ -252,6 +252,7 @@ pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/relationDisplay.
 pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/historySummary.devcheck.ts
 pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/boardViewColumns.devcheck.ts
 pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/boardFilterUrl.devcheck.ts
+pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/profileDisplay.devcheck.ts
 ```
 
 Browser smoke is not a closure gate for this round.
