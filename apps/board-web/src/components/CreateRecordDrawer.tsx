@@ -104,10 +104,6 @@ export function CreateRecordDrawer({
       })),
     [otherTagOptions, lang],
   )
-  const assigneeOptions = useMemo(
-    () => profileOptions.map((option) => ({ ...option, meta: option.value })),
-    [profileOptions],
-  )
 
   useEffect(() => {
     return () => abortCreate(createRequestIdRef, createAbortRef)
@@ -345,9 +341,8 @@ export function CreateRecordDrawer({
               onChange={(next) =>
                 setForm((current) => ({ ...current, assignee: next ?? '' }))
               }
-              options={assigneeOptions}
+              options={profileOptions}
               placeholder={t('create.assigneePlaceholder')}
-              allowCustomValue
               disabled={isCreating}
             />
 

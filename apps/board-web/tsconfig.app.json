@@ -23,5 +23,6 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
+  "exclude": ["src/**/*.devcheck.ts"],
   "references": [{ "path": "../../packages/shared" }]
 }

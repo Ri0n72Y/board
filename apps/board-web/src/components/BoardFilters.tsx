@@ -36,7 +36,7 @@ interface BoardFiltersProps {
   priorityTags?: Tag[]
   assetOptions?: RecordReferenceOption[]
   relationTargetOptions?: RecordReferenceOption[]
-  profileOptions?: { value: string; label: string }[]
+  profileOptions?: { value: string; label: string; description?: string; meta?: string }[]
   metadataLoading?: boolean
   metadataError?: MetadataErrorState
   onQChange: (q: string) => void
@@ -122,12 +122,8 @@ export function BoardFilters({
             label={t('filters.assignee')}
             value={assignee || null}
             onChange={(next) => onAssigneeChange(next ?? '')}
-            options={profileOptions.map((option) => ({
-              ...option,
-              meta: option.value,
-            }))}
+            options={profileOptions}
             placeholder={t('filters.assigneePlaceholder')}
-            allowCustomValue
           />
 
           <div className="flex flex-col justify-end gap-3 lg:col-span-2">
@@ -205,7 +201,7 @@ export function BoardFilters({
                 onClick={() => onAssigneeChange('')}
                 title={t('filters.removeFilter')}
               >
-                {t('filters.assignee')}: {assignee}
+                {t('filters.assignee')}: {assigneeNameFromOptions(profileOptions, assignee)}
               </button>
             )}
             {assetId.trim() && (
@@ -293,4 +289,14 @@ function chipClassName({
     selected && 'border border-emerald-700 bg-emerald-100 text-emerald-800',
     readonly && 'border border-slate-200',
   )
+}
+
+function assigneeNameFromOptions(
+  options: { value: string; label: string; description?: string; meta?: string }[] | undefined,
+  pk: string,
+): string {
+  if (!options) return pk
+  const option = options.find((o) => o.value === pk)
+  if (option) return `${option.label} (${option.description ?? pk})`
+  return `Unknown member (${pk.slice(0, 6)}…${pk.slice(-4)})`
 }

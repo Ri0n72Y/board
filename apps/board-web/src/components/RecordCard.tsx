@@ -342,7 +342,7 @@ function formatAssignee(
   if (!pk || pk.trim() === '') return t('record.unassigned')
   const profile = lookupProfile(profiles ?? null, pk)
   if (profile) {
-    return `${profile.name} (${pk})`
+    return `${profile.name} (${pk.slice(0, 6)}…${pk.slice(-4)})`
   }
-  return pk
+  return `${t('record.unknownMember')} (${pk.slice(0, 6)}…${pk.slice(-4)})`
 }

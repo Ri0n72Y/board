@@ -1,7 +1,16 @@
 import { create } from 'zustand'
-import type { BoardConfig, Profile } from '@labour-board/shared'
+import type {
+  BoardConfig,
+  CreateProfileInput,
+  Profile,
+  UpdateProfileInput,
+} from '@labour-board/shared'
 import { fetchConfig } from '../api/config'
-import { fetchProfiles } from '../api/profiles'
+import {
+  createProfile as createProfileApi,
+  fetchProfiles,
+  updateProfile as updateProfileApi,
+} from '../api/profiles'
 
 interface MetadataError {
   config: string | null
@@ -14,6 +23,8 @@ interface BoardMetadataState {
   isLoading: boolean
   error: MetadataError
   loadMetadata: (signal?: AbortSignal) => Promise<void>
+  createProfile: (input: CreateProfileInput) => Promise<Profile>
+  updateProfile: (pk: string, input: UpdateProfileInput) => Promise<Profile>
 }
 
 let activeMetadataRequestId = 0
@@ -68,4 +79,33 @@ export const useBoardMetadataStore = create<BoardMetadataState>((set) => ({
       error: { config: configError, profiles: profilesError },
     })
   },
+
+  createProfile: async (input: CreateProfileInput): Promise<Profile> => {
+    const created = await createProfileApi(input)
+    set((state) => ({
+      profiles: state.profiles
+        ? [...state.profiles, created].sort(profileSort)
+        : [created],
+    }))
+    return created
+  },
+
+  updateProfile: async (
+    pk: string,
+    input: UpdateProfileInput,
+  ): Promise<Profile> => {
+    const updated = await updateProfileApi(pk, input)
+    set((state) => ({
+      profiles: state.profiles?.map((p) =>
+        p.pk === pk ? updated : p,
+      ) ?? null,
+    }))
+    return updated
+  },
 }))
+
+function profileSort(a: Profile, b: Profile): number {
+  const nameCompare = a.name.localeCompare(b.name)
+  if (nameCompare !== 0) return nameCompare
+  return a.pk.localeCompare(b.pk)
+}

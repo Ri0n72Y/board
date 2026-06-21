@@ -106,10 +106,6 @@ export function EditRecordDrawer({
       })),
     [otherTagOptions, lang]
   )
-  const assigneeOptions = useMemo(
-    () => profileOptions.map((option) => ({ ...option, meta: option.value })),
-    [profileOptions],
-  )
   const recordReferenceCopy = useMemo(
     () => ({
       unknownAsset: t('recordReference.unknownAsset'),
@@ -463,9 +459,8 @@ export function EditRecordDrawer({
               onChange={(next) =>
                 setForm((state) => ({ ...state, assignee: next ?? '' }))
               }
-              options={assigneeOptions}
+              options={profileOptions}
               placeholder={t('edit.assigneePlaceholder')}
-              allowCustomValue
               disabled={isSaving}
             />
 

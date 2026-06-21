@@ -17,26 +17,27 @@ describe('ProfileService', () => {
     const created = await service.create({
       pk: 'member-1',
       name: 'Ada',
-      extra: { role: 'programmer' },
     })
 
-    expect(created).toEqual({
+    expect(created).toMatchObject({
       pk: 'member-1',
       name: 'Ada',
-      extra: { role: 'programmer' },
+      avatarUrl: null,
     })
+    expect(created.createdAt).toBeDefined()
+    expect(created.updatedAt).toBeDefined()
     await expect(service.list()).resolves.toEqual([created])
     await expect(service.findByPk('member-1')).resolves.toEqual(created)
 
     const updated = await service.update('member-1', {
       name: 'Ada Lovelace',
-      extra: null,
+      avatarUrl: 'https://example.com/ada.png',
     })
 
-    expect(updated).toEqual({
+    expect(updated).toMatchObject({
       pk: 'member-1',
       name: 'Ada Lovelace',
-      extra: undefined,
+      avatarUrl: 'https://example.com/ada.png',
     })
   })
 
@@ -44,7 +45,7 @@ describe('ProfileService', () => {
     const service = createService()
 
     await expect(
-      service.update('missing', { name: 'Missing' })
+      service.update('missing', { name: 'Missing' }),
     ).resolves.toBeNull()
   })
 
@@ -52,22 +53,22 @@ describe('ProfileService', () => {
     const service = createService()
 
     await expect(
-      service.create({ pk: '', name: 'No key' })
+      service.create({ pk: '', name: 'No key' }),
     ).rejects.toThrow(ProfileValidationError)
     await expect(
-      service.create({ pk: 'member-1', name: 1 as unknown as string })
-    ).rejects.toThrow('Profile name must be a string')
+      service.create({ pk: 'member-1', name: 1 as unknown as string }),
+    ).rejects.toThrow('Profile name is required')
   })
 
-  it('allows blank profile names so callers can fall back to the public key', async () => {
+  it('rejects blank profile names', async () => {
     const service = createService()
 
     await expect(
-      service.create({ pk: 'member-1', name: '' })
-    ).resolves.toEqual({ pk: 'member-1', name: '' })
+      service.create({ pk: 'member-1', name: '' }),
+    ).rejects.toThrow(ProfileValidationError)
     await expect(
-      service.update('member-1', { name: '   ' })
-    ).resolves.toEqual({ pk: 'member-1', name: '   ' })
+      service.create({ pk: 'member-1', name: '   ' }),
+    ).rejects.toThrow(ProfileValidationError)
   })
 
   it('rejects duplicate profile keys', async () => {
@@ -75,7 +76,96 @@ describe('ProfileService', () => {
     await service.create({ pk: 'member-1', name: 'Ada' })
 
     await expect(
-      service.create({ pk: 'member-1', name: 'Other Ada' })
+      service.create({ pk: 'member-1', name: 'Other Ada' }),
     ).rejects.toThrow(ProfileConflictError)
+  })
+
+  it('rejects invalid avatarUrl', async () => {
+    const service = createService()
+
+    await expect(
+      service.create({
+        pk: 'member-1',
+        name: 'Ada',
+        avatarUrl: 'ftp://bad.example.com',
+      }),
+    ).rejects.toThrow(ProfileValidationError)
+  })
+
+  it('allows empty or null avatarUrl when creating', async () => {
+    const service = createService()
+
+    await expect(
+      service.create({ pk: 'member-1', name: 'Ada', avatarUrl: '' }),
+    ).resolves.toMatchObject({ avatarUrl: null })
+    await expect(
+      service.create({ pk: 'member-2', name: 'Bob' }),
+    ).resolves.toMatchObject({ avatarUrl: null })
+  })
+
+  it('allows clearing avatarUrl via update', async () => {
+    const service = createService()
+    await service.create({
+      pk: 'member-1',
+      name: 'Ada',
+      avatarUrl: 'https://example.com/ada.png',
+    })
+
+    await expect(
+      service.update('member-1', { avatarUrl: '' }),
+    ).resolves.toMatchObject({ avatarUrl: null })
+  })
+
+  it('rejects sensitive fields in create input', async () => {
+    const service = createService()
+
+    await expect(
+      service.create({
+        pk: 'member-x',
+        name: 'X',
+        privateKey: 'secret' as unknown as string,
+      } as never),
+    ).rejects.toThrow(ProfileValidationError)
+
+    await expect(
+      service.create({
+        pk: 'member-x',
+        name: 'X',
+        password: 'secret' as unknown as string,
+      } as never),
+    ).rejects.toThrow(ProfileValidationError)
+
+    await expect(
+      service.create({
+        pk: 'member-x',
+        name: 'X',
+        secretKey: 'secret' as unknown as string,
+      } as never),
+    ).rejects.toThrow(ProfileValidationError)
+
+    await expect(
+      service.create({
+        pk: 'member-x',
+        name: 'X',
+        seedPhrase: 'secret' as unknown as string,
+      } as never),
+    ).rejects.toThrow(ProfileValidationError)
+  })
+
+  it('rejects body.pk mismatch in PATCH', async () => {
+    const service = createService()
+    await service.create({ pk: 'member-a', name: 'Alice' })
+
+    await expect(
+      service.update('member-a', {
+        pk: 'member-b',
+        name: 'Bob',
+      }),
+    ).rejects.toThrow(ProfileValidationError)
+  })
+
+  it('returns null when finding a non-existent profile', async () => {
+    const service = createService()
+    await expect(service.findByPk('nobody')).resolves.toBeNull()
   })
 })

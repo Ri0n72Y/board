@@ -2,10 +2,12 @@ import type {
   BoardConfig,
   BoardCurrentProjection,
   Profile,
+  PublicKey,
   Tag,
   TagDefinition,
 } from '@labour-board/shared'
 import type { BoardCurrentFilters } from './boardFilterUrl'
+import { buildProfileOptions, profileInitials } from './profileDisplay'
 
 export function hasEffectiveFilters(filters: BoardCurrentFilters): boolean {
   return (
@@ -127,10 +129,31 @@ export function getTagDisplayFromConfig(
   return allDefs.find((d) => d.id === tag)?.displayName
 }
 
-/** Extract assignee options (profiles) as {value, label} for select dropdown. */
+/** Extract assignee options from profiles for SearchSelect dropdowns. */
 export function getProfileOptions(
   profiles: Profile[] | null,
-): { value: string; label: string }[] {
+): { value: string; label: string; description: string; meta: string }[] {
   if (!profiles) return []
-  return profiles.map((p) => ({ value: p.pk, label: p.name }))
+  return buildProfileOptions(profiles)
+}
+
+/** Format assignee for display using profile data with unknown fallback. */
+export function formatAssigneeForDisplay(
+  pk: PublicKey | undefined | null,
+  profiles: Profile[] | null,
+  unassignedLabel: string,
+  unknownLabel: string,
+): string {
+  if (!pk || pk.trim() === '') return unassignedLabel
+  const profile = lookupProfile(profiles, pk)
+  if (profile) return `${profile.name} (${pk.slice(0, 6)}…${pk.slice(-4)})`
+  return `${unknownLabel} (${pk.slice(0, 6)}…${pk.slice(-4)})`
+}
+
+/** Get initials for a profile or fallback from pk. */
+export function getProfileInitials(
+  profile: Profile | undefined,
+  pk: PublicKey | undefined | null,
+): string {
+  return profileInitials(profile?.name, pk ?? '')
 }

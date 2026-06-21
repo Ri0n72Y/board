@@ -108,11 +108,16 @@ export interface RecordHistoryReplay {
   steps: RecordHistoryReplayStep[]
 }
 
-export type CreateProfileInput = Profile
+export interface CreateProfileInput {
+  pk: Profile['pk']
+  name: string
+  avatarUrl?: string | null
+}
 
 export interface UpdateProfileInput {
+  pk?: string
   name?: string
-  extra?: Record<string, unknown> | null
+  avatarUrl?: string | null
 }
 
 export interface RecordResponse<T> {
