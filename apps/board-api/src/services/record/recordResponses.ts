@@ -21,8 +21,6 @@ export interface PatchResult {
   patch: BoardPatchResponse
   /** The new dynamic current-head version after this patch was committed. */
   newCurrentVersion: number
-  /** Deprecated compatibility alias for legacy clients. */
-  newSnapshotVersion?: number
 }
 
 // ─── Error types ───
@@ -86,16 +84,16 @@ export function resolveActor(headerValue: string | undefined): PublicKey {
 
 export function assertAppendPatchResult(
   result: AppendPatchResult,
-  snapshotVersion: number,
+  currentVersion: number,
   parentId: RecordId | null
 ): asserts result is Extract<AppendPatchResult, { ok: true }> {
   if (result.ok) {
     return
   }
 
-  if (result.reason === 'snapshotVersionMismatch') {
+  if (result.reason === 'currentVersionMismatch') {
     throw new SnapshotConflictError(
-      `Snapshot version mismatch: client has ${snapshotVersion}, server has ${result.currentVersion}`
+      `Current version mismatch: client has ${currentVersion}, server has ${result.currentVersion}`
     )
   }
 

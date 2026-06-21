@@ -40,7 +40,7 @@ export function assertRecordPatchInputShape(
   }
 
   const rawInput = input as unknown as Record<string, unknown>
-  if (!('currentVersion' in input) && !('snapshotVersion' in rawInput)) {
+  if (!('currentVersion' in rawInput)) {
     throw new RecordValidationError('currentVersion is required (number)')
   }
   const observedVersion = getRawObservedVersion(input)
@@ -154,10 +154,7 @@ export async function submitRecordPatch(
   if (!head) {
     return null
   }
-  const observedCurrentVersion = await getObservedCurrentVersion(
-    input,
-    repository
-  )
+  const observedCurrentVersion = input.currentVersion
   if (observedCurrentVersion !== head.currentVersion) {
     throw new CurrentHeadConflictError(
       `Current version mismatch: client has ${observedCurrentVersion}, server has ${head.currentVersion}`
@@ -223,22 +220,18 @@ export async function submitRecordPatch(
     createdAt: now,
   }
 
-  const expectedSnapshotVersion = await getExpectedSnapshotVersion(
-    input,
-    repository
-  )
+  const expectedSnapshotVersion = await getExpectedSnapshotHeadVersion(input)
   const appendResult = await snapshotHeadRepository.appendPatchAndAdvanceHead({
     targetId: targetId as RecordId,
     patch,
     expectedSnapshotVersion,
     expectedParentId: input.parentId as RecordId | null,
   })
-  const appendSuccess = await ensureAppendSucceeded(appendResult, repository)
+  await ensureAppendSucceeded(appendResult, repository)
 
   return {
     patch: toPatchResponse(patch),
     newCurrentVersion: head.currentVersion + 1,
-    newSnapshotVersion: appendSuccess.newSnapshotVersion,
   }
 }
 
@@ -248,7 +241,7 @@ async function ensureAppendSucceeded(
 ): Promise<Extract<AppendPatchResult, { ok: true }>> {
   if (result.ok) return result
 
-  if (result.reason === 'snapshotVersionMismatch') {
+  if (result.reason === 'currentVersionMismatch') {
     const baseRecords = await repository.list({
       includeArchived: true,
       excludeTags: [],
@@ -414,43 +407,14 @@ function isTag(value: string): value is Tag {
   return separator > 0 && separator < value.length - 1
 }
 
-async function getObservedCurrentVersion(
-  input: CreateRecordPatchInput<DeepPartial<RecordBody>>,
-  repository: RecordRepository
+async function getExpectedSnapshotHeadVersion(
+  input: CreateRecordPatchInput<DeepPartial<RecordBody>>
 ): Promise<number> {
-  const rawInput = input as unknown as Record<string, unknown>
-  if (typeof rawInput.currentVersion === 'number') {
-    return rawInput.currentVersion
-  }
-
-  const baseRecords = await repository.list({
-    includeArchived: true,
-    excludeTags: [],
-  })
-  return baseRecords.length + (rawInput.snapshotVersion as number)
-}
-
-async function getExpectedSnapshotVersion(
-  input: CreateRecordPatchInput<DeepPartial<RecordBody>>,
-  repository: RecordRepository
-): Promise<number> {
-  const rawInput = input as unknown as Record<string, unknown>
-  if (typeof rawInput.snapshotVersion === 'number') {
-    return rawInput.snapshotVersion
-  }
-
-  const baseRecords = await repository.list({
-    includeArchived: true,
-    excludeTags: [],
-  })
-  return (rawInput.currentVersion as number) - baseRecords.length
+  return input.currentVersion
 }
 
 function getRawObservedVersion(
   input: CreateRecordPatchInput<DeepPartial<RecordBody>>
 ): unknown {
-  const rawInput = input as unknown as Record<string, unknown>
-  return typeof rawInput.currentVersion === 'number'
-    ? rawInput.currentVersion
-    : rawInput.snapshotVersion
+  return (input as unknown as Record<string, unknown>).currentVersion
 }

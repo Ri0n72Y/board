@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   projectRecordCurrent,
   isArchivedInCurrent,
@@ -45,7 +45,7 @@ describe('boardCurrentProjection', () => {
 
     await service.createRecordPatch(recordId, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       body: { description: 'Updated desc' },
     })
@@ -67,7 +67,7 @@ describe('boardCurrentProjection', () => {
 
     await service.createRecordPatch(recordId, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
 
@@ -84,13 +84,13 @@ describe('boardCurrentProjection', () => {
 
     const r1 = await service.createRecordPatch(recordId, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       body: { description: 'Step 1' },
     })
 
     await service.createRecordPatch(recordId, {
       parentId: r1!.patch.body.id,
-      snapshotVersion: 1,
+      currentVersion: 1,
       body: { content: 'Step 2 content' },
     })
 
@@ -111,7 +111,7 @@ describe('boardCurrentProjection', () => {
 
     await service.createRecordPatch(recordId, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
     // Archive via delete (appends archive patch)

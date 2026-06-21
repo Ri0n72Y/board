@@ -13,7 +13,6 @@ export type {
   RecordQuery,
   RecordResponse,
   UpdateProfileInput,
-  UpdateRecordInput,
 } from './api.js'
 export type {
   BlockedRecordEntry,

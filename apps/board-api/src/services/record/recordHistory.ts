@@ -195,7 +195,7 @@ function determineStatus(
  * This is a pure projection — it does not write to any repository.
  *
  * Patches are applied using the existing {@link applyRecordPatch} utility.
- * `description`, `targetId`, `parentId`, and `snapshotVersion` are never
+ * `description`, `targetId`, `parentId`, and `currentVersion` are never
  * written into the record state.
  */
 export function replayRecordHistory(

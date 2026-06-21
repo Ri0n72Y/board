@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from './recordRepository.js'
 import {
   MemorySnapshotHeadRepository,
@@ -143,7 +143,7 @@ describe('MemorySnapshotHeadRepository', () => {
       expectedParentId: 'patch-1',
     })
 
-    expect(result).toMatchObject({ ok: false, reason: 'snapshotVersionMismatch' })
+    expect(result).toMatchObject({ ok: false, reason: 'currentVersionMismatch' })
     await expect(records.findPatchById('patch-2')).resolves.toBeNull()
   })
 
@@ -288,7 +288,7 @@ describe('MongoSnapshotHeadRepository transaction abort', () => {
 
     expect(result).toMatchObject({
       ok: false,
-      reason: 'snapshotVersionMismatch',
+      reason: 'currentVersionMismatch',
     })
     expect(getSessionAborted()).toBe(true)
     expect(getSessionCommitted()).toBe(false)
@@ -311,7 +311,7 @@ describe('MongoSnapshotHeadRepository transaction abort', () => {
 
     expect(result).toMatchObject({
       ok: false,
-      reason: 'snapshotVersionMismatch',
+      reason: 'currentVersionMismatch',
       currentVersion: 0,
     })
     expect(getSessionAborted()).toBe(true)
@@ -413,7 +413,7 @@ describe('MongoSnapshotHeadRepository transaction abort', () => {
 
     expect(result).toMatchObject({
       ok: false,
-      reason: 'snapshotVersionMismatch',
+      reason: 'currentVersionMismatch',
       currentVersion: 0,
     })
     expect(getSessionAborted()).toBe(true)
@@ -518,7 +518,7 @@ describe('MemorySnapshotHeadRepository concurrent append lock', () => {
     expect(conflict).toHaveLength(1)
     expect(conflict[0]).toMatchObject({
       ok: false,
-      reason: 'snapshotVersionMismatch',
+      reason: 'currentVersionMismatch',
     })
 
     // Only one patch exists in the records collection

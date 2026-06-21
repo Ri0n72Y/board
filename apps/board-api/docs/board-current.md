@@ -106,7 +106,8 @@ The selected record set and reference lookup scope are intentionally separate:
 
 ## Patch Edit Boundary
 
-Board-web must not use `/api/v0/snapshot-head` for edit/status-move flows.
+Board-web must not use `/api/v0/snapshot-head` for edit/status-move flows;
+that HTTP route does not exist.
 
 Canonical patch edit/status-move sequence:
 
@@ -116,5 +117,5 @@ POST /api/v0/records/:id/patches
 ```
 
 `GET /api/v0/records/:id/head` returns `parentId` and `currentVersion`.
-The backend still accepts `snapshotVersion` as a deprecated compatibility
-alias, but frontend code must use `currentVersion`.
+The backend requires `currentVersion` and does not accept legacy version
+aliases.

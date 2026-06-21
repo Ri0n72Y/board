@@ -7,7 +7,6 @@ import type {
 import { error, ok } from '../../http/responses.js'
 import {
   RecordValidationError,
-  SnapshotConflictError,
   type BoardRecordResponse,
   type RecordService,
 } from '../../services/recordService.js'
@@ -41,33 +40,6 @@ export function createRecordCrudRoute(recordService: RecordService): Hono {
     } catch (caught) {
       if (caught instanceof RecordValidationError) {
         return c.json(error('INVALID_RECORD', caught.message), 400)
-      }
-
-      throw caught
-    }
-  })
-
-  records.patch('/:id', async (_c) => {
-    return _c.json(
-      error(
-        'GONE',
-        'Legacy direct record PATCH is disabled; use POST /api/v0/records/:id/patches'
-      ),
-      410
-    )
-  })
-
-  records.delete('/:id', async (c) => {
-    try {
-      const record = await recordService.delete(c.req.param('id'))
-      if (!record) {
-        return c.json(error('NOT_FOUND', 'Record not found'), 404)
-      }
-
-      return c.json<ApiResponse<BoardRecordResponse>>(ok(record))
-    } catch (caught) {
-      if (caught instanceof SnapshotConflictError) {
-        return c.json(error('CONFLICT', caught.message), 409)
       }
 
       throw caught

@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { getBoardCurrentProjection } from './boardCurrentService.js'
 import { createServiceWithRepo, makePatchDoc } from '../record/recordTestUtils.js'
 
@@ -67,7 +67,7 @@ describe('boardCurrentService', () => {
 
     await service.createRecordPatch(recordId, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       body: { description: 'Updated via patch' },
     })
@@ -99,7 +99,7 @@ describe('boardCurrentService', () => {
 
     await service.createRecordPatch(envelope.body.id, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: {
         change: [
           { namespace: 'status', from: 'status:todo', to: 'status:wip' },
@@ -137,7 +137,7 @@ describe('boardCurrentService', () => {
     })
     await service.createRecordPatch(first.body.id, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
 
@@ -176,7 +176,7 @@ describe('boardCurrentService', () => {
 
     await service.createRecordPatch(envelope.body.id, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       assignee: 'member-current',
       assets: [target.body.id],
       relations: [{ constraint: 'blocks', target: target.body.id }],
@@ -228,7 +228,7 @@ describe('boardCurrentService', () => {
 
     const firstPatch = await service.createRecordPatch(envelope.body.id, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       body: {
         title: 'Current visible title',
         description: 'Current visible description',
@@ -239,7 +239,7 @@ describe('boardCurrentService', () => {
 
     const secondPatch = await service.createRecordPatch(envelope.body.id, {
       parentId: firstPatch!.patch.body.id,
-      snapshotVersion: firstPatch!.newSnapshotVersion,
+      currentVersion: firstPatch!.newCurrentVersion,
       body: { content: 'Current visible content' },
       description: 'hidden second patch description',
     })
@@ -383,7 +383,7 @@ describe('boardCurrentService', () => {
 
     await service.createRecordPatch(recordId, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
     await service.delete(recordId)

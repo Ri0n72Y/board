@@ -1,4 +1,4 @@
-﻿import { Hono } from 'hono'
+import { Hono } from 'hono'
 import { DEFAULT_BOARD_CONFIG } from '@labour-board/shared'
 import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from '../../repositories/recordRepository.js'
@@ -76,7 +76,7 @@ describe('recordHistoryRoute', () => {
 
     await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] }, description: 'First change' }),
+      body: JSON.stringify({ parentId: null, currentVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] }, description: 'First change' }),
       headers: { 'content-type': 'application/json' },
     })
 
@@ -104,7 +104,7 @@ describe('recordHistoryRoute', () => {
 
     const p1Res = await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, snapshotVersion: 0, body: { description: 'Patch 1' } }),
+      body: JSON.stringify({ parentId: null, currentVersion: 0, body: { description: 'Patch 1' } }),
       headers: { 'content-type': 'application/json' },
     })
     const p1Payload = await p1Res.json()
@@ -112,7 +112,7 @@ describe('recordHistoryRoute', () => {
 
     const p2Res = await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: p1Id, snapshotVersion: 1, body: { description: 'Patch 2' } }),
+      body: JSON.stringify({ parentId: p1Id, currentVersion: 1, body: { description: 'Patch 2' } }),
       headers: { 'content-type': 'application/json' },
     })
     const p2Payload = await p2Res.json()
@@ -142,7 +142,7 @@ describe('recordHistoryRoute', () => {
 
     await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
+      body: JSON.stringify({ parentId: null, currentVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
       headers: { 'content-type': 'application/json' },
     })
 
@@ -165,7 +165,7 @@ describe('recordHistoryRoute', () => {
 
     await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
+      body: JSON.stringify({ parentId: null, currentVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
       headers: { 'content-type': 'application/json' },
     })
 
@@ -215,7 +215,7 @@ describe('recordHistoryRoute', () => {
 
     const p1Res = await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, snapshotVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
+      body: JSON.stringify({ parentId: null, currentVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
       headers: { 'content-type': 'application/json' },
     })
     const p1Payload = await p1Res.json()
@@ -223,7 +223,7 @@ describe('recordHistoryRoute', () => {
 
     await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: p1Id, snapshotVersion: 1, body: { description: 'Updated via patch' } }),
+      body: JSON.stringify({ parentId: p1Id, currentVersion: 1, body: { description: 'Updated via patch' } }),
       headers: { 'content-type': 'application/json' },
     })
 
@@ -282,17 +282,29 @@ describe('recordHistoryRoute', () => {
     expect(payload.data.replay).toBeUndefined()
   })
 
-  it('archive via DELETE appears as a patch in history with replay', async () => {
+  it('archive patch appears in history with replay', async () => {
     const app = createApp()
     const createResponse = await app.request('/api/v0/records', {
       method: 'POST',
-      body: JSON.stringify({ schema: 'CardBody', tags: ['status:todo'], body: { title: 'Delete history test' } }),
+      body: JSON.stringify({ schema: 'CardBody', tags: ['status:todo'], body: { title: 'Archive history test' } }),
       headers: { 'content-type': 'application/json' },
     })
     const createPayload = await createResponse.json()
     const recordId = createPayload.data.body.id as string
 
-    await app.request(`/api/v0/records/${recordId}`, { method: 'DELETE' })
+    const archiveHeadResponse = await app.request(`/api/v0/records/${recordId}/head`)
+    const archiveHeadPayload = await archiveHeadResponse.json()
+    const archiveResponse = await app.request(`/api/v0/records/${recordId}/patches`, {
+      method: 'POST',
+      body: JSON.stringify({
+        parentId: archiveHeadPayload.data.lastPatchId,
+        currentVersion: archiveHeadPayload.data.currentVersion,
+        tagChanges: { add: ['status:archived'] },
+        description: 'Archive record',
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
+    expect(archiveResponse.status).toBe(201)
 
     const response = await app.request(`/api/v0/records/${recordId}/history`)
     const payload = await response.json()

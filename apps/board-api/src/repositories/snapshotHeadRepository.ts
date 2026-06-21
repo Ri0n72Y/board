@@ -40,7 +40,7 @@ export type AppendPatchResult =
     }
   | {
       ok: false
-      reason: 'snapshotVersionMismatch'
+      reason: 'currentVersionMismatch'
       currentVersion: number
     }
   | {
@@ -352,7 +352,7 @@ export class MongoSnapshotHeadRepository implements SnapshotHeadRepository {
         if (isDuplicateKeyError(caught)) {
           throw new SnapshotHeadTransactionAbort({
             ok: false,
-            reason: 'snapshotVersionMismatch',
+            reason: 'currentVersionMismatch',
             currentVersion: head.version,
           })
         }
@@ -386,7 +386,7 @@ export class MongoSnapshotHeadRepository implements SnapshotHeadRepository {
     if (!replaced) {
       throw new SnapshotHeadTransactionAbort({
         ok: false,
-        reason: 'snapshotVersionMismatch',
+        reason: 'currentVersionMismatch',
         currentVersion: head.version,
       })
     }
@@ -461,7 +461,7 @@ async function validateAppend(
   if (params.expectedSnapshotVersion !== head.version) {
     return {
       ok: false,
-      reason: 'snapshotVersionMismatch',
+      reason: 'currentVersionMismatch',
       currentVersion: head.version,
     }
   }

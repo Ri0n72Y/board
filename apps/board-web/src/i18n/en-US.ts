@@ -232,6 +232,8 @@ const enUS = {
       'Record changed on the server. Refresh and try again.',
     'edit.headMissing':
       'Current record is not present in current head. Refresh current board and try again.',
+    'edit.staleHead':
+      'The current record has been changed by another operation. Refresh and edit again.',
     'edit.optional': ' (optional)',
 
     // ─── Snapshot Drawer ───

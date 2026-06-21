@@ -8,15 +8,11 @@ import {
   type MutableRefObject,
 } from 'react'
 import type {
-  AssetRef,
   Profile,
-  PublicKey,
   RecordBody,
   RecordItem,
   RecordResponse,
-  RelationRef,
   Tag,
-  TagChanges,
 } from '@labour-board/shared'
 import {
   ExclamationTriangleIcon,
@@ -33,12 +29,13 @@ import {
   ensureReferenceOptions,
   type RecordReferenceOption,
 } from '../utils/recordReferenceOptions'
+import type { RelationConstraintOption } from '../utils/relationDisplay'
 import {
-  normalizeRelationDrafts,
-  sameRelations,
-  type RelationConstraintOption,
-} from '../utils/relationDisplay'
-import { buildTagChanges } from '../utils/tagChanges'
+  asEditableBody,
+  buildPatchDraft,
+  hasEditHeadChanged,
+  type EditPatchFormState,
+} from '../utils/editPatchDraft'
 import { formatTagLabel } from '../utils/tagDisplay'
 import { RelationEditor } from './RelationEditor'
 import { Button } from './ui/Button'
@@ -60,29 +57,10 @@ interface EditRecordDrawerProps {
   onPatched: (recordId: string) => Promise<void> | void
 }
 
-interface FormState {
-  title: string
-  summary: string
-  details: string
-  statusTag: string
-  priorityTag: string
-  otherTags: Tag[]
-  unsupportedTags: Tag[]
-  assignee: string
-  assets: string[]
-  relations: RelationRef[]
-}
-
-interface PatchDraft {
-  tagChanges?: TagChanges
-  assignee?: PublicKey | null
-  assets?: AssetRef[]
-  relations?: RelationRef[]
-  body?: {
-    title: string
-    description: string | null
-    content: string | null
-  }
+interface BaseHead {
+  recordId: string
+  lastPatchId: string | null
+  currentVersion: number
 }
 
 export function EditRecordDrawer({
@@ -102,11 +80,12 @@ export function EditRecordDrawer({
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
   const current = record.body
-  const [form, setForm] = useState<FormState>(() =>
+  const [form, setForm] = useState<EditPatchFormState>(() =>
     initialFormState(current, configOtherTags ?? knownTags, statusTags)
   )
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [baseHead, setBaseHead] = useState<BaseHead | null>(null)
   const requestIdRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
 
@@ -158,6 +137,49 @@ export function EditRecordDrawer({
     return () => abortEdit(requestIdRef, abortRef)
   }, [])
 
+  useEffect(() => {
+    if (!open) return
+
+    const requestId = requestIdRef.current + 1
+    requestIdRef.current = requestId
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    void fetchRecordHead(current.id, controller.signal)
+      .then((head) => {
+        if (requestIdRef.current !== requestId || controller.signal.aborted) {
+          return
+        }
+        if (!head.exists) {
+          setError(t('edit.headMissing'))
+          return
+        }
+        setBaseHead({
+          recordId: current.id,
+          lastPatchId: head.lastPatchId,
+          currentVersion: head.currentVersion,
+        })
+      })
+      .catch((caught) => {
+        if (
+          requestIdRef.current !== requestId ||
+          controller.signal.aborted ||
+          axios.isCancel(caught)
+        ) {
+          return
+        }
+        setError(caught instanceof Error ? caught.message : t('edit.errorGeneral'))
+      })
+      .finally(() => {
+        if (requestIdRef.current === requestId) {
+          abortRef.current = null
+        }
+      })
+
+    return () => abortEdit(requestIdRef, abortRef)
+  }, [current.id, open, t])
+
   const close = useCallback(() => {
     abortEdit(requestIdRef, abortRef, setIsSaving)
     onClose()
@@ -180,6 +202,12 @@ export function EditRecordDrawer({
     setError(null)
 
     try {
+      if (!baseHead || baseHead.recordId !== current.id) {
+        setError(t('edit.headMissing'))
+        setIsSaving(false)
+        return
+      }
+
       const head = await fetchRecordHead(current.id, controller.signal)
       if (requestIdRef.current !== requestId || controller.signal.aborted)
         return
@@ -190,10 +218,16 @@ export function EditRecordDrawer({
         return
       }
 
-      const parentId = head.lastPatchId
+      if (hasEditHeadChanged(baseHead, head)) {
+        setError(t('edit.staleHead'))
+        setIsSaving(false)
+        return
+      }
+
+      const parentId = baseHead.lastPatchId
       const payload: SubmitRecordPatchPayload = {
         parentId,
-        currentVersion: head.currentVersion,
+        currentVersion: baseHead.currentVersion,
         ...validation.patch,
       }
 
@@ -492,7 +526,7 @@ function initialFormState(
   record: RecordItem<RecordBody>,
   knownTags: Tag[],
   statusTags: Tag[]
-): FormState {
+): EditPatchFormState {
   const body = asEditableBody(record.body)
   const statusTag =
     record.tags.find((tag) => tag.startsWith('status:')) ?? statusTags[0] ?? ''
@@ -519,113 +553,6 @@ function initialFormState(
     assets: [...(record.assets ?? [])],
     relations: (record.relations ?? []).map((relation) => ({ ...relation })),
   }
-}
-
-function buildPatchDraft(
-  form: FormState,
-  current: RecordItem<RecordBody>
-): { ok: true; patch: PatchDraft } | { ok: false; error: string } {
-  const title = form.title.trim()
-  const statusTag = form.statusTag.trim() as Tag
-  const priorityTag = form.priorityTag.trim() as Tag
-  const tags = uniqueValues(
-    [statusTag, priorityTag, ...form.otherTags, ...form.unsupportedTags].filter(
-      Boolean
-    ) as Tag[]
-  )
-  const assets = uniqueValues(form.assets.map((asset) => asset.trim()).filter(Boolean)) as AssetRef[]
-  const assignee = form.assignee.trim()
-  const relations = normalizeRelationDrafts(form.relations)
-
-  if (!title) return { ok: false, error: 'edit.errorTitleRequired' }
-  if (!statusTag) return { ok: false, error: 'edit.errorStatusTagRequired' }
-
-  const patch: PatchDraft = {}
-  const tagChanges = buildTagChanges(current.tags, tags)
-  if (tagChanges) patch.tagChanges = tagChanges
-
-  const currentAssignee = current.assignee ?? null
-  const nextAssignee = assignee ? (assignee as PublicKey) : null
-  if (nextAssignee !== currentAssignee) {
-    patch.assignee = nextAssignee
-  }
-
-  if (!sameStringList(assets, current.assets ?? [])) {
-    patch.assets = assets
-  }
-
-  if (!sameRelations(relations, current.relations ?? [])) {
-    patch.relations = relations
-  }
-
-  const currentBody = asEditableBody(current.body)
-  const nextBody = {
-    title,
-    description: nullableTrimmed(form.summary),
-    content: nullableTrimmed(form.details),
-  }
-  const currentComparableBody = {
-    title: currentBody.title,
-    description: nullableTrimmed(currentBody.description),
-    content: nullableTrimmed(currentBody.content),
-  }
-  if (!sameRecordBodyPatch(nextBody, currentComparableBody)) {
-    patch.body = nextBody
-  }
-
-  if (Object.keys(patch).length === 0) {
-    return { ok: false, error: 'edit.errorNoChanges' }
-  }
-
-  return {
-    ok: true,
-    patch,
-  }
-}
-
-function asEditableBody(body: RecordBody): {
-  title: string
-  description: string
-  content: string
-} {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return { title: '', description: '', content: '' }
-  }
-  return {
-    title: stringValue(body, 'title'),
-    description: stringValue(body, 'description'),
-    content: stringValue(body, 'content'),
-  }
-}
-
-function stringValue(source: object, key: string): string {
-  const value = (source as Record<string, unknown>)[key]
-  return typeof value === 'string' ? value : ''
-}
-
-function nullableTrimmed(value: string): string | null {
-  const trimmed = value.trim()
-  return trimmed ? trimmed : null
-}
-
-function uniqueValues<T extends string>(values: T[]): T[] {
-  return [...new Set(values)]
-}
-
-function sameStringList(left: readonly string[], right: readonly string[]) {
-  if (left.length !== right.length) return false
-  return left.every((value, index) => value === right[index])
-}
-
-function sameRecordBodyPatch(
-  left: NonNullable<PatchDraft['body']>,
-  right: NonNullable<PatchDraft['body']>
-) {
-  return (
-    left.title === right.title &&
-    left.description === right.description &&
-    left.content === right.content
-  )
 }
 
 function abortEdit(

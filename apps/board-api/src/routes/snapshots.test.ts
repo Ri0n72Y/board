@@ -1,4 +1,4 @@
-﻿import { Hono } from 'hono'
+import { Hono } from 'hono'
 import { DEFAULT_BOARD_CONFIG } from '@labour-board/shared'
 import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from '../repositories/recordRepository.js'
@@ -94,9 +94,11 @@ describe('createSnapshotsRoute', () => {
     expect(firstSnapshot.projection.records).toHaveLength(1)
 
     await createCard(app, 'Created later', ['status:todo'])
+    const headResponse = await app.request(`/api/v0/records/${record.id}/head`)
+    const headPayload = await headResponse.json()
     await postPatch(app, record.id, {
-      parentId: null,
-      currentVersion: 2,
+      parentId: headPayload.data.lastPatchId,
+      currentVersion: headPayload.data.currentVersion,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       body: { title: 'Static after' },
     })
@@ -359,7 +361,7 @@ class CorruptSnapshotHeadRepository implements SnapshotHeadRepository {
   async appendPatchAndAdvanceHead() {
     return {
       ok: false as const,
-      reason: 'snapshotVersionMismatch' as const,
+      reason: 'currentVersionMismatch' as const,
       currentVersion: -1,
     }
   }

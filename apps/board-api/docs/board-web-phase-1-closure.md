@@ -41,11 +41,16 @@ POST  /api/v0/agent/drafts/:id/responses
 PATCH /api/v0/agent/drafts/:id/review
 ```
 
-Actual backend residuals:
+Routes that do not exist:
 
-- `PATCH /api/v0/records/:id` exists only as a legacy route returning `410 Gone`.
-- `DELETE /api/v0/records/:id` exists as a backend archive route. Board-web Phase 1 does not call it.
-- `POST /api/v0/agent/responses/manual` does not exist. The actual manual response write route is `POST /api/v0/agent/drafts/:id/responses`.
+```text
+PATCH /api/v0/records/:id
+DELETE /api/v0/records/:id
+POST /api/v0/patches
+GET /api/v0/snapshot-head
+POST /api/v0/agent/responses/manual
+PUT *
+```
 
 ### Filter Semantics
 
@@ -72,8 +77,8 @@ type BoardCurrentQuery = {
 
 - Canonical edit/status move head source: `GET /api/v0/records/:id/head`.
 - Canonical submit route: `POST /api/v0/records/:id/patches`.
-- Canonical version field for board-web: `currentVersion`.
-- `snapshotVersion` remains a backend compatibility alias only.
+- Canonical version field: `currentVersion`. It is required.
+- Legacy version aliases are not accepted.
 - Tag mutation uses `tagChanges`, not a full `tags` replacement field.
 - Patch body should omit unchanged fields and unchanged nulls.
 - `POST /api/v0/patches` is not a write entrypoint.
@@ -136,8 +141,6 @@ Manual Agent Response:
 - `applyExportFilters` was removed during closure because it was an unused route helper.
 - Related export semantics are filter-first, then related-record selection.
 - Browser smoke is a separate testing task, not a code-level closure gate.
-- Backend `DELETE /api/v0/records/:id` still exists as an archive route but is outside the board-web Phase 1 write whitelist.
-- Backend accepts `snapshotVersion` as a deprecated compatibility alias; board-web uses `currentVersion`.
 
 ## D. Phase 2 Backlog
 

@@ -20,7 +20,7 @@ type ApiResponse<T> = { ok: true; data: T } | { ok: false; error: ApiError }
 - `GET /api/v0/records/:id/history` - read one record's replay/history.
 - `GET /api/v0/patches?targetId=...` - read patch facts for debugging/history support.
 - `GET /api/v0/patches/:id` - read one patch fact.
-- `GET /api/v0/snapshot-head` - backend compatibility/current-head cache route. Board-web must not call this route.
+- `GET /api/v0/records/:id/head` - the only external current-head entrypoint for patch edit/status-move flows.
 - `GET /api/v0/board/current` - read the current board projection.
 - `GET /api/v0/board/current/export` - export the current board as Markdown or Context Pack.
 - `GET /api/v0/snapshots` - list saved snapshots.
@@ -44,8 +44,6 @@ called out below.
 - `PATCH /api/v0/agent/drafts/:id/review` - update draft review metadata only. It is not a board mutation.
 - `POST /api/v0/agent/drafts/:id/responses` - create a manual response artifact pasted by a human. It is not a board mutation and does not apply a patch.
 - `POST /api/v0/profiles` and `PATCH /api/v0/profiles/:profileKey` - profile management routes exist, but board-web Phase 1 does not expose profile management.
-- `PATCH /api/v0/records/:id` - legacy direct PATCH route exists only to return `410 Gone`; clients must not use it.
-- `DELETE /api/v0/records/:id` - backend archive route exists. It is not used by board-web Phase 1 and is not part of the board-web write whitelist.
 
 Board-web Phase 1 write whitelist:
 
@@ -67,13 +65,13 @@ the contract:
 POST /api/v0/agent/run
 POST /api/v0/agent/apply
 POST /api/v0/agent/execute
+PATCH /api/v0/records/:id
+DELETE /api/v0/records/:id
+GET /api/v0/snapshot-head
 POST /api/v0/patches
 POST /api/v0/agent/responses/manual
 PUT *
 ```
-
-`DELETE *` cannot be documented as fully absent because
-`DELETE /api/v0/records/:id` currently exists as a backend archive route.
 
 ## Board Current Filter Contract
 
@@ -137,7 +135,7 @@ Canonical request body fields:
 ```ts
 type CreateRecordPatchInput<TBodyPatch = DeepPartial<RecordBody>> = {
   parentId: RecordId | null
-  currentVersion?: number
+  currentVersion: number
   tagChanges?: {
     add?: Tag[]
     remove?: Tag[]
@@ -155,8 +153,7 @@ type CreateRecordPatchInput<TBodyPatch = DeepPartial<RecordBody>> = {
 }
 ```
 
-The backend still accepts `snapshotVersion` as a deprecated compatibility alias
-for `currentVersion`; board-web must use `currentVersion`.
+The backend requires `currentVersion`. Legacy version aliases are not accepted.
 
 Patch semantics:
 
@@ -180,7 +177,7 @@ Patch semantics:
 
 - Patch body should contain only changed fields. Do not submit unchanged nulls.
 - Patch edit/status-move uses `GET /api/v0/records/:id/head` for `parentId` and `currentVersion`.
-- Frontend patch edit/status-move must not use `/api/v0/snapshot-head`.
+- Frontend patch edit/status-move must not use `/api/v0/snapshot-head`; that HTTP route does not exist.
 - `POST /api/v0/patches` is not a write entrypoint.
 
 ## Export / Context Pack Contract

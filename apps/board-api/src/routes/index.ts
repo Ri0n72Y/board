@@ -5,7 +5,6 @@ import { createConfigRoute } from './config.js'
 import { createPatchesRoute } from './patches.js'
 import { createProfilesRoute } from './profiles.js'
 import { createRecordsRoute } from './records.js'
-import { createSnapshotHeadRoute } from './snapshotHead.js'
 import { createSnapshotsRoute } from './snapshots.js'
 import { createAgentRoute } from './agentDrafts.js'
 import type { ConfigService } from '../services/configService.js'
@@ -40,10 +39,6 @@ export function mountApiRoutes(app: Hono, services: ApiRouteServices): void {
   app.route('/api/v0/config', createConfigRoute(services.configService))
   app.route('/api/v0/profiles', createProfilesRoute(services.profileService))
   app.route('/api/v0/patches', createPatchesRoute(services.recordService))
-  app.route(
-    '/api/v0/snapshot-head',
-    createSnapshotHeadRoute(services.recordService)
-  )
   app.route('/api/v0/snapshots', createSnapshotsRoute(services.snapshotService))
   app.route('/api/v0/records', createRecordsRoute(services.recordService))
   app.route(

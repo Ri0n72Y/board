@@ -1,4 +1,4 @@
-﻿import { Hono } from 'hono'
+import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
 import { createBoardCurrentRoute } from './boardCurrent.js'
 import { createServiceWithRepo, makePatchDoc } from '../services/record/recordTestUtils.js'
@@ -78,7 +78,7 @@ describe('GET /api/v0/board/current', () => {
 
     await service.createRecordPatch(recordId, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       body: { description: 'Updated via patch' },
     })
@@ -106,7 +106,7 @@ describe('GET /api/v0/board/current', () => {
     })
     await service.createRecordPatch(envelope.body.id, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
 
@@ -159,7 +159,7 @@ describe('GET /api/v0/board/current', () => {
     })
     await service.createRecordPatch(envelope.body.id, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       assignee: 'member-current',
       assets: [target.body.id],
@@ -235,7 +235,7 @@ describe('GET /api/v0/board/current', () => {
 
     await service.createRecordPatch(recordId, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
     await service.delete(recordId)
@@ -352,7 +352,7 @@ describe('GET /api/v0/board/current', () => {
     })
     await service.createRecordPatch(envelope.body.id, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
 

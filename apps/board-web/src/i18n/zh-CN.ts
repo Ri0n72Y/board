@@ -215,6 +215,7 @@ const zhCN = {
     'edit.saveButton': '保存补丁',
     'edit.conflictError': '记录在服务器上已被修改。请刷新后重试。',
     'edit.headMissing': '当前记录不在当前 head 中。请刷新当前看板后重试。',
+    'edit.staleHead': '当前记录已被其他操作修改，请刷新后重新编辑。',
     'edit.errorGeneral': '保存补丁失败',
     'edit.errorTitleRequired': '标题为必填项。',
     'edit.errorStatusTagRequired': '状态为必填项。',

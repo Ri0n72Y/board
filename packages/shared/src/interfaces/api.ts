@@ -53,20 +53,6 @@ export interface CreateRecordInput<TBody = RecordBody> {
 }
 
 /**
- * Legacy PATCH /api/v0/records/:id input – direct mutation of a record.
- * Distinct from CreateRecordPatchInput; does not carry targetId, parentId,
- * or snapshotVersion.
- */
-export interface UpdateRecordInput<TBodyPatch = DeepPartial<RecordBody>> {
-  tags?: Tag[]
-  assignee?: PublicKey | null
-  body?: TBodyPatch
-  assets?: AssetRef[]
-  relations?: RelationRef[]
-  description?: string
-}
-
-/**
  * POST /api/v0/records/:id/patches input – appends a patch to the record's
  * patch chain.  targetId comes from the URL path parameter, not the body.
  */
@@ -74,9 +60,7 @@ export interface CreateRecordPatchInput<TBodyPatch = DeepPartial<RecordBody>> {
   /** Points to the previous patch in the chain; null for the first patch. */
   parentId: RecordId | null
   /** Client's observed dynamic current-head version for optimistic concurrency. */
-  currentVersion?: number
-  /** Deprecated compatibility alias for currentVersion. */
-  snapshotVersion?: number
+  currentVersion: number
   tagChanges?: TagChanges
   assignee?: PublicKey | null
   body?: TBodyPatch

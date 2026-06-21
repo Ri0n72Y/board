@@ -120,9 +120,10 @@ Status move example:
 }
 ```
 
-The backend accepts `snapshotVersion` only as a deprecated compatibility alias.
-Board-web must use `currentVersion` and must not read `/api/v0/snapshot-head`
-for patch edit or move status.
+The backend requires `currentVersion` and does not accept legacy version
+aliases. Board-web must use `currentVersion` and must not read
+`/api/v0/snapshot-head` for patch edit or move status; that HTTP route does
+not exist.
 
 ## Export / Context Pack
 

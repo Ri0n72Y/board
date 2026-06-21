@@ -1,4 +1,4 @@
-﻿import { Hono } from 'hono'
+import { Hono } from 'hono'
 import { DEFAULT_BOARD_CONFIG } from '@labour-board/shared'
 import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from '../repositories/recordRepository.js'
@@ -45,12 +45,12 @@ async function createPatchViaRecords(
   app: Hono,
   recordId: string,
   parentId: string | null,
-  snapshotVersion: number,
+  currentVersion: number,
   body: Record<string, unknown>
 ): Promise<{ patchId: string; response: Response }> {
   const response = await app.request(`/api/v0/records/${recordId}/patches`, {
     method: 'POST',
-    body: JSON.stringify({ parentId, snapshotVersion, ...body }),
+    body: JSON.stringify({ parentId, currentVersion, ...body }),
     headers: { 'content-type': 'application/json' },
   })
   const payload = await response.json()
@@ -207,7 +207,7 @@ describe('createPatchesRoute', () => {
       method: 'POST',
       body: JSON.stringify({
         parentId: null,
-        snapshotVersion: 0,
+        currentVersion: 0,
         tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       }),
       headers: {
@@ -230,7 +230,7 @@ describe('createPatchesRoute', () => {
       method: 'POST',
       body: JSON.stringify({
         parentId: null,
-        snapshotVersion: 0,
+        currentVersion: 0,
         tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       }),
       headers: {
@@ -252,7 +252,7 @@ describe('createPatchesRoute', () => {
       method: 'POST',
       body: JSON.stringify({
         parentId: null,
-        snapshotVersion: 0,
+        currentVersion: 0,
         tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
       }),
       headers: {

@@ -45,7 +45,7 @@ describe('recordHeadRoute', () => {
     expect(payload.data).toEqual({
       recordId,
       exists: true,
-      currentVersion: 1,
+      currentVersion: 0,
       lastPatchId: null,
     })
   })
@@ -92,7 +92,7 @@ describe('recordHeadRoute', () => {
     expect(headAfter.data).toEqual({
       recordId,
       exists: true,
-      currentVersion: 2,
+      currentVersion: 1,
       lastPatchId: patchPayload.data.patch.body.id,
     })
   })

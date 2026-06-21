@@ -1,4 +1,4 @@
-﻿import { Hono } from 'hono'
+import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
 import { ok } from './http/responses.js'
 import { loadApiEnv } from './config/env.js'
@@ -16,6 +16,25 @@ async function createTestApp(): Promise<Hono> {
   app.get('/health', (c) => c.json(ok({ status: 'ok' })))
   mountApiRoutes(app, services)
   return app
+}
+
+async function archiveRecord(app: Hono, recordId: string): Promise<void> {
+  const headResponse = await app.request(`/api/v0/records/${recordId}/head`)
+  const headPayload = await headResponse.json()
+  const archiveResponse = await app.request(
+    `/api/v0/records/${recordId}/patches`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        parentId: headPayload.data.lastPatchId,
+        currentVersion: headPayload.data.currentVersion,
+        tagChanges: { add: ['status:archived'] },
+        description: 'Archive record',
+      }),
+      headers: { 'content-type': 'application/json' },
+    }
+  )
+  expect(archiveResponse.status).toBe(201)
 }
 
 describe('app integration smoke', () => {
@@ -71,7 +90,7 @@ describe('app integration smoke', () => {
         method: 'POST',
         body: JSON.stringify({
           parentId: null,
-          snapshotVersion: 0,
+          currentVersion: 0,
           tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
           body: { description: 'Patched in integration' },
         }),
@@ -117,13 +136,13 @@ describe('app integration smoke', () => {
       method: 'POST',
       body: JSON.stringify({
         parentId: null,
-        snapshotVersion: 0,
+        currentVersion: 0,
         tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
 
-    await app.request(`/api/v0/records/${recordId}`, { method: 'DELETE' })
+    await archiveRecord(app, recordId)
 
     // Board current: hidden by default
     const boardRes = await app.request('/api/v0/board/current')
@@ -150,13 +169,13 @@ describe('app integration smoke', () => {
       method: 'POST',
       body: JSON.stringify({
         parentId: null,
-        snapshotVersion: 0,
+        currentVersion: 0,
         tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
 
-    await app.request(`/api/v0/records/${recordId}`, { method: 'DELETE' })
+    await archiveRecord(app, recordId)
 
     const boardRes = await app.request(
       '/api/v0/board/current?includeArchived=true'
@@ -191,13 +210,13 @@ describe('app integration smoke', () => {
       method: 'POST',
       body: JSON.stringify({
         parentId: null,
-        snapshotVersion: 0,
+        currentVersion: 0,
         tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
 
-    await app.request(`/api/v0/records/${recordId}`, { method: 'DELETE' })
+    await archiveRecord(app, recordId)
 
     // History
     const historyRes = await app.request(
@@ -246,20 +265,20 @@ describe('app integration smoke', () => {
       method: 'POST',
       body: JSON.stringify({
         parentId: null,
-        snapshotVersion: 0,
+        currentVersion: 0,
         tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
       }),
       headers: { 'content-type': 'application/json' },
     })
 
-    const headBeforeRes = await app.request('/api/v0/snapshot-head')
-    const headBefore = await headBeforeRes.json()
-    expect(headBefore.data.version).toBeGreaterThan(0)
+    const beforeRes = await app.request('/api/v0/board/current')
+    const before = await beforeRes.json()
+    expect(before.data.snapshotHeadVersion).toBe(1)
 
     await app.request('/api/v0/board/current')
 
-    const headAfterRes = await app.request('/api/v0/snapshot-head')
-    const headAfter = await headAfterRes.json()
-    expect(headAfter.data).toEqual(headBefore.data)
+    const afterRes = await app.request('/api/v0/board/current')
+    const after = await afterRes.json()
+    expect(after.data.snapshotHeadVersion).toBe(before.data.snapshotHeadVersion)
   })
 })

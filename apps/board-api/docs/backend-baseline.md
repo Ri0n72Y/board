@@ -23,12 +23,10 @@ current board view.
 - YAML config read: `GET /api/v0/config`.
 - Profile read/write routes exist; board-web Phase 1 does not expose profile management.
 - Record create/read/list.
-- Legacy `PATCH /api/v0/records/:id` fixed `410 Gone`.
 - Patch creation through `POST /api/v0/records/:id/patches`.
 - Patch fact read by id or target id.
 - Record current head through `GET /api/v0/records/:id/head`.
 - Record history through `GET /api/v0/records/:id/history`.
-- Snapshot-head compatibility route `GET /api/v0/snapshot-head`.
 - Current board projection and shared filtering.
 - Manual snapshot create/list/detail/export.
 - Current board export and Context Pack export.
@@ -53,11 +51,10 @@ GET  /api/v0/records/:id/head
 POST /api/v0/records/:id/patches
 ```
 
-Board-web uses `currentVersion`. The backend still accepts `snapshotVersion`
-as a deprecated compatibility alias for older callers and tests.
-
-`/api/v0/snapshot-head` remains a backend compatibility/cache read route.
-Board-web Phase 1 must not call it.
+Board-web uses `currentVersion`. The backend requires this field and does not
+accept legacy version aliases. `GET /api/v0/records/:id/head` is the only
+external current-head entrypoint; `/api/v0/snapshot-head` is not exposed as an
+HTTP route.
 
 ## Snapshot Boundary
 
@@ -91,12 +88,14 @@ POST /api/v0/agent/run
 POST /api/v0/agent/apply
 POST /api/v0/agent/execute
 POST /api/v0/agent/responses/manual
+PATCH /api/v0/records/:id
+DELETE /api/v0/records/:id
+POST /api/v0/patches
+GET /api/v0/snapshot-head
+PUT *
 ```
 
 ## Known Backend Residuals
 
-- `DELETE /api/v0/records/:id` exists as a backend archive route. It is outside the board-web Phase 1 write whitelist.
-- `PATCH /api/v0/records/:id` exists only to reject legacy direct patching with `410 Gone`.
-- `snapshotVersion` remains as a deprecated backend compatibility alias.
 - Mongo standalone fallback cannot provide the same durability guarantees as a replica-set transaction setup.
 - Permission/login, config editor, profile manager, dry-run/apply, restore, and real Agent provider integration are Phase 2+ work.

@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { RecordService, SnapshotConflictError } from '../recordService.js'
 import {
   createRecordService,
@@ -6,8 +6,8 @@ import {
   makePatchDoc,
 } from './recordTestUtils.js'
 
-describe('RecordService archive (delete)', () => {
-  it('returns null when deleting a missing record', async () => {
+describe('RecordService archive', () => {
+  it('returns null when archiving a missing record', async () => {
     const service = createRecordService()
     await expect(service.delete('missing')).resolves.toBeNull()
   })
@@ -51,12 +51,12 @@ describe('RecordService archive (delete)', () => {
     expect(history!.replay!.finalState.tags).toContain('status:archived')
   })
 
-  it('double delete returns existing archived record without creating another patch', async () => {
+  it('double archive returns existing archived record without creating another patch', async () => {
     const service = createRecordService()
     const envelope = await service.create({
       schema: 'CardBody',
       tags: ['status:todo'],
-      body: { title: 'Double delete' },
+      body: { title: 'Double archive' },
     })
     const recordId = envelope.body.id
 
@@ -72,7 +72,7 @@ describe('RecordService archive (delete)', () => {
     expect(headAfterSecond.version).toBe(versionAfterFirst)
   })
 
-  it('delete appends archive patch and advances snapshot head from non-zero version', async () => {
+  it('archive appends archive patch and advances snapshot head from non-zero version', async () => {
     const service = createRecordService()
     const envelope = await service.create({
       schema: 'CardBody',
@@ -83,7 +83,7 @@ describe('RecordService archive (delete)', () => {
 
     await service.createRecordPatch(recordId, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
     const headBeforeArchive = await service.getSnapshotHead()
@@ -114,12 +114,12 @@ describe('RecordService archive (delete)', () => {
 
   // 鈹€鈹€鈹€ Broken / conflicted chain rejection 鈹€鈹€鈹€
 
-  it('rejects delete when patch chain has multiple roots', async () => {
+  it('rejects archive when patch chain has multiple roots', async () => {
     const { service, repo } = createServiceWithRepo()
     const envelope = await service.create({
       schema: 'CardBody',
       tags: ['status:todo'],
-      body: { title: 'Multi-root delete test' },
+      body: { title: 'Multi-root archive test' },
     })
     const recordId = envelope.body.id
 
@@ -140,12 +140,12 @@ describe('RecordService archive (delete)', () => {
     }
   })
 
-  it('rejects delete when patch chain has branched children', async () => {
+  it('rejects archive when patch chain has branched children', async () => {
     const { service, repo } = createServiceWithRepo()
     const envelope = await service.create({
       schema: 'CardBody',
       tags: ['status:todo'],
-      body: { title: 'Branched delete test' },
+      body: { title: 'Branched archive test' },
     })
     const recordId = envelope.body.id
 
@@ -164,12 +164,12 @@ describe('RecordService archive (delete)', () => {
     expect(patchCountAfter).toBe(patchCountBefore + 3)
   })
 
-  it('rejects delete when patch chain has missing parent', async () => {
+  it('rejects archive when patch chain has missing parent', async () => {
     const { service, repo } = createServiceWithRepo()
     const envelope = await service.create({
       schema: 'CardBody',
       tags: ['status:todo'],
-      body: { title: 'Missing parent delete test' },
+      body: { title: 'Missing parent archive test' },
     })
     const recordId = envelope.body.id
 
@@ -187,12 +187,12 @@ describe('RecordService archive (delete)', () => {
     expect(patchCountAfter).toBe(patchCountBefore + 2)
   })
 
-  it('rejects delete when patch chain has detached cycle', async () => {
+  it('rejects archive when patch chain has detached cycle', async () => {
     const { service, repo } = createServiceWithRepo()
     const envelope = await service.create({
       schema: 'CardBody',
       tags: ['status:todo'],
-      body: { title: 'Detached cycle delete test' },
+      body: { title: 'Detached cycle archive test' },
     })
     const recordId = envelope.body.id
 
@@ -213,7 +213,7 @@ describe('RecordService archive (delete)', () => {
 
   // 鈹€鈹€鈹€ Consistency 鈹€鈹€鈹€
 
-  it('DELETE response tags match replay finalState 鈥?does not rollback current state', async () => {
+  it('archive response tags match replay finalState and does not rollback current state', async () => {
     const service = createRecordService()
     const envelope = await service.create({
       schema: 'CardBody',
@@ -224,7 +224,7 @@ describe('RecordService archive (delete)', () => {
 
     await service.createRecordPatch(recordId, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
 
@@ -248,7 +248,7 @@ describe('RecordService archive (delete)', () => {
     expect(archived.tags).toEqual(history!.replay!.finalState.tags)
   })
 
-  it('delete uses rebuilt snapshot head when no checkpoint has been loaded', async () => {
+  it('archive uses rebuilt snapshot head when no checkpoint has been loaded', async () => {
     const { service, repo } = createServiceWithRepo()
     const envelope = await service.create({
       schema: 'CardBody',

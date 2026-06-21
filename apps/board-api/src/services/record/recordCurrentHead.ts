@@ -15,10 +15,7 @@ export async function getRecordCurrentHead(
   const record = await repository.findById(recordId)
   if (!record) return null
 
-  const [baseRecords, patches] = await Promise.all([
-    repository.list({ includeArchived: true, excludeTags: [] }),
-    repository.listPatches(),
-  ])
+  const patches = await repository.listPatches()
   const targetPatches = patches.filter((patch) => patch.targetId === recordId)
   const chain = reconstructPatchChain(targetPatches, recordId as RecordId)
 
@@ -36,7 +33,7 @@ export async function getRecordCurrentHead(
   return {
     recordId,
     exists: true,
-    currentVersion: baseRecords.length + patches.length,
+    currentVersion: patches.length,
     lastPatchId,
   }
 }

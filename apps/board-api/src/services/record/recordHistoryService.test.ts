@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { createServiceWithRepo, makePatchDoc } from './recordTestUtils.js'
 
 describe('RecordService history (getRecordHistory)', () => {
@@ -13,7 +13,7 @@ describe('RecordService history (getRecordHistory)', () => {
 
     await service.createRecordPatch(recordId, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
 
@@ -161,17 +161,17 @@ describe('RecordService history (getRecordHistory)', () => {
 
     const r1 = await service.createRecordPatch(recordId, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
     const r2 = await service.createRecordPatch(recordId, {
       parentId: r1!.patch.body.id,
-      snapshotVersion: 1,
+      currentVersion: 1,
       body: { description: 'Updated' },
     })
     await service.createRecordPatch(recordId, {
       parentId: r2!.patch.body.id,
-      snapshotVersion: 2,
+      currentVersion: 2,
       assignee: 'alice' as any,
     })
 
@@ -198,16 +198,16 @@ describe('RecordService history (getRecordHistory)', () => {
 
     const r1 = await service.createRecordPatch(recordId, {
       parentId: null,
-      snapshotVersion: 0,
+      currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
     const r2 = await service.createRecordPatch(recordId, {
       parentId: r1!.patch.body.id,
-      snapshotVersion: 1,
+      currentVersion: 1,
       body: { description: 'Second change' },
     })
 
-    expect(r2!.newSnapshotVersion).toBe(2)
+    expect(r2!.newCurrentVersion).toBe(2)
 
     const headBefore = await service.getSnapshotHead()
     const beforeVersion = headBefore.version
