@@ -63,6 +63,7 @@ export function buildPatchTimeline(
     copy: HistorySummaryCopy
     references?: Record<string, HistoryReference>
     assetOptions?: RecordReferenceOption[]
+    formatAssignee?: (pk: string | null | undefined) => string
   }
 ): PatchTimelineItem[] {
   return [...patches]
@@ -82,11 +83,13 @@ export function summarizePatch(
     copy,
     references,
     assetOptions = [],
+    formatAssignee,
   }: {
     language: string | undefined
     copy: HistorySummaryCopy
     references?: Record<string, HistoryReference>
     assetOptions?: RecordReferenceOption[]
+    formatAssignee?: (pk: string | null | undefined) => string
   }
 ): PatchSummaryLine[] {
   const lines: PatchSummaryLine[] = []
@@ -122,9 +125,13 @@ export function summarizePatch(
   }
 
   if ('assignee' in patch) {
+    const rawValue = patch.assignee ?? null
+    const displayValue = formatAssignee
+      ? formatAssignee(rawValue)
+      : rawValue ?? copy.unassigned
     lines.push({
       label: copy.assignee,
-      value: patch.assignee ?? copy.unassigned,
+      value: displayValue,
     })
   }
 

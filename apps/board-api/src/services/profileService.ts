@@ -11,9 +11,6 @@ const SENSITIVE_KEYS = [
   'password',
   'secretKey',
   'seedPhrase',
-  'secret',
-  'key',
-  'passphrase',
 ]
 
 const AVATAR_URL_RE =
@@ -49,68 +46,136 @@ export class ProfileService {
   }
 
   async create(input: CreateProfileInput): Promise<Profile> {
-    assertCreateProfileInput(input)
+    // 1. validate raw shape
+    assertCreateProfileShape(input)
 
-    const existing = await this.repository.findByPk(input.pk)
+    // 2. normalize
+    const normalized = normalizeCreateProfileInput(input)
+
+    // 3. validate normalized values
+    assertNonEmptyPk(normalized.pk)
+    assertNonEmptyName(normalized.name)
+    assertValidAvatarUrl(normalized.avatarUrl)
+
+    // 4. duplicate check with normalized pk
+    const existing = await this.repository.findByPk(normalized.pk)
     if (existing) {
-      throw new ProfileConflictError(`Profile already exists: ${input.pk}`)
+      throw new ProfileConflictError(`Profile already exists: ${normalized.pk}`)
     }
 
-    return this.repository.create(input)
+    // 5. create normalized
+    return this.repository.create(normalized)
   }
 
   async update(
     pk: PublicKey,
     input: UpdateProfileInput,
   ): Promise<Profile | null> {
-    assertUpdateProfileInput(pk, input)
-    return this.repository.update(pk, input)
+    const pathPk = pk.trim()
+
+    // 1. validate raw shape
+    assertUpdateProfileShape(input)
+
+    // 2. normalize
+    const normalized = normalizeUpdateProfileInput(input)
+
+    // 3. body.pk must match path pk (both trimmed)
+    if (
+      normalized.pk !== undefined &&
+      normalized.pk !== pathPk
+    ) {
+      throw new ProfileValidationError(
+        'Body pk must match URL path pk',
+      )
+    }
+
+    // 4. validate normalized values
+    if (normalized.name !== undefined) {
+      assertNonEmptyName(normalized.name)
+    }
+    if (normalized.avatarUrl !== undefined) {
+      assertValidAvatarUrl(normalized.avatarUrl)
+    }
+
+    // 5. update with path pk
+    return this.repository.update(pathPk, normalized)
   }
 }
 
-function assertCreateProfileInput(input: CreateProfileInput): void {
-  assertNonEmptyPk(input.pk)
-  assertNonEmptyName(input.name)
-  assertNoSensitiveKeys(input as unknown as Record<string, unknown>)
-  assertValidAvatarUrl(input.avatarUrl)
+/* ─── Normalization ─── */
+
+function normalizeCreateProfileInput(
+  input: CreateProfileInput,
+): CreateProfileInput {
+  return {
+    pk: input.pk.trim(),
+    name: input.name.trim(),
+    avatarUrl: normalizeAvatarUrl(input.avatarUrl),
+  }
 }
 
-function assertUpdateProfileInput(
-  pk: string,
+function normalizeUpdateProfileInput(
   input: UpdateProfileInput,
-): void {
-  // Reject body.pk that mismatches path pk
-  if (input.pk !== undefined && input.pk !== pk) {
-    throw new ProfileValidationError(
-      'Body pk must match URL path pk',
-    )
+): UpdateProfileInput {
+  const normalized: UpdateProfileInput = {}
+  if (input.pk !== undefined) {
+    normalized.pk = input.pk.trim()
   }
-
   if (input.name !== undefined) {
-    assertNonEmptyName(input.name)
+    normalized.name = input.name.trim()
+  }
+  if (input.avatarUrl !== undefined) {
+    normalized.avatarUrl = normalizeAvatarUrl(input.avatarUrl)
+  }
+  return normalized
+}
+
+function normalizeAvatarUrl(
+  value: string | null | undefined,
+): string | null | undefined {
+  if (value === null || value === undefined) return value
+  // Empty or whitespace-only → null
+  if (value.trim().length === 0) return null
+  return value.trim()
+}
+
+/* ─── Shape validation (no normalization) ─── */
+
+function assertCreateProfileShape(input: CreateProfileInput): void {
+  if (typeof input.pk !== 'string') {
+    throw new ProfileValidationError('Profile pk must be a string')
+  }
+  if (typeof input.name !== 'string') {
+    throw new ProfileValidationError('Profile name must be a string')
   }
   assertNoSensitiveKeys(input as unknown as Record<string, unknown>)
-  if (input.avatarUrl !== undefined) {
-    assertValidAvatarUrl(input.avatarUrl)
-  }
 }
+
+function assertUpdateProfileShape(input: UpdateProfileInput): void {
+  if (input.name !== undefined && typeof input.name !== 'string') {
+    throw new ProfileValidationError('Profile name must be a string')
+  }
+  assertNoSensitiveKeys(input as unknown as Record<string, unknown>)
+}
+
+/* ─── Normalized value validation ─── */
 
 function assertNonEmptyPk(pk: string): void {
-  if (!pk || typeof pk !== 'string' || pk.trim().length === 0) {
+  if (!pk || typeof pk !== 'string' || pk.length === 0) {
     throw new ProfileValidationError('Profile pk is required')
   }
 }
 
 function assertNonEmptyName(name: string): void {
-  if (typeof name !== 'string' || name.trim().length === 0) {
-    throw new ProfileValidationError('Profile name is required and must not be empty')
+  if (typeof name !== 'string' || name.length === 0) {
+    throw new ProfileValidationError(
+      'Profile name is required and must not be empty',
+    )
   }
 }
 
 function assertValidAvatarUrl(avatarUrl: string | null | undefined): void {
-  if (avatarUrl === null || avatarUrl === undefined || avatarUrl === '') {
-    return
-  }
+  if (avatarUrl === null || avatarUrl === undefined) return
   if (typeof avatarUrl !== 'string') {
     throw new ProfileValidationError('avatarUrl must be a string URL or null')
   }

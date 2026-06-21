@@ -57,7 +57,7 @@ describe('ProfileService', () => {
     ).rejects.toThrow(ProfileValidationError)
     await expect(
       service.create({ pk: 'member-1', name: 1 as unknown as string }),
-    ).rejects.toThrow('Profile name is required')
+    ).rejects.toThrow('Profile name must be a string')
   })
 
   it('rejects blank profile names', async () => {
@@ -167,5 +167,89 @@ describe('ProfileService', () => {
   it('returns null when finding a non-existent profile', async () => {
     const service = createService()
     await expect(service.findByPk('nobody')).resolves.toBeNull()
+  })
+
+  // ─── Normalization tests ───
+
+  it('create trims pk and name before saving', async () => {
+    const service = createService()
+
+    const created = await service.create({
+      pk: '  member-1  ',
+      name: '  Ada Lovelace  ',
+    })
+
+    expect(created.pk).toBe('member-1')
+    expect(created.name).toBe('Ada Lovelace')
+  })
+
+  it('create treats whitespace avatarUrl as null', async () => {
+    const service = createService()
+
+    const created1 = await service.create({
+      pk: 'member-1',
+      name: 'Ada',
+      avatarUrl: '   ',
+    })
+    expect(created1.avatarUrl).toBeNull()
+
+    const created2 = await service.create({
+      pk: 'member-2',
+      name: 'Bob',
+      avatarUrl: '',
+    })
+    expect(created2.avatarUrl).toBeNull()
+  })
+
+  it('create with pk " member-1 " then "member-1" returns 409', async () => {
+    const service = createService()
+    await service.create({ pk: '  member-1  ', name: 'First' })
+
+    await expect(
+      service.create({ pk: 'member-1', name: 'Second' }),
+    ).rejects.toThrow(ProfileConflictError)
+  })
+
+  it('update trims name', async () => {
+    const service = createService()
+    await service.create({ pk: 'member-1', name: 'Ada' })
+
+    const updated = await service.update('member-1', {
+      name: '  Ada Lovelace  ',
+    })
+    expect(updated?.name).toBe('Ada Lovelace')
+  })
+
+  it('update trims avatarUrl', async () => {
+    const service = createService()
+    await service.create({ pk: 'member-1', name: 'Ada' })
+
+    const updated = await service.update('member-1', {
+      avatarUrl: '  https://example.com/ada.png  ',
+    })
+    expect(updated?.avatarUrl).toBe('https://example.com/ada.png')
+  })
+
+  it('PATCH body.pk with surrounding spaces matches path pk', async () => {
+    const service = createService()
+    await service.create({ pk: 'member-a', name: 'Alice' })
+
+    const updated = await service.update('member-a', {
+      pk: '  member-a  ',
+      name: 'Alice 2',
+    })
+    expect(updated?.name).toBe('Alice 2')
+  })
+
+  it('PATCH body.pk with different trimmed value returns 400', async () => {
+    const service = createService()
+    await service.create({ pk: 'member-a', name: 'Alice' })
+
+    await expect(
+      service.update('member-a', {
+        pk: '  member-b  ',
+        name: 'Bob',
+      }),
+    ).rejects.toThrow(ProfileValidationError)
   })
 })

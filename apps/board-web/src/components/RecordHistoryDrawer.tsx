@@ -45,6 +45,7 @@ export function RecordHistoryDrawer({
   history,
   isLoading,
   error,
+  profiles,
   assetOptions,
   onClose,
   onEditClick,
@@ -143,6 +144,7 @@ export function RecordHistoryDrawer({
               history={history}
               language={language}
               assetOptions={assetOptions}
+              profiles={profiles ?? null}
             />
           )}
 
@@ -161,16 +163,18 @@ function HistoryContent({
   history,
   language,
   assetOptions,
+  profiles,
 }: {
   history: RecordHistoryResponse
   language?: string
   assetOptions: RecordReferenceOption[]
+  profiles?: Profile[] | null
 }) {
   return (
     <div className="grid gap-4">
       <HistoryStatus history={history} />
       <BaseRecordDetails history={history} />
-      <PatchList history={history} language={language} assetOptions={assetOptions} />
+      <PatchList history={history} language={language} assetOptions={assetOptions} profiles={profiles} />
       <HistoryDebug history={history} />
     </div>
   )
@@ -221,13 +225,25 @@ function PatchList({
   history,
   language,
   assetOptions,
+  profiles,
 }: {
   history: RecordHistoryResponse
   language?: string
   assetOptions: RecordReferenceOption[]
+  profiles?: Profile[] | null
 }) {
   const { t } = useTranslation()
   const copy = useHistorySummaryCopy()
+
+  const formatAssignee = useMemo(() => {
+    return (pk: string | null | undefined): string => {
+      if (!pk) return copy.unassigned
+      const profile = profiles?.find((p) => p.pk === pk)
+      if (profile) return `${profile.name} (${pk.slice(0, 6)}…${pk.slice(-4)})`
+      return `${t('record.unknownMember')} (${pk.slice(0, 6)}…${pk.slice(-4)})`
+    }
+  }, [profiles, copy.unassigned, t])
+
   const timeline = useMemo(
     () =>
       buildPatchTimeline(history.patches, {
@@ -235,8 +251,9 @@ function PatchList({
         copy,
         references: history.references,
         assetOptions,
+        formatAssignee,
       }),
-    [history.patches, language, copy, history.references, assetOptions]
+    [history.patches, language, copy, history.references, assetOptions, formatAssignee]
   )
 
   return (

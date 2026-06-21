@@ -57,7 +57,7 @@ Rules:
 
 ## Write Interface Whitelist
 
-Board-web Phase 1 may call only these write routes:
+Board-web may call only these write routes:
 
 ```text
 POST  /api/v0/records
@@ -66,6 +66,8 @@ POST  /api/v0/snapshots
 POST  /api/v0/agent/drafts
 POST  /api/v0/agent/drafts/:id/responses
 PATCH /api/v0/agent/drafts/:id/review
+POST  /api/v0/profiles
+PATCH /api/v0/profiles/:pk
 ```
 
 `PATCH /api/v0/agent/drafts/:id/review` updates review metadata only.
@@ -75,6 +77,8 @@ Board-web must not call:
 
 ```text
 PATCH /api/v0/records/:id
+DELETE /api/v0/records/:id
+DELETE /api/v0/profiles/:pk
 POST /api/v0/patches
 GET /api/v0/snapshot-head
 POST /api/v0/agent/run

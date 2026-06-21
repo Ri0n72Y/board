@@ -146,6 +146,66 @@ Manual Agent Response:
 - A human-pasted artifact stored through `POST /api/v0/agent/drafts/:id/responses`.
 - It is not proof of AI execution, not an applied patch proposal, and not an automatic board write.
 
+## MVP 2.2 Member/Profile Management Addendum
+
+Status date: 2026-06-21
+
+This section records MVP 2.2 member management as completed on top of Phase 1.
+
+### Profile Contract
+
+- Profile is application-layer auxiliary data, keyed by public key.
+- LabourBoard does not store private keys or implement account/password login.
+- All registered profiles have equal permissions (no role/ACL).
+- Profile updates are plain CRUD; they do not go through record patches.
+
+### Profile Routes
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/v0/profiles` | List all profiles (sorted by name, then pk) |
+| GET | `/api/v0/profiles/:pk` | Read one profile |
+| POST | `/api/v0/profiles` | Create a profile |
+| PATCH | `/api/v0/profiles/:pk` | Update name / avatarUrl |
+
+`DELETE /api/v0/profiles/:pk` does not exist.
+
+### Assignee Integration
+
+- Record `assignee` still stores the public key.
+- Assignee UI uses profile SearchSelect (search by name or pk).
+- URL filter `assignee` still uses public key.
+- Unknown pk fallback shows "Unknown member" + short pk.
+
+### Input Normalization
+
+- `pk`, `name`, `avatarUrl` are trimmed before save.
+- Empty/whitespace `avatarUrl` is saved as `null`.
+- `privateKey`, `password`, `secretKey`, `seedPhrase` fields are rejected.
+- Duplicate `pk` (after trim) returns 409.
+
+### Write Whitelist (Updated)
+
+```text
+POST  /api/v0/records
+POST  /api/v0/records/:id/patches
+POST  /api/v0/snapshots
+POST  /api/v0/agent/drafts
+POST  /api/v0/agent/drafts/:id/responses
+PATCH /api/v0/agent/drafts/:id/review
+POST  /api/v0/profiles
+PATCH /api/v0/profiles/:pk
+```
+
+### Prohibited
+
+```text
+DELETE /api/v0/profiles/:pk
+private key / password / seed phrase fields
+permission / role / ACL
+React Router
+```
+
 ## C. Known Non-blocking Debts
 
 - Relation ordering is currently order-sensitive in `sameRelations`.
@@ -164,7 +224,6 @@ These items are explicitly not implemented in this closure round:
 - Asset registry.
 - Permission / identity / login.
 - Config editor.
-- Profile manager.
 - Agent real provider integration.
 - Agent proposal generation.
 - Dry-run transaction apply.

@@ -42,9 +42,9 @@ called out below.
 - `POST /api/v0/agent/drafts` - create an Agent Draft review-queue item with static `contextMarkdown`.
 - `PATCH /api/v0/agent/drafts/:id/review` - update draft review metadata only. It is not a board mutation.
 - `POST /api/v0/agent/drafts/:id/responses` - create a manual response artifact pasted by a human. It is not a board mutation and does not apply a patch.
-- `POST /api/v0/profiles` and `PATCH /api/v0/profiles/:profileKey` - profile management routes exist, but board-web Phase 1 does not expose profile management.
+- `POST /api/v0/profiles` and `PATCH /api/v0/profiles/:pk` - profile CRUD routes. Board-web Phase 2 exposes profile management through these routes.
 
-Board-web Phase 1 write whitelist:
+Board-web write whitelist:
 
 ```text
 POST  /api/v0/records
@@ -53,6 +53,8 @@ POST  /api/v0/snapshots
 POST  /api/v0/agent/drafts
 POST  /api/v0/agent/drafts/:id/responses
 PATCH /api/v0/agent/drafts/:id/review
+POST  /api/v0/profiles
+PATCH /api/v0/profiles/:pk
 ```
 
 ## Routes That Do Not Exist
@@ -66,6 +68,7 @@ POST /api/v0/agent/apply
 POST /api/v0/agent/execute
 PATCH /api/v0/records/:id
 DELETE /api/v0/records/:id
+DELETE /api/v0/profiles/:pk
 GET /api/v0/snapshot-head
 POST /api/v0/patches
 POST /api/v0/agent/responses/manual
@@ -224,3 +227,51 @@ Manual Agent Response:
 - It does not prove an AI executed.
 - It does not mean a patch proposal was applied.
 - It does not automatically write board state.
+
+## Profile Contract (MVP 2.2)
+
+Profile is application-layer auxiliary data, keyed by public key.
+
+LabourBoard:
+- Does not store private keys.
+- Does not implement account/password login.
+- All registered profiles have equal permissions (no role/ACL in MVP 2.2).
+- Profile updates are plain CRUD; they do not go through record patches.
+
+Profile shape:
+
+```ts
+interface Profile {
+  pk: string           // public key — stable identity, unique
+  name: string         // display name, required
+  avatarUrl?: string | null  // optional http/https URL
+  createdAt?: string
+  updatedAt?: string
+}
+```
+
+Routes:
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/v0/profiles` | List all profiles (sorted by name, then pk) |
+| GET | `/api/v0/profiles/:pk` | Read one profile |
+| POST | `/api/v0/profiles` | Create a profile |
+| PATCH | `/api/v0/profiles/:pk` | Update name / avatarUrl |
+
+`DELETE /api/v0/profiles/:pk` does not exist.
+
+Input rules:
+- `pk` and `name` are trimmed before save.
+- `name` must be non-empty after trim.
+- `avatarUrl` empty/whitespace is saved as `null`.
+- `avatarUrl` must be `http://` or `https://` when non-empty.
+- Fields `privateKey`, `password`, `secretKey`, `seedPhrase` are rejected.
+- Duplicate `pk` returns 409.
+- PATCH body.pk must match path pk (both trimmed).
+
+Assignee integration:
+- Record `assignee` still stores the public key.
+- Assignee UI uses profile SearchSelect (search by name or pk).
+- URL filter `assignee` still uses public key.
+- Unknown pk fallback shows "Unknown member" + short pk.

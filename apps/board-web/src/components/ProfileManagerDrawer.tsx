@@ -11,11 +11,10 @@ import { AnimatedDrawer } from './ui/AnimatedDrawer'
 import { Button } from './ui/Button'
 import { TextInput } from './ui/TextInput'
 import {
-  avatarColor,
-  profileInitials,
   shortPublicKey,
 } from '../utils/profileDisplay'
 import { useBoardMetadataStore } from '../stores/boardMetadataStore'
+import { ProfileAvatar } from './ProfileAvatar'
 import { cn } from '../lib/cn'
 
 interface ProfileManagerDrawerProps {
@@ -244,28 +243,16 @@ function ProfileItem({
   onCopyPk: () => void
   t: (key: string) => string
 }) {
-  const initials = profileInitials(profile.name, profile.pk)
-  const color = avatarColor(profile.pk)
   const justCopied = copiedPk === profile.pk
 
   return (
     <li className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3">
       {/* Avatar */}
-      {profile.avatarUrl ? (
-        <img
-          src={profile.avatarUrl}
-          alt={profile.name}
-          className="h-10 w-10 shrink-0 rounded-full object-cover"
-        />
-      ) : (
-        <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-          style={{ backgroundColor: color }}
-          title={profile.name}
-        >
-          {initials}
-        </div>
-      )}
+      <ProfileAvatar
+        name={profile.name}
+        pk={profile.pk}
+        avatarUrl={profile.avatarUrl}
+      />
 
       {/* Info */}
       <div className="min-w-0 flex-1">

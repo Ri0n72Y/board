@@ -96,9 +96,9 @@ export const useBoardMetadataStore = create<BoardMetadataState>((set) => ({
   ): Promise<Profile> => {
     const updated = await updateProfileApi(pk, input)
     set((state) => ({
-      profiles: state.profiles?.map((p) =>
-        p.pk === pk ? updated : p,
-      ) ?? null,
+      profiles: state.profiles
+        ? state.profiles.map((p) => (p.pk === pk ? updated : p)).sort(profileSort)
+        : null,
     }))
     return updated
   },
