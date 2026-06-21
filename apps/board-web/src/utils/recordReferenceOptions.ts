@@ -36,7 +36,7 @@ export function buildAssetReferenceOptions(
 ): RecordReferenceOption[] {
   const recordById = buildRecordMap(records)
   const resolved = new Map<string, RecordReferenceOption>()
-  const unknown = new Map<string, RecordReferenceOption>()
+  let unknown = new Map<string, RecordReferenceOption>()
 
   for (const record of records) {
     if (record.body.schema === 'AssetBody') {
@@ -49,7 +49,7 @@ export function buildAssetReferenceOptions(
       const target = recordById.get(assetId)
       if (target) {
         resolved.set(assetId, formatRecordReference(target))
-        unknown.delete(assetId)
+        unknown = omitMapKey(unknown, assetId)
       } else if (!resolved.has(assetId) && !unknown.has(assetId)) {
         unknown.set(assetId, formatUnknownReference(assetId, 'asset', copy))
       }
@@ -68,7 +68,7 @@ export function buildRelationTargetOptions(
 ): RecordReferenceOption[] {
   const recordById = buildRecordMap(records)
   const resolved = new Map<string, RecordReferenceOption>()
-  const unknown = new Map<string, RecordReferenceOption>()
+  let unknown = new Map<string, RecordReferenceOption>()
 
   for (const record of records) {
     resolved.set(record.body.id, formatRecordReference(record))
@@ -79,7 +79,7 @@ export function buildRelationTargetOptions(
       const target = recordById.get(relation.target)
       if (target) {
         resolved.set(relation.target, formatRecordReference(target))
-        unknown.delete(relation.target)
+        unknown = omitMapKey(unknown, relation.target)
       } else if (!resolved.has(relation.target) && !unknown.has(relation.target)) {
         unknown.set(relation.target, formatUnknownReference(relation.target, 'record', copy))
       }
@@ -172,6 +172,10 @@ export function shortReferenceId(id: string): string {
 
 function buildRecordMap(records: CurrentRecord[]) {
   return new Map(records.map((record) => [record.body.id, record]))
+}
+
+function omitMapKey<K, V>(source: Map<K, V>, key: K): Map<K, V> {
+  return new Map([...source].filter(([candidate]) => candidate !== key))
 }
 
 function titleFromBody(body: RecordBody): string | undefined {

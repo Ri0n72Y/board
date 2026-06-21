@@ -227,7 +227,7 @@ export async function submitRecordPatch(
     expectedSnapshotVersion,
     expectedParentId: input.parentId as RecordId | null,
   })
-  await ensureAppendSucceeded(appendResult, repository)
+  await ensureAppendSucceeded(appendResult)
 
   return {
     patch: toPatchResponse(patch),
@@ -236,18 +236,13 @@ export async function submitRecordPatch(
 }
 
 async function ensureAppendSucceeded(
-  result: AppendPatchResult,
-  repository: RecordRepository
+  result: AppendPatchResult
 ): Promise<Extract<AppendPatchResult, { ok: true }>> {
   if (result.ok) return result
 
   if (result.reason === 'currentVersionMismatch') {
-    const baseRecords = await repository.list({
-      includeArchived: true,
-      excludeTags: [],
-    })
     throw new CurrentHeadConflictError(
-      `Current version mismatch: server has ${baseRecords.length + result.currentVersion}`
+      `Current version mismatch: server has ${result.currentVersion}`
     )
   }
 

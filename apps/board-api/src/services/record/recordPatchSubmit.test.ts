@@ -5,7 +5,10 @@ import {
   RecordValidationError,
 } from '../recordService.js'
 import { MemoryRecordRepository } from '../../repositories/recordRepository.js'
-import { MemorySnapshotHeadRepository } from '../../repositories/snapshotHeadRepository.js'
+import {
+  MemorySnapshotHeadRepository,
+  type SnapshotHeadRepository,
+} from '../../repositories/snapshotHeadRepository.js'
 import {
   appendArchivePatch,
   cloneDefaultBoardConfig,
@@ -490,6 +493,28 @@ describe('RecordService patch submission (createRecordPatch)', () => {
       ).rejects.toThrow('Current version mismatch')
     })
 
+    it('reports append CAS currentVersionMismatch without adding base records', async () => {
+      const repository = new MemoryRecordRepository()
+      const service = new RecordService(
+        repository,
+        mismatchSnapshotHeadRepository(7),
+        cloneDefaultBoardConfig()
+      )
+      const envelope = await service.create({
+        schema: 'CardBody',
+        tags: ['status:todo'],
+        body: { title: 'Append CAS message test' },
+      })
+
+      await expect(
+        service.createRecordPatch(envelope.body.id, {
+          parentId: null,
+          currentVersion: 0,
+          body: { description: 'Should fail at append CAS' },
+        })
+      ).rejects.toThrow('Current version mismatch: server has 7')
+    })
+
     it('throws CurrentHeadConflictError when parentId mismatches lastPatchId', async () => {
       const service = createRecordService()
       const envelope = await service.create({
@@ -890,4 +915,24 @@ function createConfiguredTagService(): RecordService {
     new MemorySnapshotHeadRepository(repository),
     config
   )
+}
+
+function mismatchSnapshotHeadRepository(
+  currentVersion: number
+): SnapshotHeadRepository {
+  return {
+    async loadSnapshotHead() {
+      return { kind: 'snapshotHead', version: 0, records: {} }
+    },
+    rebuildSnapshotHeadFromPatches() {
+      return { kind: 'snapshotHead', version: 0, records: {} }
+    },
+    async appendPatchAndAdvanceHead() {
+      return {
+        ok: false,
+        reason: 'currentVersionMismatch',
+        currentVersion,
+      }
+    },
+  }
 }

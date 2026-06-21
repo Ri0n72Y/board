@@ -73,9 +73,8 @@ describe('recordCrudRoute', () => {
     })
     expect(patchResponse.status).toBe(404)
 
-    const removedDeleteMethod = 'DE' + 'LETE'
     const deleteResponse = await app.request(`/api/v0/records/${recordId}`, {
-      method: removedDeleteMethod,
+      method: 'DELETE',
     })
     expect(deleteResponse.status).toBe(404)
   })

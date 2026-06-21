@@ -176,6 +176,7 @@ pnpm --filter @labour-board/api import:test-data -- --reset
 pnpm --filter @labour-board/api exec tsx ../../packages/shared/src/utils/boardFilter.devcheck.ts
 pnpm --filter @labour-board/api exec tsx ../../packages/shared/src/utils/exportReferenceDisplay.devcheck.ts
 pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/searchSelect.devcheck.ts
+pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/editPatchDraft.devcheck.ts
 pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/recordReferenceOptions.devcheck.ts
 pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/referenceDisplay.devcheck.ts
 pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/relationDisplay.devcheck.ts
