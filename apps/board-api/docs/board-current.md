@@ -119,3 +119,7 @@ POST /api/v0/records/:id/patches
 `GET /api/v0/records/:id/head` returns `parentId` and `currentVersion`.
 The backend requires `currentVersion` and does not accept legacy version
 aliases.
+`currentVersion` is the current board patch-head version observed when
+resolving the record head. It is currently the global patch-head version
+(`patches.length`), not a record-local version. It advances when a patch is
+appended and is used together with `parentId` for optimistic concurrency.

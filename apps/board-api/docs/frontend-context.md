@@ -125,6 +125,11 @@ aliases. Board-web must use `currentVersion` and must not read
 `/api/v0/snapshot-head` for patch edit or move status; that HTTP route does
 not exist.
 
+`currentVersion` is the current board patch-head version observed when
+resolving the record head. It is currently the global patch-head version
+(`patches.length`), not a record-local version. It advances when a patch is
+appended and is used together with `parentId` for optimistic concurrency.
+
 ## Export / Context Pack
 
 - Current Board export and Agent Context Pack use the shared board filter.

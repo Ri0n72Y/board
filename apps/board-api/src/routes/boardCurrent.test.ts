@@ -1,7 +1,11 @@
 import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
 import { createBoardCurrentRoute } from './boardCurrent.js'
-import { createServiceWithRepo, makePatchDoc } from '../services/record/recordTestUtils.js'
+import {
+  appendArchivePatch,
+  createServiceWithRepo,
+  makePatchDoc,
+} from '../services/record/recordTestUtils.js'
 
 function createApp(): Hono {
   return new Hono()
@@ -191,7 +195,7 @@ describe('GET /api/v0/board/current', () => {
       tags: ['status:todo'],
       body: { title: 'To archive' },
     })
-    await service.delete(envelope.body.id)
+    await appendArchivePatch(service, envelope.body.id)
 
     const res = await app.request('/api/v0/board/current')
     expect(res.status).toBe(200)
@@ -209,7 +213,7 @@ describe('GET /api/v0/board/current', () => {
       tags: ['status:todo'],
       body: { title: 'Archived visible' },
     })
-    await service.delete(envelope.body.id)
+    await appendArchivePatch(service, envelope.body.id)
 
     const res = await app.request(
       '/api/v0/board/current?includeArchived=true'
@@ -238,7 +242,7 @@ describe('GET /api/v0/board/current', () => {
       currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
-    await service.delete(recordId)
+    await appendArchivePatch(service, recordId)
 
     const res = await app.request(
       '/api/v0/board/current?includeArchived=true'

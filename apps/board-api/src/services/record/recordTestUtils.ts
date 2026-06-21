@@ -59,3 +59,17 @@ export function createWriter(): BoardConfigPidWriter & {
 export function cloneDefaultBoardConfig(): BoardConfig {
   return structuredClone(DEFAULT_BOARD_CONFIG)
 }
+
+export async function appendArchivePatch(
+  service: RecordService,
+  recordId: string
+) {
+  const head = await service.getRecordCurrentHead(recordId)
+  if (!head) return null
+  return service.createRecordPatch(recordId, {
+    parentId: head.lastPatchId,
+    currentVersion: head.currentVersion,
+    tagChanges: { add: ['status:archived'] },
+    description: 'Archive record',
+  })
+}

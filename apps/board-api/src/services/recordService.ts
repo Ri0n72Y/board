@@ -24,7 +24,6 @@ import {
   resolveActor,
 } from './record/recordResponses.js'
 import { submitRecordPatch } from './record/recordPatchSubmit.js'
-import { archiveRecord } from './record/recordArchive.js'
 import { getRecordHistory } from './record/recordHistoryService.js'
 import { getRecordCurrentHead } from './record/recordCurrentHead.js'
 import {
@@ -165,16 +164,6 @@ export class RecordService {
     recordId: string
   ): Promise<RecordHistoryResponse | null> {
     return getRecordHistory({ recordId, repository: this.repository })
-  }
-
-  // ─── Archive / delete (delegated) ───
-
-  async delete(id: string): Promise<BoardRecordResponse | null> {
-    return archiveRecord({
-      id,
-      repository: this.repository,
-      snapshotHeadRepository: this.snapshotHeadRepository,
-    })
   }
 
   // ─── Private helpers ───

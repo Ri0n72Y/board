@@ -20,7 +20,6 @@ type ApiResponse<T> = { ok: true; data: T } | { ok: false; error: ApiError }
 - `GET /api/v0/records/:id/history` - read one record's replay/history.
 - `GET /api/v0/patches?targetId=...` - read patch facts for debugging/history support.
 - `GET /api/v0/patches/:id` - read one patch fact.
-- `GET /api/v0/records/:id/head` - the only external current-head entrypoint for patch edit/status-move flows.
 - `GET /api/v0/board/current` - read the current board projection.
 - `GET /api/v0/board/current/export` - export the current board as Markdown or Context Pack.
 - `GET /api/v0/snapshots` - list saved snapshots.
@@ -154,6 +153,10 @@ type CreateRecordPatchInput<TBodyPatch = DeepPartial<RecordBody>> = {
 ```
 
 The backend requires `currentVersion`. Legacy version aliases are not accepted.
+`currentVersion` is the current board patch-head version observed when
+resolving the record head. It is currently the global patch-head version
+(`patches.length`), not a record-local version. It advances when a patch is
+appended and is used together with `parentId` for optimistic concurrency.
 
 Patch semantics:
 
@@ -176,7 +179,7 @@ Patch semantics:
 ```
 
 - Patch body should contain only changed fields. Do not submit unchanged nulls.
-- Patch edit/status-move uses `GET /api/v0/records/:id/head` for `parentId` and `currentVersion`.
+- Patch edit/status-move uses the record head read response for `parentId` and `currentVersion`.
 - Frontend patch edit/status-move must not use `/api/v0/snapshot-head`; that HTTP route does not exist.
 - `POST /api/v0/patches` is not a write entrypoint.
 

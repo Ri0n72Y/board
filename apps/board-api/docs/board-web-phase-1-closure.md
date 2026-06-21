@@ -78,6 +78,8 @@ type BoardCurrentQuery = {
 - Canonical edit/status move head source: `GET /api/v0/records/:id/head`.
 - Canonical submit route: `POST /api/v0/records/:id/patches`.
 - Canonical version field: `currentVersion`. It is required.
+- `currentVersion` is the current board patch-head version observed when resolving the record head. It is currently the global patch-head version (`patches.length`), not a record-local version.
+- `currentVersion` advances when a patch is appended and is used together with `parentId` for optimistic concurrency.
 - Legacy version aliases are not accepted.
 - Tag mutation uses `tagChanges`, not a full `tags` replacement field.
 - Patch body should omit unchanged fields and unchanged nulls.

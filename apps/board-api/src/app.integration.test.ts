@@ -18,7 +18,7 @@ async function createTestApp(): Promise<Hono> {
   return app
 }
 
-async function archiveRecord(app: Hono, recordId: string): Promise<void> {
+async function appendArchivedStatus(app: Hono, recordId: string): Promise<void> {
   const headResponse = await app.request(`/api/v0/records/${recordId}/head`)
   const headPayload = await headResponse.json()
   const archiveResponse = await app.request(
@@ -142,7 +142,7 @@ describe('app integration smoke', () => {
       headers: { 'content-type': 'application/json' },
     })
 
-    await archiveRecord(app, recordId)
+    await appendArchivedStatus(app, recordId)
 
     // Board current: hidden by default
     const boardRes = await app.request('/api/v0/board/current')
@@ -175,7 +175,7 @@ describe('app integration smoke', () => {
       headers: { 'content-type': 'application/json' },
     })
 
-    await archiveRecord(app, recordId)
+    await appendArchivedStatus(app, recordId)
 
     const boardRes = await app.request(
       '/api/v0/board/current?includeArchived=true'
@@ -216,7 +216,7 @@ describe('app integration smoke', () => {
       headers: { 'content-type': 'application/json' },
     })
 
-    await archiveRecord(app, recordId)
+    await appendArchivedStatus(app, recordId)
 
     // History
     const historyRes = await app.request(

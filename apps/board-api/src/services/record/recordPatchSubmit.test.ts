@@ -7,6 +7,7 @@ import {
 import { MemoryRecordRepository } from '../../repositories/recordRepository.js'
 import { MemorySnapshotHeadRepository } from '../../repositories/snapshotHeadRepository.js'
 import {
+  appendArchivePatch,
   cloneDefaultBoardConfig,
   createRecordService,
 } from './recordTestUtils.js'
@@ -89,7 +90,7 @@ describe('RecordService patch submission (createRecordPatch)', () => {
         tags: ['status:todo'],
         body: { title: 'Archived patch test' },
       })
-      await service.delete(envelope.body.id)
+      await appendArchivePatch(service, envelope.body.id)
       const head = await service.getRecordCurrentHead(envelope.body.id)
       expect(head).not.toBeNull()
 

@@ -4,7 +4,11 @@ import {
   isArchivedInCurrent,
   type RecordCurrentOk,
 } from './boardCurrentProjection.js'
-import { createServiceWithRepo, makePatchDoc } from '../record/recordTestUtils.js'
+import {
+  appendArchivePatch,
+  createServiceWithRepo,
+  makePatchDoc,
+} from '../record/recordTestUtils.js'
 
 /**
  * Helper: creates a base record and returns its raw stored doc + a service
@@ -114,8 +118,7 @@ describe('boardCurrentProjection', () => {
       currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
-    // Archive via delete (appends archive patch)
-    await service.delete(recordId)
+    await appendArchivePatch(service, recordId)
 
     const patches = await repo.findPatchesByTargetId(recordId)
     const result = projectRecordCurrent(stored, patches)
@@ -258,7 +261,7 @@ describe('boardCurrentProjection', () => {
 
   it('isArchivedInCurrent: true when current tags include status:archived', async () => {
     const { service, repo, recordId, stored } = await createBaseRecord()
-    await service.delete(recordId)
+    await appendArchivePatch(service, recordId)
 
     const patches = await repo.findPatchesByTargetId(recordId)
     const result = projectRecordCurrent(stored, patches)

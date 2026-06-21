@@ -56,6 +56,11 @@ accept legacy version aliases. `GET /api/v0/records/:id/head` is the only
 external current-head entrypoint; `/api/v0/snapshot-head` is not exposed as an
 HTTP route.
 
+`currentVersion` is the current board patch-head version observed when
+resolving the record head. It is currently the global patch-head version
+(`patches.length`), not a record-local version. It advances when a patch is
+appended and is used together with `parentId` for optimistic concurrency.
+
 ## Snapshot Boundary
 
 Manual snapshots are saved projection checkpoints:

@@ -207,7 +207,7 @@ describe('Mongo smoke', () => {
     // Snapshot head initially at version 0
     const head0Res = await app.request(`/api/v0/records/${recordId}/head`)
     const head0 = await head0Res.json()
-    expect(head0.data.currentVersion).toBe(1)
+    expect(head0.data.currentVersion).toBe(0)
     expect(head0.data.lastPatchId).toBeNull()
 
     // Apply a patch
@@ -230,7 +230,7 @@ describe('Mongo smoke', () => {
     // Snapshot head advanced
     const head1Res = await app.request(`/api/v0/records/${recordId}/head`)
     const head1 = await head1Res.json()
-    expect(head1.data.currentVersion).toBe(2)
+    expect(head1.data.currentVersion).toBe(1)
     expect(head1.data.lastPatchId).toBe(patchId)
 
     // Verify snapshot head is NOT in records collection

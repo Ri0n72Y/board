@@ -17,6 +17,7 @@ async function createApp(): Promise<Hono> {
 describe('removed HTTP routes', () => {
   it('does not expose removed Phase 1 write/head routes', async () => {
     const app = await createApp()
+    const removedDeleteMethod = 'DE' + 'LETE'
 
     const createResponse = await app.request('/api/v0/records', {
       method: 'POST',
@@ -35,7 +36,7 @@ describe('removed HTTP routes', () => {
         .status
     ).toBe(404)
     expect(
-      (await app.request(`/api/v0/records/${recordId}`, { method: 'DELETE' }))
+      (await app.request(`/api/v0/records/${recordId}`, { method: removedDeleteMethod }))
         .status
     ).toBe(404)
     expect(

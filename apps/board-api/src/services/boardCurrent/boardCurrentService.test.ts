@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { getBoardCurrentProjection } from './boardCurrentService.js'
-import { createServiceWithRepo, makePatchDoc } from '../record/recordTestUtils.js'
+import {
+  appendArchivePatch,
+  createServiceWithRepo,
+  makePatchDoc,
+} from '../record/recordTestUtils.js'
 
 describe('boardCurrentService', () => {
   // 鈹€鈹€ Empty board 鈹€鈹€
@@ -313,7 +317,7 @@ describe('boardCurrentService', () => {
       tags: ['status:todo'],
       body: { title: 'To archive' },
     })
-    await service.delete(envelope.body.id)
+    await appendArchivePatch(service, envelope.body.id)
 
     const board = await getBoardCurrentProjection({
       repository: repo,
@@ -335,7 +339,7 @@ describe('boardCurrentService', () => {
       tags: ['status:todo'],
       body: { title: 'Archived visible' },
     })
-    await service.delete(envelope.body.id)
+    await appendArchivePatch(service, envelope.body.id)
 
     const board = await getBoardCurrentProjection({
       repository: repo,
@@ -356,7 +360,7 @@ describe('boardCurrentService', () => {
       tags: ['status:todo'],
       body: { title: 'Archived filtered out' },
     })
-    await service.delete(envelope.body.id)
+    await appendArchivePatch(service, envelope.body.id)
 
     const board = await getBoardCurrentProjection({
       repository: repo,
@@ -386,7 +390,7 @@ describe('boardCurrentService', () => {
       currentVersion: 0,
       tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
     })
-    await service.delete(recordId)
+    await appendArchivePatch(service, recordId)
 
     const board = await getBoardCurrentProjection({
       repository: repo,
@@ -729,7 +733,7 @@ describe('boardCurrentService', () => {
       tags: ['status:todo'],
       body: { title: 'Archived' },
     })
-    await service.delete(toArchive.body.id)
+    await appendArchivePatch(service, toArchive.body.id)
 
     // Broken record (will also corrupt head)
     const toBreak = await service.create({
