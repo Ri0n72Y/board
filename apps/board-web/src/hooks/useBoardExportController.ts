@@ -6,7 +6,7 @@ import {
   validateAgentContextProfileOptions,
 } from '@labour-board/shared'
 import { exportCurrentBoard } from '../api/exports'
-import type { BoardCurrentFilters } from '../api/boardCurrent'
+import type { BoardCurrentFilters } from '../utils/boardFilterUrl'
 import { hasEffectiveFilters } from '../utils/board'
 import { downloadTextFile } from '../utils/download'
 

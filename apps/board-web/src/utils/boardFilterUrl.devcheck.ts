@@ -3,13 +3,14 @@
  * pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/boardFilterUrl.devcheck.ts
  */
 
-import type { BoardCurrentFilters } from '../api/boardCurrent'
 import {
   DEFAULT_BOARD_CURRENT_FILTERS,
+  type BoardCurrentFilters,
   boardFilterSearchToQuery,
   boardFilterUrlQuery,
   normalizeBoardFilterUrl,
   parseBoardFilterUrl,
+  shouldReplaceBoardFilterUrl,
 } from './boardFilterUrl'
 
 eq(
@@ -150,6 +151,41 @@ eq(
   parseBoardFilterUrl(boardFilterUrlQuery(fullFilters)),
   normalizeBoardFilterUrl(fullFilters),
   'parse(serialize(filters)) returns normalized filters',
+)
+
+eq(
+  shouldReplaceBoardFilterUrl('?tag=status%3Atodo', 'tags=status%3Atodo'),
+  true,
+  'raw tag compatibility query should be replaced with canonical tags query',
+)
+eq(
+  shouldReplaceBoardFilterUrl(
+    '?relationTarget=r&tags=b&q=x&tags=a',
+    'q=x&tags=b&tags=a&relationTarget=r',
+  ),
+  true,
+  'unstable raw query order should be replaced with stable canonical order',
+)
+eq(
+  boardFilterSearchToQuery('tagMatch=all&includeArchived=false&q=%20'),
+  '',
+  'default and blank values canonicalize to empty query',
+)
+eq(
+  shouldReplaceBoardFilterUrl(
+    '?tagMatch=all&includeArchived=false&q=%20',
+    '',
+  ),
+  true,
+  'raw default-only query should be replaced with empty query',
+)
+eq(
+  shouldReplaceBoardFilterUrl(
+    '?q=x&tags=b&tags=a&relationTarget=r',
+    'q=x&tags=b&tags=a&relationTarget=r',
+  ),
+  false,
+  'canonical raw query should not be replaced',
 )
 
 console.log('boardFilterUrl devcheck passed')

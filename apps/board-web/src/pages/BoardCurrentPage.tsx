@@ -1,4 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import type {
   RecordBody,
   RecordItem,
@@ -52,9 +57,9 @@ import {
 } from '../utils/board'
 import {
   areBoardFiltersEqual,
-  boardFilterSearchToQuery,
   boardFilterUrlQuery,
   parseBoardFilterUrl,
+  shouldReplaceBoardFilterUrl,
 } from '../utils/boardFilterUrl'
 import { getStatusColumns } from '../utils/boardView'
 import {
@@ -79,7 +84,11 @@ const EMPTY_RECORDS: RecordResponse<RecordItem<RecordBody>>[] = []
 export function BoardCurrentPage() {
   const { t, i18n } = useTranslation()
   const draftFilters = useBoardCurrentStore((s) => s.filters)
+  const effectiveFilters = useBoardCurrentStore((s) => s.effectiveFilters)
   const lastAppliedFilters = useBoardCurrentStore((s) => s.lastAppliedFilters)
+  const filterUrlApplyVersion = useBoardCurrentStore(
+    (s) => s.filterUrlApplyVersion,
+  )
   const projection = useBoardCurrentStore((s) => s.projection)
   const isLoading = useBoardCurrentStore((s) => s.isLoading)
   const error = useBoardCurrentStore((s) => s.error)
@@ -93,6 +102,7 @@ export function BoardCurrentPage() {
   const setAssetId = useBoardCurrentStore((s) => s.setAssetId)
   const setRelationTarget = useBoardCurrentStore((s) => s.setRelationTarget)
   const setFilters = useBoardCurrentStore((s) => s.setFilters)
+  const setEffectiveFilters = useBoardCurrentStore((s) => s.setEffectiveFilters)
   const loadCurrentBoard = useBoardCurrentStore((s) => s.loadCurrentBoard)
 
   const config = useBoardMetadataStore((s) => s.config)
@@ -125,9 +135,15 @@ export function BoardCurrentPage() {
     return () => controller.abort()
   }, [loadMetadata])
 
-  const debouncedQ = useDebouncedValue(draftFilters.q, Q_DEBOUNCE_MS)
-  const effectiveFilters = useMemo(
-    () => ({
+  const debouncedQ = useDebouncedValue(
+    draftFilters.q,
+    Q_DEBOUNCE_MS,
+    filterUrlApplyVersion,
+  )
+
+  useEffect(() => {
+    if (debouncedQ !== draftFilters.q) return
+    setEffectiveFilters({
       q: debouncedQ,
       tags: draftFilters.tags,
       tagMatch: draftFilters.tagMatch,
@@ -135,17 +151,18 @@ export function BoardCurrentPage() {
       assignee: draftFilters.assignee,
       assetId: draftFilters.assetId,
       relationTarget: draftFilters.relationTarget,
-    }),
-    [
-      debouncedQ,
-      draftFilters.tags,
-      draftFilters.tagMatch,
-      draftFilters.includeArchived,
-      draftFilters.assignee,
-      draftFilters.assetId,
-      draftFilters.relationTarget,
-    ]
-  )
+    })
+  }, [
+    debouncedQ,
+    draftFilters.q,
+    draftFilters.tags,
+    draftFilters.tagMatch,
+    draftFilters.includeArchived,
+    draftFilters.assignee,
+    draftFilters.assetId,
+    draftFilters.relationTarget,
+    setEffectiveFilters,
+  ])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -157,8 +174,7 @@ export function BoardCurrentPage() {
     if (typeof window === 'undefined') return
 
     const nextQuery = boardFilterUrlQuery(effectiveFilters)
-    const currentQuery = boardFilterSearchToQuery(window.location.search)
-    if (nextQuery === currentQuery) return
+    if (!shouldReplaceBoardFilterUrl(window.location.search, nextQuery)) return
 
     const nextUrl = [
       window.location.pathname,

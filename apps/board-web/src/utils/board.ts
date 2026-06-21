@@ -5,7 +5,7 @@ import type {
   Tag,
   TagDefinition,
 } from '@labour-board/shared'
-import type { BoardCurrentFilters } from '../api/boardCurrent'
+import type { BoardCurrentFilters } from './boardFilterUrl'
 
 export function hasEffectiveFilters(filters: BoardCurrentFilters): boolean {
   return (

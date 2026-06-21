@@ -3,7 +3,16 @@ import type {
   BoardCurrentTagMatch,
   Tag,
 } from '@labour-board/shared'
-import type { BoardCurrentFilters } from '../api/boardCurrent'
+
+export interface BoardCurrentFilters {
+  q: string
+  tags: Tag[]
+  tagMatch: BoardCurrentTagMatch
+  includeArchived: boolean
+  assignee: string
+  assetId: string
+  relationTarget: string
+}
 
 export const DEFAULT_BOARD_CURRENT_FILTERS: BoardCurrentFilters = {
   q: '',
@@ -85,6 +94,17 @@ export function appendBoardFilterUrlParams(
 
 export function boardFilterSearchToQuery(search: string): string {
   return serializeBoardFilterUrl(parseBoardFilterUrl(search)).toString()
+}
+
+export function rawBoardFilterSearchQuery(search: string): string {
+  return search.startsWith('?') ? search.slice(1) : search
+}
+
+export function shouldReplaceBoardFilterUrl(
+  search: string,
+  nextQuery: string,
+): boolean {
+  return rawBoardFilterSearchQuery(search) !== nextQuery
 }
 
 export function areBoardFiltersEqual(

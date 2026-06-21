@@ -2,20 +2,12 @@ import axios from 'axios'
 import type {
   ApiResponse,
   BoardCurrentProjection,
-  BoardCurrentTagMatch,
-  Tag,
 } from '@labour-board/shared'
-import { serializeBoardFilterUrl } from '../utils/boardFilterUrl'
-
-export interface BoardCurrentFilters {
-  q: string
-  tags: Tag[]
-  tagMatch: BoardCurrentTagMatch
-  includeArchived: boolean
-  assignee: string
-  assetId: string
-  relationTarget: string
-}
+import {
+  serializeBoardFilterUrl,
+  type BoardCurrentFilters,
+} from '../utils/boardFilterUrl'
+export type { BoardCurrentFilters } from '../utils/boardFilterUrl'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
 

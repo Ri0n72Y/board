@@ -4,21 +4,23 @@ import type {
   BoardCurrentTagMatch,
   Tag,
 } from '@labour-board/shared'
+import { fetchBoardCurrent } from '../api/boardCurrent'
 import {
-  fetchBoardCurrent,
-  type BoardCurrentFilters,
-} from '../api/boardCurrent'
-import {
+  areBoardFiltersEqual,
   DEFAULT_BOARD_CURRENT_FILTERS,
   normalizeBoardFilterUrl,
   parseBoardFilterUrl,
+  type BoardCurrentFilters,
 } from '../utils/boardFilterUrl'
 
 interface BoardCurrentState {
   /** Draft filters: always reflect user input immediately (raw q). */
   filters: BoardCurrentFilters
+  /** Effective filters drive URL, board current loading, export, and drafts. */
+  effectiveFilters: BoardCurrentFilters
   /** The effective filters that produced the current projection. */
   lastAppliedFilters: BoardCurrentFilters | null
+  filterUrlApplyVersion: number
   projection: BoardCurrentProjection | null
   isLoading: boolean
   error: string | null
@@ -31,6 +33,7 @@ interface BoardCurrentState {
   setAssetId: (assetId: string) => void
   setRelationTarget: (relationTarget: string) => void
   setFilters: (filters: BoardCurrentFilters) => void
+  setEffectiveFilters: (filters: BoardCurrentFilters) => void
   loadCurrentBoard: (filters: BoardCurrentFilters, signal?: AbortSignal) => Promise<void>
 }
 
@@ -40,7 +43,9 @@ let activeRequestId = 0
 
 export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
   filters: initialFilters,
+  effectiveFilters: cloneFilters(initialFilters),
   lastAppliedFilters: null,
+  filterUrlApplyVersion: 0,
   projection: null,
   isLoading: true,
   error: null,
@@ -62,6 +67,10 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
               ...state.filters,
               tags: [...state.filters.tags, tag],
             },
+            effectiveFilters: {
+              ...state.effectiveFilters,
+              tags: [...state.effectiveFilters.tags, tag],
+            },
           }
     )
   },
@@ -72,36 +81,58 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
         ...state.filters,
         tags: state.filters.tags.filter((value) => value !== tag),
       },
+      effectiveFilters: {
+        ...state.effectiveFilters,
+        tags: state.effectiveFilters.tags.filter((value) => value !== tag),
+      },
     })),
 
   setTagMatch: (tagMatch) =>
     set((state) => ({
       filters: { ...state.filters, tagMatch },
+      effectiveFilters: { ...state.effectiveFilters, tagMatch },
     })),
 
   setIncludeArchived: (includeArchived) =>
     set((state) => ({
       filters: { ...state.filters, includeArchived },
+      effectiveFilters: { ...state.effectiveFilters, includeArchived },
     })),
 
   setAssignee: (assignee) =>
     set((state) => ({
       filters: { ...state.filters, assignee },
+      effectiveFilters: { ...state.effectiveFilters, assignee },
     })),
 
   setAssetId: (assetId) =>
     set((state) => ({
       filters: { ...state.filters, assetId },
+      effectiveFilters: { ...state.effectiveFilters, assetId },
     })),
 
   setRelationTarget: (relationTarget) =>
     set((state) => ({
       filters: { ...state.filters, relationTarget },
+      effectiveFilters: { ...state.effectiveFilters, relationTarget },
     })),
 
   setFilters: (filters) =>
-    set({
-      filters: cloneFilters(normalizeBoardFilterUrl(filters)),
+    set((state) => {
+      const normalized = cloneFilters(normalizeBoardFilterUrl(filters))
+      return {
+        filters: normalized,
+        effectiveFilters: cloneFilters(normalized),
+        filterUrlApplyVersion: state.filterUrlApplyVersion + 1,
+      }
+    }),
+
+  setEffectiveFilters: (filters) =>
+    set((state) => {
+      const normalized = cloneFilters(normalizeBoardFilterUrl(filters))
+      return areBoardFiltersEqual(state.effectiveFilters, normalized)
+        ? state
+        : { effectiveFilters: normalized }
     }),
 
   loadCurrentBoard: async (filters, signal) => {
