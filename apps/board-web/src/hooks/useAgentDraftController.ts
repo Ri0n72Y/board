@@ -5,6 +5,7 @@ import type { ExportContextPackOptions } from './useBoardExportController'
 import { createAgentDraft, fetchAgentDraft, fetchAgentDrafts, fetchAgentDraftHandoff, updateAgentDraftReview } from '../api/agentDrafts'
 import { downloadTextFile } from '../utils/download'
 import { useAgentResponseController } from './useAgentResponseController'
+import { useAgentSuggestionController } from './useAgentSuggestionController'
 
 function isIgnoredHandoffAbort(err: unknown): boolean {
   if (axios.isCancel(err)) return true
@@ -61,6 +62,24 @@ export function useAgentDraftController() {
     setSelectedResponse,
   } = useAgentResponseController()
 
+  // Agent Suggestion controller
+  const {
+    suggestions,
+    selectedSuggestion,
+    isListLoading: isSuggestionListLoading,
+    isDetailLoading: isSuggestionDetailLoading,
+    isGenerating: isSuggestionGenerating,
+    listError: suggestionListError,
+    detailError: suggestionDetailError,
+    generateError: suggestionGenerateError,
+    abortAll: abortAllSuggestions,
+    clearSuggestions,
+    loadSuggestionList,
+    loadSuggestionDetail,
+    generateSuggestion,
+    setSelectedSuggestion,
+  } = useAgentSuggestionController()
+
   const abortAll = useCallback(() => {
     listRequestIdRef.current += 1
     detailRequestIdRef.current += 1
@@ -78,7 +97,8 @@ export function useAgentDraftController() {
     reviewAbortRef.current = null
     handoffAbortRef.current = null
     abortAllResponses()
-  }, [abortAllResponses])
+    abortAllSuggestions()
+  }, [abortAllResponses, abortAllSuggestions])
 
   useEffect(() => abortAll, [abortAll])
 
@@ -129,7 +149,8 @@ export function useAgentDraftController() {
     setIsReviewing(false)
     setIsHandoffLoading(false)
     clearResponses()
-  }, [abortAll, clearResponses])
+    clearSuggestions()
+  }, [abortAll, clearResponses, clearSuggestions])
 
   const loadDraftDetail = useCallback((draftId: string) => {
     const requestId = detailRequestIdRef.current + 1
@@ -144,8 +165,9 @@ export function useAgentDraftController() {
     setHandoffFeedback(null)
     setIsHandoffLoading(false)
 
-    // Clear response state for new draft
+    // Clear response and suggestion state for new draft
     clearResponses()
+    clearSuggestions()
 
     const controller = new AbortController()
     detailAbortRef.current = controller
@@ -157,8 +179,9 @@ export function useAgentDraftController() {
       .then((data) => {
         if (detailRequestIdRef.current !== requestId || controller.signal.aborted) return
         setSelectedDraft(data.draft)
-        // Load responses for this draft
+        // Load responses and suggestions for this draft
         loadResponseList(draftId)
+        loadSuggestionList(draftId)
       })
       .catch((err: unknown) => {
         if (detailRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) return
@@ -169,7 +192,7 @@ export function useAgentDraftController() {
         setIsDetailLoading(false)
         detailAbortRef.current = null
       })
-  }, [clearResponses, loadResponseList])
+  }, [clearResponses, clearSuggestions, loadResponseList, loadSuggestionList])
 
   const saveDraft = useCallback(
     (options: ExportContextPackOptions & {
@@ -373,5 +396,17 @@ export function useAgentDraftController() {
     loadResponseDetail,
     saveResponse,
     setSelectedResponse,
+    // Agent Suggestion — returned directly from destructured stable values
+    suggestions,
+    selectedSuggestion,
+    isSuggestionListLoading,
+    isSuggestionDetailLoading,
+    isSuggestionGenerating,
+    suggestionListError,
+    suggestionDetailError,
+    suggestionGenerateError,
+    loadSuggestionDetail,
+    generateSuggestion,
+    setSelectedSuggestion,
   }
 }

@@ -165,3 +165,28 @@ Phase 1 Agent workflow is manual and non-executing:
 - Handoff is formal Markdown for a reviewed draft, not execution authorization.
 - Manual Agent Response is a pasted artifact, not proof of execution and not an applied patch.
 - No board mutation passes through the Agent workflow.
+
+## MVP 2.3 Addendum: Agent Skill Registry + AI Suggestion
+
+### Skill Registry
+
+- `GET /api/v0/agent/skills` returns skill summaries without full markdown.
+- `GET /api/v0/agent/skills/:skillId` returns full skill markdown.
+- Built-in `labourboard-advisor` skill is always enabled and ranked first.
+- Skills are read-only Markdown context files. No POST/PATCH/DELETE skill routes exist.
+- Path traversal is prevented for skill file reads.
+
+### AI Suggestions
+
+- `POST /api/v0/agent/drafts/:draftId/suggestions` generates AI suggestions from a reviewed draft's `contextMarkdown`.
+- `GET /api/v0/agent/drafts/:draftId/suggestions` returns suggestion summaries without full markdown.
+- `GET /api/v0/agent/suggestions/:suggestionId` returns the full suggestion markdown.
+- `PATCH /api/v0/agent/suggestions/:suggestionId/review` updates suggestion review status.
+- Suggestions store `skillSnapshots` for audit trail.
+- Suggestions store `contextHash` (sha256 of draft contextMarkdown).
+- Suggestions do NOT mutate board records.
+- Suggestions do NOT apply patches.
+- board-web does NOT expose any provider API keys.
+- Current provider is **mock** (`MockAgentSuggestionProvider`). Real provider integration is deferred.
+- No `POST /api/v0/agent/run`, `POST /api/v0/agent/apply`, or `POST /api/v0/agent/execute` routes exist.
+- No `POST /api/v0/agent/suggestions/:id/apply` route exists.

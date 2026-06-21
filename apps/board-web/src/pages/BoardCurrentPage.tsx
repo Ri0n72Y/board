@@ -645,6 +645,16 @@ export function BoardCurrentPage() {
         responseCreateError={agentDraftController.responseCreateError}
         onLoadResponseDetail={agentDraftController.loadResponseDetail}
         onSaveResponse={agentDraftController.saveResponse}
+        suggestions={agentDraftController.suggestions}
+        selectedSuggestion={agentDraftController.selectedSuggestion}
+        isSuggestionListLoading={agentDraftController.isSuggestionListLoading}
+        isSuggestionDetailLoading={agentDraftController.isSuggestionDetailLoading}
+        isSuggestionGenerating={agentDraftController.isSuggestionGenerating}
+        suggestionListError={agentDraftController.suggestionListError}
+        suggestionDetailError={agentDraftController.suggestionDetailError}
+        suggestionGenerateError={agentDraftController.suggestionGenerateError}
+        onGenerateSuggestion={agentDraftController.generateSuggestion}
+        onSelectSuggestion={agentDraftController.loadSuggestionDetail}
       />
 
       <ExportContextDrawer

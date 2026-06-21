@@ -12,6 +12,7 @@ import {
   getSnapshotsCollection,
   getAgentDraftsCollection,
   getAgentResponsesCollection,
+  getAgentSuggestionsCollection,
 } from '../db/mongo.js'
 import {
   MemoryProfileRepository,
@@ -39,6 +40,8 @@ import { ProfileService } from './profileService.js'
 import { SnapshotService } from './snapshot/snapshotService.js'
 import { AgentDraftService } from './agent/agentDraftService.js'
 import { AgentResponseService } from './agent/agentResponseService.js'
+import { AgentSkillService } from './agent/agentSkillService.js'
+import { AgentSuggestionService } from './agent/agentSuggestionService.js'
 import {
   MemoryAgentDraftRepository,
   MongoAgentDraftRepository,
@@ -49,6 +52,11 @@ import {
   MongoAgentResponseRepository,
   type AgentResponseRepository,
 } from '../repositories/agentResponseRepository.js'
+import {
+  MemoryAgentSuggestionRepository,
+  MongoAgentSuggestionRepository,
+} from '../repositories/agentSuggestionRepository.js'
+import { MockAgentSuggestionProvider } from '../config/agentSuggestionProvider.js'
 
 export interface ApiServices {
   configService: ConfigService
@@ -57,6 +65,8 @@ export interface ApiServices {
   snapshotService: SnapshotService
   agentDraftService: AgentDraftService
   agentResponseService: AgentResponseService
+  agentSkillService: AgentSkillService
+  agentSuggestionService: AgentSuggestionService
   recordRepository: RecordRepository
   snapshotHeadRepository: SnapshotHeadRepository
   snapshotRepository: SnapshotRepository
@@ -149,6 +159,20 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
     agentResponseService: new AgentResponseService(
       agentResponseRepository,
       agentDraftRepository
+    ),
+    agentSkillService: new AgentSkillService(),
+    agentSuggestionService: new AgentSuggestionService(
+      env.mongodbUri
+        ? new MongoAgentSuggestionRepository(
+            (await getAgentSuggestionsCollection<Document>(
+              env.mongodbUri,
+              env.mongodbDb
+            )) as Collection<Document>
+          )
+        : new MemoryAgentSuggestionRepository(),
+      agentDraftRepository,
+      new AgentSkillService(),
+      new MockAgentSuggestionProvider()
     ),
     recordRepository,
     snapshotHeadRepository,

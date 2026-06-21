@@ -1,4 +1,4 @@
-import type { AgentDraftDetail, AgentDraftStatus, AgentDraftSummary, AgentResponseDetail, AgentResponseSummary } from '@labour-board/shared'
+import type { AgentDraftDetail, AgentDraftStatus, AgentDraftSummary, AgentResponseDetail, AgentResponseSummary, AgentSuggestionDetail, AgentSuggestionSummary } from '@labour-board/shared'
 import { useTranslation } from 'react-i18next'
 import { Button } from './ui/Button'
 import { AgentDraftQueuePanel } from './agentDrafts/AgentDraftQueuePanel'
@@ -10,6 +10,7 @@ import { AgentDraftContextPreview } from './agentDrafts/AgentDraftContextPreview
 import { FormalHandoffSection } from './agentDrafts/FormalHandoffSection'
 import { ManualAgentResponseSection } from './agentDrafts/ManualAgentResponseSection'
 import { AgentManualWorkflowTimeline } from './agentDrafts/AgentManualWorkflowTimeline'
+import { AgentSuggestionSection } from './agentDrafts/AgentSuggestionSection'
 import { ErrorBlock } from './agentDrafts/ErrorBlock'
 
 interface AgentDraftsDrawerProps {
@@ -44,6 +45,17 @@ interface AgentDraftsDrawerProps {
   onDownloadHandoff?: (draftId: string) => void
   onLoadResponseDetail?: (responseId: string) => void
   onSaveResponse?: (draftId: string, responseMarkdown: string, externalAgentName?: string, responseNote?: string) => Promise<AgentResponseDetail>
+  // Agent Suggestion
+  suggestions?: AgentSuggestionSummary[]
+  selectedSuggestion?: AgentSuggestionDetail | null
+  isSuggestionListLoading?: boolean
+  isSuggestionDetailLoading?: boolean
+  isSuggestionGenerating?: boolean
+  suggestionListError?: string | null
+  suggestionDetailError?: string | null
+  suggestionGenerateError?: string | null
+  onGenerateSuggestion?: (draftId: string) => void
+  onSelectSuggestion?: (suggestionId: string) => void
 }
 
 export function AgentDraftsDrawer({
@@ -77,6 +89,17 @@ export function AgentDraftsDrawer({
   onDownloadHandoff,
   onLoadResponseDetail,
   onSaveResponse,
+  // Agent Suggestion
+  suggestions = [],
+  selectedSuggestion = null,
+  isSuggestionListLoading = false,
+  isSuggestionDetailLoading = false,
+  isSuggestionGenerating = false,
+  suggestionListError = null,
+  suggestionDetailError = null,
+  suggestionGenerateError = null,
+  onGenerateSuggestion,
+  onSelectSuggestion,
 }: AgentDraftsDrawerProps) {
   const { t } = useTranslation()
 
@@ -180,6 +203,23 @@ export function AgentDraftsDrawer({
                     responseCreateError={responseCreateError}
                     onLoadResponseDetail={onLoadResponseDetail}
                     onSaveResponse={onSaveResponse}
+                  />
+                )}
+
+                {onGenerateSuggestion && onSelectSuggestion && (
+                  <AgentSuggestionSection
+                    key={`${selectedDraft.id}-suggestions`}
+                    draft={selectedDraft}
+                    suggestions={suggestions}
+                    selectedSuggestion={selectedSuggestion}
+                    isListLoading={isSuggestionListLoading}
+                    isDetailLoading={isSuggestionDetailLoading}
+                    isGenerating={isSuggestionGenerating}
+                    listError={suggestionListError}
+                    detailError={suggestionDetailError}
+                    generateError={suggestionGenerateError}
+                    onGenerate={onGenerateSuggestion}
+                    onSelectSuggestion={onSelectSuggestion}
                   />
                 )}
               </div>

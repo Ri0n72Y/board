@@ -104,4 +104,21 @@ export type {
   CreateAgentResponseResponse,
   GetAgentResponseResponse,
   ListAgentResponsesResponse,
+  // Agent Skill types (2.3)
+  AgentSkillDetail,
+  AgentSkillSnapshot,
+  AgentSkillSource,
+  AgentSkillSummary,
+  GetAgentSkillResponse,
+  ListAgentSkillsResponse,
+  // Agent Suggestion types (2.3)
+  AgentSuggestionDetail,
+  AgentSuggestionStatus,
+  AgentSuggestionSummary,
+  CreateAgentSuggestionInput,
+  CreateAgentSuggestionResponse,
+  GetAgentSuggestionResponse,
+  ListAgentSuggestionsResponse,
+  UpdateAgentSuggestionReviewInput,
+  UpdateAgentSuggestionReviewResponse,
 } from './agent.js'

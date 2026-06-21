@@ -256,3 +256,62 @@ pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/profileDisplay.d
 ```
 
 Browser smoke is not a closure gate for this round.
+
+## MVP 2.3 Addendum: Agent Skill Registry + AI Suggestion Artifact
+
+Status date: 2026-06-21
+
+### New Capabilities
+
+1. Agent Skill Registry (`GET /api/v0/agent/skills`, `GET /api/v0/agent/skills/:id`).
+2. Built-in `labourboard-advisor` skill (always enabled, ranked first).
+3. Agent Suggestion generation from reviewed Agent Drafts.
+4. Suggestion list (summary only) and detail (full markdown) separation.
+5. Agent Suggestion review status (generated/reviewed/discarded).
+6. Skill snapshots stored immutably with each suggestion for audit.
+7. Context hash (sha256) stored with each suggestion.
+8. Mock provider for MVP 2.3 validation; real provider deferred.
+
+### Frontier Boundaries (Unchanged)
+
+- No board mutation through suggestions.
+- No patch application.
+- No tools execution.
+- No CLI worker.
+- No Tauri.
+- No React Router.
+- No provider API key exposure in board-web.
+- No skill POST/PATCH/DELETE routes.
+- No suggestion apply route.
+- No `run`/`apply`/`execute` routes.
+
+### New Routes Whitelist
+
+```text
+GET   /api/v0/agent/skills
+GET   /api/v0/agent/skills/:skillId
+POST  /api/v0/agent/drafts/:draftId/suggestions
+GET   /api/v0/agent/drafts/:draftId/suggestions
+GET   /api/v0/agent/suggestions/:suggestionId
+PATCH /api/v0/agent/suggestions/:suggestionId/review
+```
+
+### New Forbidden Routes
+
+```text
+POST /api/v0/agent/skills
+PATCH /api/v0/agent/skills/:id
+DELETE /api/v0/agent/skills/:id
+POST /api/v0/agent/suggestions/:id/apply
+```
+
+### Devcheck Gates
+
+```text
+pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/agentSuggestionDisplay.devcheck.ts
+```
+
+### Provider Status
+
+Current: **mock provider** only (`MockAgentSuggestionProvider`).
+Real provider (openai-compatible) deferred to a subsequent iteration.

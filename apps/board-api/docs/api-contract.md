@@ -31,6 +31,18 @@ type ApiResponse<T> = { ok: true; data: T } | { ok: false; error: ApiError }
 - `GET /api/v0/agent/drafts/:id/responses` - list manual response summaries for one draft.
 - `GET /api/v0/agent/responses/:responseId` - read one manual response detail.
 
+## MVP 2.3 Read Routes
+
+- `GET /api/v0/agent/skills` - list agent skills (summaries only, no full markdown).
+- `GET /api/v0/agent/skills/:skillId` - read one agent skill detail (includes markdown).
+- `GET /api/v0/agent/drafts/:draftId/suggestions` - list AI suggestion summaries for a draft (no full markdown).
+- `GET /api/v0/agent/suggestions/:suggestionId` - read one AI suggestion detail (includes full markdown).
+
+## MVP 2.3 Write Routes
+
+- `POST /api/v0/agent/drafts/:draftId/suggestions` - generate an AI suggestion from a reviewed draft. Not a board mutation.
+- `PATCH /api/v0/agent/suggestions/:suggestionId/review` - update suggestion review status. Not a board mutation.
+
 ## Phase 1 Write Routes
 
 These routes exist in code. Board-web Phase 1 uses only the allowed subset
@@ -66,12 +78,16 @@ the contract:
 POST /api/v0/agent/run
 POST /api/v0/agent/apply
 POST /api/v0/agent/execute
+POST /api/v0/agent/suggestions/:id/apply
 PATCH /api/v0/records/:id
 DELETE /api/v0/records/:id
 DELETE /api/v0/profiles/:pk
 GET /api/v0/snapshot-head
 POST /api/v0/patches
 POST /api/v0/agent/responses/manual
+POST /api/v0/agent/skills
+PATCH /api/v0/agent/skills/:id
+DELETE /api/v0/agent/skills/:id
 PUT *
 ```
 

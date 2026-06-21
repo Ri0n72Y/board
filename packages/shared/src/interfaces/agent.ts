@@ -144,3 +144,90 @@ export interface ListAgentResponsesResponse {
 export interface GetAgentResponseResponse {
   response: AgentResponseDetail
 }
+
+// ─── Agent Skill types (2.3) ───
+
+export type AgentSkillSource = 'built-in' | 'project' | 'workspace' | 'server' | 'local'
+
+export interface AgentSkillSummary {
+  id: string
+  name: string
+  description: string
+  source: AgentSkillSource
+  path: string
+  contentHash: string // sha256 hex
+  updatedAt?: string
+}
+
+export interface AgentSkillDetail extends AgentSkillSummary {
+  markdown: string
+}
+
+export interface AgentSkillSnapshot {
+  id: string
+  name: string
+  source: AgentSkillSource
+  path: string
+  contentHash: string
+  markdown: string
+}
+
+export interface ListAgentSkillsResponse {
+  skills: AgentSkillSummary[]
+}
+
+export interface GetAgentSkillResponse {
+  skill: AgentSkillDetail
+}
+
+// ─── Agent Suggestion types (2.3) ───
+
+export type AgentSuggestionStatus = 'generated' | 'reviewed' | 'discarded'
+
+export interface AgentSuggestionSummary {
+  id: string
+  draftId: string
+  title: string
+  summary: string
+  highlights: string[] // max 5
+  status: AgentSuggestionStatus
+  createdAt: string
+  createdBy: string
+  provider: string
+  model: string
+  contextHash: string
+}
+
+export interface AgentSuggestionDetail extends AgentSuggestionSummary {
+  markdown: string
+  skillSnapshots: AgentSkillSnapshot[]
+  diagnostics?: string[]
+}
+
+export interface CreateAgentSuggestionInput {
+  title?: string
+  instruction?: string
+  skillIds?: string[]
+  provider?: string
+}
+
+export interface CreateAgentSuggestionResponse {
+  suggestion: AgentSuggestionDetail
+}
+
+export interface ListAgentSuggestionsResponse {
+  suggestions: AgentSuggestionSummary[]
+}
+
+export interface GetAgentSuggestionResponse {
+  suggestion: AgentSuggestionDetail
+}
+
+export interface UpdateAgentSuggestionReviewInput {
+  status: AgentSuggestionStatus
+  reviewNote?: string
+}
+
+export interface UpdateAgentSuggestionReviewResponse {
+  suggestion: AgentSuggestionDetail
+}
