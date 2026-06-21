@@ -475,6 +475,32 @@ const zhCN = {
       '已丢弃的草稿无法生成正式移交。请重置为草稿后重新审核。',
     'agent.handoff.failed': '移交失败',
 
+    // ─── Agent Suggestions (2.3) ───
+    'agent.suggestions.title': 'AI 建议 ({{count}})',
+    'agent.suggestions.generate': '生成 AI 建议',
+    'agent.suggestions.generating': '生成中...',
+    'agent.suggestions.requiresReviewed':
+      '草稿必须先通过审核才能生成 AI 建议。',
+    'agent.suggestions.loadingList': '加载建议中...',
+    'agent.suggestions.loadingDetail': '加载建议详情中...',
+    'agent.suggestions.empty':
+      '暂无 AI 建议。从已审核的草稿生成一个。',
+    'agent.suggestions.generateFailed': '建议生成失败',
+    'agent.suggestions.listFailed': '加载建议失败',
+    'agent.suggestions.detailFailed': '加载建议详情失败',
+    'agent.suggestions.fullSuggestion': '完整建议',
+    'agent.suggestions.copyFullMarkdown': '复制完整 Markdown',
+    'agent.suggestions.downloadMarkdown': '下载 Markdown',
+    'agent.suggestions.usedSkills': '使用的 Skills ({{count}})',
+    'agent.suggestions.expand': '展开',
+    'agent.suggestions.collapse': '折叠',
+    'agent.suggestions.diagnostics': '诊断信息',
+    'agent.suggestions.copied': '已复制！',
+    'agent.suggestions.copyFailed': '复制失败',
+    'agent.suggestions.status.generated': '已生成',
+    'agent.suggestions.status.reviewed': '已审核',
+    'agent.suggestions.status.discarded': '已丢弃',
+
     // ─── Record History Drawer ───
     'history.loading': '正在加载记录历史...',
     'history.loadError': '加载记录历史失败',

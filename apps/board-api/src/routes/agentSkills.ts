@@ -13,12 +13,12 @@ export function createAgentSkillsRoute(
 ): Hono {
   const route = new Hono()
 
-  route.get('/', async (c) => {
+  route.get('/skills', async (c) => {
     const skills = await agentSkillService.listSkills()
     return c.json<ApiResponse<ListAgentSkillsResponse>>(ok({ skills }))
   })
 
-  route.get('/:skillId', async (c) => {
+  route.get('/skills/:skillId', async (c) => {
     try {
       const skill = await agentSkillService.getSkill(c.req.param('skillId'))
       if (!skill) {

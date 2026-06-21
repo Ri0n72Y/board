@@ -17,7 +17,10 @@ interface SkillManifest {
   id: string
   name: string
   description: string
-  path: string
+  /** Absolute filesystem path for reading. Never exposed via API. */
+  fsPath: string
+  /** Logical path exposed via API (e.g. "built-in:labourboard-advisor/SKILL.md"). */
+  logicalPath: string
 }
 
 const BUILT_IN_SKILLS: SkillManifest[] = [
@@ -26,28 +29,52 @@ const BUILT_IN_SKILLS: SkillManifest[] = [
     name: 'LabourBoard Advisor',
     description:
       'Built-in product skill for LabourBoard analysis. Provides context interpretation, board diagnosis, risk assessment, and action recommendations. Always enabled by default.',
-    path: join(SKILLS_BASE_DIR, 'labourboard-advisor', 'SKILL.md'),
+    fsPath: join(SKILLS_BASE_DIR, 'labourboard-advisor', 'SKILL.md'),
+    logicalPath: 'built-in:labourboard-advisor/SKILL.md',
   },
 ]
 
+interface LoadedSkill {
+  markdown: string
+  contentHash: string
+}
+
 export class AgentSkillService {
-  private skillCache = new Map<string, { markdown: string; contentHash: string }>()
+  private skillCache = new Map<string, LoadedSkill>()
 
   async listSkills(): Promise<AgentSkillSummary[]> {
-    return BUILT_IN_SKILLS.map((m) => this.toSummary(m))
+    const summaries: AgentSkillSummary[] = []
+    for (const m of BUILT_IN_SKILLS) {
+      const loaded = await this.loadSkillMarkdown(m.fsPath)
+      if (!loaded) continue
+      summaries.push({
+        id: m.id,
+        name: m.name,
+        description: m.description,
+        source: 'built-in',
+        path: m.logicalPath,
+        contentHash: loaded.contentHash,
+      })
+    }
+    return summaries
   }
 
   async getSkill(skillId: string): Promise<AgentSkillDetail | null> {
     const manifest = BUILT_IN_SKILLS.find((m) => m.id === skillId)
     if (!manifest) return null
 
-    this.validatePath(manifest.path)
+    this.validatePath(manifest.fsPath)
 
-    const loaded = await this.loadSkillMarkdown(manifest.path)
+    const loaded = await this.loadSkillMarkdown(manifest.fsPath)
     if (!loaded) return null
 
     return {
-      ...this.toSummary(manifest),
+      id: manifest.id,
+      name: manifest.name,
+      description: manifest.description,
+      source: 'built-in',
+      path: manifest.logicalPath,
+      contentHash: loaded.contentHash,
       markdown: loaded.markdown,
     }
   }
@@ -56,35 +83,57 @@ export class AgentSkillService {
     const manifest = BUILT_IN_SKILLS.find((m) => m.id === skillId)
     if (!manifest) return null
 
-    this.validatePath(manifest.path)
+    this.validatePath(manifest.fsPath)
 
-    const loaded = await this.loadSkillMarkdown(manifest.path)
+    const loaded = await this.loadSkillMarkdown(manifest.fsPath)
     if (!loaded) return null
 
     return {
       id: manifest.id,
       name: manifest.name,
       source: 'built-in',
-      path: manifest.path,
+      path: manifest.logicalPath,
       contentHash: loaded.contentHash,
       markdown: loaded.markdown,
     }
   }
 
-  async loadBuiltInSkillSnapshots(skillIds?: string[]): Promise<AgentSkillSnapshot[]> {
-    const ids = skillIds && skillIds.length > 0 ? skillIds : [BUILT_IN_SKILL_ID]
+  /**
+   * Resolve and validate skill IDs, returning snapshots.
+   * labourboard-advisor is always included first.
+   * Unknown skillIds cause a SkillNotFoundError.
+   * Duplicate skillIds are deduplicated.
+   */
+  async resolveSkillSnapshots(skillIds?: string[]): Promise<AgentSkillSnapshot[]> {
+    const normalized: string[] = []
 
-    // Always include labourboard-advisor first
-    const ordered = [
-      BUILT_IN_SKILL_ID,
-      ...ids.filter((id) => id !== BUILT_IN_SKILL_ID),
-    ]
+    // LabourBoard advisor always first
+    normalized.push(BUILT_IN_SKILL_ID)
+
+    // Append user-provided ids, deduplicating
+    if (skillIds && skillIds.length > 0) {
+      for (const raw of skillIds) {
+        if (typeof raw !== 'string') {
+          throw new SkillNotFoundError('each skillId must be a non-empty string')
+        }
+        const trimmed = raw.trim()
+        if (trimmed.length === 0) {
+          throw new SkillNotFoundError('skillId must not be empty')
+        }
+        if (normalized.includes(trimmed)) continue
+        normalized.push(trimmed)
+      }
+    }
+
+    // Validate every id exists
+    for (const id of normalized) {
+      if (!BUILT_IN_SKILLS.some((m) => m.id === id)) {
+        throw new SkillNotFoundError(`Unknown skill ID: ${id}`)
+      }
+    }
 
     const snapshots: AgentSkillSnapshot[] = []
-
-    for (const id of ordered) {
-      // Only load skills that exist in BUILT_IN_SKILLS
-      if (!BUILT_IN_SKILLS.some((m) => m.id === id)) continue
+    for (const id of normalized) {
       const snapshot = await this.getSkillSnapshot(id)
       if (snapshot) snapshots.push(snapshot)
     }
@@ -92,27 +141,15 @@ export class AgentSkillService {
     return snapshots
   }
 
-  private toSummary(manifest: SkillManifest): AgentSkillSummary {
-    return {
-      id: manifest.id,
-      name: manifest.name,
-      description: manifest.description,
-      source: 'built-in',
-      path: manifest.path,
-      contentHash: '',
-      // contentHash is populated from the cache; empty here is fine for list
-    }
-  }
-
-  private async loadSkillMarkdown(filePath: string): Promise<{ markdown: string; contentHash: string } | null> {
-    const cached = this.skillCache.get(filePath)
+  private async loadSkillMarkdown(fsPath: string): Promise<LoadedSkill | null> {
+    const cached = this.skillCache.get(fsPath)
     if (cached) return cached
 
     try {
-      const markdown = await readFile(filePath, 'utf-8')
+      const markdown = await readFile(fsPath, 'utf-8')
       const contentHash = createHash('sha256').update(markdown).digest('hex')
       const result = { markdown, contentHash }
-      this.skillCache.set(filePath, result)
+      this.skillCache.set(fsPath, result)
       return result
     } catch {
       return null
@@ -126,7 +163,10 @@ export class AgentSkillService {
     const normalized = normalize(resolve(filePath))
     const normalizedBase = normalize(SKILLS_BASE_DIR)
 
-    if (!normalized.startsWith(normalizedBase + sep) && normalized !== normalizedBase) {
+    if (
+      !normalized.startsWith(normalizedBase + sep) &&
+      normalized !== normalizedBase
+    ) {
       throw new SkillPathTraversalError(
         `Skill path traversal rejected: ${filePath}`,
       )

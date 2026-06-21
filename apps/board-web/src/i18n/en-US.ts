@@ -513,6 +513,32 @@ const enUS = {
       'Discarded drafts cannot generate formal handoff. Reset to Draft and review again if needed.',
     'agent.handoff.failed': 'Handoff failed',
 
+    // ─── Agent Suggestions (2.3) ───
+    'agent.suggestions.title': 'AI Suggestions ({{count}})',
+    'agent.suggestions.generate': 'Generate AI Suggestion',
+    'agent.suggestions.generating': 'Generating...',
+    'agent.suggestions.requiresReviewed':
+      'Draft must be reviewed before generating AI suggestions.',
+    'agent.suggestions.loadingList': 'Loading suggestions...',
+    'agent.suggestions.loadingDetail': 'Loading suggestion detail...',
+    'agent.suggestions.empty':
+      'No AI suggestions yet. Generate one from this reviewed draft.',
+    'agent.suggestions.generateFailed': 'Suggestion generation failed',
+    'agent.suggestions.listFailed': 'Failed to load suggestions',
+    'agent.suggestions.detailFailed': 'Failed to load suggestion detail',
+    'agent.suggestions.fullSuggestion': 'Full Suggestion',
+    'agent.suggestions.copyFullMarkdown': 'Copy Full Markdown',
+    'agent.suggestions.downloadMarkdown': 'Download Markdown',
+    'agent.suggestions.usedSkills': 'Used Skills ({{count}})',
+    'agent.suggestions.expand': 'Expand',
+    'agent.suggestions.collapse': 'Collapse',
+    'agent.suggestions.diagnostics': 'Diagnostics',
+    'agent.suggestions.copied': 'Copied!',
+    'agent.suggestions.copyFailed': 'Copy failed',
+    'agent.suggestions.status.generated': 'generated',
+    'agent.suggestions.status.reviewed': 'reviewed',
+    'agent.suggestions.status.discarded': 'discarded',
+
     // ─── Record History Drawer ───
     'history.loading': 'Loading record history...',
     'history.loadError': 'Failed to load record history',

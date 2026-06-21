@@ -225,7 +225,6 @@ export interface GetAgentSuggestionResponse {
 
 export interface UpdateAgentSuggestionReviewInput {
   status: AgentSuggestionStatus
-  reviewNote?: string
 }
 
 export interface UpdateAgentSuggestionReviewResponse {

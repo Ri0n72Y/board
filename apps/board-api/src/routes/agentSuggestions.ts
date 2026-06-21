@@ -16,6 +16,7 @@ import {
   AgentSuggestionNotFoundError,
   AgentSuggestionNotAllowedError,
 } from '../services/agent/agentSuggestionService.js'
+import { SkillNotFoundError } from '../services/agent/agentSkillService.js'
 
 export function createAgentSuggestionsRoute(
   agentSuggestionService: AgentSuggestionService,
@@ -27,7 +28,7 @@ export function createAgentSuggestionsRoute(
     const actor = c.req.header('x-actor-id') ?? undefined
     const draftId = c.req.param('draftId')
     try {
-      const input = await parseCreateSuggestionInput(c.req.raw, draftId)
+      const input = await parseCreateSuggestionInput(c.req.raw)
       const suggestion = await agentSuggestionService.createSuggestion(
         draftId,
         input,
@@ -39,6 +40,9 @@ export function createAgentSuggestionsRoute(
       )
     } catch (caught) {
       if (caught instanceof AgentSuggestionValidationError) {
+        return c.json(error('INVALID_SUGGESTION', caught.message), 400)
+      }
+      if (caught instanceof SkillNotFoundError) {
         return c.json(error('INVALID_SUGGESTION', caught.message), 400)
       }
       if (caught instanceof AgentSuggestionNotFoundError) {
@@ -127,7 +131,6 @@ export function createAgentSuggestionsRoute(
 
 async function parseCreateSuggestionInput(
   request: Request,
-  _draftId: string,
 ): Promise<CreateAgentSuggestionInput> {
   if (
     !request.headers.get('content-type')?.includes('application/json')
@@ -146,30 +149,61 @@ async function parseCreateSuggestionInput(
 
   const input: CreateAgentSuggestionInput = {}
 
-  if (body.title !== undefined) {
-    if (typeof body.title === 'string' && body.title.trim()) {
-      input.title = body.title.trim()
+  // title: optional string
+  if (body.title !== undefined && body.title !== null) {
+    if (typeof body.title !== 'string') {
+      throw new AgentSuggestionValidationError('title must be a string')
+    }
+    const trimmed = body.title.trim()
+    if (trimmed.length > 0) {
+      input.title = trimmed
     }
   }
 
-  if (body.instruction !== undefined) {
-    if (typeof body.instruction === 'string' && body.instruction.trim()) {
-      input.instruction = body.instruction.trim()
+  // instruction: optional string
+  if (body.instruction !== undefined && body.instruction !== null) {
+    if (typeof body.instruction !== 'string') {
+      throw new AgentSuggestionValidationError('instruction must be a string')
+    }
+    const trimmed = body.instruction.trim()
+    if (trimmed.length > 0) {
+      input.instruction = trimmed
     }
   }
 
-  if (body.skillIds !== undefined) {
-    if (Array.isArray(body.skillIds)) {
-      input.skillIds = body.skillIds.filter(
-        (id): id is string => typeof id === 'string' && id.trim().length > 0,
-      )
+  // provider: optional string (only "mock" currently)
+  if (body.provider !== undefined && body.provider !== null) {
+    if (typeof body.provider !== 'string') {
+      throw new AgentSuggestionValidationError('provider must be a string')
     }
+    const trimmed = body.provider.trim()
+    if (trimmed.length === 0) {
+      throw new AgentSuggestionValidationError('provider must not be empty')
+    }
+    input.provider = trimmed
   }
 
-  if (body.provider !== undefined) {
-    if (typeof body.provider === 'string' && body.provider.trim()) {
-      input.provider = body.provider.trim()
+  // skillIds: optional string[] — every element must be a non-empty string
+  if (body.skillIds !== undefined && body.skillIds !== null) {
+    if (!Array.isArray(body.skillIds)) {
+      throw new AgentSuggestionValidationError('skillIds must be an array')
     }
+    for (let i = 0; i < body.skillIds.length; i++) {
+      const item = body.skillIds[i]
+      if (typeof item !== 'string') {
+        throw new AgentSuggestionValidationError(
+          `skillIds[${i}] must be a string`,
+        )
+      }
+      if (item.trim().length === 0) {
+        throw new AgentSuggestionValidationError(
+          `skillIds[${i}] must not be empty`,
+        )
+      }
+    }
+    input.skillIds = (body.skillIds as string[]).map(
+      (s: string) => s.trim(),
+    )
   }
 
   return input
@@ -207,15 +241,7 @@ async function parseUpdateReviewInput(
     )
   }
 
-  const input: UpdateAgentSuggestionReviewInput = {
+  return {
     status: body.status as AgentSuggestionStatus,
   }
-
-  if (body.reviewNote !== undefined) {
-    if (typeof body.reviewNote === 'string') {
-      input.reviewNote = body.reviewNote
-    }
-  }
-
-  return input
 }

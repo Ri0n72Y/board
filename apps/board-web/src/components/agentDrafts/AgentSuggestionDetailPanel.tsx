@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { AgentSuggestionDetail } from '@labour-board/shared'
 import { Button } from '../ui/Button'
 import { MarkdownPreview } from '../ui/MarkdownPreview'
@@ -11,6 +12,7 @@ interface AgentSuggestionDetailPanelProps {
 export function AgentSuggestionDetailPanel({
   suggestion,
 }: AgentSuggestionDetailPanelProps) {
+  const { t } = useTranslation()
   const [showSkills, setShowSkills] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
 
@@ -19,10 +21,10 @@ export function AgentSuggestionDetailPanel({
   const handleCopyMarkdown = async () => {
     try {
       await navigator.clipboard.writeText(suggestion.markdown)
-      setCopyFeedback('Copied!')
+      setCopyFeedback(t('agent.suggestions.copied'))
       setTimeout(() => setCopyFeedback(null), 2000)
     } catch {
-      setCopyFeedback('Copy failed')
+      setCopyFeedback(t('agent.suggestions.copyFailed'))
       setTimeout(() => setCopyFeedback(null), 3000)
     }
   }
@@ -58,21 +60,21 @@ export function AgentSuggestionDetailPanel({
           variant="default"
           onClick={handleCopyMarkdown}
         >
-          {copyFeedback ?? 'Copy Full Markdown'}
+          {copyFeedback ?? t('agent.suggestions.copyFullMarkdown')}
         </Button>
         <Button
           type="button"
           variant="default"
           onClick={handleDownloadMarkdown}
         >
-          Download Markdown
+          {t('agent.suggestions.downloadMarkdown')}
         </Button>
       </div>
 
       {/* Full markdown preview */}
       <div className="rounded-lg border border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-4 py-2 text-xs font-semibold uppercase text-slate-500">
-          Full Suggestion
+          {t('agent.suggestions.fullSuggestion')}
         </div>
         <div className="p-4">
           <MarkdownPreview
@@ -92,10 +94,14 @@ export function AgentSuggestionDetailPanel({
             onClick={() => setShowSkills((v) => !v)}
           >
             <span>
-              Used Skills ({suggestion.skillSnapshots.length})
+              {t('agent.suggestions.usedSkills', {
+                count: suggestion.skillSnapshots.length,
+              })}
             </span>
             <span className="text-slate-400">
-              {showSkills ? 'Collapse' : 'Expand'}
+              {showSkills
+                ? t('agent.suggestions.collapse')
+                : t('agent.suggestions.expand')}
             </span>
           </button>
           {showSkills && (
@@ -127,7 +133,7 @@ export function AgentSuggestionDetailPanel({
       {/* Diagnostics */}
       {suggestion.diagnostics && suggestion.diagnostics.length > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-          <strong>Diagnostics:</strong>
+          <strong>{t('agent.suggestions.diagnostics')}:</strong>
           <ul className="mt-1 list-inside list-disc space-y-0.5">
             {suggestion.diagnostics.map((d, i) => (
               <li key={i}>{d}</li>

@@ -63,8 +63,8 @@ export class AgentSuggestionService {
     // 3. Validate input
     this.validateInput(input)
 
-    // 4. Load skill snapshots
-    const skillSnapshots = await this.skillService.loadBuiltInSkillSnapshots(
+    // 4. Load skill snapshots (validates all skillIds exist)
+    const skillSnapshots = await this.skillService.resolveSkillSnapshots(
       input.skillIds,
     )
 
@@ -205,6 +205,13 @@ export class AgentSuggestionService {
     if (input.provider !== undefined && input.provider !== null) {
       if (typeof input.provider !== 'string' || input.provider.trim().length === 0) {
         throw new AgentSuggestionValidationError('provider must be a non-empty string')
+      }
+      // Currently only mock provider is supported
+      const VALID_PROVIDERS = ['mock']
+      if (!VALID_PROVIDERS.includes(input.provider.trim())) {
+        throw new AgentSuggestionValidationError(
+          `Unsupported provider: ${input.provider}. Currently only "mock" is available.`,
+        )
       }
     }
   }

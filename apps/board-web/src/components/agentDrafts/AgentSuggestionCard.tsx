@@ -1,4 +1,5 @@
 import type { AgentSuggestionSummary } from '@labour-board/shared'
+import { useTranslation } from 'react-i18next'
 import { cn } from '../../lib/cn'
 
 interface AgentSuggestionCardProps {
@@ -13,21 +14,19 @@ const STATUS_CLASSES: Record<string, string> = {
   discarded: 'bg-slate-50 text-slate-500 border-slate-200',
 } as const
 
-const STATUS_LABELS: Record<string, string> = {
-  generated: 'generated',
-  reviewed: 'reviewed',
-  discarded: 'discarded',
-} as const
-
 export function AgentSuggestionCard({
   suggestion,
   isSelected,
   onSelect,
 }: AgentSuggestionCardProps) {
+  const { t } = useTranslation()
+
   const statusClass =
     STATUS_CLASSES[suggestion.status] ?? STATUS_CLASSES.generated
-  const statusLabel =
-    STATUS_LABELS[suggestion.status] ?? suggestion.status
+  const statusLabel = t(
+    `agent.suggestions.status.${suggestion.status}`,
+    suggestion.status,
+  )
 
   return (
     <button

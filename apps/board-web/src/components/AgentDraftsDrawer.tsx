@@ -54,7 +54,7 @@ interface AgentDraftsDrawerProps {
   suggestionListError?: string | null
   suggestionDetailError?: string | null
   suggestionGenerateError?: string | null
-  onGenerateSuggestion?: (draftId: string) => void
+  onGenerateSuggestion?: (draftId: string) => void | Promise<unknown>
   onSelectSuggestion?: (suggestionId: string) => void
 }
 
