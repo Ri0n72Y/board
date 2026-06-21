@@ -6,6 +6,7 @@ import type {
   BoardExportLevel,
   BoardExportResult,
 } from '@labour-board/shared'
+import { appendBoardFilterUrlParams } from '../utils/boardFilterUrl'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
 
@@ -70,16 +71,7 @@ function toParams(options: ExportRequestOptions): URLSearchParams {
   addBoolean(params, 'includeAssets', options.includeAssets)
   addBoolean(params, 'includeContent', options.includeContent)
 
-  const filters = options.filters
-  if (filters?.q) params.set('q', filters.q)
-  for (const tag of filters?.tags ?? []) params.append('tags', tag)
-  if (filters?.tagMatch) params.set('tagMatch', filters.tagMatch)
-  if (filters?.includeArchived) params.set('includeArchived', 'true')
-  if (filters?.assignee) params.set('assignee', filters.assignee)
-  if (filters?.assetId) params.set('assetId', filters.assetId)
-  if (filters?.relationTarget) {
-    params.set('relationTarget', filters.relationTarget)
-  }
+  appendBoardFilterUrlParams(params, options.filters)
 
   return params
 }

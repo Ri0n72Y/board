@@ -8,6 +8,11 @@ import {
   fetchBoardCurrent,
   type BoardCurrentFilters,
 } from '../api/boardCurrent'
+import {
+  DEFAULT_BOARD_CURRENT_FILTERS,
+  normalizeBoardFilterUrl,
+  parseBoardFilterUrl,
+} from '../utils/boardFilterUrl'
 
 interface BoardCurrentState {
   /** Draft filters: always reflect user input immediately (raw q). */
@@ -25,18 +30,11 @@ interface BoardCurrentState {
   setAssignee: (assignee: string) => void
   setAssetId: (assetId: string) => void
   setRelationTarget: (relationTarget: string) => void
+  setFilters: (filters: BoardCurrentFilters) => void
   loadCurrentBoard: (filters: BoardCurrentFilters, signal?: AbortSignal) => Promise<void>
 }
 
-const initialFilters: BoardCurrentFilters = {
-  q: '',
-  tags: [],
-  tagMatch: 'all',
-  includeArchived: false,
-  assignee: '',
-  assetId: '',
-  relationTarget: '',
-}
+const initialFilters = getInitialFilters()
 
 let activeRequestId = 0
 
@@ -101,6 +99,11 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
       filters: { ...state.filters, relationTarget },
     })),
 
+  setFilters: (filters) =>
+    set({
+      filters: cloneFilters(normalizeBoardFilterUrl(filters)),
+    }),
+
   loadCurrentBoard: async (filters, signal) => {
     const requestId = ++activeRequestId
     set({ isLoading: true, error: null })
@@ -126,3 +129,15 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
     }
   },
 }))
+
+function getInitialFilters(): BoardCurrentFilters {
+  if (typeof window === 'undefined') return cloneFilters(DEFAULT_BOARD_CURRENT_FILTERS)
+  return parseBoardFilterUrl(window.location.search)
+}
+
+function cloneFilters(filters: BoardCurrentFilters): BoardCurrentFilters {
+  return {
+    ...filters,
+    tags: [...filters.tags],
+  }
+}

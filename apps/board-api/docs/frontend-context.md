@@ -43,6 +43,17 @@ Rules:
 - `q` searches pid, id, tags, assignee, assets, relation constraint/target,
   title, description, and content.
 - `q` does not search schema, createdBy, createdAt, patch descriptions, or old body state.
+- Board-web persists Board Current filter state in the page URL query using
+  the same `BoardCurrentQuery` fields: `q`, repeatable `tags`, `tagMatch`,
+  `includeArchived`, `assignee`, `assetId`, and `relationTarget`.
+- Default URL values are omitted: empty strings, empty `tags`, `tagMatch=all`,
+  and `includeArchived=false` do not appear in canonical board-web URLs.
+- `tag` is accepted by board-web as a single-tag compatibility input and is
+  canonicalized back to repeatable `tags`.
+- Browser back/forward restores Board Current filters from the URL and reloads
+  the current board with those filters.
+- The frontend URL query helper is `apps/board-web/src/utils/boardFilterUrl.ts`;
+  its closure check is `boardFilterUrl.devcheck.ts`.
 
 ## Write Interface Whitelist
 
@@ -133,6 +144,8 @@ appended and is used together with `parentId` for optimistic concurrency.
 ## Export / Context Pack
 
 - Current Board export and Agent Context Pack use the shared board filter.
+- Board-web passes the same URL-restored Board Current filters into Current
+  Board export, Context Pack export, and filtered Agent Draft creation.
 - Exported/selected records are distinct from reference lookup scope.
 - Asset and relation output may show readable labels, but stored payloads remain raw ids.
 - Snapshot export uses the saved snapshot projection, not a current-board readback.

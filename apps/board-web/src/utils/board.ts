@@ -13,7 +13,8 @@ export function hasEffectiveFilters(filters: BoardCurrentFilters): boolean {
     filters.tags.length > 0 ||
     filters.assignee.trim().length > 0 ||
     filters.assetId.trim().length > 0 ||
-    filters.relationTarget.trim().length > 0
+    filters.relationTarget.trim().length > 0 ||
+    filters.includeArchived
   )
 }
 

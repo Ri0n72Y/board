@@ -25,6 +25,7 @@ current contracts and explicitly separates Phase 2 backlog from current scope.
 16. Formal Handoff.
 17. Export/context readable references for assets and relations.
 18. Safety boundaries for non-executing Agent workflow.
+19. Board Current filter state persisted in URL query.
 
 ## B. Frozen Contracts
 
@@ -72,6 +73,13 @@ type BoardCurrentQuery = {
 - `tags + assignee + assetId + relationTarget + q` combine with AND semantics.
 - `q` searches pid, id, tags, assignee, assets, relation constraint/target, title, description, and content.
 - `q` does not search schema, createdBy, createdAt, patch descriptions, or old body state.
+- Board-web persists these filters in the Board Current URL query.
+- URL query uses the same `BoardCurrentQuery` fields: `q`, repeatable `tags`,
+  `tagMatch`, `includeArchived`, `assignee`, `assetId`, and `relationTarget`.
+- `tag` is accepted as a single-tag compatibility input and canonicalized back
+  to repeatable `tags`.
+- Default values are omitted from board-web URLs.
+- Browser back/forward restores filters from the URL.
 
 ### Patch Semantics
 
@@ -104,6 +112,8 @@ Status move example:
 ### Export Semantics
 
 - Current Board export and Context Pack use the shared board filter.
+- Board-web Current Board export, Context Pack export, and filtered Agent Draft
+  creation reuse the same URL-restored Board Current filters.
 - `context.records` is the selected/exported record set.
 - Reference map is built from full `projection.records`.
 - Assets render readable label plus raw id.
@@ -148,7 +158,7 @@ Manual Agent Response:
 
 These items are explicitly not implemented in this closure round:
 
-- Saved filters / URL query persistence.
+- Saved filter data model.
 - Graph view.
 - Relation graph visualization.
 - Asset registry.
@@ -182,6 +192,7 @@ pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/referenceDisplay
 pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/relationDisplay.devcheck.ts
 pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/historySummary.devcheck.ts
 pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/boardViewColumns.devcheck.ts
+pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/boardFilterUrl.devcheck.ts
 ```
 
 Browser smoke is not a closure gate for this round.

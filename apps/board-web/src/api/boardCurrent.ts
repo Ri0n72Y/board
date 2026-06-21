@@ -5,6 +5,7 @@ import type {
   BoardCurrentTagMatch,
   Tag,
 } from '@labour-board/shared'
+import { serializeBoardFilterUrl } from '../utils/boardFilterUrl'
 
 export interface BoardCurrentFilters {
   q: string
@@ -21,29 +22,7 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
 export function buildBoardCurrentSearchParams(
   filters: BoardCurrentFilters,
 ): URLSearchParams {
-  const params = new URLSearchParams()
-  const q = filters.q.trim()
-
-  if (q) params.set('q', q)
-  if (filters.includeArchived) params.set('includeArchived', 'true')
-
-  const trimmedAssignee = filters.assignee.trim()
-  if (trimmedAssignee) params.set('assignee', trimmedAssignee)
-
-  const trimmedAssetId = filters.assetId.trim()
-  if (trimmedAssetId) params.set('assetId', trimmedAssetId)
-
-  const trimmedRelationTarget = filters.relationTarget.trim()
-  if (trimmedRelationTarget) params.set('relationTarget', trimmedRelationTarget)
-
-  if (filters.tags.length > 0) {
-    for (const tag of filters.tags) {
-      params.append('tags', tag)
-    }
-    params.set('tagMatch', filters.tagMatch)
-  }
-
-  return params
+  return serializeBoardFilterUrl(filters)
 }
 
 export async function fetchBoardCurrent(

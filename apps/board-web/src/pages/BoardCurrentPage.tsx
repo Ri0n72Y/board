@@ -50,6 +50,12 @@ import {
   hasEffectiveFilters,
   mergeKnownTags,
 } from '../utils/board'
+import {
+  areBoardFiltersEqual,
+  boardFilterSearchToQuery,
+  boardFilterUrlQuery,
+  parseBoardFilterUrl,
+} from '../utils/boardFilterUrl'
 import { getStatusColumns } from '../utils/boardView'
 import {
   getUncategorizedColumnLabel,
@@ -86,6 +92,7 @@ export function BoardCurrentPage() {
   const setAssignee = useBoardCurrentStore((s) => s.setAssignee)
   const setAssetId = useBoardCurrentStore((s) => s.setAssetId)
   const setRelationTarget = useBoardCurrentStore((s) => s.setRelationTarget)
+  const setFilters = useBoardCurrentStore((s) => s.setFilters)
   const loadCurrentBoard = useBoardCurrentStore((s) => s.loadCurrentBoard)
 
   const config = useBoardMetadataStore((s) => s.config)
@@ -145,6 +152,36 @@ export function BoardCurrentPage() {
     void loadCurrentBoard(effectiveFilters, controller.signal)
     return () => controller.abort()
   }, [effectiveFilters, loadCurrentBoard])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const nextQuery = boardFilterUrlQuery(effectiveFilters)
+    const currentQuery = boardFilterSearchToQuery(window.location.search)
+    if (nextQuery === currentQuery) return
+
+    const nextUrl = [
+      window.location.pathname,
+      nextQuery ? `?${nextQuery}` : '',
+      window.location.hash,
+    ].join('')
+    window.history.replaceState(window.history.state, '', nextUrl)
+  }, [effectiveFilters])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handlePopState = () => {
+      const nextFilters = parseBoardFilterUrl(window.location.search)
+      const currentFilters = useBoardCurrentStore.getState().filters
+      if (!areBoardFiltersEqual(currentFilters, nextFilters)) {
+        setFilters(nextFilters)
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [setFilters])
 
   const knownTags = useMemo(
     () => mergeKnownTags(projection, config),
@@ -394,6 +431,7 @@ export function BoardCurrentPage() {
         onClearFilters={() => {
           setQ('')
           draftFilters.tags.forEach((t) => removeTag(t))
+          setTagMatch('all')
           setAssignee('')
           updateAssetId('')
           updateRelationTarget('')
