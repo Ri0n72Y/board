@@ -1,9 +1,19 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import type { AgentDraftDetail, AgentSuggestionDetail } from '@labour-board/shared'
+import type { AgentProviderRuntimeConfig } from '../../config/agentProviderConfig.js'
 import { MemoryAgentDraftRepository } from '../../repositories/agentDraftRepository.js'
 import { MemoryAgentSuggestionRepository } from '../../repositories/agentSuggestionRepository.js'
 import { AgentSkillService, SkillNotFoundError } from '../agent/agentSkillService.js'
-import { MockAgentSuggestionProvider } from '../../config/agentSuggestionProvider.js'
+import {
+  AgentProviderUnavailableError,
+  DisabledAgentSuggestionProvider,
+  MockAgentSuggestionProvider,
+  type AgentSuggestionProvider,
+  type AgentSuggestionProviderInput,
+  type AgentSuggestionProviderOutput,
+} from '../../config/agentSuggestionProvider.js'
+import { AgentProviderBudgetExceededError } from './agentProviderBudget.js'
+import { AgentProviderOutputValidationError } from './agentSuggestionQuality.js'
 import {
   AgentSuggestionService,
   AgentSuggestionNotFoundError,
@@ -39,6 +49,43 @@ function makeReviewedDraft(overrides?: Partial<AgentDraftDetail>): AgentDraftDet
   }
 }
 
+function makeProviderConfig(
+  overrides?: Partial<AgentProviderRuntimeConfig>,
+): AgentProviderRuntimeConfig {
+  return {
+    kind: 'mock',
+    model: 'mock-suggestion-v1',
+    apiKeyPresent: false,
+    maxInputChars: 200_000,
+    maxOutputChars: 50_000,
+    maxEstimatedInputTokens: 50_000,
+    maxEstimatedOutputTokens: 12_000,
+    requestTimeoutMs: 30_000,
+    retryMaxAttempts: 0,
+    enabled: true,
+    ...overrides,
+  }
+}
+
+class InvalidOutputProvider implements AgentSuggestionProvider {
+  readonly kind = 'mock'
+  readonly model = 'invalid-output'
+  readonly realProvider = false
+
+  async generate(
+    _input: AgentSuggestionProviderInput,
+  ): Promise<AgentSuggestionProviderOutput> {
+    return {
+      title: 'Invalid',
+      summary: 'Invalid',
+      highlights: ['Invalid'],
+      markdown: '# Missing required sections',
+      provider: 'mock',
+      model: 'invalid-output',
+    }
+  }
+}
+
 describe('AgentSuggestionService', () => {
   let draftRepo: MemoryAgentDraftRepository
   let suggestionRepo: MemoryAgentSuggestionRepository
@@ -56,6 +103,7 @@ describe('AgentSuggestionService', () => {
       draftRepo,
       skillService,
       provider,
+      makeProviderConfig(),
     )
   })
 
@@ -208,6 +256,121 @@ describe('AgentSuggestionService', () => {
     expect(suggestion.model).toBe('mock-suggestion-v1')
     expect(suggestion.title).toBeTruthy()
     expect(suggestion.markdown).toContain('LabourBoard AI Suggestion')
+  })
+
+  it('audit metadata saved on success', async () => {
+    const draft = makeReviewedDraft()
+    await draftRepo.create(draft)
+
+    const suggestion = await svc.createSuggestion(draft.id, {})
+    expect(suggestion.audit).toMatchObject({
+      providerKind: 'mock',
+      providerModel: 'mock-suggestion-v1',
+      contextHash: suggestion.contextHash,
+      budgetCheckStatus: 'passed',
+      outputValidationStatus: 'passed',
+      realProvider: false,
+    })
+    expect(suggestion.audit?.contextCharCount).toBe(draft.contextMarkdown.length)
+    expect(suggestion.audit?.estimatedInputTokens).toBeGreaterThan(0)
+    expect(suggestion.audit?.estimatedOutputTokens).toBeGreaterThan(0)
+  })
+
+  it('audit does not include markdown/context/apiKey', async () => {
+    const draft = makeReviewedDraft()
+    await draftRepo.create(draft)
+
+    const suggestion = await svc.createSuggestion(draft.id, {})
+    const auditJson = JSON.stringify(suggestion.audit)
+    expect(auditJson).not.toContain(draft.contextMarkdown)
+    expect(auditJson).not.toContain(suggestion.markdown)
+    expect(auditJson).not.toContain('apiKey')
+  })
+
+  it('provider kind/model reflected in audit', async () => {
+    const draft = makeReviewedDraft()
+    await draftRepo.create(draft)
+
+    const suggestion = await svc.createSuggestion(draft.id, {})
+    expect(suggestion.audit?.providerKind).toBe('mock')
+    expect(suggestion.audit?.providerModel).toBe('mock-suggestion-v1')
+  })
+
+  it('detail returns audit', async () => {
+    const draft = makeReviewedDraft()
+    await draftRepo.create(draft)
+    const suggestion = await svc.createSuggestion(draft.id, {})
+
+    const detail = await svc.getSuggestion(suggestion.id)
+    expect(detail?.audit).toBeDefined()
+  })
+
+  it('list summary does not return full audit', async () => {
+    const draft = makeReviewedDraft()
+    await draftRepo.create(draft)
+    await svc.createSuggestion(draft.id, {})
+
+    const list = await svc.listSuggestions(draft.id)
+    expect((list[0] as Record<string, unknown>).audit).toBeUndefined()
+  })
+
+  it('budget exceeded does not save suggestion', async () => {
+    const draft = makeReviewedDraft()
+    await draftRepo.create(draft)
+    const budgetLimitedService = new AgentSuggestionService(
+      suggestionRepo,
+      draftRepo,
+      skillService,
+      provider,
+      makeProviderConfig({ maxInputChars: 1 }),
+    )
+
+    await expect(
+      budgetLimitedService.createSuggestion(draft.id, {}),
+    ).rejects.toThrow(AgentProviderBudgetExceededError)
+    expect(await suggestionRepo.listByDraftId(draft.id)).toHaveLength(0)
+  })
+
+  it('provider unavailable does not save suggestion', async () => {
+    const draft = makeReviewedDraft()
+    await draftRepo.create(draft)
+    const disabledService = new AgentSuggestionService(
+      suggestionRepo,
+      draftRepo,
+      skillService,
+      new DisabledAgentSuggestionProvider(
+        'disabled',
+        'none',
+        'provider disabled',
+      ),
+      makeProviderConfig({
+        kind: 'disabled',
+        model: 'none',
+        enabled: false,
+      }),
+    )
+
+    await expect(disabledService.createSuggestion(draft.id, {})).rejects.toThrow(
+      AgentProviderUnavailableError,
+    )
+    expect(await suggestionRepo.listByDraftId(draft.id)).toHaveLength(0)
+  })
+
+  it('invalid provider output does not save suggestion', async () => {
+    const draft = makeReviewedDraft()
+    await draftRepo.create(draft)
+    const invalidOutputService = new AgentSuggestionService(
+      suggestionRepo,
+      draftRepo,
+      skillService,
+      new InvalidOutputProvider(),
+      makeProviderConfig(),
+    )
+
+    await expect(
+      invalidOutputService.createSuggestion(draft.id, {}),
+    ).rejects.toThrow(AgentProviderOutputValidationError)
+    expect(await suggestionRepo.listByDraftId(draft.id)).toHaveLength(0)
   })
 
   // ─── Review status ───

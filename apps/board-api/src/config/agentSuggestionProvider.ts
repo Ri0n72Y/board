@@ -1,5 +1,6 @@
 import type { AgentSkillSnapshot } from '@labour-board/shared'
 import { createHash } from 'node:crypto'
+import type { AgentProviderKind } from './agentProviderConfig.js'
 
 export interface AgentSuggestionProviderInput {
   contextMarkdown: string
@@ -24,6 +25,10 @@ export interface AgentSuggestionProviderOutput {
 }
 
 export interface AgentSuggestionProvider {
+  readonly kind: AgentProviderKind
+  readonly model: string
+  readonly realProvider: boolean
+
   generate(
     input: AgentSuggestionProviderInput,
   ): Promise<AgentSuggestionProviderOutput>
@@ -32,6 +37,10 @@ export interface AgentSuggestionProvider {
 // ─── Mock Provider ───
 
 export class MockAgentSuggestionProvider implements AgentSuggestionProvider {
+  readonly kind = 'mock'
+  readonly model = 'mock-suggestion-v1'
+  readonly realProvider = false
+
   async generate(
     input: AgentSuggestionProviderInput,
   ): Promise<AgentSuggestionProviderOutput> {
@@ -191,4 +200,48 @@ of the project context beyond what the draft captures.
 - Historical board data (previous snapshots).
 - Human feedback on previous suggestions to calibrate analysis.
 `
+}
+
+export class DisabledAgentSuggestionProvider
+  implements AgentSuggestionProvider
+{
+  readonly realProvider = false
+  readonly kind: AgentProviderKind
+  readonly model: string
+  private readonly reason: string
+
+  constructor(
+    kind: AgentProviderKind,
+    model: string,
+    reason: string,
+  ) {
+    this.kind = kind
+    this.model = model
+    this.reason = reason
+  }
+
+  async generate(): Promise<AgentSuggestionProviderOutput> {
+    throw new AgentProviderUnavailableError(this.reason)
+  }
+}
+
+export class AgentProviderUnavailableError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AgentProviderUnavailableError'
+  }
+}
+
+export class AgentProviderTimeoutError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AgentProviderTimeoutError'
+  }
+}
+
+export class AgentProviderRateLimitedError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AgentProviderRateLimitedError'
+  }
 }

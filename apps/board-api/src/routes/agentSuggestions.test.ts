@@ -5,9 +5,31 @@ import { loadApiEnv } from '../config/env.js'
 import { createApiServices } from '../services/index.js'
 import { mountApiRoutes } from '../routes/index.js'
 
-async function createTestApp(): Promise<Hono> {
+async function createTestApp(
+  envOverrides: NodeJS.ProcessEnv = {},
+): Promise<Hono> {
+  const originalEnv = new Map<string, string | undefined>()
+  for (const key of Object.keys(envOverrides)) {
+    originalEnv.set(key, process.env[key])
+    const value = envOverrides[key]
+    if (value === undefined) {
+      delete process.env[key]
+    } else {
+      process.env[key] = value
+    }
+  }
+
   const env = loadApiEnv({ BOARD_CONFIG_OPTIONAL: 'true' })
   const services = await createApiServices(env)
+
+  for (const [key, value] of originalEnv) {
+    if (value === undefined) {
+      delete process.env[key]
+    } else {
+      process.env[key] = value
+    }
+  }
+
   const app = new Hono()
   app.get('/health', (c) => c.json(ok({ status: 'ok' })))
   mountApiRoutes(app, services)
@@ -57,6 +79,7 @@ describe('Agent Suggestions route', () => {
     expect(payload.ok).toBe(true)
     expect(payload.data.suggestion.markdown).toBeTruthy()
     expect(payload.data.suggestion.skillSnapshots.length).toBeGreaterThan(0)
+    expect(payload.data.suggestion.audit).toBeDefined()
   })
 
   it('POST missing draft returns 404', async () => {
@@ -159,6 +182,85 @@ describe('Agent Suggestions route', () => {
     expect(res.status).toBe(400)
   })
 
+  it('provider unavailable maps to 503', async () => {
+    const app = await createTestApp({
+      AGENT_SUGGESTION_PROVIDER: 'disabled',
+      AGENT_SUGGESTION_MODEL: 'disabled-model',
+    })
+    const draftId = await createReviewedDraft(app)
+
+    const res = await app.request(
+      `/api/v0/agent/drafts/${draftId}/suggestions`,
+      {
+        method: 'POST',
+        body: JSON.stringify({}),
+        headers: { 'content-type': 'application/json' },
+      },
+    )
+    expect(res.status).toBe(503)
+    const payload = await res.json()
+    expect(payload.error.code).toBe('PROVIDER_UNAVAILABLE')
+  })
+
+  it('openai-compatible currently maps to provider unavailable', async () => {
+    const app = await createTestApp({
+      AGENT_SUGGESTION_PROVIDER: 'openai-compatible',
+      AGENT_SUGGESTION_MODEL: 'future-model',
+      AGENT_SUGGESTION_API_KEY: 'secret-test-key',
+    })
+    const draftId = await createReviewedDraft(app)
+
+    const res = await app.request(
+      `/api/v0/agent/drafts/${draftId}/suggestions`,
+      {
+        method: 'POST',
+        body: JSON.stringify({}),
+        headers: { 'content-type': 'application/json' },
+      },
+    )
+    const payload = await res.json()
+    expect(res.status).toBe(503)
+    expect(JSON.stringify(payload)).not.toContain('secret-test-key')
+  })
+
+  it('budget exceeded maps to 413', async () => {
+    const app = await createTestApp({
+      AGENT_SUGGESTION_MAX_INPUT_CHARS: '1',
+    })
+    const draftId = await createReviewedDraft(app)
+
+    const res = await app.request(
+      `/api/v0/agent/drafts/${draftId}/suggestions`,
+      {
+        method: 'POST',
+        body: JSON.stringify({}),
+        headers: { 'content-type': 'application/json' },
+      },
+    )
+    expect(res.status).toBe(413)
+    const payload = await res.json()
+    expect(payload.error.code).toBe('PROVIDER_BUDGET_EXCEEDED')
+  })
+
+  it('output invalid maps to 502', async () => {
+    const app = await createTestApp({
+      AGENT_SUGGESTION_MAX_OUTPUT_CHARS: '10',
+    })
+    const draftId = await createReviewedDraft(app)
+
+    const res = await app.request(
+      `/api/v0/agent/drafts/${draftId}/suggestions`,
+      {
+        method: 'POST',
+        body: JSON.stringify({}),
+        headers: { 'content-type': 'application/json' },
+      },
+    )
+    expect(res.status).toBe(502)
+    const payload = await res.json()
+    expect(payload.error.code).toBe('PROVIDER_OUTPUT_INVALID')
+  })
+
   it('POST with skillIds string returns 400', async () => {
     const app = await createTestApp()
     const draftId = await createReviewedDraft(app)
@@ -243,6 +345,7 @@ describe('Agent Suggestions route', () => {
     expect(payload.ok).toBe(true)
     for (const s of payload.data.suggestions) {
       expect(s.markdown).toBeUndefined()
+      expect(s.audit).toBeUndefined()
     }
   })
 
@@ -270,6 +373,7 @@ describe('Agent Suggestions route', () => {
     const payload = await res.json()
     expect(payload.data.suggestion.markdown).toBeTruthy()
     expect(payload.data.suggestion.skillSnapshots).toBeDefined()
+    expect(payload.data.suggestion.audit).toBeDefined()
   })
 
   // ─── PATCH review ───

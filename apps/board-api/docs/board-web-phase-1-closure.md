@@ -193,6 +193,8 @@ POST  /api/v0/snapshots
 POST  /api/v0/agent/drafts
 POST  /api/v0/agent/drafts/:id/responses
 PATCH /api/v0/agent/drafts/:id/review
+POST  /api/v0/agent/drafts/:draftId/suggestions
+PATCH /api/v0/agent/suggestions/:suggestionId/review
 POST  /api/v0/profiles
 PATCH /api/v0/profiles/:pk
 ```
@@ -315,3 +317,71 @@ pnpm --filter @labour-board/api exec tsx ../board-web/src/utils/agentSuggestionD
 
 Current: **mock provider** only (`MockAgentSuggestionProvider`).
 Real provider (openai-compatible) deferred to a subsequent iteration.
+
+## MVP 2.4 Addendum: Agent Provider Readiness
+
+Status date: 2026-06-24
+
+### New Readiness Capabilities
+
+1. Backend-only Agent Suggestion provider config via `AGENT_SUGGESTION_*` env vars.
+2. Provider kinds: `mock`, `disabled`, `openai-compatible`.
+3. Provider factory with explicit mock and disabled/stub behavior.
+4. Provider unavailable, budget exceeded, output validation, timeout, and rate limit error classes.
+5. Input budget check before provider generation.
+6. Output quality validation before saving suggestions.
+7. Suggestion detail audit metadata.
+8. board-web detail display for non-sensitive audit fields.
+
+### Provider Status
+
+- Default provider remains `mock`.
+- `openai-compatible` is a disabled/stub readiness mode only.
+- No real provider network calls are implemented.
+- No OpenAI, Anthropic, or DeepSeek SDK/package is introduced.
+- No provider fallback happens silently. A configured unavailable provider fails the request.
+- `AGENT_SUGGESTION_API_KEY` remains backend-only; public/audit metadata exposes only `apiKeyPresent`.
+
+### Budget Check
+
+- Input chars = draft `contextMarkdown` chars + skill markdown chars + instruction chars.
+- Token estimate = `Math.ceil(charCount / 4)`.
+- Defaults: `maxInputChars=200000`, `maxEstimatedInputTokens=50000`, `maxOutputChars=50000`, `maxEstimatedOutputTokens=12000`.
+- Budget failure returns 413 and does not save a suggestion.
+- Budget errors do not include raw context, skill markdown, prompt text, or keys.
+
+### Output Quality Gate
+
+- Required markdown title: `# LabourBoard AI Suggestion`.
+- Required sections: `## 1. Summary`, `## 2. Board Diagnosis`, `## 3. Risks`, `## 4. Recommended Actions`, `## 5. Patch Candidate Notes`, `## 6. Questions for Human Review`, `## 7. Limits`.
+- Empty markdown/title/summary/provider/model fail validation.
+- Output length above configured limits fails validation.
+- Execution claims such as `I applied the patch`, `I executed`, `已修改看板`, and `已应用补丁` fail validation.
+- Non-string highlights fail validation; more than 5 highlights are capped.
+- Validation failure returns 502 and does not save a suggestion.
+
+### Audit Metadata
+
+- Detail responses may include `audit`.
+- Audit stores provider kind/model, generated time, context hash, context/skill/instruction char counts, estimated tokens, input limits, budget/validation status, and `realProvider`.
+- Audit does not store API keys, prompt full text, draft `contextMarkdown`, or full skill markdown.
+- List summaries remain compact and do not return full audit.
+
+### Frontier Boundaries (Unchanged)
+
+- No board mutation through suggestions.
+- No patch application.
+- No tools execution.
+- No CLI worker.
+- No Tauri.
+- No React Router.
+- No provider key exposure in board-web.
+- No provider selector/key input UI in board-web.
+- No suggestion apply route.
+- No `run`/`apply`/`execute` routes.
+
+### Error Semantics
+
+- Provider unavailable: `503 PROVIDER_UNAVAILABLE`.
+- Budget exceeded: `413 PROVIDER_BUDGET_EXCEEDED`.
+- Output invalid: `502 PROVIDER_OUTPUT_INVALID`.

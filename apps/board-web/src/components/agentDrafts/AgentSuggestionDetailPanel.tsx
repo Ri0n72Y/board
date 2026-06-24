@@ -14,6 +14,7 @@ export function AgentSuggestionDetailPanel({
 }: AgentSuggestionDetailPanelProps) {
   const { t } = useTranslation()
   const [showSkills, setShowSkills] = useState(false)
+  const [showAudit, setShowAudit] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
 
   if (!suggestion) return null
@@ -130,6 +131,84 @@ export function AgentSuggestionDetailPanel({
         </div>
       )}
 
+      {/* Audit metadata - collapsed by default */}
+      {suggestion.audit && (
+        <div className="rounded-lg border border-slate-200 bg-white">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-4 py-2 text-xs font-semibold uppercase text-slate-500 hover:bg-slate-50"
+            onClick={() => setShowAudit((v) => !v)}
+          >
+            <span>{t('agent.suggestions.audit')}</span>
+            <span className="text-slate-400">
+              {showAudit
+                ? t('agent.suggestions.collapse')
+                : t('agent.suggestions.expand')}
+            </span>
+          </button>
+          {showAudit && (
+            <dl className="grid gap-2 border-t border-slate-100 px-4 py-3 text-xs text-slate-600 sm:grid-cols-2">
+              <AuditItem
+                label={t('agent.suggestions.auditProvider')}
+                value={`${suggestion.audit.providerKind}/${suggestion.audit.providerModel}`}
+              />
+              <AuditItem
+                label={t('agent.suggestions.auditGeneratedAt')}
+                value={new Date(suggestion.audit.generatedAt).toLocaleString()}
+              />
+              <AuditItem
+                label={t('agent.suggestions.auditContextChars')}
+                value={suggestion.audit.contextCharCount.toLocaleString()}
+              />
+              <AuditItem
+                label={t('agent.suggestions.auditSkillChars')}
+                value={suggestion.audit.skillCharCount.toLocaleString()}
+              />
+              <AuditItem
+                label={t('agent.suggestions.auditInstructionChars')}
+                value={suggestion.audit.instructionCharCount.toLocaleString()}
+              />
+              <AuditItem
+                label={t('agent.suggestions.auditEstimatedInputTokens')}
+                value={suggestion.audit.estimatedInputTokens.toLocaleString()}
+              />
+              <AuditItem
+                label={t('agent.suggestions.auditEstimatedOutputTokens')}
+                value={
+                  suggestion.audit.estimatedOutputTokens?.toLocaleString() ??
+                  t('agent.suggestions.auditUnknown')
+                }
+              />
+              <AuditItem
+                label={t('agent.suggestions.auditLimits')}
+                value={`${suggestion.audit.maxInputChars.toLocaleString()} chars / ${suggestion.audit.maxEstimatedInputTokens.toLocaleString()} tokens`}
+              />
+              <AuditItem
+                label={t('agent.suggestions.auditBudget')}
+                value={suggestion.audit.budgetCheckStatus}
+              />
+              <AuditItem
+                label={t('agent.suggestions.auditValidation')}
+                value={suggestion.audit.outputValidationStatus}
+              />
+              <AuditItem
+                label={t('agent.suggestions.auditRealProvider')}
+                value={
+                  suggestion.audit.realProvider
+                    ? t('agent.suggestions.yes')
+                    : t('agent.suggestions.no')
+                }
+              />
+              <AuditItem
+                label={t('agent.suggestions.auditContextHash')}
+                value={suggestion.audit.contextHash.slice(0, 12)}
+                mono
+              />
+            </dl>
+          )}
+        </div>
+      )}
+
       {/* Diagnostics */}
       {suggestion.diagnostics && suggestion.diagnostics.length > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
@@ -141,6 +220,33 @@ export function AgentSuggestionDetailPanel({
           </ul>
         </div>
       )}
+    </div>
+  )
+}
+
+function AuditItem({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string
+  value: string
+  mono?: boolean
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[10px] font-semibold uppercase text-slate-400">
+        {label}
+      </dt>
+      <dd
+        className={
+          mono
+            ? 'truncate font-mono text-[11px] text-slate-700'
+            : 'truncate text-slate-700'
+        }
+      >
+        {value}
+      </dd>
     </div>
   )
 }

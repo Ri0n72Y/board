@@ -20,6 +20,22 @@ function makeDetail(overrides?: Partial<AgentSuggestionDetail>): AgentSuggestion
     contextHash: 'abc123',
     markdown: '# Full markdown\n\nThis is the full content.',
     skillSnapshots: [],
+    audit: {
+      providerKind: 'mock',
+      providerModel: 'mock-v1',
+      generatedAt: '2026-06-24T00:00:00.000Z',
+      contextHash: 'abc123',
+      contextCharCount: 10,
+      skillCharCount: 20,
+      instructionCharCount: 0,
+      estimatedInputTokens: 8,
+      estimatedOutputTokens: 10,
+      maxInputChars: 200_000,
+      maxEstimatedInputTokens: 50_000,
+      budgetCheckStatus: 'passed',
+      outputValidationStatus: 'passed',
+      realProvider: false,
+    },
     ...overrides,
   }
 }
@@ -37,6 +53,7 @@ describe('MemoryAgentSuggestionRepository', () => {
     expect(found).not.toBeNull()
     expect(found!.markdown).toBe(detail.markdown)
     expect(found!.skillSnapshots).toEqual(detail.skillSnapshots)
+    expect(found!.audit).toEqual(detail.audit)
   })
 
   it('findById returns null for missing', async () => {
@@ -59,6 +76,7 @@ describe('MemoryAgentSuggestionRepository', () => {
     for (const s of list) {
       expect((s as Record<string, unknown>).markdown).toBeUndefined()
       expect((s as Record<string, unknown>).skillSnapshots).toBeUndefined()
+      expect((s as Record<string, unknown>).audit).toBeUndefined()
     }
   })
 

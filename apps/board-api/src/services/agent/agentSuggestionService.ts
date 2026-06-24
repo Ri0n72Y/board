@@ -10,8 +10,15 @@ import type {
 import type { AgentDraftRepository } from '../../repositories/agentDraftRepository.js'
 import type { AgentSuggestionRepository } from '../../repositories/agentSuggestionRepository.js'
 import type { AgentSuggestionProvider } from '../../config/agentSuggestionProvider.js'
+import type { AgentProviderRuntimeConfig } from '../../config/agentProviderConfig.js'
+import { loadAgentProviderRuntimeConfig } from '../../config/agentProviderConfig.js'
 import type { AgentSkillService } from './agentSkillService.js'
 import { resolveActor } from '../record/recordResponses.js'
+import {
+  buildSuggestionBudgetInput,
+  checkSuggestionBudget,
+} from './agentProviderBudget.js'
+import { validateSuggestionOutput } from './agentSuggestionQuality.js'
 
 const MAX_TITLE_LENGTH = 200
 const MAX_INSTRUCTION_LENGTH = 5_000
@@ -23,17 +30,20 @@ export class AgentSuggestionService {
   private readonly draftRepository: AgentDraftRepository
   private readonly skillService: AgentSkillService
   private readonly provider: AgentSuggestionProvider
+  private readonly providerConfig: AgentProviderRuntimeConfig
 
   constructor(
     suggestionRepository: AgentSuggestionRepository,
     draftRepository: AgentDraftRepository,
     skillService: AgentSkillService,
     provider: AgentSuggestionProvider,
+    providerConfig: AgentProviderRuntimeConfig = loadAgentProviderRuntimeConfig(),
   ) {
     this.suggestionRepository = suggestionRepository
     this.draftRepository = draftRepository
     this.skillService = skillService
     this.provider = provider
+    this.providerConfig = providerConfig
   }
 
   async createSuggestion(
@@ -68,16 +78,25 @@ export class AgentSuggestionService {
       input.skillIds,
     )
 
-    // 5. Compute context hash
+    // 5. Check provider input budget before any provider call.
+    const instruction = input.instruction?.trim()
+    const budgetInput = buildSuggestionBudgetInput(
+      draft.contextMarkdown,
+      skillSnapshots,
+      instruction,
+    )
+    checkSuggestionBudget(budgetInput, this.providerConfig)
+
+    // 6. Compute context hash
     const contextHash = createHash('sha256')
       .update(draft.contextMarkdown)
       .digest('hex')
 
-    // 6. Call provider
+    // 7. Call provider
     const providerOutput = await this.provider.generate({
       contextMarkdown: draft.contextMarkdown,
       skillSnapshots,
-      instruction: input.instruction?.trim(),
+      instruction,
       draftId: draft.id,
       draftTitle: draft.title,
       draftProfile: draft.profile,
@@ -86,34 +105,55 @@ export class AgentSuggestionService {
       title: input.title?.trim(),
     })
 
-    // 7. Build suggestion detail
+    // 8. Validate provider output before saving.
+    const validatedOutput = validateSuggestionOutput(
+      providerOutput,
+      this.providerConfig,
+    )
+
+    // 9. Build suggestion detail
     const now = new Date().toISOString()
     const createdBy = resolveActor(actor)
 
     // Truncate summary to max length
     const summary =
-      providerOutput.summary.length > MAX_SUMMARY_LENGTH
-        ? providerOutput.summary.slice(0, MAX_SUMMARY_LENGTH - 3) + '...'
-        : providerOutput.summary
+      validatedOutput.summary.length > MAX_SUMMARY_LENGTH
+        ? validatedOutput.summary.slice(0, MAX_SUMMARY_LENGTH - 3) + '...'
+        : validatedOutput.summary
 
-    // Truncate highlights
-    const highlights = providerOutput.highlights.slice(0, MAX_HIGHLIGHTS)
+    const highlights = validatedOutput.highlights.slice(0, MAX_HIGHLIGHTS)
 
     const suggestion: AgentSuggestionDetail = {
       id: crypto.randomUUID(),
       draftId: draft.id,
-      title: providerOutput.title,
+      title: validatedOutput.title,
       summary,
       highlights,
       status: 'generated',
       createdAt: now,
       createdBy,
-      provider: providerOutput.provider,
-      model: providerOutput.model,
+      provider: validatedOutput.provider,
+      model: validatedOutput.model,
       contextHash,
-      markdown: providerOutput.markdown,
+      markdown: validatedOutput.markdown,
       skillSnapshots,
-      diagnostics: providerOutput.diagnostics,
+      diagnostics: validatedOutput.diagnostics,
+      audit: {
+        providerKind: this.provider.kind,
+        providerModel: validatedOutput.model,
+        generatedAt: now,
+        contextHash,
+        contextCharCount: budgetInput.contextCharCount,
+        skillCharCount: budgetInput.skillCharCount,
+        instructionCharCount: budgetInput.instructionCharCount,
+        estimatedInputTokens: budgetInput.estimatedInputTokens,
+        estimatedOutputTokens: validatedOutput.estimatedOutputTokens,
+        maxInputChars: this.providerConfig.maxInputChars,
+        maxEstimatedInputTokens: this.providerConfig.maxEstimatedInputTokens,
+        budgetCheckStatus: 'passed',
+        outputValidationStatus: 'passed',
+        realProvider: this.provider.realProvider,
+      },
     }
 
     return this.suggestionRepository.create(suggestion)
@@ -206,11 +246,10 @@ export class AgentSuggestionService {
       if (typeof input.provider !== 'string' || input.provider.trim().length === 0) {
         throw new AgentSuggestionValidationError('provider must be a non-empty string')
       }
-      // Currently only mock provider is supported
-      const VALID_PROVIDERS = ['mock']
-      if (!VALID_PROVIDERS.includes(input.provider.trim())) {
+      const requestedProvider = input.provider.trim()
+      if (requestedProvider !== this.providerConfig.kind) {
         throw new AgentSuggestionValidationError(
-          `Unsupported provider: ${input.provider}. Currently only "mock" is available.`,
+          `Requested provider "${requestedProvider}" does not match configured provider "${this.providerConfig.kind}". Provider fallback is not allowed.`,
         )
       }
     }

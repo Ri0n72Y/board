@@ -65,6 +65,8 @@ POST  /api/v0/snapshots
 POST  /api/v0/agent/drafts
 POST  /api/v0/agent/drafts/:id/responses
 PATCH /api/v0/agent/drafts/:id/review
+POST  /api/v0/agent/drafts/:draftId/suggestions
+PATCH /api/v0/agent/suggestions/:suggestionId/review
 POST  /api/v0/profiles
 PATCH /api/v0/profiles/:pk
 ```
@@ -243,6 +245,64 @@ Manual Agent Response:
 - It does not prove an AI executed.
 - It does not mean a patch proposal was applied.
 - It does not automatically write board state.
+
+## MVP 2.4 Addendum: Agent Provider Readiness
+
+MVP 2.4 prepares the backend boundary for real Agent Suggestion providers. It
+does not implement real provider network calls.
+
+Provider config:
+
+- Default provider remains `mock`.
+- Supported provider kinds are `mock`, `disabled`, and `openai-compatible`.
+- Provider config is backend-only and loaded from `AGENT_SUGGESTION_*` env vars.
+- `AGENT_SUGGESTION_API_KEY` is read only by backend config.
+- Public config/audit fields expose only `apiKeyPresent: boolean`; the key value is never returned.
+- `openai-compatible` currently resolves to a disabled/stub provider and does not issue network requests.
+- Provider fallback is never silent. If `openai-compatible` is configured, suggestion generation fails with provider unavailable instead of falling back to mock.
+
+Budget check:
+
+- Input chars are counted as `contextMarkdown.length + skill markdown lengths + instruction.length`.
+- Token estimate is `Math.ceil(charCount / 4)`.
+- Defaults: `maxInputChars=200000`, `maxEstimatedInputTokens=50000`, `maxOutputChars=50000`, `maxEstimatedOutputTokens=12000`.
+- Budget failure returns `413 PROVIDER_BUDGET_EXCEEDED`.
+- Budget failure does not save a suggestion artifact.
+- Error messages include counts/limits only, not raw context, skill markdown, prompt text, or keys.
+
+Output quality validation:
+
+- Provider output must include non-empty `title`, `summary`, `provider`, `model`, and `markdown`.
+- Markdown must include `# LabourBoard AI Suggestion` and sections `## 1. Summary` through `## 7. Limits`.
+- Markdown must not exceed configured output limits.
+- Execution claims such as `I applied the patch`, `I executed`, `已修改看板`, or `已应用补丁` are rejected.
+- `highlights` must be a string array and are capped at 5.
+- Output validation failure returns `502 PROVIDER_OUTPUT_INVALID`.
+- Output validation failure does not save a suggestion artifact.
+
+Suggestion audit metadata:
+
+- Suggestion detail may include `audit`.
+- Audit stores `providerKind`, `providerModel`, `generatedAt`, `contextHash`, char counts, token estimates, budget/validation status, configured input limits, and `realProvider`.
+- Audit does not store API keys, prompt full text, draft `contextMarkdown`, skill markdown, or full provider request payloads.
+- Suggestion list summaries remain compact and do not return full `audit`, `markdown`, `skillSnapshots`, or `diagnostics`.
+- Suggestion detail returns full markdown, skill snapshots, diagnostics, and audit.
+
+Error semantics:
+
+- Provider unavailable returns `503 PROVIDER_UNAVAILABLE`.
+- Budget exceeded returns `413 PROVIDER_BUDGET_EXCEEDED`.
+- Provider output invalid returns `502 PROVIDER_OUTPUT_INVALID`.
+
+Unchanged boundaries:
+
+- No board mutation through suggestions.
+- No patch apply route.
+- No run/apply/execute route.
+- No tools execution.
+- No CLI worker.
+- No Tauri.
+- board-web exposes no provider key and no provider config UI.
 
 ## Profile Contract (MVP 2.2)
 

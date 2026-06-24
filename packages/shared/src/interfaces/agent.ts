@@ -184,6 +184,27 @@ export interface GetAgentSkillResponse {
 
 export type AgentSuggestionStatus = 'generated' | 'reviewed' | 'discarded'
 
+export type AgentSuggestionAuditBudgetStatus = 'passed' | 'blocked'
+
+export type AgentSuggestionAuditValidationStatus = 'passed' | 'failed'
+
+export interface AgentSuggestionAudit {
+  providerKind: 'mock' | 'disabled' | 'openai-compatible'
+  providerModel: string
+  generatedAt: string
+  contextHash: string
+  contextCharCount: number
+  skillCharCount: number
+  instructionCharCount: number
+  estimatedInputTokens: number
+  estimatedOutputTokens?: number
+  maxInputChars: number
+  maxEstimatedInputTokens: number
+  budgetCheckStatus: AgentSuggestionAuditBudgetStatus
+  outputValidationStatus: AgentSuggestionAuditValidationStatus
+  realProvider: boolean
+}
+
 export interface AgentSuggestionSummary {
   id: string
   draftId: string
@@ -202,6 +223,7 @@ export interface AgentSuggestionDetail extends AgentSuggestionSummary {
   markdown: string
   skillSnapshots: AgentSkillSnapshot[]
   diagnostics?: string[]
+  audit?: AgentSuggestionAudit
 }
 
 export interface CreateAgentSuggestionInput {

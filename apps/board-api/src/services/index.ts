@@ -56,7 +56,8 @@ import {
   MemoryAgentSuggestionRepository,
   MongoAgentSuggestionRepository,
 } from '../repositories/agentSuggestionRepository.js'
-import { MockAgentSuggestionProvider } from '../config/agentSuggestionProvider.js'
+import { loadAgentProviderRuntimeConfig } from '../config/agentProviderConfig.js'
+import { createAgentSuggestionProvider } from '../config/agentSuggestionProviderFactory.js'
 
 export interface ApiServices {
   configService: ConfigService
@@ -76,6 +77,7 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
   const boardConfigState = await loadBoardConfigState(env)
   const boardConfig = boardConfigState.config
   const agentRuntimeConfig = loadAgentRuntimeConfig(process.env)
+  const agentProviderConfig = loadAgentProviderRuntimeConfig(process.env)
   const recordsCollection = env.mongodbUri
     ? ((await getRecordsCollection<Document>(
         env.mongodbUri,
@@ -172,7 +174,8 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
         : new MemoryAgentSuggestionRepository(),
       agentDraftRepository,
       new AgentSkillService(),
-      new MockAgentSuggestionProvider()
+      createAgentSuggestionProvider(agentProviderConfig),
+      agentProviderConfig
     ),
     recordRepository,
     snapshotHeadRepository,

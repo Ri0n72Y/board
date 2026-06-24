@@ -16,7 +16,10 @@ import {
   AgentSuggestionNotFoundError,
   AgentSuggestionNotAllowedError,
 } from '../services/agent/agentSuggestionService.js'
+import { AgentProviderUnavailableError } from '../config/agentSuggestionProvider.js'
 import { SkillNotFoundError } from '../services/agent/agentSkillService.js'
+import { AgentProviderBudgetExceededError } from '../services/agent/agentProviderBudget.js'
+import { AgentProviderOutputValidationError } from '../services/agent/agentSuggestionQuality.js'
 
 export function createAgentSuggestionsRoute(
   agentSuggestionService: AgentSuggestionService,
@@ -50,6 +53,15 @@ export function createAgentSuggestionsRoute(
       }
       if (caught instanceof AgentSuggestionNotAllowedError) {
         return c.json(error('SUGGESTION_NOT_ALLOWED', caught.message), 409)
+      }
+      if (caught instanceof AgentProviderUnavailableError) {
+        return c.json(error('PROVIDER_UNAVAILABLE', caught.message), 503)
+      }
+      if (caught instanceof AgentProviderBudgetExceededError) {
+        return c.json(error('PROVIDER_BUDGET_EXCEEDED', caught.message), 413)
+      }
+      if (caught instanceof AgentProviderOutputValidationError) {
+        return c.json(error('PROVIDER_OUTPUT_INVALID', caught.message), 502)
       }
       throw caught
     }

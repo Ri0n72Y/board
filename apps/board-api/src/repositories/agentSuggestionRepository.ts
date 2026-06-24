@@ -109,7 +109,12 @@ export class MongoAgentSuggestionRepository
     const docs = await this.collection
       .find(suggestionFilter({ draftId }))
       .sort({ createdAt: -1 })
-      .project<Document>({ markdown: 0, skillSnapshots: 0, diagnostics: 0 })
+      .project<Document>({
+        markdown: 0,
+        skillSnapshots: 0,
+        diagnostics: 0,
+        audit: 0,
+      })
       .toArray()
     return docs.map(fromSuggestionDoc).map(toSummary)
   }
@@ -159,6 +164,7 @@ function toSuggestionDoc(
     markdown: suggestion.markdown,
     skillSnapshots: suggestion.skillSnapshots,
     diagnostics: suggestion.diagnostics,
+    audit: suggestion.audit,
   }
 }
 
@@ -178,5 +184,6 @@ function fromSuggestionDoc(doc: Document): AgentSuggestionDetail {
     markdown: doc.markdown,
     skillSnapshots: doc.skillSnapshots ?? [],
     diagnostics: doc.diagnostics,
+    audit: doc.audit,
   }
 }
