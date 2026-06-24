@@ -129,4 +129,60 @@ describe('agentSuggestionQuality', () => {
     )
     expect(output.highlights).toEqual(['1', '2', '3', '4', '5'])
   })
+
+  it('diagnostics non-array fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({
+          diagnostics: 'not-array' as unknown as string[],
+        }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing non-string fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({
+          diagnostics: ['ok', 1 as unknown as string],
+        }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics too long fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({
+          diagnostics: ['x'.repeat(501)],
+        }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing API_KEY fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({
+          diagnostics: ['OPENAI_API_KEY was present'],
+        }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('valid diagnostics pass', () => {
+    const output = validateSuggestionOutput(
+      validOutput({
+        diagnostics: ['Mock provider generated a bounded diagnostic.'],
+      }),
+      config,
+    )
+    expect(output.diagnostics).toEqual([
+      'Mock provider generated a bounded diagnostic.',
+    ])
+  })
 })

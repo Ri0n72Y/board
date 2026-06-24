@@ -100,4 +100,20 @@ describe('MockAgentSuggestionProvider', () => {
 
     expect(output.model).toBe('mock-suggestion-v1')
   })
+
+  it('uses configured model when provided', async () => {
+    const provider = new MockAgentSuggestionProvider('mock-configured-model')
+    const output = await provider.generate({
+      contextMarkdown: '# Test',
+      skillSnapshots: [mockSkill],
+      draftId: 'draft-1',
+      draftTitle: 'Test',
+      draftProfile: 'agent-full',
+      draftSource: 'current-board',
+      draftRecordCount: 1,
+    })
+
+    expect(provider.model).toBe('mock-configured-model')
+    expect(output.model).toBe('mock-configured-model')
+  })
 })

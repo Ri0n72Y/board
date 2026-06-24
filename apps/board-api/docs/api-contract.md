@@ -258,6 +258,7 @@ Provider config:
 - Provider config is backend-only and loaded from `AGENT_SUGGESTION_*` env vars.
 - `AGENT_SUGGESTION_API_KEY` is read only by backend config.
 - Public config/audit fields expose only `apiKeyPresent: boolean`; the key value is never returned.
+- `mock` uses `AGENT_SUGGESTION_MODEL` for its reported model and defaults to `mock-suggestion-v1`.
 - `openai-compatible` currently resolves to a disabled/stub provider and does not issue network requests.
 - Provider fallback is never silent. If `openai-compatible` is configured, suggestion generation fails with provider unavailable instead of falling back to mock.
 
@@ -266,6 +267,7 @@ Budget check:
 - Input chars are counted as `contextMarkdown.length + skill markdown lengths + instruction.length`.
 - Token estimate is `Math.ceil(charCount / 4)`.
 - Defaults: `maxInputChars=200000`, `maxEstimatedInputTokens=50000`, `maxOutputChars=50000`, `maxEstimatedOutputTokens=12000`.
+- `AGENT_SUGGESTION_COST_BUDGET_CENTS` maps to reserved `costBudgetCents` in MVP 2.4. It is parsed by backend config but is not enforced while providers are mock or disabled/stub.
 - Budget failure returns `413 PROVIDER_BUDGET_EXCEEDED`.
 - Budget failure does not save a suggestion artifact.
 - Error messages include counts/limits only, not raw context, skill markdown, prompt text, or keys.
@@ -277,13 +279,14 @@ Output quality validation:
 - Markdown must not exceed configured output limits.
 - Execution claims such as `I applied the patch`, `I executed`, `已修改看板`, or `已应用补丁` are rejected.
 - `highlights` must be a string array and are capped at 5.
+- `diagnostics`, when present, must be a string array. Each entry is capped at 500 characters and must not contain sensitive markers such as API key names, `Authorization`, `Bearer`, `prompt`, `contextMarkdown`, or `skill markdown`.
 - Output validation failure returns `502 PROVIDER_OUTPUT_INVALID`.
 - Output validation failure does not save a suggestion artifact.
 
 Suggestion audit metadata:
 
 - Suggestion detail may include `audit`.
-- Audit stores `providerKind`, `providerModel`, `generatedAt`, `contextHash`, char counts, token estimates, budget/validation status, configured input limits, and `realProvider`.
+- Audit stores `providerKind`, `providerModel`, `generatedAt`, `contextHash`, char counts, token estimates, budget/validation status, configured input/output limits, and `realProvider`.
 - Audit does not store API keys, prompt full text, draft `contextMarkdown`, skill markdown, or full provider request payloads.
 - Suggestion list summaries remain compact and do not return full `audit`, `markdown`, `skillSnapshots`, or `diagnostics`.
 - Suggestion detail returns full markdown, skill snapshots, diagnostics, and audit.

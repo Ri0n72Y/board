@@ -6,11 +6,11 @@ import {
   MockAgentSuggestionProvider,
 } from './agentSuggestionProvider.js'
 import { createAgentSuggestionProvider } from './agentSuggestionProviderFactory.js'
-import type { AgentProviderRuntimeConfig } from './agentProviderConfig.js'
+import type { InternalAgentProviderRuntimeConfig } from './agentProviderConfig.js'
 
 function makeConfig(
-  overrides?: Partial<AgentProviderRuntimeConfig>,
-): AgentProviderRuntimeConfig {
+  overrides?: Partial<InternalAgentProviderRuntimeConfig>,
+): InternalAgentProviderRuntimeConfig {
   return {
     kind: 'mock',
     model: 'mock-suggestion-v1',
@@ -46,12 +46,22 @@ describe('agentSuggestionProviderFactory', () => {
       makeConfig({
         kind: 'openai-compatible',
         model: 'future-model',
+        apiKey: 'secret-provider-key',
+        apiKeyPresent: true,
         enabled: false,
       }),
     )
     expect(provider).toBeInstanceOf(DisabledAgentSuggestionProvider)
     expect(provider.kind).toBe('openai-compatible')
     expect(provider.realProvider).toBe(false)
+  })
+
+  it('mock provider uses configured model', async () => {
+    const provider = createAgentSuggestionProvider(
+      makeConfig({ model: 'mock-custom-model' }),
+    )
+    expect(provider).toBeInstanceOf(MockAgentSuggestionProvider)
+    expect(provider.model).toBe('mock-custom-model')
   })
 
   it('disabled/stub generate throws AgentProviderUnavailableError', async () => {
@@ -61,6 +71,22 @@ describe('agentSuggestionProviderFactory', () => {
     await expect(provider.generate({} as never)).rejects.toThrow(
       AgentProviderUnavailableError,
     )
+  })
+
+  it('internal apiKey is not exposed by provider output or errors', async () => {
+    const secret = 'secret-provider-key'
+    const provider = createAgentSuggestionProvider(
+      makeConfig({
+        kind: 'openai-compatible',
+        model: 'future-model',
+        apiKey: secret,
+        apiKeyPresent: true,
+        enabled: false,
+      }),
+    )
+
+    await expect(provider.generate({} as never)).rejects.not.toThrow(secret)
+    expect(JSON.stringify(provider)).not.toContain(secret)
   })
 
   it('factory does not import real provider SDKs or network clients', async () => {

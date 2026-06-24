@@ -198,11 +198,13 @@ Phase 1 Agent workflow is manual and non-executing:
 - Real provider network calls are still not implemented.
 - Default suggestion provider remains `mock`.
 - Provider config is backend-only. board-web must not expose provider API keys, provider key inputs, provider selectors, or `VITE_*` provider key variables.
+- `mock` reports the backend-configured `AGENT_SUGGESTION_MODEL`, defaulting to `mock-suggestion-v1`.
 - `openai-compatible` currently means backend disabled/stub readiness only. It returns a provider unavailable error and must not call external APIs.
+- `AGENT_SUGGESTION_COST_BUDGET_CENTS` maps to reserved `costBudgetCents` in MVP 2.4 and is not displayed as an enforced budget.
 - Provider unavailable errors are displayed from the backend response; board-web does not fallback to mock.
 - Budget exceeded errors are displayed from the backend response and do not create a suggestion.
 - Provider output validation errors are displayed from the backend response and do not create a suggestion.
-- Suggestion detail may display non-sensitive audit metadata: provider kind/model, generated time, context hash, char counts, token estimates, limits, budget status, output validation status, and `realProvider`.
+- Suggestion detail may display non-sensitive audit metadata: provider kind/model, generated time, context hash, char counts, token estimates, input/output limits, budget status, output validation status, and `realProvider`.
 - Suggestion list remains compact and does not show full audit, markdown, skill markdown, diagnostics, prompt text, or context text.
 - Audit metadata must not include API keys, full prompts, full `contextMarkdown`, or full skill markdown.
 - No board mutation, patch apply, tools execution, CLI worker, Tauri, run/apply/execute route, or suggestion apply route is added by provider readiness work.

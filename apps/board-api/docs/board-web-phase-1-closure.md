@@ -336,11 +336,13 @@ Status date: 2026-06-24
 ### Provider Status
 
 - Default provider remains `mock`.
+- `mock` reports the backend-configured `AGENT_SUGGESTION_MODEL`, defaulting to `mock-suggestion-v1`.
 - `openai-compatible` is a disabled/stub readiness mode only.
 - No real provider network calls are implemented.
 - No OpenAI, Anthropic, or DeepSeek SDK/package is introduced.
 - No provider fallback happens silently. A configured unavailable provider fails the request.
 - `AGENT_SUGGESTION_API_KEY` remains backend-only; public/audit metadata exposes only `apiKeyPresent`.
+- `AGENT_SUGGESTION_COST_BUDGET_CENTS` maps to reserved `costBudgetCents` in MVP 2.4. It is parsed by backend config but not enforced while providers are mock or disabled/stub.
 
 ### Budget Check
 
@@ -358,12 +360,13 @@ Status date: 2026-06-24
 - Output length above configured limits fails validation.
 - Execution claims such as `I applied the patch`, `I executed`, `已修改看板`, and `已应用补丁` fail validation.
 - Non-string highlights fail validation; more than 5 highlights are capped.
+- Diagnostics, when present, must be a string array. Entries are capped at 500 characters and rejected when they contain sensitive markers such as API key names, `Authorization`, `Bearer`, `prompt`, `contextMarkdown`, or `skill markdown`.
 - Validation failure returns 502 and does not save a suggestion.
 
 ### Audit Metadata
 
 - Detail responses may include `audit`.
-- Audit stores provider kind/model, generated time, context hash, context/skill/instruction char counts, estimated tokens, input limits, budget/validation status, and `realProvider`.
+- Audit stores provider kind/model, generated time, context hash, context/skill/instruction char counts, estimated tokens, input/output limits, budget/validation status, and `realProvider`.
 - Audit does not store API keys, prompt full text, draft `contextMarkdown`, or full skill markdown.
 - List summaries remain compact and do not return full audit.
 

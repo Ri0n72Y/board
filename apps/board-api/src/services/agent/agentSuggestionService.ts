@@ -149,7 +149,10 @@ export class AgentSuggestionService {
         estimatedInputTokens: budgetInput.estimatedInputTokens,
         estimatedOutputTokens: validatedOutput.estimatedOutputTokens,
         maxInputChars: this.providerConfig.maxInputChars,
+        maxOutputChars: this.providerConfig.maxOutputChars,
         maxEstimatedInputTokens: this.providerConfig.maxEstimatedInputTokens,
+        maxEstimatedOutputTokens:
+          this.providerConfig.maxEstimatedOutputTokens,
         budgetCheckStatus: 'passed',
         outputValidationStatus: 'passed',
         realProvider: this.provider.realProvider,

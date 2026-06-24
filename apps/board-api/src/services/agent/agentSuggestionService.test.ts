@@ -86,6 +86,25 @@ class InvalidOutputProvider implements AgentSuggestionProvider {
   }
 }
 
+class DiagnosticsProvider extends MockAgentSuggestionProvider {
+  private readonly diagnosticsValue: unknown
+
+  constructor(diagnosticsValue: unknown) {
+    super()
+    this.diagnosticsValue = diagnosticsValue
+  }
+
+  override async generate(
+    input: AgentSuggestionProviderInput,
+  ): Promise<AgentSuggestionProviderOutput> {
+    const output = await super.generate(input)
+    return {
+      ...output,
+      diagnostics: this.diagnosticsValue as string[],
+    }
+  }
+}
+
 describe('AgentSuggestionService', () => {
   let draftRepo: MemoryAgentDraftRepository
   let suggestionRepo: MemoryAgentSuggestionRepository
@@ -274,6 +293,8 @@ describe('AgentSuggestionService', () => {
     expect(suggestion.audit?.contextCharCount).toBe(draft.contextMarkdown.length)
     expect(suggestion.audit?.estimatedInputTokens).toBeGreaterThan(0)
     expect(suggestion.audit?.estimatedOutputTokens).toBeGreaterThan(0)
+    expect(suggestion.audit?.maxOutputChars).toBe(50_000)
+    expect(suggestion.audit?.maxEstimatedOutputTokens).toBe(12_000)
   })
 
   it('audit does not include markdown/context/apiKey', async () => {
@@ -285,6 +306,7 @@ describe('AgentSuggestionService', () => {
     expect(auditJson).not.toContain(draft.contextMarkdown)
     expect(auditJson).not.toContain(suggestion.markdown)
     expect(auditJson).not.toContain('apiKey')
+    expect(auditJson).not.toContain('prompt')
   })
 
   it('provider kind/model reflected in audit', async () => {
@@ -371,6 +393,38 @@ describe('AgentSuggestionService', () => {
       invalidOutputService.createSuggestion(draft.id, {}),
     ).rejects.toThrow(AgentProviderOutputValidationError)
     expect(await suggestionRepo.listByDraftId(draft.id)).toHaveLength(0)
+  })
+
+  it('diagnostics failure does not save suggestion', async () => {
+    const draft = makeReviewedDraft()
+    await draftRepo.create(draft)
+    const invalidDiagnosticsService = new AgentSuggestionService(
+      suggestionRepo,
+      draftRepo,
+      skillService,
+      new DiagnosticsProvider(['Authorization: Bearer secret']),
+      makeProviderConfig(),
+    )
+
+    await expect(
+      invalidDiagnosticsService.createSuggestion(draft.id, {}),
+    ).rejects.toThrow(AgentProviderOutputValidationError)
+    expect(await suggestionRepo.listByDraftId(draft.id)).toHaveLength(0)
+  })
+
+  it('valid diagnostics are saved', async () => {
+    const draft = makeReviewedDraft()
+    await draftRepo.create(draft)
+    const diagnosticsService = new AgentSuggestionService(
+      suggestionRepo,
+      draftRepo,
+      skillService,
+      new DiagnosticsProvider(['Mock provider diagnostic.']),
+      makeProviderConfig(),
+    )
+
+    const suggestion = await diagnosticsService.createSuggestion(draft.id, {})
+    expect(suggestion.diagnostics).toEqual(['Mock provider diagnostic.'])
   })
 
   // ─── Review status ───

@@ -33,6 +33,21 @@ const EXECUTION_CLAIM_DENYLIST = [
 ]
 
 const MAX_HIGHLIGHTS = 5
+const MAX_DIAGNOSTIC_LENGTH = 500
+
+const DIAGNOSTIC_SENSITIVE_MARKERS = [
+  'apiKey',
+  'API_KEY',
+  'AGENT_SUGGESTION_API_KEY',
+  'OPENAI_API_KEY',
+  'ANTHROPIC_API_KEY',
+  'DEEPSEEK_API_KEY',
+  'Authorization',
+  'Bearer',
+  'prompt',
+  'contextMarkdown',
+  'skill markdown',
+]
 
 export function validateSuggestionOutput(
   output: AgentSuggestionProviderOutput,
@@ -109,6 +124,35 @@ export function validateSuggestionOutput(
       throw new AgentProviderOutputValidationError(
         'Provider output highlights must contain only strings.',
       )
+    }
+  }
+
+  if (output.diagnostics !== undefined) {
+    if (!Array.isArray(output.diagnostics)) {
+      throw new AgentProviderOutputValidationError(
+        'Provider output diagnostics must be an array.',
+      )
+    }
+
+    for (const diagnostic of output.diagnostics) {
+      if (typeof diagnostic !== 'string') {
+        throw new AgentProviderOutputValidationError(
+          'Provider output diagnostics must contain only strings.',
+        )
+      }
+      if (diagnostic.length > MAX_DIAGNOSTIC_LENGTH) {
+        throw new AgentProviderOutputValidationError(
+          `Provider output diagnostics entries must not exceed ${MAX_DIAGNOSTIC_LENGTH} characters.`,
+        )
+      }
+      const marker = DIAGNOSTIC_SENSITIVE_MARKERS.find((value) =>
+        diagnostic.includes(value),
+      )
+      if (marker) {
+        throw new AgentProviderOutputValidationError(
+          `Provider output diagnostics contain a prohibited sensitive marker: ${marker}.`,
+        )
+      }
     }
   }
 

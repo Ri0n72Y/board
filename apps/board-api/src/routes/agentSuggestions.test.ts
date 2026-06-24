@@ -19,14 +19,17 @@ async function createTestApp(
     }
   }
 
-  const env = loadApiEnv({ BOARD_CONFIG_OPTIONAL: 'true' })
-  const services = await createApiServices(env)
-
-  for (const [key, value] of originalEnv) {
-    if (value === undefined) {
-      delete process.env[key]
-    } else {
-      process.env[key] = value
+  let services!: Awaited<ReturnType<typeof createApiServices>>
+  try {
+    const env = loadApiEnv({ BOARD_CONFIG_OPTIONAL: 'true' })
+    services = await createApiServices(env)
+  } finally {
+    for (const [key, value] of originalEnv) {
+      if (value === undefined) {
+        delete process.env[key]
+      } else {
+        process.env[key] = value
+      }
     }
   }
 
@@ -80,6 +83,43 @@ describe('Agent Suggestions route', () => {
     expect(payload.data.suggestion.markdown).toBeTruthy()
     expect(payload.data.suggestion.skillSnapshots.length).toBeGreaterThan(0)
     expect(payload.data.suggestion.audit).toBeDefined()
+  })
+
+  it('createApiServices accepts internal apiKey without leaking it into suggestion responses', async () => {
+    const secret = 'secret-test-key'
+    const app = await createTestApp({
+      AGENT_SUGGESTION_PROVIDER: 'mock',
+      AGENT_SUGGESTION_MODEL: 'mock-configured-model',
+      AGENT_SUGGESTION_API_KEY: secret,
+    })
+    const draftId = await createReviewedDraft(app)
+
+    const res = await app.request(
+      `/api/v0/agent/drafts/${draftId}/suggestions`,
+      {
+        method: 'POST',
+        body: JSON.stringify({}),
+        headers: { 'content-type': 'application/json' },
+      },
+    )
+    expect(res.status).toBe(201)
+    const payload = await res.json()
+    const suggestionId: string = payload.data.suggestion.id
+    const responseJson = JSON.stringify(payload)
+    expect(payload.data.suggestion.model).toBe('mock-configured-model')
+    expect(payload.data.suggestion.audit.providerModel).toBe(
+      'mock-configured-model',
+    )
+    expect(responseJson).not.toContain(secret)
+    expect(responseJson).not.toContain('apiKey')
+
+    const detailRes = await app.request(
+      `/api/v0/agent/suggestions/${suggestionId}`,
+    )
+    expect(detailRes.status).toBe(200)
+    const detailPayload = await detailRes.json()
+    expect(JSON.stringify(detailPayload)).not.toContain(secret)
+    expect(JSON.stringify(detailPayload)).not.toContain('apiKey')
   })
 
   it('POST missing draft returns 404', async () => {

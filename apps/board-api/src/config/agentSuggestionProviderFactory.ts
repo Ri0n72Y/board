@@ -1,4 +1,4 @@
-import type { AgentProviderRuntimeConfig } from './agentProviderConfig.js'
+import type { InternalAgentProviderRuntimeConfig } from './agentProviderConfig.js'
 import {
   DisabledAgentSuggestionProvider,
   MockAgentSuggestionProvider,
@@ -6,10 +6,10 @@ import {
 } from './agentSuggestionProvider.js'
 
 export function createAgentSuggestionProvider(
-  config: AgentProviderRuntimeConfig,
+  config: InternalAgentProviderRuntimeConfig,
 ): AgentSuggestionProvider {
   if (config.kind === 'mock') {
-    return new MockAgentSuggestionProvider()
+    return new MockAgentSuggestionProvider(config.model)
   }
 
   if (config.kind === 'openai-compatible') {

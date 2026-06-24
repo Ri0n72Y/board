@@ -38,8 +38,12 @@ export interface AgentSuggestionProvider {
 
 export class MockAgentSuggestionProvider implements AgentSuggestionProvider {
   readonly kind = 'mock'
-  readonly model = 'mock-suggestion-v1'
+  readonly model: string
   readonly realProvider = false
+
+  constructor(model = 'mock-suggestion-v1') {
+    this.model = model
+  }
 
   async generate(
     input: AgentSuggestionProviderInput,
@@ -85,7 +89,7 @@ export class MockAgentSuggestionProvider implements AgentSuggestionProvider {
       highlights: highlights.slice(0, 5),
       markdown,
       provider: 'mock',
-      model: 'mock-suggestion-v1',
+      model: this.model,
     }
   }
 }

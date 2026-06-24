@@ -15,7 +15,7 @@ export interface AgentProviderRuntimeConfig {
   enabled: boolean
 }
 
-interface InternalAgentProviderRuntimeConfig
+export interface InternalAgentProviderRuntimeConfig
   extends AgentProviderRuntimeConfig {
   apiKey?: string
 }

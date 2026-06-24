@@ -81,7 +81,7 @@ export function AgentSuggestionDetailPanel({
           <MarkdownPreview
             content={suggestion.markdown}
             maxHeight="max-h-[60vh]"
-            emptyMessage="No markdown content."
+            emptyMessage={t('agent.suggestions.emptyMarkdown')}
           />
         </div>
       </div>
@@ -181,7 +181,11 @@ export function AgentSuggestionDetailPanel({
               />
               <AuditItem
                 label={t('agent.suggestions.auditLimits')}
-                value={`${suggestion.audit.maxInputChars.toLocaleString()} chars / ${suggestion.audit.maxEstimatedInputTokens.toLocaleString()} tokens`}
+                value={`${suggestion.audit.maxInputChars.toLocaleString()} in chars / ${suggestion.audit.maxOutputChars.toLocaleString()} out chars`}
+              />
+              <AuditItem
+                label={t('agent.suggestions.auditTokenLimits')}
+                value={`${suggestion.audit.maxEstimatedInputTokens.toLocaleString()} in / ${suggestion.audit.maxEstimatedOutputTokens.toLocaleString()} out`}
               />
               <AuditItem
                 label={t('agent.suggestions.auditBudget')}

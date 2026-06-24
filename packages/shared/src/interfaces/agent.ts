@@ -199,7 +199,9 @@ export interface AgentSuggestionAudit {
   estimatedInputTokens: number
   estimatedOutputTokens?: number
   maxInputChars: number
+  maxOutputChars: number
   maxEstimatedInputTokens: number
+  maxEstimatedOutputTokens: number
   budgetCheckStatus: AgentSuggestionAuditBudgetStatus
   outputValidationStatus: AgentSuggestionAuditValidationStatus
   realProvider: boolean
