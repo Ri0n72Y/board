@@ -208,3 +208,20 @@ Phase 1 Agent workflow is manual and non-executing:
 - Suggestion list remains compact and does not show full audit, markdown, skill markdown, diagnostics, prompt text, or context text.
 - Audit metadata must not include API keys, full prompts, full `contextMarkdown`, or full skill markdown.
 - No board mutation, patch apply, tools execution, CLI worker, Tauri, run/apply/execute route, or suggestion apply route is added by provider readiness work.
+
+## MVP 2.5 Addendum: Real Provider + Hardening
+
+- `openai-compatible` provider now makes real HTTP calls to the configured base URL.
+- All provider HTTP errors are mapped to distinct status codes visible in the frontend error display:
+
+  - `503 PROVIDER_UNAVAILABLE` — config missing or auth failure
+  - `504 PROVIDER_TIMEOUT` — request timeout
+  - `429 PROVIDER_RATE_LIMITED` — provider rate limiting
+  - `502 PROVIDER_HTTP_ERROR` — provider HTTP 5xx or unexpected 4xx
+  - `413 PROVIDER_BUDGET_EXCEEDED` — input budget exceeded
+  - `502 PROVIDER_OUTPUT_INVALID` — response parse failure or output validation failure
+- Board-web displays these errors via the existing `generateError` state and `ErrorBlock` component.
+- Board-web has no changes to provider key handling: no key input, no selector, no toggle, no config UI.
+- Suggestion detail displays `realProvider` (true for openai-compatible, false for mock) in the audit panel.
+- Board-web does not display prompt text, context markdown, skill markdown, raw requests, or raw responses.
+- Mock provider still works unchanged.

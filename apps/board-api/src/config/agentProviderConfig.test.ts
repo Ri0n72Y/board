@@ -30,7 +30,7 @@ describe('agentProviderConfig', () => {
     expect(config.kind).toBe('openai-compatible')
     expect(config.model).toBe('provider-model')
     expect(config.baseUrl).toBe('https://provider.invalid/v1')
-    expect(config.enabled).toBe(false)
+    expect(config.enabled).toBe(true)
   })
 
   it('apiKeyPresent reflects key presence without exposing the value', () => {

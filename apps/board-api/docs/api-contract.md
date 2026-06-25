@@ -294,6 +294,9 @@ Suggestion audit metadata:
 Error semantics:
 
 - Provider unavailable returns `503 PROVIDER_UNAVAILABLE`.
+- Provider timeout returns `504 PROVIDER_TIMEOUT`.
+- Provider rate limited returns `429 PROVIDER_RATE_LIMITED`.
+- Provider HTTP error returns `502 PROVIDER_HTTP_ERROR`.
 - Budget exceeded returns `413 PROVIDER_BUDGET_EXCEEDED`.
 - Provider output invalid returns `502 PROVIDER_OUTPUT_INVALID`.
 
@@ -306,6 +309,79 @@ Unchanged boundaries:
 - No CLI worker.
 - No Tauri.
 - board-web exposes no provider key and no provider config UI.
+
+## MVP 2.5 Addendum: Real OpenAI-Compatible Provider
+
+Status date: 2026-06-24
+
+### Real Provider Enabled
+
+- `openai-compatible` provider is now a real HTTP-calling provider.
+- Uses `AGENT_SUGGESTION_BASE_URL`, `AGENT_SUGGESTION_API_KEY`, and `AGENT_SUGGESTION_MODEL`.
+- Provider makes POST requests to `{baseUrl}/chat/completions` with an OpenAI-compatible chat completions body.
+- No SDK dependency. Uses Node `fetch` via dependency injection.
+- API key is sent only in the `Authorization: Bearer {key}` header; never in URL query.
+- Provider output JSON is parsed from chat completion response `choices[0].message.content`.
+- JSON parse failures and missing/incorrect response fields map to `502 PROVIDER_OUTPUT_INVALID` through the output validation gate.
+
+### Required Env for Real Provider
+
+```
+AGENT_SUGGESTION_PROVIDER=openai-compatible
+AGENT_SUGGESTION_BASE_URL=https://api.example.com/v1
+AGENT_SUGGESTION_API_KEY=sk-...
+AGENT_SUGGESTION_MODEL=gpt-4
+```
+
+Missing baseUrl, apiKey, or model → factory returns `DisabledAgentSuggestionProvider` with a clear error message. No silent fallback to mock.
+
+### Error Mapping (Extended)
+
+| Error | HTTP Status | Code |
+|-------|------------|------|
+| Config missing / provider disabled | 503 | `PROVIDER_UNAVAILABLE` |
+| Request timeout | 504 | `PROVIDER_TIMEOUT` |
+| HTTP 429 | 429 | `PROVIDER_RATE_LIMITED` |
+| HTTP 401/403 | 503 | `PROVIDER_UNAVAILABLE` (key not exposed) |
+| HTTP 5xx | 502 | `PROVIDER_HTTP_ERROR` |
+| HTTP 4xx (other) | 502 | `PROVIDER_HTTP_ERROR` |
+| Response JSON parse failed | 502 | `PROVIDER_OUTPUT_INVALID` |
+| Provider output object invalid | 502 | `PROVIDER_OUTPUT_INVALID` |
+| Budget exceeded | 413 | `PROVIDER_BUDGET_EXCEEDED` |
+
+### Timeout & Retry
+
+- Timeout via `AbortController`; exceeding `requestTimeoutMs` returns `504 PROVIDER_TIMEOUT`.
+- `retryMaxAttempts` default `0` (no retry). Configurable via `AGENT_SUGGESTION_RETRY_MAX_ATTEMPTS`.
+- Retry only for transient errors (network failures, HTTP 5xx, 429). No retry for 4xx, 401/403, output invalid, or budget exceeded.
+
+### Output Object Guard
+
+- `validateSuggestionOutput()` now rejects `null`, string, number, and array inputs as `AgentProviderOutputValidationError`.
+- Missing fields or wrong field types also fail as `AgentProviderOutputValidationError`.
+- No TypeError reaches the caller; all type errors are caught and re-raised as `AgentProviderOutputValidationError`.
+
+### Diagnostics Hardening
+
+- Sensitive marker check is now **case-insensitive**.
+- Expanded marker list: `apikey`, `api_key`, `secret`, `token`, `access_token`, `refresh_token`, `authorization`, `bearer`, `x-api-key`, `prompt`, `contextmarkdown`, `context markdown`, `skill markdown`, `system prompt`, `raw request`, `raw response`.
+- Max 20 diagnostic entries; max 500 characters per entry.
+- Diagnostics failure fails output validation; no suggestion saved.
+
+### Prompt Construction
+
+- Prompt built by `agentSuggestionPrompt.ts`: includes system prompt with output contract, user prompt with draft title, skill markdown, context, and instruction.
+- Prompt explicitly prohibits execution claims, patch generation, tool calls, and external operations.
+- Prompt requires record references (pid/id) when context includes records.
+- Prompt full text is **not** saved to suggestion artifact, audit, diagnostics, or repository.
+
+### Unchanged Boundaries
+
+- Suggestion still does NOT mutate board records or snapshots.
+- Suggestion still does NOT apply patches.
+- No tools execution, CLI worker, Tauri, React Router, or suggestion apply route.
+- No provider SDK packages introduced.
+- board-web still has no provider key, key input, provider selector, or provider config UI.
 
 ## Profile Contract (MVP 2.2)
 

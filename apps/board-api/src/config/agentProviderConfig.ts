@@ -81,7 +81,7 @@ export function loadInternalAgentProviderRuntimeConfig(
       env.AGENT_SUGGESTION_COST_BUDGET_CENTS,
       'AGENT_SUGGESTION_COST_BUDGET_CENTS',
     ),
-    enabled: kind === 'mock',
+    enabled: kind === 'mock' || kind === 'openai-compatible',
   }
 }
 

@@ -12,6 +12,8 @@ import {
   type AgentSuggestionProviderInput,
   type AgentSuggestionProviderOutput,
 } from '../../config/agentSuggestionProvider.js'
+import { OpenAICompatibleSuggestionProvider } from '../../config/openAICompatibleSuggestionProvider.js'
+import type { InternalAgentProviderRuntimeConfig } from '../../config/agentProviderConfig.js'
 import { AgentProviderBudgetExceededError } from './agentProviderBudget.js'
 import { AgentProviderOutputValidationError } from './agentSuggestionQuality.js'
 import {
@@ -439,5 +441,115 @@ describe('AgentSuggestionService', () => {
     })
     expect(updated).not.toBeNull()
     expect(updated!.status).toBe('reviewed')
+  })
+
+  // ─── Real provider: audit.realProvider = true ───
+
+  it('real provider success audit.realProvider is true', async () => {
+    const VALID_MD = `# LabourBoard AI Suggestion
+
+## 1. Summary
+
+Test.
+
+## 2. Board Diagnosis
+
+Test.
+
+## 3. Risks
+
+Test.
+
+## 4. Recommended Actions
+
+Test.
+
+## 5. Patch Candidate Notes
+
+Test.
+
+## 6. Questions for Human Review
+
+Test.
+
+## 7. Limits
+
+Test.`
+
+    const fakeFetcher = ((_url: string | URL | Request, _init?: RequestInit) =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    title: 'Real Analysis',
+                    summary: 'Real provider summary.',
+                    highlights: ['Finding 1', 'Finding 2'],
+                    markdown: VALID_MD,
+                    diagnostics: ['real provider used'],
+                  }),
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      )) as typeof fetch
+
+    const internalConfig: InternalAgentProviderRuntimeConfig = {
+      kind: 'openai-compatible',
+      model: 'real-model',
+      baseUrl: 'https://api.example.com/v1',
+      apiKey: 'sk-test-key',
+      apiKeyPresent: true,
+      maxInputChars: 200_000,
+      maxOutputChars: 50_000,
+      maxEstimatedInputTokens: 50_000,
+      maxEstimatedOutputTokens: 12_000,
+      requestTimeoutMs: 30_000,
+      retryMaxAttempts: 0,
+      enabled: true,
+    }
+
+    const realProvider = new OpenAICompatibleSuggestionProvider(
+      internalConfig,
+      fakeFetcher,
+    )
+
+    const publicConfig: AgentProviderRuntimeConfig = {
+      kind: 'openai-compatible',
+      model: 'real-model',
+      apiKeyPresent: true,
+      maxInputChars: 200_000,
+      maxOutputChars: 50_000,
+      maxEstimatedInputTokens: 50_000,
+      maxEstimatedOutputTokens: 12_000,
+      requestTimeoutMs: 30_000,
+      retryMaxAttempts: 0,
+      enabled: true,
+    }
+
+    const realSvc = new AgentSuggestionService(
+      suggestionRepo,
+      draftRepo,
+      skillService,
+      realProvider,
+      publicConfig,
+    )
+
+    const draft = makeReviewedDraft()
+    await draftRepo.create(draft)
+
+    const suggestion = await realSvc.createSuggestion(draft.id, {})
+    expect(suggestion.audit).toBeDefined()
+    expect(suggestion.audit!.realProvider).toBe(true)
+    expect(suggestion.audit!.providerKind).toBe('openai-compatible')
+    expect(suggestion.audit!.providerModel).toBe('real-model')
+    expect(suggestion.audit!.budgetCheckStatus).toBe('passed')
+    expect(suggestion.audit!.outputValidationStatus).toBe('passed')
+    expect(suggestion.title).toBe('Real Analysis')
+    expect(suggestion.provider).toBe('openai-compatible')
   })
 })

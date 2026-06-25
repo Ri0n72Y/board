@@ -94,9 +94,14 @@ describe('agentSuggestionProviderFactory', () => {
       new URL('./agentSuggestionProviderFactory.ts', import.meta.url),
       'utf-8',
     )
-    expect(source).not.toContain(['Open', 'AI'].join(''))
-    expect(source).not.toContain('Anthro' + 'pic')
-    expect(source).not.toContain('Deep' + 'Seek')
+    // Factory may reference its own OpenAI-compatible provider class
+    // but must never import external SDK packages.
+    expect(source).not.toContain('from ' + "'openai'")
+    expect(source).not.toContain('from ' + '"openai"')
+    expect(source).not.toContain('from ' + "'@anthropic")
+    expect(source).not.toContain('from ' + '"@anthropic')
+    expect(source).not.toContain('from ' + "'deepseek")
+    expect(source).not.toContain('from ' + '"deepseek')
     expect(source).not.toContain('chat' + '/completions')
     expect(source).not.toContain('responses' + '.create')
     expect(source).not.toContain('fetch' + '(')

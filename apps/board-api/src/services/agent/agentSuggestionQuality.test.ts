@@ -185,4 +185,129 @@ describe('agentSuggestionQuality', () => {
       'Mock provider generated a bounded diagnostic.',
     ])
   })
+
+  // ─── Output object guard ───
+
+  it('output null fails as AgentProviderOutputValidationError', () => {
+    expect(() =>
+      validateSuggestionOutput(null as unknown as AgentSuggestionProviderOutput, config),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('output string fails as AgentProviderOutputValidationError', () => {
+    expect(() =>
+      validateSuggestionOutput('string' as unknown as AgentSuggestionProviderOutput, config),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('output array fails as AgentProviderOutputValidationError', () => {
+    expect(() =>
+      validateSuggestionOutput([] as unknown as AgentSuggestionProviderOutput, config),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('output object missing markdown fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        { title: 'T', summary: 'S', highlights: [], provider: 'p', model: 'm' } as AgentSuggestionProviderOutput,
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('output object with markdown as number fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ markdown: 123 as unknown as string }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  // ─── Diagnostics case-insensitive hardening ───
+
+  it('diagnostics containing Authorization (case mixed) fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['some authorization header was sent'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing Bearer fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['used bearer token'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing bearer (lowercase) fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['sent bearer auth'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing api_key fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['the api_key was set'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing secret fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['secret key was used'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing access token fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['access_token was provided'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing Prompt (case-insensitive) fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['Prompt was too long'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing raw response fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['raw response was logged'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics exceeding 20 entries fails', () => {
+    const entries = Array.from({ length: 21 }, (_, i) => `diagnostic ${i + 1}`)
+    expect(() =>
+      validateSuggestionOutput(validOutput({ diagnostics: entries }), config),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics at exactly 20 entries passes', () => {
+    const entries = Array.from({ length: 20 }, (_, i) => `diagnostic ${i + 1}`)
+    const output = validateSuggestionOutput(validOutput({ diagnostics: entries }), config)
+    expect(output.diagnostics?.length).toBe(20)
+  })
 })

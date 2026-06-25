@@ -34,25 +34,50 @@ const EXECUTION_CLAIM_DENYLIST = [
 
 const MAX_HIGHLIGHTS = 5
 const MAX_DIAGNOSTIC_LENGTH = 500
+const MAX_DIAGNOSTIC_ENTRIES = 20
 
-const DIAGNOSTIC_SENSITIVE_MARKERS = [
-  'apiKey',
-  'API_KEY',
-  'AGENT_SUGGESTION_API_KEY',
-  'OPENAI_API_KEY',
-  'ANTHROPIC_API_KEY',
-  'DEEPSEEK_API_KEY',
-  'Authorization',
-  'Bearer',
+const DIAGNOSTIC_SENSITIVE_MARKERS_LOWER = [
+  'apikey',
+  'api_key',
+  'secret',
+  'token',
+  'access_token',
+  'refresh_token',
+  'authorization',
+  'bearer',
+  'x-api-key',
   'prompt',
-  'contextMarkdown',
+  'contextmarkdown',
+  'context markdown',
   'skill markdown',
+  'system prompt',
+  'raw request',
+  'raw response',
 ]
 
 export function validateSuggestionOutput(
   output: AgentSuggestionProviderOutput,
   config: AgentProviderRuntimeConfig,
 ): ValidatedSuggestionOutput {
+  // ─── Object guard: ensure output is a proper object ───
+  if (output === null) {
+    throw new AgentProviderOutputValidationError(
+      'Provider output must be an object, received null.',
+    )
+  }
+  if (typeof output !== 'object') {
+    throw new AgentProviderOutputValidationError(
+      `Provider output must be an object, received ${typeof output}.`,
+    )
+  }
+  if (Array.isArray(output)) {
+    throw new AgentProviderOutputValidationError(
+      'Provider output must be an object, received array.',
+    )
+  }
+
+  // ─── Field validation ───
+
   if (typeof output.markdown !== 'string' || output.markdown.trim() === '') {
     throw new AgentProviderOutputValidationError(
       'Provider output markdown must be a non-empty string.',
@@ -134,6 +159,12 @@ export function validateSuggestionOutput(
       )
     }
 
+    if (output.diagnostics.length > MAX_DIAGNOSTIC_ENTRIES) {
+      throw new AgentProviderOutputValidationError(
+        `Provider output diagnostics must not exceed ${MAX_DIAGNOSTIC_ENTRIES} entries.`,
+      )
+    }
+
     for (const diagnostic of output.diagnostics) {
       if (typeof diagnostic !== 'string') {
         throw new AgentProviderOutputValidationError(
@@ -145,8 +176,9 @@ export function validateSuggestionOutput(
           `Provider output diagnostics entries must not exceed ${MAX_DIAGNOSTIC_LENGTH} characters.`,
         )
       }
-      const marker = DIAGNOSTIC_SENSITIVE_MARKERS.find((value) =>
-        diagnostic.includes(value),
+      const lowerDiagnostic = diagnostic.toLowerCase()
+      const marker = DIAGNOSTIC_SENSITIVE_MARKERS_LOWER.find((value) =>
+        lowerDiagnostic.includes(value),
       )
       if (marker) {
         throw new AgentProviderOutputValidationError(

@@ -386,5 +386,44 @@ Status date: 2026-06-24
 ### Error Semantics
 
 - Provider unavailable: `503 PROVIDER_UNAVAILABLE`.
+- Provider timeout: `504 PROVIDER_TIMEOUT`.
+- Provider rate limited: `429 PROVIDER_RATE_LIMITED`.
+- Provider HTTP error: `502 PROVIDER_HTTP_ERROR`.
 - Budget exceeded: `413 PROVIDER_BUDGET_EXCEEDED`.
 - Output invalid: `502 PROVIDER_OUTPUT_INVALID`.
+
+## MVP 2.5 Addendum: Real Provider + Hardening
+
+Status date: 2026-06-24
+
+### New Capabilities
+
+1. `OpenAICompatibleSuggestionProvider` — real HTTP-calling provider using fetch, AbortController timeout, and retry.
+2. Provider prompt builder (`agentSuggestionPrompt.ts`) with output JSON contract and execution prohibition.
+3. Extended provider error classes: `AgentProviderHttpError`, with distinct HTTP status mappings.
+4. Output object guard: `validateSuggestionOutput()` rejects null/string/array as `AgentProviderOutputValidationError`.
+5. Case-insensitive diagnostics sensitive marker validation with expanded marker list and entry count limit.
+6. `retryMaxAttempts` config; defaults to 0 (no retry). Retry only for transient failures (5xx, 429, network errors).
+
+### Provider Status
+
+- Default provider remains `mock`.
+- `openai-compatible` is now a real provider that issues HTTP POST to `{baseUrl}/chat/completions`.
+- No provider SDK packages (no openai, @anthropic, deepseek). Uses Node `fetch`.
+- No silent fallback to mock. Missing env → `DisabledAgentSuggestionProvider` with clear error.
+- `AGENT_SUGGESTION_API_KEY` remains backend-only. Key never appears in output, audit, diagnostics, or error messages.
+- Real provider success sets `audit.realProvider = true`; mock success sets `audit.realProvider = false`.
+
+### Frontier Boundaries (Unchanged)
+
+- No board mutation through suggestions.
+- No patch application.
+- No tools execution.
+- No CLI worker.
+- No Tauri.
+- No React Router.
+- No provider key exposure in board-web.
+- No provider selector/key input UI in board-web.
+- No suggestion apply route.
+- No `run`/`apply`/`execute` routes.
+- Suggestion is still a read-only analysis artifact.

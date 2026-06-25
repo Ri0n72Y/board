@@ -16,7 +16,12 @@ import {
   AgentSuggestionNotFoundError,
   AgentSuggestionNotAllowedError,
 } from '../services/agent/agentSuggestionService.js'
-import { AgentProviderUnavailableError } from '../config/agentSuggestionProvider.js'
+import {
+  AgentProviderUnavailableError,
+  AgentProviderTimeoutError,
+  AgentProviderRateLimitedError,
+  AgentProviderHttpError,
+} from '../config/agentSuggestionProvider.js'
 import { SkillNotFoundError } from '../services/agent/agentSkillService.js'
 import { AgentProviderBudgetExceededError } from '../services/agent/agentProviderBudget.js'
 import { AgentProviderOutputValidationError } from '../services/agent/agentSuggestionQuality.js'
@@ -56,6 +61,15 @@ export function createAgentSuggestionsRoute(
       }
       if (caught instanceof AgentProviderUnavailableError) {
         return c.json(error('PROVIDER_UNAVAILABLE', caught.message), 503)
+      }
+      if (caught instanceof AgentProviderTimeoutError) {
+        return c.json(error('PROVIDER_TIMEOUT', caught.message), 504)
+      }
+      if (caught instanceof AgentProviderRateLimitedError) {
+        return c.json(error('PROVIDER_RATE_LIMITED', caught.message), 429)
+      }
+      if (caught instanceof AgentProviderHttpError) {
+        return c.json(error('PROVIDER_HTTP_ERROR', caught.message), 502)
       }
       if (caught instanceof AgentProviderBudgetExceededError) {
         return c.json(error('PROVIDER_BUDGET_EXCEEDED', caught.message), 413)

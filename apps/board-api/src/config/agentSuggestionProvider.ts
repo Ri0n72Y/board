@@ -249,3 +249,13 @@ export class AgentProviderRateLimitedError extends Error {
     this.name = 'AgentProviderRateLimitedError'
   }
 }
+
+export class AgentProviderHttpError extends Error {
+  readonly httpStatus: number
+
+  constructor(message: string, httpStatus: number) {
+    super(message)
+    this.name = 'AgentProviderHttpError'
+    this.httpStatus = httpStatus
+  }
+}
