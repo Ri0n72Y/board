@@ -11,6 +11,7 @@ import {
   fetchAgentSuggestions,
   updateAgentSuggestionReview,
 } from '../api/agentSuggestions'
+import { extractApiErrorMessage } from '../api/apiError'
 
 export function useAgentSuggestionController() {
   const [suggestions, setSuggestions] = useState<AgentSuggestionSummary[]>([])
@@ -90,7 +91,7 @@ export function useAgentSuggestionController() {
           axios.isCancel(err)
         )
           return
-        setListError(err instanceof Error ? err.message : String(err))
+        setListError(extractApiErrorMessage(err))
       })
       .finally(() => {
         if (listRequestIdRef.current !== requestId) return
@@ -126,9 +127,7 @@ export function useAgentSuggestionController() {
           axios.isCancel(err)
         )
           return
-        setDetailError(
-          err instanceof Error ? err.message : String(err),
-        )
+        setDetailError(extractApiErrorMessage(err))
       })
       .finally(() => {
         if (detailRequestIdRef.current !== requestId) return
@@ -173,7 +172,7 @@ export function useAgentSuggestionController() {
           ) {
             throw err
           }
-          const message = err instanceof Error ? err.message : String(err)
+          const message = extractApiErrorMessage(err)
           setGenerateError(message)
           throw err
         })
@@ -222,9 +221,7 @@ export function useAgentSuggestionController() {
             axios.isCancel(err)
           )
             return
-          setReviewError(
-            err instanceof Error ? err.message : String(err),
-          )
+          setReviewError(extractApiErrorMessage(err))
         })
         .finally(() => {
           if (reviewRequestIdRef.current !== requestId) return

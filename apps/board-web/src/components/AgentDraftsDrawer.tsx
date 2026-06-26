@@ -162,7 +162,7 @@ export function AgentDraftsDrawer({
                   responses={responses}
                 />
 
-                <AgentDraftMetaPanel key={selectedDraft.id} draft={selectedDraft} />
+                <AgentDraftMetaPanel key={`draft-meta:${selectedDraft.id}`} draft={selectedDraft} />
 
                 <AgentDraftReviewInfo draft={selectedDraft} />
 
@@ -179,7 +179,7 @@ export function AgentDraftsDrawer({
 
                 {onUpdateReview && (
                   <AgentDraftReviewActions
-                    key={selectedDraft.id}
+                    key={`draft-review:${selectedDraft.id}`}
                     draft={selectedDraft}
                     isReviewing={isReviewing}
                     reviewError={reviewError}
@@ -191,7 +191,7 @@ export function AgentDraftsDrawer({
 
                 {onSaveResponse && onLoadResponseDetail && (
                   <ManualAgentResponseSection
-                    key={selectedDraft.id}
+                    key={`draft-responses:${selectedDraft.id}`}
                     draft={selectedDraft}
                     responses={responses}
                     selectedResponse={selectedResponse}
@@ -208,7 +208,7 @@ export function AgentDraftsDrawer({
 
                 {onGenerateSuggestion && onSelectSuggestion && (
                   <AgentSuggestionSection
-                    key={`${selectedDraft.id}-suggestions`}
+                    key={`draft-suggestions:${selectedDraft.id}`}
                     draft={selectedDraft}
                     suggestions={suggestions}
                     selectedSuggestion={selectedSuggestion}

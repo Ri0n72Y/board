@@ -20,6 +20,10 @@ export function AgentSuggestionCard({
   onSelect,
 }: AgentSuggestionCardProps) {
   const { t } = useTranslation()
+  const visibleHighlights = keyTextItems(
+    suggestion.highlights.slice(0, 3),
+    `suggestion:${suggestion.id}:highlight`,
+  )
 
   const statusClass =
     STATUS_CLASSES[suggestion.status] ?? STATUS_CLASSES.generated
@@ -59,13 +63,13 @@ export function AgentSuggestionCard({
 
       {suggestion.highlights.length > 0 && (
         <ul className="mb-2 space-y-0.5">
-          {suggestion.highlights.slice(0, 3).map((h, i) => (
+          {visibleHighlights.map(({ key, text }) => (
             <li
-              key={i}
+              key={key}
               className="truncate pl-3 text-[11px] leading-snug text-slate-500"
               style={{ listStyleType: "'– '" }}
             >
-              {h}
+              {text}
             </li>
           ))}
         </ul>
@@ -79,4 +83,25 @@ export function AgentSuggestionCard({
       </div>
     </button>
   )
+}
+
+function keyTextItems(items: string[], prefix: string): { key: string; text: string }[] {
+  const seen = new Map<string, number>()
+  return items.map((text) => {
+    const hash = hashText(text)
+    const occurrence = seen.get(hash) ?? 0
+    seen.set(hash, occurrence + 1)
+    return {
+      key: `${prefix}:${hash}:${occurrence}`,
+      text,
+    }
+  })
+}
+
+function hashText(value: string): string {
+  let hash = 0
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0
+  }
+  return hash.toString(36)
 }

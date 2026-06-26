@@ -46,7 +46,7 @@ export function ManualAgentResponseSection({
 
   // Clear form when draft changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset on key change, parent uses key={draft.id}
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset on namespaced parent key change
     setResponseAgentName('')
     setResponseNote('')
     setResponseMarkdown('')

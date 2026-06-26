@@ -16,7 +16,7 @@ export function AgentDraftMetaPanel({ draft }: AgentDraftMetaPanelProps) {
 
   // Clear copy feedback when draft changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset on key change, parent also uses key={draft.id}
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset on namespaced parent key change
     setCopyFeedback(null)
   }, [draft.id])
 
