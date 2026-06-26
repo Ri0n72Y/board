@@ -1,4 +1,11 @@
-import type { AgentDraftDetail, AgentSuggestionDetail, AgentSuggestionSummary } from '@labour-board/shared'
+import type {
+  AgentDraftDetail,
+  AgentSuggestionDetail,
+  AgentSuggestionSummary,
+  RecordBody,
+  RecordItem,
+  RecordResponse,
+} from '@labour-board/shared'
 import { useTranslation } from 'react-i18next'
 import { ErrorBlock } from './ErrorBlock'
 import { AgentSuggestionCard } from './AgentSuggestionCard'
@@ -17,6 +24,8 @@ interface AgentSuggestionSectionProps {
   generateError: string | null
   onGenerate: (draftId: string) => void | Promise<unknown>
   onSelectSuggestion: (id: string) => void
+  records?: RecordResponse<RecordItem<RecordBody>>[]
+  onPatched?: (recordId: string) => void
 }
 
 export function AgentSuggestionSection({
@@ -31,6 +40,8 @@ export function AgentSuggestionSection({
   generateError,
   onGenerate,
   onSelectSuggestion,
+  records,
+  onPatched,
 }: AgentSuggestionSectionProps) {
   const { t } = useTranslation()
   const isReviewed = draft.status === 'reviewed'
@@ -131,7 +142,11 @@ export function AgentSuggestionSection({
       )}
 
       {!isDetailLoading && !detailError && selectedSuggestion && (
-        <AgentSuggestionDetailPanel suggestion={selectedSuggestion} />
+        <AgentSuggestionDetailPanel
+          suggestion={selectedSuggestion}
+          records={records}
+          onPatched={onPatched}
+        />
       )}
     </div>
   )

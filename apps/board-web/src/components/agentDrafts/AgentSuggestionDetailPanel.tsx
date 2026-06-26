@@ -1,20 +1,32 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { AgentSuggestionDetail } from '@labour-board/shared'
+import type {
+  AgentSuggestionDetail,
+  RecordBody,
+  RecordItem,
+  RecordResponse,
+} from '@labour-board/shared'
 import { Button } from '../ui/Button'
 import { MarkdownPreview } from '../ui/MarkdownPreview'
+import { AgentPatchDraftPanel } from './AgentPatchDraftPanel'
 import { downloadTextFile } from '../../utils/download'
+import { canCreatePatchDraft } from '../../utils/agentPatchDraft'
 
 interface AgentSuggestionDetailPanelProps {
   suggestion: AgentSuggestionDetail | null
+  records?: RecordResponse<RecordItem<RecordBody>>[]
+  onPatched?: (recordId: string) => void
 }
 
 export function AgentSuggestionDetailPanel({
   suggestion,
+  records,
+  onPatched,
 }: AgentSuggestionDetailPanelProps) {
   const { t } = useTranslation()
   const [showSkills, setShowSkills] = useState(false)
   const [showAudit, setShowAudit] = useState(false)
+  const [showPatchDraft, setShowPatchDraft] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
 
   if (!suggestion) return null
@@ -77,6 +89,43 @@ export function AgentSuggestionDetailPanel({
           {t('agent.suggestions.downloadMarkdown')}
         </Button>
       </div>
+
+      {/* Patch Draft section */}
+      {records && onPatched && canCreatePatchDraft(suggestion) && (
+        <div className="rounded-lg border border-slate-200 bg-white">
+          <div className="border-b border-slate-100 px-4 py-2 text-xs font-semibold uppercase text-slate-500">
+            {t('agent.patchDraft.title')}
+          </div>
+          <div className="px-4 py-3">
+            {!showPatchDraft ? (
+              <div className="grid gap-2">
+                <p className="text-xs text-slate-600">
+                  {t('agent.patchDraft.safetyNotice')}
+                </p>
+                <div>
+                  <Button
+                    type="button"
+                    variant="default"
+                    onClick={() => setShowPatchDraft(true)}
+                  >
+                    {t('agent.patchDraft.createButton')}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <AgentPatchDraftPanel
+                key={suggestion.id}
+                suggestionId={suggestion.id}
+                suggestionTitle={suggestion.title}
+                suggestionMarkdown={suggestion.markdown}
+                records={records}
+                onPatched={onPatched}
+                onClose={() => setShowPatchDraft(false)}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Full markdown preview */}
       <div className="rounded-lg border border-slate-200 bg-white">

@@ -655,6 +655,8 @@ export function BoardCurrentPage() {
         suggestionGenerateError={agentDraftController.suggestionGenerateError}
         onGenerateSuggestion={agentDraftController.generateSuggestion}
         onSelectSuggestion={agentDraftController.loadSuggestionDetail}
+        records={records}
+        onPatched={refreshAfterPatch}
       />
 
       <ExportContextDrawer

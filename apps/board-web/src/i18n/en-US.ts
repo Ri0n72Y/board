@@ -557,6 +557,37 @@ const enUS = {
     'agent.suggestions.status.reviewed': 'reviewed',
     'agent.suggestions.status.discarded': 'discarded',
 
+    // ─── Agent Patch Draft (2.6) ───
+    'agent.patchDraft.title': 'Patch Draft',
+    'agent.patchDraft.closeTitle': 'Close patch draft',
+    'agent.patchDraft.close': 'Close',
+    'agent.patchDraft.safetyNotice':
+      'This creates a human-edited patch draft. Nothing is applied automatically.',
+    'agent.patchDraft.createButton': 'Create Patch Draft',
+    'agent.patchDraft.selectRecord': 'Target Record',
+    'agent.patchDraft.searchPlaceholder': 'Search records by PID or title...',
+    'agent.patchDraft.loadingHead': 'Loading record head...',
+    'agent.patchDraft.targetRecord': 'Target',
+    'agent.patchDraft.currentVersion': 'Version',
+    'agent.patchDraft.parentId': 'Parent',
+    'agent.patchDraft.none': 'none',
+    'agent.patchDraft.descriptionLabel': 'Patch Description',
+    'agent.patchDraft.descriptionPlaceholder':
+      'Review suggestion detail before submitting. No AI patch has been applied.',
+    'agent.patchDraft.submitButton': 'Submit Human Patch',
+    'agent.patchDraft.submitting': 'Submitting...',
+    'agent.patchDraft.submitSuccess': 'Patch submitted successfully. Board refreshed.',
+    'agent.patchDraft.headLoadFailed': 'Failed to load record head.',
+    'agent.patchDraft.headMissing':
+      'This record is not present in current head. Refresh current board and try again.',
+    'agent.patchDraft.staleHead':
+      'This record has been changed by another operation. The head has been refreshed. Please review and submit again.',
+    'agent.patchDraft.conflictError':
+      'Record changed on the server. Refresh and try again.',
+    'agent.patchDraft.submitFailed': 'Patch submission failed.',
+    'agent.patchDraft.errorDescriptionRequired': 'Patch description is required.',
+    'agent.patchDraft.pidCandidatesLabel': 'PIDs found in suggestion:',
+
     // ─── Record History Drawer ───
     'history.loading': 'Loading record history...',
     'history.loadError': 'Failed to load record history',

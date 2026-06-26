@@ -1,4 +1,4 @@
-import type { AgentDraftDetail, AgentDraftStatus, AgentDraftSummary, AgentResponseDetail, AgentResponseSummary, AgentSuggestionDetail, AgentSuggestionSummary } from '@labour-board/shared'
+import type { AgentDraftDetail, AgentDraftStatus, AgentDraftSummary, AgentResponseDetail, AgentResponseSummary, AgentSuggestionDetail, AgentSuggestionSummary, RecordBody, RecordItem, RecordResponse } from '@labour-board/shared'
 import { useTranslation } from 'react-i18next'
 import { Button } from './ui/Button'
 import { AgentDraftQueuePanel } from './agentDrafts/AgentDraftQueuePanel'
@@ -56,6 +56,9 @@ interface AgentDraftsDrawerProps {
   suggestionGenerateError?: string | null
   onGenerateSuggestion?: (draftId: string) => void | Promise<unknown>
   onSelectSuggestion?: (suggestionId: string) => void
+  // Patch Draft (2.6)
+  records?: RecordResponse<RecordItem<RecordBody>>[]
+  onPatched?: (recordId: string) => void
 }
 
 export function AgentDraftsDrawer({
@@ -100,6 +103,9 @@ export function AgentDraftsDrawer({
   suggestionGenerateError = null,
   onGenerateSuggestion,
   onSelectSuggestion,
+  // Patch Draft (2.6)
+  records,
+  onPatched,
 }: AgentDraftsDrawerProps) {
   const { t } = useTranslation()
 
@@ -220,6 +226,8 @@ export function AgentDraftsDrawer({
                     generateError={suggestionGenerateError}
                     onGenerate={onGenerateSuggestion}
                     onSelectSuggestion={onSelectSuggestion}
+                    records={records}
+                    onPatched={onPatched}
                   />
                 )}
               </div>
