@@ -524,30 +524,14 @@ const zhCN = {
     'agent.patchDraft.closeTitle': '关闭补丁草稿',
     'agent.patchDraft.close': '关闭',
     'agent.patchDraft.safetyNotice':
-      '创建人工编辑的补丁草稿。不会自动应用任何内容。',
+      '创建人工编辑的补丁草稿。不会自动应用任何内容。你需要在记录编辑器中编辑并提交补丁。',
     'agent.patchDraft.createButton': '创建补丁草稿',
     'agent.patchDraft.selectRecord': '目标记录',
     'agent.patchDraft.searchPlaceholder': '按 PID 或标题搜索记录...',
-    'agent.patchDraft.loadingHead': '加载记录 head...',
-    'agent.patchDraft.targetRecord': '目标',
-    'agent.patchDraft.currentVersion': '当前版本',
-    'agent.patchDraft.parentId': '父节点',
-    'agent.patchDraft.none': '无',
     'agent.patchDraft.descriptionLabel': '补丁说明',
-    'agent.patchDraft.descriptionPlaceholder':
-      '提交前请参考 AI 建议详情。未应用任何 AI 补丁。',
-    'agent.patchDraft.submitButton': '提交人工补丁',
-    'agent.patchDraft.submitting': '提交中...',
-    'agent.patchDraft.submitSuccess': '补丁提交成功。看板已刷新。',
-    'agent.patchDraft.headLoadFailed': '加载记录 head 失败。',
-    'agent.patchDraft.headMissing':
-      '此记录不存在于当前 head 中。请刷新当前看板后重试。',
-    'agent.patchDraft.staleHead':
-      '此记录已被其他操作修改。已刷新 head，请检查后重新提交。',
-    'agent.patchDraft.conflictError':
-      '服务器上的记录已变更。请刷新后重试。',
-    'agent.patchDraft.submitFailed': '补丁提交失败。',
-    'agent.patchDraft.errorDescriptionRequired': '补丁说明为必填项。',
+    'agent.patchDraft.descriptionHint':
+      '此说明将在记录编辑器中提交补丁时附带。',
+    'agent.patchDraft.openEditorButton': '在记录编辑器中打开',
     'agent.patchDraft.pidCandidatesLabel': '建议中发现的 PID：',
 
     // ─── Record History Drawer ───

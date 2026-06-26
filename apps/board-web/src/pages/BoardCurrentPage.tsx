@@ -117,6 +117,9 @@ export function BoardCurrentPage() {
   const [editRecord, setEditRecord] = useState<RecordResponse<
     RecordItem<RecordBody>
   > | null>(null)
+  const [editInitialPatchDescription, setEditInitialPatchDescription] = useState<
+    string | undefined
+  >(undefined)
   const [isContextExportOpen, setIsContextExportOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
@@ -321,7 +324,20 @@ export function BoardCurrentPage() {
 
   const closeEdit = useCallback(() => {
     setEditRecord(null)
+    setEditInitialPatchDescription(undefined)
   }, [])
+
+  // Opens EditRecordDrawer from a patch draft with suggestion-sourced description.
+  const handleOpenPatchEditor = useCallback(
+    (recordId: string, patchDescription: string) => {
+      const found = records.find((r) => r.body.id === recordId)
+      if (!found) return
+      setIsCreateOpen(false)
+      setEditInitialPatchDescription(patchDescription)
+      setEditRecord(found)
+    },
+    [records],
+  )
 
   const refreshAfterPatch = useCallback(
     async (recordId: string) => {
@@ -656,7 +672,7 @@ export function BoardCurrentPage() {
         onGenerateSuggestion={agentDraftController.generateSuggestion}
         onSelectSuggestion={agentDraftController.loadSuggestionDetail}
         records={records}
-        onPatched={refreshAfterPatch}
+        onOpenEditor={handleOpenPatchEditor}
       />
 
       <ExportContextDrawer
@@ -712,6 +728,7 @@ export function BoardCurrentPage() {
           assetOptions={assetOptions}
           relationTargetOptions={relationTargetOptions}
           relationConstraintOptions={relationConstraintOptions}
+          initialPatchDescription={editInitialPatchDescription}
           onClose={closeEdit}
           onPatched={refreshAfterPatch}
         />

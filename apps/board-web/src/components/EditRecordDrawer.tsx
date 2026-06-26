@@ -53,6 +53,7 @@ interface EditRecordDrawerProps {
   assetOptions: RecordReferenceOption[]
   relationTargetOptions: RecordReferenceOption[]
   relationConstraintOptions: RelationConstraintOption[]
+  initialPatchDescription?: string
   onClose: () => void
   onPatched: (recordId: string) => Promise<void> | void
 }
@@ -74,6 +75,7 @@ export function EditRecordDrawer({
   assetOptions,
   relationTargetOptions,
   relationConstraintOptions,
+  initialPatchDescription,
   onClose,
   onPatched,
 }: EditRecordDrawerProps) {
@@ -225,6 +227,13 @@ export function EditRecordDrawer({
         parentId,
         currentVersion: baseHead.currentVersion,
         ...validation.patch,
+      }
+
+      // Stitch suggestion-sourced patch description when provided.
+      // Only the suggestion id/title/manual marker; does NOT include
+      // full markdown, context, prompt, or raw response.
+      if (initialPatchDescription) {
+        payload.description = initialPatchDescription
       }
 
       await submitRecordPatch(current.id, payload, controller.signal)

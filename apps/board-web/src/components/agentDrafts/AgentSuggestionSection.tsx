@@ -25,7 +25,7 @@ interface AgentSuggestionSectionProps {
   onGenerate: (draftId: string) => void | Promise<unknown>
   onSelectSuggestion: (id: string) => void
   records?: RecordResponse<RecordItem<RecordBody>>[]
-  onPatched?: (recordId: string) => void
+  onOpenEditor?: (recordId: string, patchDescription: string) => void
 }
 
 export function AgentSuggestionSection({
@@ -41,7 +41,7 @@ export function AgentSuggestionSection({
   onGenerate,
   onSelectSuggestion,
   records,
-  onPatched,
+  onOpenEditor,
 }: AgentSuggestionSectionProps) {
   const { t } = useTranslation()
   const isReviewed = draft.status === 'reviewed'
@@ -145,7 +145,7 @@ export function AgentSuggestionSection({
         <AgentSuggestionDetailPanel
           suggestion={selectedSuggestion}
           records={records}
-          onPatched={onPatched}
+          onOpenEditor={onOpenEditor}
         />
       )}
     </div>

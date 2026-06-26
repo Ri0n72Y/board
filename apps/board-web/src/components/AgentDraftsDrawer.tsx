@@ -58,7 +58,7 @@ interface AgentDraftsDrawerProps {
   onSelectSuggestion?: (suggestionId: string) => void
   // Patch Draft (2.6)
   records?: RecordResponse<RecordItem<RecordBody>>[]
-  onPatched?: (recordId: string) => void
+  onOpenEditor?: (recordId: string, patchDescription: string) => void
 }
 
 export function AgentDraftsDrawer({
@@ -105,7 +105,7 @@ export function AgentDraftsDrawer({
   onSelectSuggestion,
   // Patch Draft (2.6)
   records,
-  onPatched,
+  onOpenEditor,
 }: AgentDraftsDrawerProps) {
   const { t } = useTranslation()
 
@@ -227,7 +227,7 @@ export function AgentDraftsDrawer({
                     onGenerate={onGenerateSuggestion}
                     onSelectSuggestion={onSelectSuggestion}
                     records={records}
-                    onPatched={onPatched}
+                    onOpenEditor={onOpenEditor}
                   />
                 )}
               </div>

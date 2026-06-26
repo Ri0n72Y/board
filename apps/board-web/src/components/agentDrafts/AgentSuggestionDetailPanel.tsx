@@ -15,13 +15,13 @@ import { canCreatePatchDraft } from '../../utils/agentPatchDraft'
 interface AgentSuggestionDetailPanelProps {
   suggestion: AgentSuggestionDetail | null
   records?: RecordResponse<RecordItem<RecordBody>>[]
-  onPatched?: (recordId: string) => void
+  onOpenEditor?: (recordId: string, patchDescription: string) => void
 }
 
 export function AgentSuggestionDetailPanel({
   suggestion,
   records,
-  onPatched,
+  onOpenEditor,
 }: AgentSuggestionDetailPanelProps) {
   const { t } = useTranslation()
   const [showSkills, setShowSkills] = useState(false)
@@ -91,7 +91,7 @@ export function AgentSuggestionDetailPanel({
       </div>
 
       {/* Patch Draft section */}
-      {records && onPatched && canCreatePatchDraft(suggestion) && (
+      {records && onOpenEditor && canCreatePatchDraft(suggestion) && (
         <div className="rounded-lg border border-slate-200 bg-white">
           <div className="border-b border-slate-100 px-4 py-2 text-xs font-semibold uppercase text-slate-500">
             {t('agent.patchDraft.title')}
@@ -119,7 +119,7 @@ export function AgentSuggestionDetailPanel({
                 suggestionTitle={suggestion.title}
                 suggestionMarkdown={suggestion.markdown}
                 records={records}
-                onPatched={onPatched}
+                onOpenEditor={onOpenEditor}
                 onClose={() => setShowPatchDraft(false)}
               />
             )}
