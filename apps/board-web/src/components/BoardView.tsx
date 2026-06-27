@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import type {
   BoardConfig,
   Profile,
@@ -29,8 +29,7 @@ interface BoardViewProps {
   profiles?: Profile[] | null
   assetOptions: RecordReferenceOption[]
   relationTargetOptions: RecordReferenceOption[]
-  onHistoryClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
-  onEditClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
+  onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
   movingRecordId?: string | null
   moveErrors?: Record<string, string>
   visibleColumnIds?: string[] | null
@@ -38,6 +37,7 @@ interface BoardViewProps {
     record: RecordResponse<RecordItem<RecordBody>>,
     targetStatusTag: Tag,
   ) => void
+  onToastHint?: (msg: string | null) => void
 }
 
 export function BoardView({
@@ -46,12 +46,12 @@ export function BoardView({
   profiles,
   assetOptions,
   relationTargetOptions,
-  onHistoryClick,
-  onEditClick,
+  onCardClick,
   movingRecordId,
   moveErrors,
   visibleColumnIds,
   onMoveStatus,
+  onToastHint,
 }: BoardViewProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
@@ -88,78 +88,75 @@ export function BoardView({
     [allColumns],
   )
 
-  return (
-    <section className="mt-4" aria-label="Current records board">
-      {(hiddenSummary.hiddenRecordCount > 0 ||
-        hiddenSummary.hiddenUncategorizedRecordCount > 0) && (
-        <div className="mb-3 grid gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {hiddenSummary.hiddenRecordCount > 0 && (
-            <p>
-              {t('board.hiddenColumnsNotice', {
-                count: hiddenSummary.hiddenColumnCount,
-                columns: hiddenSummary.hiddenColumnCount,
-                records: hiddenSummary.hiddenRecordCount,
-              })}
-            </p>
-          )}
-          {hiddenSummary.hiddenUncategorizedRecordCount > 0 && (
-            <p>
-              {t('board.hiddenUncategorizedNotice', {
-                count: hiddenSummary.hiddenUncategorizedRecordCount,
-              })}
-            </p>
-          )}
-        </div>
-      )}
-      <div className="rounded-lg border border-slate-200 bg-white/70 p-2">
-        <p className="mb-2 px-1 text-xs font-medium text-slate-500">
-          {t('board.horizontalScrollHint')}
-        </p>
-        <div className="overflow-x-auto pb-3 [scrollbar-width:thin]">
-          <div className="grid min-w-max gap-3 sm:auto-cols-[20rem] sm:grid-flow-col sm:grid-cols-none">
-          {columns.map((column) => (
-            <section
-              key={column.id}
-              className="grid max-h-[calc(100svh-18rem)] min-h-80 grid-rows-[auto_minmax(0,1fr)] gap-3 rounded-lg border border-slate-200 bg-slate-100 p-3 sm:w-80"
-              aria-label={column.label}
-            >
-              <header className="sticky top-0 z-10 flex min-w-0 items-center justify-between gap-3 bg-slate-100 pb-1">
-                <div className="min-w-0">
-                  <h2 className="truncate text-sm font-bold text-slate-950">
-                    {column.label}
-                  </h2>
-                </div>
-                <span className="inline-flex min-h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-white px-2 text-xs font-bold text-slate-600">
-                  {column.records.length}
-                </span>
-              </header>
+  // Show hidden columns notice as toast
+  useEffect(() => {
+    const parts: string[] = []
+    if (hiddenSummary.hiddenRecordCount > 0) {
+      parts.push(t('board.hiddenColumnsNotice', {
+        count: hiddenSummary.hiddenColumnCount,
+        columns: hiddenSummary.hiddenColumnCount,
+        records: hiddenSummary.hiddenRecordCount,
+      }))
+    }
+    if (hiddenSummary.hiddenUncategorizedRecordCount > 0) {
+      parts.push(t('board.hiddenUncategorizedNotice', {
+        count: hiddenSummary.hiddenUncategorizedRecordCount,
+      }))
+    }
+    if (parts.length > 0) {
+      onToastHint?.(parts.join(' '))
+    } else {
+      onToastHint?.(null)
+    }
+  }, [hiddenSummary, t, onToastHint])
 
-              {column.records.length > 0 ? (
-                <div className="grid min-h-0 gap-3 overflow-y-auto pr-1 [scrollbar-width:thin]">
-                  {column.records.map((record) => (
-                    <RecordCard
-                      key={record.body.id}
-                      record={record}
-                      profiles={profiles}
-                      assetOptions={assetOptions}
-                      relationTargetOptions={relationTargetOptions}
-                      compact
-                      moveStatusOptions={moveStatusOptions}
-                      isMovingStatus={movingRecordId === record.body.id}
-                      moveStatusError={moveErrors?.[record.body.id] ?? null}
-                      onHistoryClick={onHistoryClick}
-                      onEditClick={onEditClick}
-                      onMoveStatus={onMoveStatus}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="rounded-md border border-dashed border-slate-300 bg-white px-3 py-4 text-sm text-slate-500">
-                  {t('record.noRecords')}
-                </p>
-              )}
-            </section>
-          ))}
+  return (
+    <section className="h-full min-h-0" aria-label="Current records board">
+      <div className="h-full min-h-0 rounded-lg border border-slate-200 bg-white/70 p-3 pb-5">
+        <div className="h-full min-h-0 overflow-x-auto pb-4 [scrollbar-width:thin]">
+          <div className="grid h-full w-max auto-cols-[24rem] grid-flow-col items-stretch gap-4">
+            {columns.map((column) => (
+              <section
+                key={column.id}
+                className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3 rounded-lg border border-slate-200 bg-slate-100 p-4"
+                aria-label={column.label}
+              >
+                <header className="flex min-w-0 items-center justify-between gap-3 bg-slate-100 pb-1">
+                  <div className="min-w-0">
+                    <h2 className="truncate text-sm font-bold text-slate-950">
+                      {column.label}
+                    </h2>
+                  </div>
+                  <span className="inline-flex min-h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-white px-2 text-xs font-bold text-slate-600">
+                    {column.records.length}
+                  </span>
+                </header>
+
+                {column.records.length > 0 ? (
+                  <div className="grid min-h-0 auto-rows-max items-start gap-3 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                    {column.records.map((record) => (
+                      <RecordCard
+                        key={record.body.id}
+                        record={record}
+                        profiles={profiles}
+                        assetOptions={assetOptions}
+                        relationTargetOptions={relationTargetOptions}
+                        compact
+                        moveStatusOptions={moveStatusOptions}
+                        isMovingStatus={movingRecordId === record.body.id}
+                        moveStatusError={moveErrors?.[record.body.id] ?? null}
+                        onCardClick={onCardClick}
+                        onMoveStatus={onMoveStatus}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="rounded-md border border-dashed border-slate-300 bg-white px-3 py-4 text-sm text-slate-500">
+                    {t('record.noRecords')}
+                  </p>
+                )}
+              </section>
+            ))}
           </div>
         </div>
       </div>

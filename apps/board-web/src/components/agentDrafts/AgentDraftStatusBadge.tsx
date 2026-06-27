@@ -10,7 +10,7 @@ export function AgentDraftStatusBadge({ status }: { status: AgentDraftStatus }) 
     discarded: 'bg-red-200 text-red-800',
   }
   return (
-    <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-semibold uppercase ${colors[status]}`}>
+    <span className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-semibold uppercase ${colors[status]}`}>
       {t(`agent.status.${status}`)}
     </span>
   )

@@ -310,4 +310,111 @@ describe('agentSuggestionQuality', () => {
     const output = validateSuggestionOutput(validOutput({ diagnostics: entries }), config)
     expect(output.diagnostics?.length).toBe(20)
   })
+
+  // ─── Token budget semantics allowed ───
+
+  it('diagnostics containing "token budget" passes', () => {
+    const output = validateSuggestionOutput(
+      validOutput({ diagnostics: ['token budget: 5000 tokens allocated'] }),
+      config,
+    )
+    expect(output.diagnostics).toBeDefined()
+  })
+
+  it('diagnostics containing "input tokens" passes', () => {
+    const output = validateSuggestionOutput(
+      validOutput({ diagnostics: ['input tokens: 1200'] }),
+      config,
+    )
+    expect(output.diagnostics).toBeDefined()
+  })
+
+  it('diagnostics containing "estimated output tokens" passes', () => {
+    const output = validateSuggestionOutput(
+      validOutput({ diagnostics: ['estimated output tokens: 800'] }),
+      config,
+    )
+    expect(output.diagnostics).toBeDefined()
+  })
+
+  it('diagnostics containing token usage budget sentence passes', () => {
+    const output = validateSuggestionOutput(
+      validOutput({ diagnostics: ['Token usage is within budget'] }),
+      config,
+    )
+    expect(output.diagnostics).toBeDefined()
+  })
+
+  it('diagnostics containing "token 预算" passes', () => {
+    const output = validateSuggestionOutput(
+      validOutput({ diagnostics: ['token 预算: 5000'] }),
+      config,
+    )
+    expect(output.diagnostics).toBeDefined()
+  })
+
+  // ─── Credential semantics still blocked ───
+
+  it('diagnostics containing "api key" fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['the api key was set'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing "Bearer token" fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['used Bearer token for auth'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing "access token" fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['access token is invalid'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing "refresh token" fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['refresh token was used'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing "Authorization" fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['Authorization header present'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing "密钥" fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['检测到 密钥 泄露'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
+
+  it('diagnostics containing "私钥" fails', () => {
+    expect(() =>
+      validateSuggestionOutput(
+        validOutput({ diagnostics: ['私钥 不应出现在日志中'] }),
+        config,
+      ),
+    ).toThrow(AgentProviderOutputValidationError)
+  })
 })

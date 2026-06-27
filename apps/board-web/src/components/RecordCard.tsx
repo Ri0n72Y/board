@@ -5,11 +5,10 @@ import type {
   RecordResponse,
   Tag,
 } from '@labour-board/shared'
-import { ClockIcon, PencilSquareIcon } from '@heroicons/react/20/solid'
 import { useTranslation } from 'react-i18next'
-import { Button } from './ui/Button'
 import { TagChipRow } from './BoardFilters'
 import { MoveStatusControl } from './MoveStatusControl'
+import { ProfileAvatar } from './ProfileAvatar'
 import { lookupProfile } from '../utils/board'
 import {
   formatRelationLine,
@@ -20,7 +19,21 @@ import {
   summarizeReferenceList,
   type ReferenceDisplayItem,
 } from '../utils/referenceDisplay'
+import { formatProfileCompact } from '../utils/profileDisplay'
 import type { MoveStatusOption } from '../utils/statusMove'
+
+/** Tags that, when clicked inside a card, should NOT trigger card detail open. */
+const INTERACTIVE_SELECTOR =
+  'button, a, input, select, textarea, [data-card-interactive="true"]'
+
+function isInteractiveTarget(
+  target: EventTarget | null,
+  currentTarget: EventTarget
+): boolean {
+  if (target === currentTarget) return false
+  if (!(target instanceof Element)) return false
+  return target.closest(INTERACTIVE_SELECTOR) !== null
+}
 
 interface RecordCardProps {
   record: RecordResponse<RecordItem<RecordBody>>
@@ -32,11 +45,10 @@ interface RecordCardProps {
   moveStatusOptions?: MoveStatusOption[]
   moveStatusError?: string | null
   isMovingStatus?: boolean
-  onHistoryClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
-  onEditClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
+  onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
   onMoveStatus?: (
     record: RecordResponse<RecordItem<RecordBody>>,
-    targetStatusTag: Tag,
+    targetStatusTag: Tag
   ) => void
 }
 
@@ -49,95 +61,116 @@ export function RecordCard({
   moveStatusOptions = [],
   moveStatusError,
   isMovingStatus = false,
-  onHistoryClick,
-  onEditClick,
+  onCardClick,
   onMoveStatus,
 }: RecordCardProps) {
   const { t } = useTranslation()
   const current = record.body
   const body = asDisplayBody(current.body)
   const title = body.title ?? current.pid
-  const currentStatus = current.tags.find((tag) => tag.startsWith('status:')) ?? null
+  const currentStatus =
+    current.tags.find((tag) => tag.startsWith('status:')) ?? null
+  const profile = lookupProfile(profiles ?? null, current.assignee ?? '')
+  const assigneeDisplay = formatProfileCompact(
+    current.assignee,
+    profile,
+    t('record.unassigned'),
+    t('record.unknownMember')
+  )
+
+  const handleClick = (event: React.MouseEvent) => {
+    if (isInteractiveTarget(event.target as EventTarget, event.currentTarget))
+      return
+    onCardClick?.(record)
+  }
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.target !== event.currentTarget) return
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onCardClick?.(record)
+    }
+  }
 
   if (compact) {
     return (
-      <article className="grid gap-3 rounded-lg border border-slate-200 bg-white p-3">
-        <div className="grid gap-2">
-          <div className="min-w-0">
-            <p className="mb-1 font-mono text-xs text-slate-500">
-              {current.pid}
-            </p>
-            <h3 className="wrap-break-word text-base font-semibold leading-tight text-slate-950">
-              {title}
-            </h3>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              className="min-h-8 px-2.5 text-xs"
-              onClick={() => onEditClick?.(record)}
-              title={t('record.editTitle')}
-              icon={<PencilSquareIcon className="h-4 w-4" />}
-            >
-              {t('record.edit')}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="min-h-8 px-2.5 text-xs"
-              onClick={() => onHistoryClick?.(record)}
-              title={t('record.openHistory')}
-              icon={<ClockIcon className="h-4 w-4" />}
-            >
-              {t('record.history')}
-            </Button>
-          </div>
+      <article
+        className="flex h-fit w-full cursor-pointer flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 transition hover:border-slate-400 hover:shadow-sm"
+        onClick={handleClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
+      >
+        <div className="min-w-0 shrink-0">
+          <p className="mb-0.5 font-mono text-xs text-slate-500">
+            {current.pid}
+          </p>
+          <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-slate-950">
+            {title}
+          </h3>
         </div>
 
-        <dl className="grid gap-2">
-          <MetaItem
-            label={t('record.assignee')}
-            value={formatAssignee(current.assignee, profiles, t)}
+        <div className="min-w-0 shrink-0">
+          <AssigneeCompact
+            pk={current.assignee}
+            profile={profile}
+            displayText={assigneeDisplay}
           />
-        </dl>
+        </div>
 
         {current.tags.length > 0 ? (
-          <TagChipRow tags={current.tags} readonly />
+          <div className="max-h-7 shrink-0 overflow-hidden">
+            <TagChipRow tags={current.tags} readonly />
+          </div>
         ) : (
-          <p className="text-sm text-slate-500">{t('record.noTags')}</p>
+          <p className="text-xs text-slate-400">{t('record.noTags')}</p>
         )}
 
         <ReferenceList
           label={t('record.assets')}
           values={current.assets ?? []}
           options={assetOptions}
-          maxVisible={2}
+          maxVisible={1}
           compact
         />
 
         <RelationsList
           relations={current.relations ?? []}
           relationTargetOptions={relationTargetOptions}
-          maxVisible={2}
+          maxVisible={1}
           compact
         />
 
         {onMoveStatus && moveStatusOptions.length > 0 && (
-          <MoveStatusControl
-            currentStatus={currentStatus}
-            options={moveStatusOptions}
-            isMoving={isMovingStatus}
-            error={moveStatusError}
-            onMove={(targetStatusTag) => onMoveStatus(record, targetStatusTag)}
-          />
+          <div
+            data-card-interactive="true"
+            className="shrink-0 border-t border-slate-100 pt-2"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <MoveStatusControl
+              currentStatus={currentStatus}
+              options={moveStatusOptions}
+              isMoving={isMovingStatus}
+              error={moveStatusError}
+              onMove={(targetStatusTag) =>
+                onMoveStatus(record, targetStatusTag)
+              }
+            />
+          </div>
         )}
       </article>
     )
   }
 
   return (
-    <article className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5">
+    <article
+      className="grid cursor-pointer gap-4 rounded-lg border border-slate-200 bg-white p-5 transition hover:border-slate-400 hover:shadow-sm max-w-3xl"
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+    >
       <div className="grid gap-3 sm:flex sm:justify-between">
         <div>
           <p className="mb-1 font-mono text-xs text-slate-500">{current.pid}</p>
@@ -145,35 +178,19 @@ export function RecordCard({
             {title}
           </h2>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onEditClick?.(record)}
-            title={t('record.editTitle')}
-            icon={<PencilSquareIcon className="h-4 w-4" />}
-          >
-            {t('record.edit')}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onHistoryClick?.(record)}
-            title={t('record.openHistory')}
-            icon={<ClockIcon className="h-4 w-4" />}
-          >
-            {t('record.history')}
-          </Button>
-        </div>
+        <AssigneeCompact
+          pk={current.assignee}
+          profile={profile}
+          displayText={assigneeDisplay}
+        />
       </div>
 
-      <dl className="grid gap-2 sm:grid-cols-3">
-        <MetaItem
-          label={t('record.assignee')}
-          value={formatAssignee(current.assignee, profiles, t)}
-        />
+      <dl className="grid gap-2 sm:grid-cols-2">
         <MetaItem label={t('record.schema')} value={current.schema} />
-        <MetaItem label={t('record.created')} value={formatDate(record.createdAt)} />
+        <MetaItem
+          label={t('record.created')}
+          value={formatDate(record.createdAt)}
+        />
       </dl>
 
       {(body.description || body.content) && (
@@ -205,6 +222,29 @@ export function RecordCard({
         maxVisible={3}
       />
     </article>
+  )
+}
+
+function AssigneeCompact({
+  pk,
+  profile,
+  displayText,
+}: {
+  pk?: string | null
+  profile: Profile | undefined | null
+  displayText: string
+}) {
+  if (!pk) return null
+  return (
+    <div className="flex shrink-0 items-center gap-2" title={displayText}>
+      <ProfileAvatar
+        name={profile?.name ?? pk}
+        pk={pk}
+        avatarUrl={profile?.avatarUrl ?? null}
+        size={24}
+      />
+      <span className="truncate text-xs text-slate-500">{displayText}</span>
+    </div>
   )
 }
 
@@ -240,7 +280,11 @@ function ReferenceList({
       {summary.visible.length > 0 ? (
         <ul className="grid gap-1.5">
           {summary.visible.map((item, index) => (
-            <ReferenceListItem item={item} key={`${item.value}:${index}`} />
+            <ReferenceListItem
+              item={item}
+              key={`${item.value}:${index}`}
+              compact={compact}
+            />
           ))}
           {summary.hiddenCount > 0 && (
             <li className="text-xs font-medium text-slate-500">
@@ -255,9 +299,22 @@ function ReferenceList({
   )
 }
 
-function ReferenceListItem({ item }: { item: ReferenceDisplayItem }) {
+function ReferenceListItem({
+  item,
+  compact = false,
+}: {
+  item: ReferenceDisplayItem
+  compact?: boolean
+}) {
   return (
-    <li className="min-w-0 wrap-break-word text-xs text-slate-700" title={item.meta}>
+    <li
+      className={
+        compact
+          ? 'min-w-0 truncate text-xs text-slate-700'
+          : 'min-w-0 wrap-break-word text-xs text-slate-700'
+      }
+      title={item.meta}
+    >
       {item.label}
     </li>
   )
@@ -276,19 +333,28 @@ function RelationsList({
 }) {
   const { t } = useTranslation()
   const visibleRelations = (relations ?? []).slice(0, maxVisible)
-  const hiddenCount = Math.max((relations?.length ?? 0) - visibleRelations.length, 0)
+  const hiddenCount = Math.max(
+    (relations?.length ?? 0) - visibleRelations.length,
+    0
+  )
   const translate: RelationTranslator = (key, options) =>
     t(key, { defaultValue: options?.defaultValue ?? key })
   if (compact && (!relations || relations.length === 0)) return null
 
   return (
     <section className={compact ? 'grid gap-1.5' : 'grid gap-2'}>
-      <h3 className="text-sm font-semibold text-slate-500">{t('record.relations')}</h3>
+      <h3 className="text-sm font-semibold text-slate-500">
+        {t('record.relations')}
+      </h3>
       {relations && relations.length > 0 ? (
         <ul className="grid gap-1.5">
           {visibleRelations.map((relation, index) => (
             <li
-              className="min-w-0 wrap-break-word text-xs text-slate-700"
+              className={
+                compact
+                  ? 'min-w-0 truncate text-xs text-slate-700'
+                  : 'min-w-0 wrap-break-word text-xs text-slate-700'
+              }
               key={`${relation.constraint}:${relation.target}:${index}`}
               title={relation.target}
             >
@@ -307,6 +373,7 @@ function RelationsList({
     </section>
   )
 }
+
 function asDisplayBody(body: RecordBody): {
   title?: string
   description?: string
@@ -332,17 +399,4 @@ function formatDate(value: string): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   return date.toLocaleString()
-}
-
-function formatAssignee(
-  pk: string | undefined | null,
-  profiles: Profile[] | null | undefined,
-  t: (key: string) => string,
-): string {
-  if (!pk || pk.trim() === '') return t('record.unassigned')
-  const profile = lookupProfile(profiles ?? null, pk)
-  if (profile) {
-    return `${profile.name} (${pk.slice(0, 6)}…${pk.slice(-4)})`
-  }
-  return `${t('record.unknownMember')} (${pk.slice(0, 6)}…${pk.slice(-4)})`
 }

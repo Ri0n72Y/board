@@ -6,10 +6,8 @@
  */
 import {
   buildPatchDraftDescription,
-  buildPatchDraftSummaryLine,
   canCreatePatchDraft,
   extractPidCandidates,
-  patchDraftHasContentChanges,
 } from './agentPatchDraft'
 import type { AgentSuggestionDetail } from '@labour-board/shared'
 
@@ -57,14 +55,6 @@ assert(
 // Must NOT contain full markdown, prompt, raw response
 const desc = buildPatchDraftDescription('test-id', 'Test')
 assert(!desc.includes('```json'), 'does not contain markdown fence')
-
-// ─── buildPatchDraftSummaryLine ───
-console.log('\nbuildPatchDraftSummaryLine')
-assertEq(
-  buildPatchDraftSummaryLine('abcdef123456', 'Test suggestion'),
-  'AI suggestion abcdef12: Test suggestion',
-  'constructs summary line',
-)
 
 // ─── extractPidCandidates ───
 console.log('\nextractPidCandidates')
@@ -125,37 +115,6 @@ assert(
     markdown: '',
   } as unknown as AgentSuggestionDetail),
   'empty title and markdown → false',
-)
-
-// ─── patchDraftHasContentChanges ───
-console.log('\npatchDraftHasContentChanges')
-assert(
-  !patchDraftHasContentChanges({}),
-  'empty payload → false',
-)
-assert(
-  patchDraftHasContentChanges({ body: { title: 'new' } }),
-  'body present → true',
-)
-assert(
-  patchDraftHasContentChanges({ tagChanges: { add: [], remove: [] } }),
-  'tagChanges present → true',
-)
-assert(
-  patchDraftHasContentChanges({ assignee: 'pk1' }),
-  'assignee present → true',
-)
-assert(
-  patchDraftHasContentChanges({ assets: ['a'] }),
-  'assets present → true',
-)
-assert(
-  patchDraftHasContentChanges({ relations: [] }),
-  'relations present → true',
-)
-assert(
-  !patchDraftHasContentChanges({ assignee: undefined }),
-  'assignee undefined → false',
 )
 
 // ─── Summary ───

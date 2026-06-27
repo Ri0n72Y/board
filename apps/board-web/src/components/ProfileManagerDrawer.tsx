@@ -182,7 +182,7 @@ export function ProfileManagerDrawer({
 
         {/* Create/Edit form */}
         {mode !== 'idle' && (
-          <FormCard
+          <ProfileManagerFormCard
             mode={mode}
             form={form}
             error={error}
@@ -212,7 +212,7 @@ export function ProfileManagerDrawer({
         ) : (
           <ul className="grid gap-2">
             {filteredProfiles.map((profile) => (
-              <ProfileItem
+              <ProfileManagerProfileItem
                 key={profile.pk}
                 profile={profile}
                 copiedPk={copiedPk}
@@ -230,7 +230,7 @@ export function ProfileManagerDrawer({
 
 /* ─── Profile list item ─── */
 
-function ProfileItem({
+function ProfileManagerProfileItem({
   profile,
   copiedPk,
   onEdit,
@@ -301,7 +301,7 @@ function ProfileItem({
 
 /* ─── Create / Edit form card ─── */
 
-function FormCard({
+function ProfileManagerFormCard({
   mode,
   form,
   error,

@@ -12,6 +12,7 @@ const enUS = {
     'header.refresh': 'Refresh',
     'header.refreshing': 'Refreshing...',
     'header.settings': 'Settings',
+    'header.more': 'More',
 
     // ─── View mode toggle ───
     'viewMode.list': 'List View',
@@ -131,6 +132,7 @@ const enUS = {
     'record.noRecords': 'No records',
     'record.none': 'None',
     'record.assets': 'Assets',
+    'record.close': 'Close',
     'record.relations': 'Relations',
     'record.moreAssets_one': '+{{count}} more asset',
     'record.moreAssets_other': '+{{count}} more assets',
@@ -203,7 +205,7 @@ const enUS = {
     'create.optional': ' (optional)',
 
     // ─── Edit Record Drawer ───
-    'edit.subtitle': '{pid} / {id}',
+    'edit.subtitle': '{{pid}} / {{id}}',
     'edit.title': 'Edit Record',
     'edit.closeTitle': 'Close edit record',
     'edit.close': 'Close',
@@ -257,11 +259,12 @@ const enUS = {
     'snapshot.loadingList': 'Loading snapshots...',
     'snapshot.empty': 'No snapshots yet.',
     'snapshot.noReason': 'No reason',
-    'snapshot.recordsCount': '{count} records',
+    'snapshot.recordsCount': '{{count}} records',
     'snapshot.loadingDetail': 'Loading snapshot detail...',
     'snapshot.selectHint': 'Select a snapshot to view its static records.',
     'snapshot.detailTitle': 'Snapshot detail',
     'snapshot.exportButton': 'Export Snapshot',
+    'snapshot.exporting': 'Exporting...',
     'snapshot.exportAgentContext': 'Export Agent Snapshot Context',
     'snapshot.restoreNotImplemented': 'Restore not implemented',
     'snapshot.detailCreated': 'Created',
@@ -373,6 +376,33 @@ const enUS = {
     'agent.selectHint': 'Select a draft to view its context.',
     'agent.detailFailed': 'Detail failed',
 
+    // ─── Agent Draft Context Preview ───
+    'agent.contextPreview': 'Context Markdown Preview',
+
+    // ─── Agent Draft Meta Panel ───
+    'agent.meta.title': 'Context markdown preview',
+    'agent.meta.profile': 'Profile',
+    'agent.meta.source': 'Source',
+    'agent.meta.created': 'Created',
+    'agent.meta.createdBy': 'Created by',
+    'agent.meta.status': 'Status',
+    'agent.meta.records': 'Records',
+    'agent.meta.contextGoal': 'Context goal',
+    'agent.meta.snapshot': 'Snapshot',
+    'agent.meta.none': 'None',
+    'agent.meta.copyMarkdown': 'Copy Markdown',
+    'agent.meta.download': 'Download',
+    'agent.meta.copied': 'Copied!',
+    'agent.meta.copyFailed': 'Copy failed',
+
+    // ─── Agent Draft Review Info ───
+    'agent.reviewInfo.notReviewed': 'Not reviewed yet',
+    'agent.reviewInfo.title': 'Review Info',
+    'agent.reviewInfo.reviewedAt': 'Reviewed at',
+    'agent.reviewInfo.reviewedBy': 'Reviewed by',
+    'agent.reviewInfo.reviewNote': 'Review note',
+    'agent.reviewInfo.unknown': 'unknown',
+
     // ─── Agent Draft Queue ───
     'agent.queue.title': 'Draft Queue',
     'agent.queue.refresh': 'Refresh',
@@ -382,7 +412,7 @@ const enUS = {
     'agent.queue.creating': 'Creating draft...',
     'agent.queue.loading': 'Loading drafts...',
     'agent.queue.empty': 'No agent drafts yet.',
-    'agent.queue.emptyFilter': 'No {status} drafts.',
+    'agent.queue.emptyFilter': 'No {{status}} drafts.',
     'agent.queue.emptyHint':
       'Save a Context Pack from the Export drawer as an Agent Draft to review here.',
     'agent.queue.records': 'records',
@@ -419,6 +449,7 @@ const enUS = {
     'agent.timeline.tone.complete': 'complete',
     'agent.timeline.tone.pending': 'pending',
     'agent.timeline.tone.blocked': 'blocked',
+    'agent.timeline.tone.by': 'by {{name}}',
     'agent.timeline.draftCreated': 'Draft Created',
     'agent.timeline.draftCreatedDesc':
       'A static Agent context draft was created from the selected source.',
@@ -429,7 +460,7 @@ const enUS = {
     'agent.timeline.reviewed': 'Human Reviewed',
     'agent.timeline.reviewedDesc':
       'This draft is eligible for formal handoff and manual response intake.',
-    'agent.timeline.reviewedNote': 'Note: {note}',
+    'agent.timeline.reviewedNote': 'Note: {{note}}',
     'agent.timeline.discarded': 'Discarded',
     'agent.timeline.discardedDesc':
       'This draft is not eligible for formal handoff or manual response intake.',
@@ -445,10 +476,10 @@ const enUS = {
     'agent.timeline.handoffDisabled': 'Formal Handoff Disabled',
     'agent.timeline.handoffDisabledDesc':
       'Discarded drafts cannot generate formal handoff.',
-    'agent.timeline.responses': 'Manual Responses Pasted ({count})',
+    'agent.timeline.responses': 'Manual Responses Pasted ({{count}})',
     'agent.timeline.responsesDesc':
       'Responses are manually pasted records. They are not applied patches and do not mutate the board.',
-    'agent.timeline.responsesMore': '+{count} more responses',
+    'agent.timeline.responsesMore': '+{{count}} more responses',
     'agent.timeline.noResponses': 'No Manual Responses Yet',
     'agent.timeline.noResponsesDesc':
       'Paste an external Agent response manually after using the handoff.',
@@ -487,7 +518,7 @@ const enUS = {
     'agent.response.pasteDiscarded': 'Response paste not available',
     'agent.response.pasteDiscardedDesc':
       'Discarded drafts cannot receive Agent responses. Reset to Draft and review again if needed.',
-    'agent.response.listTitle': 'Pasted Responses ({count})',
+    'agent.response.listTitle': 'Pasted Responses ({{count}})',
     'agent.response.loadingResponses': 'Loading responses...',
     'agent.response.listFailed': 'Response list failed',
     'agent.response.detailFailed': 'Response detail failed',
@@ -498,6 +529,12 @@ const enUS = {
     'agent.response.copyFailed': 'Copy failed',
     'agent.response.showFull': 'Show full',
     'agent.response.collapse': 'Collapse',
+    'agent.response.chars': 'chars',
+    'agent.response.meta.agent': 'Agent',
+    'agent.response.meta.pastedAt': 'Pasted at',
+    'agent.response.meta.pastedBy': 'Pasted by',
+    'agent.response.meta.length': 'Length',
+    'agent.response.meta.note': 'Note',
 
     // ─── Formal Handoff Section ───
     'agent.handoff.sectionTitle': 'Formal Handoff',
@@ -568,6 +605,8 @@ const enUS = {
     'agent.patchDraft.createButton': 'Create Patch Draft',
     'agent.patchDraft.selectRecord': 'Target Record',
     'agent.patchDraft.searchPlaceholder': 'Search records by PID or title...',
+    'agent.patchDraft.visibleRecordsHint':
+      'Only records visible in the current board view are listed. Clear filters if the target record is missing.',
     'agent.patchDraft.descriptionLabel': 'Patch Description',
     'agent.patchDraft.descriptionHint':
       'This description will be attached to the patch when submitted via the record editor.',
@@ -666,7 +705,8 @@ const enUS = {
     'summary.archived': 'Archived',
     'summary.blocked': 'Blocked',
 
-    // ─── Status Badge ───
+    // ─── Badges / Toast ───
+    'toast.close': 'Close',
     'badge.loading': 'loading',
     'badge.clean': 'clean',
     'badge.partial': 'partial',

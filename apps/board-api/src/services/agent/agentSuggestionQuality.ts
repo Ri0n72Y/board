@@ -37,11 +37,16 @@ const MAX_DIAGNOSTIC_LENGTH = 500
 const MAX_DIAGNOSTIC_ENTRIES = 20
 
 const DIAGNOSTIC_SENSITIVE_MARKERS_LOWER = [
+  'api key',
   'apikey',
   'api_key',
   'secret',
-  'token',
+  'password',
+  'private key',
+  'bearer token',
+  'access token',
   'access_token',
+  'refresh token',
   'refresh_token',
   'authorization',
   'bearer',
@@ -53,6 +58,12 @@ const DIAGNOSTIC_SENSITIVE_MARKERS_LOWER = [
   'system prompt',
   'raw request',
   'raw response',
+  '密钥',
+  '私钥',
+  '密码',
+  '访问令牌',
+  '刷新令牌',
+  '授权头',
 ]
 
 export function validateSuggestionOutput(

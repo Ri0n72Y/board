@@ -9,8 +9,9 @@ import {
   ArrowPathIcon,
   CameraIcon,
   ExclamationTriangleIcon,
-  XMarkIcon,
 } from '@heroicons/react/20/solid'
+import { useTranslation } from 'react-i18next'
+import { AnimatedDrawer } from './ui/AnimatedDrawer'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
 import { TagChipRow } from './BoardFilters'
@@ -65,158 +66,134 @@ export function SnapshotDrawer({
   onSaveSnapshotDraft,
   onClose,
 }: SnapshotDrawerProps) {
+  const { t } = useTranslation()
+
   if (!open) return null
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-slate-950/30"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose()
-      }}
+    <AnimatedDrawer
+      open={open}
+      onClose={onClose}
+      title={t('snapshot.title')}
+      subtitle={t('snapshot.subtitle')}
+      closeLabel={t('snapshot.close')}
+      size="xl"
     >
-      <aside
-        aria-labelledby="snapshots-title"
-        aria-modal="true"
-        className="ml-auto grid h-full w-full max-w-5xl grid-rows-[auto_1fr] overflow-hidden border-l border-slate-200 bg-stone-50 text-slate-950 shadow-xl"
-        role="dialog"
-      >
-        <header className="flex min-w-0 items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4">
-          <div className="min-w-0">
-            <p className="mb-1 text-xs font-bold uppercase text-slate-500">
-              Checkpoints
-            </p>
-            <h2 className="text-xl font-semibold leading-tight" id="snapshots-title">
-              Snapshots
-            </h2>
+      <div className="grid content-start gap-4 lg:grid-cols-[20rem_1fr]">
+        <section className="grid content-start gap-4">
+          <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
+            <label className="grid gap-1.5 text-xs font-bold uppercase text-slate-500">
+              {t('snapshot.reason')}
+              <textarea
+                className="min-h-20 resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal normal-case text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
+                value={reason}
+                onChange={(event) => onReasonChange(event.target.value)}
+                placeholder={t('snapshot.reasonPlaceholder')}
+                disabled={isCreating}
+              />
+            </label>
+            {createError && <ErrorBlock title={t('snapshot.createError')} message={createError} />}
+            <Button
+              type="button"
+              onClick={onCreateSnapshot}
+              disabled={isCreating}
+              icon={
+                isCreating ? (
+                  <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CameraIcon className="h-4 w-4" />
+                )
+              }
+            >
+              {isCreating ? t('snapshot.creating') : t('snapshot.createButton')}
+            </Button>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onClose}
-            title="Close snapshots"
-            icon={<XMarkIcon className="h-4 w-4" />}
-          >
-            Close
-          </Button>
-        </header>
 
-        <div className="grid min-h-0 gap-4 overflow-y-auto px-5 py-4 lg:grid-cols-[20rem_1fr]">
-          <section className="grid content-start gap-4">
-            <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
-              <label className="grid gap-1.5 text-xs font-bold uppercase text-slate-500">
-                Reason
-                <textarea
-                  className="min-h-20 resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal normal-case text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
-                  value={reason}
-                  onChange={(event) => onReasonChange(event.target.value)}
-                  placeholder="Why create this checkpoint?"
-                  disabled={isCreating}
-                />
-              </label>
-              {createError && <ErrorBlock title="Create failed" message={createError} />}
+          <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold uppercase text-slate-500">
+                {t('snapshot.listTitle')}
+              </h3>
               <Button
                 type="button"
-                onClick={onCreateSnapshot}
-                disabled={isCreating}
-                icon={
-                  isCreating ? (
-                    <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <CameraIcon className="h-4 w-4" />
-                  )
-                }
+                variant="ghost"
+                className="min-h-8 px-2.5 text-xs"
+                onClick={onRefreshList}
+                disabled={isListLoading}
+                icon={<ArrowPathIcon className={isListLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />}
               >
-                {isCreating ? 'Creating...' : 'Create Snapshot'}
+                {t('snapshot.refresh')}
               </Button>
             </div>
+            {listError && <ErrorBlock title={t('snapshot.listFailed')} message={listError} />}
+            {isListLoading && (
+              <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                {t('snapshot.loadingList')}
+              </p>
+            )}
+            {!isListLoading && snapshots.length === 0 && (
+              <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-sm text-slate-500">
+                {t('snapshot.empty')}
+              </p>
+            )}
+            {snapshots.length > 0 && (
+              <ol className="grid gap-2">
+                {snapshots.map((snapshot) => (
+                  <li key={snapshot.id}>
+                    <button
+                      type="button"
+                      className={
+                        selectedSnapshot?.id === snapshot.id
+                          ? 'grid w-full gap-1.5 rounded-md border border-emerald-500 bg-emerald-50 px-3 py-2 text-left'
+                          : 'grid w-full gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-emerald-500'
+                      }
+                      onClick={() => onSelectSnapshot(snapshot.id)}
+                    >
+                      <span className="text-sm font-semibold text-slate-950">
+                        {formatDate(snapshot.createdAt)}
+                      </span>
+                      <span className="wrap-break-word text-xs text-slate-600">
+                        {snapshot.reason ?? t('snapshot.noReason')}
+                      </span>
+                      <span className="flex flex-wrap items-center gap-1.5">
+                        <Badge>{t('snapshot.recordsCount', { count: snapshot.recordCount })}</Badge>
+                        <Badge>{snapshot.projectionStatus}</Badge>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </section>
 
-            <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold uppercase text-slate-500">
-                  Snapshot list
-                </h3>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="min-h-8 px-2.5 text-xs"
-                  onClick={onRefreshList}
-                  disabled={isListLoading}
-                  icon={<ArrowPathIcon className={isListLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />}
-                >
-                  Refresh
-                </Button>
-              </div>
-              {listError && <ErrorBlock title="List failed" message={listError} />}
-              {isListLoading && (
-                <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-                  Loading snapshots...
-                </p>
-              )}
-              {!isListLoading && snapshots.length === 0 && (
-                <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-sm text-slate-500">
-                  No snapshots yet.
-                </p>
-              )}
-              {snapshots.length > 0 && (
-                <ol className="grid gap-2">
-                  {snapshots.map((snapshot) => (
-                    <li key={snapshot.id}>
-                      <button
-                        type="button"
-                        className={
-                          selectedSnapshot?.id === snapshot.id
-                            ? 'grid w-full gap-1.5 rounded-md border border-emerald-500 bg-emerald-50 px-3 py-2 text-left'
-                            : 'grid w-full gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-emerald-500'
-                        }
-                        onClick={() => onSelectSnapshot(snapshot.id)}
-                      >
-                        <span className="text-sm font-semibold text-slate-950">
-                          {formatDate(snapshot.createdAt)}
-                        </span>
-                        <span className="wrap-break-word text-xs text-slate-600">
-                          {snapshot.reason ?? 'No reason'}
-                        </span>
-                        <span className="flex flex-wrap items-center gap-1.5">
-                          <Badge>{snapshot.recordCount.toString()} records</Badge>
-                          <Badge>{snapshot.projectionStatus}</Badge>
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              )}
+        <section className="min-w-0">
+          {isDetailLoading && (
+            <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">
+              {t('snapshot.loadingDetail')}
             </div>
-          </section>
-
-          <section className="min-w-0">
-            {isDetailLoading && (
-              <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">
-                Loading snapshot detail...
-              </div>
-            )}
-            {detailError && <ErrorBlock title="Detail failed" message={detailError} />}
-            {!isDetailLoading && !detailError && selectedSnapshot && (
-              <SnapshotDetailView
-                snapshot={selectedSnapshot}
-                isExporting={isExporting}
-                exportError={exportError}
-                isSavingDraft={isSavingDraft}
-                draftSaveError={draftSaveError}
-                onExportSnapshot={onExportSnapshot}
-                onExportSnapshotContext={onExportSnapshotContext}
-                onSaveSnapshotDraft={onSaveSnapshotDraft}
-              />
-            )}
-            {!isDetailLoading && !detailError && !selectedSnapshot && (
-              <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">
-                Select a snapshot to view its static records.
-              </div>
-            )}
-          </section>
-        </div>
-      </aside>
-    </div>
+          )}
+          {detailError && <ErrorBlock title={t('snapshot.detailFailed')} message={detailError} />}
+          {!isDetailLoading && !detailError && selectedSnapshot && (
+            <SnapshotDetailView
+              snapshot={selectedSnapshot}
+              isExporting={isExporting}
+              exportError={exportError}
+              isSavingDraft={isSavingDraft}
+              draftSaveError={draftSaveError}
+              onExportSnapshot={onExportSnapshot}
+              onExportSnapshotContext={onExportSnapshotContext}
+              onSaveSnapshotDraft={onSaveSnapshotDraft}
+            />
+          )}
+          {!isDetailLoading && !detailError && !selectedSnapshot && (
+            <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">
+              {t('snapshot.selectHint')}
+            </div>
+          )}
+        </section>
+      </div>
+    </AnimatedDrawer>
   )
 }
 
@@ -239,6 +216,7 @@ function SnapshotDetailView({
   onExportSnapshotContext?: () => void
   onSaveSnapshotDraft?: (title: string) => Promise<void>
 }) {
+  const { t } = useTranslation()
   const [draftTitle, setDraftTitle] = useState('')
 
   return (
@@ -247,7 +225,7 @@ function SnapshotDetailView({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-lg font-semibold text-slate-950">
-              Snapshot detail
+              {t('snapshot.detailTitle')}
             </h3>
             <p className="break-all font-mono text-xs text-slate-500">
               {snapshot.id}
@@ -266,7 +244,7 @@ function SnapshotDetailView({
                 )
               }
             >
-              {isExporting ? 'Exporting...' : 'Export Snapshot'}
+              {isExporting ? t('snapshot.exporting') : t('snapshot.exportButton')}
             </Button>
             <Button
               type="button"
@@ -280,23 +258,23 @@ function SnapshotDetailView({
                 )
               }
             >
-              {isExporting ? 'Exporting...' : 'Export Agent Snapshot Context'}
+              {isExporting ? t('snapshot.exporting') : t('snapshot.exportAgentContext')}
             </Button>
-            <Button type="button" disabled title="Restore not implemented">
-              Restore not implemented
+            <Button type="button" disabled title={t('snapshot.restoreNotImplemented')}>
+              {t('snapshot.restoreNotImplemented')}
             </Button>
           </div>
         </div>
-        {exportError && <ErrorBlock title="Export failed" message={exportError} />}
+        {exportError && <ErrorBlock title={t('snapshot.exportFailed')} message={exportError} />}
         <dl className="grid gap-2 sm:grid-cols-2">
-          <MetaItem label="Created" value={formatDate(snapshot.createdAt)} />
-          <MetaItem label="Created by" value={snapshot.createdBy} mono />
-          <MetaItem label="Reason" value={snapshot.reason ?? 'None'} />
-          <MetaItem label="Source" value={snapshot.source} />
-          <MetaItem label="Records" value={snapshot.recordCount.toString()} />
-          <MetaItem label="Patches" value={(snapshot.patchCount ?? 0).toString()} />
+          <MetaItem label={t('snapshot.detailCreated')} value={formatDate(snapshot.createdAt)} />
+          <MetaItem label={t('snapshot.detailCreatedBy')} value={snapshot.createdBy} mono />
+          <MetaItem label={t('snapshot.detailReason')} value={snapshot.reason ?? t('history.none')} />
+          <MetaItem label={t('snapshot.detailSource')} value={snapshot.source} />
+          <MetaItem label={t('snapshot.detailRecords')} value={snapshot.recordCount.toString()} />
+          <MetaItem label={t('snapshot.detailPatches')} value={(snapshot.patchCount ?? 0).toString()} />
           <MetaItem
-            label="Projection"
+            label={t('snapshot.detailProjection')}
             value={snapshot.projectionStatus}
           />
         </dl>
@@ -305,19 +283,19 @@ function SnapshotDetailView({
       {onSaveSnapshotDraft && (
         <section className="grid gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-5">
           <h3 className="text-xs font-bold uppercase text-emerald-700">
-            Save Agent Snapshot Draft
+            {t('snapshot.draftSectionTitle')}
           </h3>
           <p className="text-xs text-emerald-800">
-            Save this snapshot as a static Agent Session Draft for human review before handing to an Agent.
+            {t('snapshot.draftDescription')}
           </p>
           <TextInput
-            label="Draft title"
+            label={t('snapshot.draftTitle')}
             value={draftTitle}
             onChange={(event) => setDraftTitle(event.target.value)}
-            placeholder="e.g. Snapshot checkpoint review"
+            placeholder={t('snapshot.draftPlaceholder')}
           />
           {draftSaveError && (
-            <ErrorBlock title="Draft save failed" message={draftSaveError} />
+            <ErrorBlock title={t('snapshot.draftSaveError')} message={draftSaveError} />
           )}
           <Button
             type="button"
@@ -339,7 +317,7 @@ function SnapshotDetailView({
               ) : undefined
             }
           >
-            {isSavingDraft ? 'Saving...' : 'Save Agent Snapshot Draft'}
+            {isSavingDraft ? t('snapshot.draftSaving') : t('snapshot.draftSaveButton')}
           </Button>
         </section>
       )}
@@ -356,34 +334,36 @@ function ProjectionSummary({
 }: {
   projection: BoardCurrentProjection
 }) {
+  const { t } = useTranslation()
+
   return (
     <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
       <h3 className="text-sm font-semibold uppercase text-slate-500">
-        Projection summary
+        {t('snapshot.projectionSummary')}
       </h3>
       <dl className="grid gap-2 sm:grid-cols-3">
         <MetaItem
-          label="Snapshot head"
+          label={t('snapshot.snapshotHead')}
           value={projection.snapshotHeadVersion.toString()}
         />
         <MetaItem
-          label="Visible"
+          label={t('snapshot.visible')}
           value={projection.summary.visibleCurrentRecords.toString()}
         />
         <MetaItem
-          label="Base"
+          label={t('snapshot.base')}
           value={projection.summary.totalBaseRecords.toString()}
         />
         <MetaItem
-          label="Archived"
+          label={t('snapshot.archived')}
           value={projection.summary.archivedRecords.toString()}
         />
         <MetaItem
-          label="Blocked"
+          label={t('snapshot.blocked')}
           value={projection.summary.blockedRecords.toString()}
         />
         <MetaItem
-          label="Status"
+          label={t('snapshot.status')}
           value={projection.summary.projectionStatus}
         />
       </dl>
@@ -396,13 +376,15 @@ function SnapshotRecords({
 }: {
   projection: BoardCurrentProjection
 }) {
+  const { t } = useTranslation()
+
   return (
     <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
       <h3 className="text-sm font-semibold uppercase text-slate-500">
-        Static records
+        {t('snapshot.staticRecords')}
       </h3>
       {projection.records.length === 0 ? (
-        <p className="text-slate-500">No records in this snapshot.</p>
+        <p className="text-slate-500">{t('snapshot.noRecordsInSnapshot')}</p>
       ) : (
         <ol className="grid gap-3">
           {projection.records.map((record) => (
@@ -421,7 +403,7 @@ function SnapshotRecords({
               {record.body.tags.length > 0 ? (
                 <TagChipRow tags={record.body.tags} readonly />
               ) : (
-                <p className="text-sm text-slate-500">No tags</p>
+                <p className="text-sm text-slate-500">{t('record.noTags')}</p>
               )}
             </li>
           ))}
@@ -436,6 +418,7 @@ function Diagnostics({
 }: {
   projection: BoardCurrentProjection
 }) {
+  const { t } = useTranslation()
   const diagnostics = projection.diagnostics ?? []
   const blocked = projection.blockedRecords ?? []
 
@@ -443,11 +426,11 @@ function Diagnostics({
     <section className="grid gap-3 rounded-lg border border-amber-300 bg-amber-50 p-5 text-amber-950">
       <div className="flex flex-wrap items-center gap-2">
         <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />
-        <h3 className="text-sm font-semibold uppercase">Diagnostics</h3>
+        <h3 className="text-sm font-semibold uppercase">{t('snapshot.diagnostics')}</h3>
         <Badge>{(diagnostics.length + blocked.length).toString()}</Badge>
       </div>
       {diagnostics.length === 0 && blocked.length === 0 ? (
-        <p>No snapshot diagnostics.</p>
+        <p>{t('snapshot.noDiagnostics')}</p>
       ) : (
         <div className="grid gap-2">
           {diagnostics.map((item) => (

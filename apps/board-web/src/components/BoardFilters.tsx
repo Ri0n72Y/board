@@ -7,9 +7,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { useTranslation } from 'react-i18next'
 import { Button } from './ui/Button'
-import { TextInput } from './ui/TextInput'
 import { SwitchField } from './ui/SwitchField'
-import { Panel } from './ui/Panel'
 import { SearchSelect } from './ui/SearchSelect'
 import { cn } from '../lib/cn'
 import { formatTagLabel } from '../utils/tagDisplay'
@@ -36,7 +34,12 @@ interface BoardFiltersProps {
   priorityTags?: Tag[]
   assetOptions?: RecordReferenceOption[]
   relationTargetOptions?: RecordReferenceOption[]
-  profileOptions?: { value: string; label: string; description?: string; meta?: string }[]
+  profileOptions?: {
+    value: string
+    label: string
+    description?: string
+    meta?: string
+  }[]
   metadataLoading?: boolean
   metadataError?: MetadataErrorState
   onQChange: (q: string) => void
@@ -58,8 +61,6 @@ export function BoardFilters({
   assignee,
   assetId,
   relationTarget,
-  statusTags = [],
-  priorityTags = [],
   assetOptions = [],
   relationTargetOptions = [],
   profileOptions = [],
@@ -74,160 +75,163 @@ export function BoardFilters({
   onRelationTargetChange,
   onOpenAdvanced,
   onClearFilters,
-  // Rest unused in simplified main UI, retained for interface compat
 }: BoardFiltersProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
 
   const hasMetadataWarning =
     metadataError && (metadataError.config || metadataError.profiles)
-
   const hasAnyFilter =
-    q.trim() || tags.length > 0 || assignee.trim() || assetId.trim() || relationTarget.trim() || includeArchived
+    q.trim() ||
+    tags.length > 0 ||
+    assignee.trim() ||
+    assetId.trim() ||
+    relationTarget.trim() ||
+    includeArchived
   const assetIdLabel = getReferenceDisplayLabel(assetOptions, assetId)
-  const relationTargetLabel = getReferenceDisplayLabel(relationTargetOptions, relationTarget)
+  const relationTargetLabel = getReferenceDisplayLabel(
+    relationTargetOptions,
+    relationTarget
+  )
 
   return (
-    <>
-      <Panel className="p-4" aria-label="Board filters">
-        {metadataLoading && (
-          <p className="mb-3 text-xs text-slate-400">
-            {t('metadata.loading.all')}
-          </p>
-        )}
-        {hasMetadataWarning && (
-          <div
-            className="mb-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
-            role="alert"
-          >
-            <ExclamationTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>
-              {metadataError?.config && t('metadata.error.config')}
-              {metadataError?.config && metadataError?.profiles && ' '}
-              {metadataError?.profiles && t('metadata.error.profiles')}
-            </span>
-          </div>
-        )}
+    <div className="border-b border-slate-200 bg-slate-50/95 px-6 py-2.5 sm:px-8">
+      {/* Metadata inline warnings — compact */}
+      {metadataLoading && (
+        <span className="mr-2 inline-block text-xs text-slate-400">
+          {t('metadata.loading.all')}
+        </span>
+      )}
+      {hasMetadataWarning && (
+        <span
+          className="mr-2 inline-flex items-center gap-1 text-xs text-amber-700"
+          role="alert"
+        >
+          <ExclamationTriangleIcon className="h-3 w-3 shrink-0" />
+          {metadataError?.config && t('metadata.error.config')}
+          {metadataError?.config && metadataError?.profiles && ' '}
+          {metadataError?.profiles && t('metadata.error.profiles')}
+        </span>
+      )}
 
-        <div className="grid gap-3 lg:grid-cols-4">
-          <TextInput
-            label={t('filters.search')}
+      {/* Main filter row — compact, single row, no wrap */}
+      <div className="flex min-h-9 flex-nowrap items-center gap-6 overflow-hidden">
+        <div className="relative min-w-0 flex-[1_1_32rem]">
+          <MagnifyingGlassIcon className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            className="h-9 w-full rounded-md border border-slate-200 bg-white pl-8 pr-3 text-sm text-slate-950 outline-none placeholder:text-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-100"
             value={q}
             onChange={(event) => onQChange(event.target.value)}
             placeholder={t('filters.searchPlaceholder')}
-            icon={<MagnifyingGlassIcon className="h-4 w-4" />}
+            aria-label={t('filters.search')}
           />
+        </div>
 
+        <div className="relative hidden w-44 shrink-0 sm:block">
+          <input
+            type="text"
+            className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none placeholder:text-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-100"
+            placeholder={t('filters.tagPlaceholder')}
+            aria-label={t('filters.tagSearch')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const input = e.currentTarget as HTMLInputElement
+                const val = input.value.trim()
+                if (val) {
+                  onAddTag(val)
+                  input.value = ''
+                }
+              }
+            }}
+          />
+        </div>
+
+        <div className="w-60 shrink-0">
           <SearchSelect
             mode="option"
-            label={t('filters.assignee')}
             value={assignee || null}
             onChange={(next) => onAssigneeChange(next ?? '')}
             options={profileOptions}
             placeholder={t('filters.assigneePlaceholder')}
           />
-
-          <div className="flex flex-col justify-end gap-3 lg:col-span-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <SwitchField
-                label={t('filters.includeArchived')}
-                checked={includeArchived}
-                onChange={onIncludeArchivedChange}
-              />
-              {onClearFilters && hasAnyFilter && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="min-h-8 px-2.5 text-xs"
-                  onClick={onClearFilters}
-                  icon={<XMarkIcon className="h-3.5 w-3.5" />}
-                >
-                  {t('filters.clearFilters')}
-                </Button>
-              )}
-              {onOpenAdvanced && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="min-h-8 px-2.5 text-xs"
-                  onClick={onOpenAdvanced}
-                  icon={<AdjustmentsHorizontalIcon className="h-4 w-4" />}
-                >
-                  {t('filters.advancedFilters')}
-                </Button>
-              )}
-            </div>
-          </div>
         </div>
-      </Panel>
 
-      {/* Status / priority quick-select */}
-      {(statusTags.length > 0 || priorityTags.length > 0) && (
-        <Panel className="mt-3 px-4 py-3" aria-label="Status and priority quick filters">
-          <div className="grid gap-2 lg:grid-cols-2 lg:items-start">
-            <TagChipRow
-              label={t('filters.statusOptions')}
-              tags={statusTags}
-              onTagClick={onAddTag}
-            />
-            <TagChipRow
-              label={t('filters.priorityOptions')}
-              tags={priorityTags}
-              onTagClick={onAddTag}
-            />
-          </div>
-        </Panel>
-      )}
+        <SwitchField
+          label={t('filters.includeArchived')}
+          checked={includeArchived}
+          onChange={onIncludeArchivedChange}
+          className="shrink-0 whitespace-nowrap"
+        />
 
-      {/* Active tags */}
+        {onClearFilters && hasAnyFilter && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="min-h-9 shrink-0 px-3 text-sm"
+            onClick={onClearFilters}
+            icon={<XMarkIcon className="h-3.5 w-3.5" />}
+          >
+            {t('filters.clearFilters')}
+          </Button>
+        )}
+
+        {onOpenAdvanced && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="min-h-9 shrink-0 px-3 text-sm"
+            onClick={onOpenAdvanced}
+            icon={<AdjustmentsHorizontalIcon className="h-4 w-4" />}
+          >
+            {t('filters.advancedFilters')}
+          </Button>
+        )}
+      </div>
+
+      {/* Active tag chips — only when present */}
       {tags.length > 0 && (
-        <Panel className="mt-3 px-4 py-3" aria-label="Active tag filters">
-          <TagChipRow
-            label={t('filters.activeTag')}
-            tags={tags}
-            selected
-            onTagClick={onRemoveTag}
-          />
-        </Panel>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {tags.map((tag) => (
+            <button
+              className={chipClassName({ selected: true })}
+              key={tag}
+              type="button"
+              onClick={() => onRemoveTag(tag)}
+              title={t('filters.removeTagFilter')}
+            >
+              {formatTagLabel(tag, lang)}
+            </button>
+          ))}
+        </div>
       )}
 
-      {/* Active filter summary: assetId / relationTarget / assignee */}
-      {(assetId.trim() || relationTarget.trim() || assignee.trim()) && (
-        <Panel className="mt-3 px-4 py-3" aria-label="Active ID filters">
-          <div className="flex flex-wrap items-center gap-2">
-            {assignee.trim() && (
-              <button
-                className={chipClassName({ selected: true })}
-                type="button"
-                onClick={() => onAssigneeChange('')}
-                title={t('filters.removeFilter')}
-              >
-                {t('filters.assignee')}: {assigneeNameFromOptions(profileOptions, assignee)}
-              </button>
-            )}
-            {assetId.trim() && (
-              <button
-                className={chipClassName({ selected: true })}
-                type="button"
-                onClick={() => onAssetIdChange('')}
-                title={t('filters.removeFilter')}
-              >
-                {t('filters.assetId')}: {assetIdLabel}
-              </button>
-            )}
-            {relationTarget.trim() && (
-              <button
-                className={chipClassName({ selected: true })}
-                type="button"
-                onClick={() => onRelationTargetChange('')}
-                title={t('filters.removeFilter')}
-              >
-                {t('filters.relationTarget')}: {relationTargetLabel}
-              </button>
-            )}
-          </div>
-        </Panel>
+      {/* Active filter chips: assetId / relationTarget — only when present */}
+      {(assetId.trim() || relationTarget.trim()) && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {assetId.trim() && (
+            <button
+              className={chipClassName({ selected: true })}
+              type="button"
+              onClick={() => onAssetIdChange('')}
+              title={t('filters.removeFilter')}
+            >
+              {t('filters.assetId')}: {assetIdLabel}
+            </button>
+          )}
+          {relationTarget.trim() && (
+            <button
+              className={chipClassName({ selected: true })}
+              type="button"
+              onClick={() => onRelationTargetChange('')}
+              title={t('filters.removeFilter')}
+            >
+              {t('filters.relationTarget')}: {relationTargetLabel}
+            </button>
+          )}
+        </div>
       )}
-    </>
+    </div>
   )
 }
 
@@ -255,7 +259,9 @@ export function TagChipRow({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {label && <span className="text-xs font-bold text-slate-500">{label}</span>}
+      {label && (
+        <span className="text-xs font-bold text-slate-500">{label}</span>
+      )}
       {tags.map((tag) =>
         readonly || !onTagClick ? (
           <span className={chipClassName({ selected, readonly })} key={tag}>
@@ -267,7 +273,11 @@ export function TagChipRow({
             key={tag}
             type="button"
             onClick={() => onTagClick(tag)}
-            title={selected ? t('filters.removeTagFilter') : t('filters.addTagFilter')}
+            title={
+              selected
+                ? t('filters.removeTagFilter')
+                : t('filters.addTagFilter')
+            }
           >
             {formatTagLabel(tag, lang)}
           </button>
@@ -285,18 +295,8 @@ function chipClassName({
   readonly?: boolean
 }) {
   return cn(
-    'inline-flex min-h-[30px] max-w-full items-center rounded-full bg-slate-100 px-2.5 font-mono text-xs leading-tight text-slate-700 break-all',
+    'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 font-mono text-xs leading-tight text-slate-700 break-all',
     selected && 'border border-emerald-700 bg-emerald-100 text-emerald-800',
-    readonly && 'border border-slate-200',
+    readonly && 'border border-slate-200'
   )
-}
-
-function assigneeNameFromOptions(
-  options: { value: string; label: string; description?: string; meta?: string }[] | undefined,
-  pk: string,
-): string {
-  if (!options) return pk
-  const option = options.find((o) => o.value === pk)
-  if (option) return `${option.label} (${option.description ?? pk})`
-  return `Unknown member (${pk.slice(0, 6)}…${pk.slice(-4)})`
 }

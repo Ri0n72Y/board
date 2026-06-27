@@ -12,6 +12,7 @@ const zhCN = {
     'header.refresh': '刷新',
     'header.refreshing': '刷新中...',
     'header.settings': '设置',
+    'header.more': '更多',
 
     // ─── View mode toggle ───
     'viewMode.list': '列表视图',
@@ -124,6 +125,7 @@ const zhCN = {
     'record.noRecords': '无记录',
     'record.none': '无',
     'record.assets': '资产',
+    'record.close': '关闭',
     'record.relations': '关联',
     'record.moreAssets': '+{{count}} 更多资产',
     'record.moreRelations': '+{{count}} 更多关联',
@@ -193,7 +195,7 @@ const zhCN = {
     'create.optional': '（可选）',
 
     // ─── Edit Record Drawer ───
-    'edit.subtitle': '{pid} / {id}',
+    'edit.subtitle': '{{pid}} / {{id}}',
     'edit.title': '编辑记录',
     'edit.closeTitle': '关闭编辑记录',
     'edit.close': '关闭',
@@ -225,7 +227,7 @@ const zhCN = {
     'edit.errorStatusTagRequired': '状态为必填项。',
     'edit.errorNoChanges': '没有需要保存的修改。',
     'edit.initialPatchDescriptionNotice':
-      'This patch will include a human-draft description from an AI suggestion.',
+      '此补丁将附带一段来自 AI 建议的人工草稿说明。',
     'edit.optional': '（可选）',
 
     // ─── Snapshot Drawer ───
@@ -243,11 +245,12 @@ const zhCN = {
     'snapshot.loadingList': '正在加载快照...',
     'snapshot.empty': '尚无快照。',
     'snapshot.noReason': '无原因',
-    'snapshot.recordsCount': '{count} 条记录',
+    'snapshot.recordsCount': '{{count}} 条记录',
     'snapshot.loadingDetail': '正在加载快照详情...',
     'snapshot.selectHint': '选择一个快照以查看其静态记录。',
     'snapshot.detailTitle': '快照详情',
     'snapshot.exportButton': '导出快照',
+    'snapshot.exporting': '导出中...',
     'snapshot.exportAgentContext': '导出 Agent 快照上下文',
     'snapshot.restoreNotImplemented': '恢复功能未实现',
     'snapshot.detailCreated': '创建时间',
@@ -347,6 +350,32 @@ const zhCN = {
     'agent.selectHint': '选择一个上下文草稿以查看内容。',
     'agent.detailFailed': '详情加载失败',
 
+    // ─── Agent Draft Context Preview ───
+    'agent.contextPreview': '上下文 Markdown 预览',
+
+    // ─── Agent Draft Meta Panel ───
+    'agent.meta.profile': '配置',
+    'agent.meta.source': '来源',
+    'agent.meta.created': '创建时间',
+    'agent.meta.createdBy': '创建者',
+    'agent.meta.status': '状态',
+    'agent.meta.records': '记录数',
+    'agent.meta.contextGoal': '上下文目标',
+    'agent.meta.snapshot': '快照',
+    'agent.meta.none': '无',
+    'agent.meta.copyMarkdown': '复制 Markdown',
+    'agent.meta.download': '下载',
+    'agent.meta.copied': '已复制！',
+    'agent.meta.copyFailed': '复制失败',
+
+    // ─── Agent Draft Review Info ───
+    'agent.reviewInfo.notReviewed': '尚未审核',
+    'agent.reviewInfo.title': '审核信息',
+    'agent.reviewInfo.reviewedAt': '审核时间',
+    'agent.reviewInfo.reviewedBy': '审核人',
+    'agent.reviewInfo.reviewNote': '审核备注',
+    'agent.reviewInfo.unknown': '未知',
+
     // ─── Agent Draft Queue ───
     'agent.queue.title': '草稿队列',
     'agent.queue.refresh': '刷新',
@@ -356,7 +385,7 @@ const zhCN = {
     'agent.queue.creating': '正在创建草稿...',
     'agent.queue.loading': '正在加载草稿...',
     'agent.queue.empty': '尚无 Agent 草稿。',
-    'agent.queue.emptyFilter': '无{status}草稿。',
+    'agent.queue.emptyFilter': '无{{status}}草稿。',
     'agent.queue.emptyHint':
       '从导出面板保存上下文包为 Agent 草稿，可在此处审核。',
     'agent.queue.records': '条记录',
@@ -391,6 +420,7 @@ const zhCN = {
     'agent.timeline.tone.complete': '已完成',
     'agent.timeline.tone.pending': '待处理',
     'agent.timeline.tone.blocked': '已阻塞',
+    'agent.timeline.tone.by': '由 {{name}}',
     'agent.timeline.draftCreated': '草稿已创建',
     'agent.timeline.draftCreatedDesc':
       '从所选来源创建了静态 Agent 上下文草稿。',
@@ -399,7 +429,7 @@ const zhCN = {
     'agent.timeline.reviewPendingHint': '正式移交或响应录入前需标记为已审核。',
     'agent.timeline.reviewed': '已人工审核',
     'agent.timeline.reviewedDesc': '此草稿可以进行正式移交和手动响应录入。',
-    'agent.timeline.reviewedNote': '备注：{note}',
+    'agent.timeline.reviewedNote': '备注：{{note}}',
     'agent.timeline.discarded': '已丢弃',
     'agent.timeline.discardedDesc': '此草稿无法进行正式移交或手动响应录入。',
     'agent.timeline.handoffReady': '正式移交就绪',
@@ -411,10 +441,10 @@ const zhCN = {
     'agent.timeline.handoffLockedDesc': '请先审核此草稿再生成正式移交。',
     'agent.timeline.handoffDisabled': '正式移交已禁用',
     'agent.timeline.handoffDisabledDesc': '已丢弃的草稿无法生成正式移交。',
-    'agent.timeline.responses': '手动粘贴的响应（{count}）',
+    'agent.timeline.responses': '手动粘贴的响应（{{count}}）',
     'agent.timeline.responsesDesc':
       '响应是手动粘贴的记录。它们不是已应用的补丁，不会变更看板。',
-    'agent.timeline.responsesMore': '+{count} 条更多响应',
+    'agent.timeline.responsesMore': '+{{count}} 条更多响应',
     'agent.timeline.noResponses': '尚无手动响应',
     'agent.timeline.noResponsesDesc':
       '使用移交后将外部 Agent 响应手动粘贴于此。',
@@ -452,7 +482,7 @@ const zhCN = {
     'agent.response.pasteDiscarded': '响应粘贴不可用',
     'agent.response.pasteDiscardedDesc':
       '已丢弃的草稿无法接收 Agent 响应。请重置为草稿后重新审核。',
-    'agent.response.listTitle': '已粘贴的响应（{count}）',
+    'agent.response.listTitle': '已粘贴的响应（{{count}}）',
     'agent.response.loadingResponses': '正在加载响应...',
     'agent.response.listFailed': '响应列表加载失败',
     'agent.response.detailFailed': '响应详情加载失败',
@@ -463,6 +493,12 @@ const zhCN = {
     'agent.response.copyFailed': '复制失败',
     'agent.response.showFull': '显示全部',
     'agent.response.collapse': '收起',
+    'agent.response.chars': '字符',
+    'agent.response.meta.agent': 'Agent',
+    'agent.response.meta.pastedAt': '粘贴时间',
+    'agent.response.meta.pastedBy': '粘贴者',
+    'agent.response.meta.length': '长度',
+    'agent.response.meta.note': '备注',
 
     // ─── Formal Handoff Section ───
     'agent.handoff.sectionTitle': '正式移交',
@@ -530,6 +566,8 @@ const zhCN = {
     'agent.patchDraft.createButton': '创建补丁草稿',
     'agent.patchDraft.selectRecord': '目标记录',
     'agent.patchDraft.searchPlaceholder': '按 PID 或标题搜索记录...',
+    'agent.patchDraft.visibleRecordsHint':
+      '这里只列出当前看板视图中可见的记录。如果找不到目标记录，请先清除筛选条件。',
     'agent.patchDraft.descriptionLabel': '补丁说明',
     'agent.patchDraft.descriptionHint':
       '此说明将在记录编辑器中提交补丁时附带。',
@@ -613,7 +651,8 @@ const zhCN = {
     'summary.archived': '已归档',
     'summary.blocked': '已阻塞',
 
-    // ─── Status Badge ───
+    // ─── Badges / Toast ───
+    'toast.close': '关闭',
     'badge.loading': '加载中',
     'badge.clean': '正常',
     'badge.partial': '部分',
