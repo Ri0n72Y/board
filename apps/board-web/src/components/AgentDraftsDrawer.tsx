@@ -2,8 +2,6 @@ import type {
   AgentDraftDetail,
   AgentDraftStatus,
   AgentDraftSummary,
-  AgentResponseDetail,
-  AgentResponseSummary,
   AgentSuggestionDetail,
   AgentSuggestionSummary,
   RecordBody,
@@ -18,13 +16,10 @@ import { AgentDraftMetaPanel } from './agentDrafts/AgentDraftMetaPanel'
 import { AgentDraftReviewInfo } from './agentDrafts/AgentDraftReviewInfo'
 import { AgentDraftReviewActions } from './agentDrafts/AgentDraftReviewActions'
 import { AgentDraftContextPreview } from './agentDrafts/AgentDraftContextPreview'
-import { FormalHandoffSection } from './agentDrafts/FormalHandoffSection'
-import { ManualAgentResponseSection } from './agentDrafts/ManualAgentResponseSection'
-import { AgentManualWorkflowTimeline } from './agentDrafts/AgentManualWorkflowTimeline'
 import { AgentSuggestionSection } from './agentDrafts/AgentSuggestionSection'
 import { ErrorBlock } from './agentDrafts/ErrorBlock'
 
-interface AgentDraftsDrawerBaseProps {
+interface AgentDraftsDrawerProps {
   open: boolean
   drafts: AgentDraftSummary[]
   selectedDraft: AgentDraftDetail | null
@@ -36,9 +31,6 @@ interface AgentDraftsDrawerBaseProps {
   createError: string | null
   isReviewing?: boolean
   reviewError?: string | null
-  isHandoffLoading?: boolean
-  handoffError?: string | null
-  handoffFeedback?: string | null
   onSelectDraft: (draftId: string) => void
   onRefreshList: () => void
   onClose: () => void
@@ -47,29 +39,7 @@ interface AgentDraftsDrawerBaseProps {
     status: AgentDraftStatus,
     reviewNote?: string,
   ) => void
-  onCopyHandoff?: (draftId: string) => void
-  onDownloadHandoff?: (draftId: string) => void
-}
-
-interface AgentResponsePanelProps {
-  responses?: AgentResponseSummary[]
-  selectedResponse?: AgentResponseDetail | null
-  isResponseListLoading?: boolean
-  isResponseDetailLoading?: boolean
-  isResponseCreating?: boolean
-  responseListError?: string | null
-  responseDetailError?: string | null
-  responseCreateError?: string | null
-  onLoadResponseDetail?: (responseId: string) => void
-  onSaveResponse?: (
-    draftId: string,
-    responseMarkdown: string,
-    externalAgentName?: string,
-    responseNote?: string,
-  ) => Promise<AgentResponseDetail>
-}
-
-interface AgentSuggestionPanelProps {
+  // Agent Suggestion
   suggestions?: AgentSuggestionSummary[]
   selectedSuggestion?: AgentSuggestionDetail | null
   isSuggestionListLoading?: boolean
@@ -83,17 +53,10 @@ interface AgentSuggestionPanelProps {
     instruction?: string,
   ) => void | Promise<unknown>
   onSelectSuggestion?: (suggestionId: string) => void
-}
-
-interface AgentPatchDraftBridgeProps {
+  // Patch Draft
   records?: RecordResponse<RecordItem<RecordBody>>[]
   onOpenEditor?: (recordId: string, patchDescription: string) => void
 }
-
-type AgentDraftsDrawerProps = AgentDraftsDrawerBaseProps &
-  AgentResponsePanelProps &
-  AgentSuggestionPanelProps &
-  AgentPatchDraftBridgeProps
 
 export function AgentDraftsDrawer({
   open,
@@ -107,25 +70,10 @@ export function AgentDraftsDrawer({
   createError,
   isReviewing = false,
   reviewError = null,
-  isHandoffLoading = false,
-  handoffError = null,
-  handoffFeedback = null,
-  responses = [],
-  selectedResponse = null,
-  isResponseListLoading = false,
-  isResponseDetailLoading = false,
-  isResponseCreating = false,
-  responseListError = null,
-  responseDetailError = null,
-  responseCreateError = null,
   onSelectDraft,
   onRefreshList,
   onClose,
   onUpdateReview,
-  onCopyHandoff,
-  onDownloadHandoff,
-  onLoadResponseDetail,
-  onSaveResponse,
   // Agent Suggestion
   suggestions = [],
   selectedSuggestion = null,
@@ -137,7 +85,7 @@ export function AgentDraftsDrawer({
   suggestionGenerateError = null,
   onGenerateSuggestion,
   onSelectSuggestion,
-  // Patch Draft (2.6)
+  // Patch Draft
   records,
   onOpenEditor,
 }: AgentDraftsDrawerProps) {
@@ -175,25 +123,9 @@ export function AgentDraftsDrawer({
             <div className="grid gap-4">
               <AgentDraftSafetyBanner />
 
-              <AgentManualWorkflowTimeline
-                draft={selectedDraft}
-                responses={responses}
-              />
-
               <AgentDraftMetaPanel key={`draft-meta:${selectedDraft.id}`} draft={selectedDraft} />
 
               <AgentDraftReviewInfo draft={selectedDraft} />
-
-              {onCopyHandoff && onDownloadHandoff && (
-                <FormalHandoffSection
-                  draft={selectedDraft}
-                  isHandoffLoading={isHandoffLoading}
-                  handoffError={handoffError}
-                  handoffFeedback={handoffFeedback}
-                  onCopyHandoff={onCopyHandoff}
-                  onDownloadHandoff={onDownloadHandoff}
-                />
-              )}
 
               {onUpdateReview && (
                 <AgentDraftReviewActions
@@ -206,23 +138,6 @@ export function AgentDraftsDrawer({
               )}
 
               <AgentDraftContextPreview draft={selectedDraft} />
-
-              {onSaveResponse && onLoadResponseDetail && (
-                <ManualAgentResponseSection
-                  key={`draft-responses:${selectedDraft.id}`}
-                  draft={selectedDraft}
-                  responses={responses}
-                  selectedResponse={selectedResponse}
-                  isResponseListLoading={isResponseListLoading}
-                  isResponseDetailLoading={isResponseDetailLoading}
-                  isResponseCreating={isResponseCreating}
-                  responseListError={responseListError}
-                  responseDetailError={responseDetailError}
-                  responseCreateError={responseCreateError}
-                  onLoadResponseDetail={onLoadResponseDetail}
-                  onSaveResponse={onSaveResponse}
-                />
-              )}
 
               {onGenerateSuggestion && onSelectSuggestion && (
                 <AgentSuggestionSection

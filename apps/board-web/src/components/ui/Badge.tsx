@@ -15,7 +15,12 @@ const colorClass: Record<BadgeColor, string> = {
   slate: 'bg-slate-100 text-slate-500',
 }
 
-export function Badge({ color = 'slate', children, className, ...props }: BadgeProps) {
+export function Badge({
+  color = 'slate',
+  children,
+  className,
+  ...props
+}: BadgeProps) {
   return (
     <span
       className={cn(

@@ -243,7 +243,7 @@ export function SearchSelect({
         <input
           ref={inputRef}
           id={id}
-          className="min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 pr-16 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+          className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 pr-14 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
           value={inputValue}
           onChange={(event) => {
             setQuery(event.target.value)

@@ -1,23 +1,15 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type {
   RecordBody,
   RecordItem,
   RecordResponse,
 } from '@labour-board/shared'
 import {
-  ArrowDownTrayIcon,
   ArrowPathIcon,
-  CameraIcon,
-  Cog6ToothIcon,
-  DocumentTextIcon,
   ExclamationTriangleIcon,
   PlusIcon,
-  QueueListIcon,
+  EllipsisHorizontalIcon,
+  XMarkIcon,
 } from '@heroicons/react/20/solid'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../components/ui/Button'
@@ -78,6 +70,7 @@ import {
 import { buildRelationConstraintOptions } from '../utils/relationDisplay'
 import { formatTagLabel } from '../utils/tagDisplay'
 import { useDebouncedValue } from '../utils/useDebounce'
+import { cn } from '../lib/cn'
 
 const Q_DEBOUNCE_MS = 300
 const EMPTY_RECORDS: RecordResponse<RecordItem<RecordBody>>[] = []
@@ -88,7 +81,7 @@ export function BoardCurrentPage() {
   const effectiveFilters = useBoardCurrentStore((s) => s.effectiveFilters)
   const lastAppliedFilters = useBoardCurrentStore((s) => s.lastAppliedFilters)
   const filterUrlApplyVersion = useBoardCurrentStore(
-    (s) => s.filterUrlApplyVersion,
+    (s) => s.filterUrlApplyVersion
   )
   const projection = useBoardCurrentStore((s) => s.projection)
   const isLoading = useBoardCurrentStore((s) => s.isLoading)
@@ -118,9 +111,8 @@ export function BoardCurrentPage() {
   const [editRecord, setEditRecord] = useState<RecordResponse<
     RecordItem<RecordBody>
   > | null>(null)
-  const [editInitialPatchDescription, setEditInitialPatchDescription] = useState<
-    string | undefined
-  >(undefined)
+  const [editInitialPatchDescription, setEditInitialPatchDescription] =
+    useState<string | undefined>(undefined)
   const [isContextExportOpen, setIsContextExportOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
@@ -136,6 +128,9 @@ export function BoardCurrentPage() {
     string[] | null
   >(() => readVisibleColumnPreference())
 
+  // Toast state for non-critical hints/notices
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+
   useEffect(() => {
     const controller = new AbortController()
     void loadMetadata(controller.signal)
@@ -145,7 +140,7 @@ export function BoardCurrentPage() {
   const debouncedQ = useDebouncedValue(
     draftFilters.q,
     Q_DEBOUNCE_MS,
-    filterUrlApplyVersion,
+    filterUrlApplyVersion
   )
 
   useEffect(() => {
@@ -224,44 +219,58 @@ export function BoardCurrentPage() {
       unknownRecord: t('recordReference.unknownRecord'),
       rawId: t('recordReference.rawId'),
     }),
-    [t],
+    [t]
   )
 
   const records = projection?.records ?? EMPTY_RECORDS
   const assetOptions = useMemo(() => {
-    const currentOptions = buildAssetReferenceOptions(records, recordReferenceCopy)
+    const currentOptions = buildAssetReferenceOptions(
+      records,
+      recordReferenceCopy
+    )
     return selectedAssetOption
       ? mergeReferenceOptions(currentOptions, [selectedAssetOption])
       : currentOptions
   }, [records, recordReferenceCopy, selectedAssetOption])
   const relationTargetOptions = useMemo(() => {
-    const currentOptions = buildRelationTargetOptions(records, recordReferenceCopy)
+    const currentOptions = buildRelationTargetOptions(
+      records,
+      recordReferenceCopy
+    )
     return selectedRelationTargetOption
       ? mergeReferenceOptions(currentOptions, [selectedRelationTargetOption])
       : currentOptions
   }, [records, recordReferenceCopy, selectedRelationTargetOption])
   const relationConstraintOptions = useMemo(
     () => buildRelationConstraintOptions(records, t, config),
-    [records, t, config],
+    [records, t, config]
   )
 
-  const updateAssetId = useCallback((assetId: string) => {
-    setAssetId(assetId)
-    setSelectedAssetOption(
-      assetId
-        ? assetOptions.find((option) => option.value === assetId) ?? null
-        : null,
-    )
-  }, [assetOptions, setAssetId])
+  const updateAssetId = useCallback(
+    (assetId: string) => {
+      setAssetId(assetId)
+      setSelectedAssetOption(
+        assetId
+          ? (assetOptions.find((option) => option.value === assetId) ?? null)
+          : null
+      )
+    },
+    [assetOptions, setAssetId]
+  )
 
-  const updateRelationTarget = useCallback((relationTarget: string) => {
-    setRelationTarget(relationTarget)
-    setSelectedRelationTargetOption(
-      relationTarget
-        ? relationTargetOptions.find((option) => option.value === relationTarget) ?? null
-        : null,
-    )
-  }, [relationTargetOptions, setRelationTarget])
+  const updateRelationTarget = useCallback(
+    (relationTarget: string) => {
+      setRelationTarget(relationTarget)
+      setSelectedRelationTargetOption(
+        relationTarget
+          ? (relationTargetOptions.find(
+              (option) => option.value === relationTarget
+            ) ?? null)
+          : null
+      )
+    },
+    [relationTargetOptions, setRelationTarget]
+  )
   const blockedRecords = projection?.blockedRecords ?? []
   const diagnostics = projection?.diagnostics ?? []
   const projectionStatus = projection?.summary.projectionStatus
@@ -283,21 +292,21 @@ export function BoardCurrentPage() {
   }, [config, records, i18n.resolvedLanguage])
   const boardColumnIds = useMemo(
     () => boardColumnOptions.map((column) => column.id),
-    [boardColumnOptions],
+    [boardColumnOptions]
   )
   const visibleBoardColumnIds = useMemo(
     () => resolveVisibleColumnIds(boardColumnIds, storedVisibleColumnIds),
-    [boardColumnIds, storedVisibleColumnIds],
+    [boardColumnIds, storedVisibleColumnIds]
   )
   const updateVisibleBoardColumnIds = useCallback(
     (nextColumnIds: string[]) => {
       const normalized = writeVisibleColumnPreference(
         boardColumnIds,
-        nextColumnIds,
+        nextColumnIds
       )
       setStoredVisibleColumnIds(normalized)
     },
-    [boardColumnIds],
+    [boardColumnIds]
   )
 
   function refresh() {
@@ -337,7 +346,7 @@ export function BoardCurrentPage() {
     (record: RecordResponse<RecordItem<RecordBody>>) => {
       setDetailRecord(record)
     },
-    [],
+    []
   )
 
   const closeDetail = useCallback(() => {
@@ -349,7 +358,7 @@ export function BoardCurrentPage() {
       setDetailRecord(null)
       openEdit(record)
     },
-    [openEdit],
+    [openEdit]
   )
 
   const handleDetailHistory = useCallback(
@@ -357,10 +366,9 @@ export function BoardCurrentPage() {
       setDetailRecord(null)
       historyController.openHistory(record)
     },
-    [historyController],
+    [historyController]
   )
 
-  // Opens EditRecordDrawer from a patch draft with suggestion-sourced description.
   const handleOpenPatchEditor = useCallback(
     (recordId: string, patchDescription: string) => {
       const found = records.find((r) => r.body.id === recordId)
@@ -369,7 +377,7 @@ export function BoardCurrentPage() {
       setEditInitialPatchDescription(patchDescription)
       setEditRecord(found)
     },
-    [records],
+    [records]
   )
 
   const refreshAfterPatch = useCallback(
@@ -386,226 +394,276 @@ export function BoardCurrentPage() {
     onMoved: refreshAfterPatch,
   })
 
+  // ── More menu items ──
+  const moreMenuItems = [
+    {
+      key: 'snapshots',
+      label: t('header.snapshots'),
+      action: snapshotController.openSnapshots,
+    },
+    {
+      key: 'export',
+      label: t('header.exportCurrentBoard'),
+      action: boardExportController.exportCurrentMarkdown,
+      disabled: boardExportController.isCurrentExporting || !projection,
+    },
+    {
+      key: 'context',
+      label: t('header.contextPack'),
+      action: () => setIsContextExportOpen(true),
+      disabled: !projection,
+    },
+    {
+      key: 'agent',
+      label: t('header.agentDrafts'),
+      action: agentDraftController.openDrawer,
+      disabled: !projection,
+    },
+    {
+      key: 'settings',
+      label: t('header.settings'),
+      action: () => setIsSettingsOpen(true),
+    },
+  ]
+
   return (
-    <main className="mx-auto min-h-svh w-full max-w-295 bg-stone-50 px-4 py-3 text-slate-950 sm:px-6 sm:py-4">
-      <header className="mb-3 grid gap-3 sm:flex sm:items-start sm:justify-between">
-        <div>
-          <p className="mb-0.5 text-xs font-bold uppercase text-slate-500">
-            {t('header.currentBoard')}
-          </p>
-          <h1 className="text-2xl font-bold leading-tight text-slate-950">
-            {t('header.appTitle')}
-          </h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge status={projectionStatus} />
-          <ViewModeToggle value={viewMode} onChange={setViewMode} />
-          <Button
-            type="button"
-            onClick={openCreate}
-            icon={<PlusIcon className="h-4 w-4" />}
+    <div className="h-svh overflow-hidden bg-slate-50 text-slate-950">
+      <div className="grid h-full w-full grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden">
+        {/* Header — stable top bar */}
+        <header
+          className={cn(
+            `z-30 h-18 min-h-16  gap-4  px-8 backdrop-blur-sm sm:px-10`,
+            `flex items-center justify-between`,
+            `border-b border-slate-200 bg-white/90`
+          )}
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <div>
+              <p className="mb-0.5 text-xs font-bold uppercase text-slate-500">
+                {t('header.currentBoard')}
+              </p>
+              <h1 className="truncate text-lg font-bold leading-tight text-slate-950">
+                {t('header.appTitle')}
+              </h1>
+            </div>
+            <StatusBadge status={projectionStatus} />
+          </div>
+          <div className="flex shrink-0 items-center gap-6 whitespace-nowrap">
+            <ViewModeToggle value={viewMode} onChange={setViewMode} />
+            <Button
+              type="button"
+              onClick={openCreate}
+              icon={<PlusIcon className="h-4 w-4" />}
+              className="min-h-8 px-2.5 text-xs"
+            >
+              {t('header.createRecord')}
+            </Button>
+            <Button
+              type="button"
+              onClick={refresh}
+              disabled={isLoading}
+              icon={
+                <ArrowPathIcon
+                  className={isLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'}
+                />
+              }
+              className="min-h-8 px-2.5 text-xs"
+            >
+              {isLoading ? t('header.refreshing') : t('header.refresh')}
+            </Button>
+            <details className="relative">
+              <summary className="inline-flex min-h-8 cursor-pointer items-center rounded-md border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 list-none hover:bg-slate-50">
+                <EllipsisHorizontalIcon className="h-4 w-4" />
+                <span className="ml-1">{t('header.more')}</span>
+              </summary>
+              <div className="absolute right-0 top-full z-40 mt-1 w-48 rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+                {moreMenuItems.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className="block w-full px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                    onClick={() => {
+                      item.action()
+                      // Close the <details>
+                      const details = document.querySelector('details[open]')
+                      if (details) details.removeAttribute('open')
+                    }}
+                    disabled={item.disabled}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </details>
+          </div>
+        </header>
+
+        {/* Filters — single row */}
+        <BoardFilters
+          q={draftFilters.q}
+          tags={draftFilters.tags}
+          tagMatch={draftFilters.tagMatch}
+          includeArchived={draftFilters.includeArchived}
+          assignee={draftFilters.assignee}
+          assetId={draftFilters.assetId}
+          relationTarget={draftFilters.relationTarget}
+          knownTags={config ? knownTags : projectionKnownTags}
+          statusTags={statusTags}
+          priorityTags={priorityTags}
+          assetOptions={assetOptions}
+          relationTargetOptions={relationTargetOptions}
+          profileOptions={profileOptions}
+          metadataLoading={metadataLoading}
+          metadataError={metadataError}
+          onQChange={setQ}
+          onAddTag={addTag}
+          onRemoveTag={removeTag}
+          onTagMatchChange={setTagMatch}
+          onIncludeArchivedChange={setIncludeArchived}
+          onAssigneeChange={setAssignee}
+          onAssetIdChange={updateAssetId}
+          onRelationTargetChange={updateRelationTarget}
+          onOpenAdvanced={() => setIsAdvancedFiltersOpen(true)}
+          onClearFilters={() => {
+            setQ('')
+            draftFilters.tags.forEach((t) => removeTag(t))
+            setTagMatch('all')
+            setAssignee('')
+            updateAssetId('')
+            updateRelationTarget('')
+            setIncludeArchived(false)
+          }}
+        />
+
+        {/* Main content area — board fills remaining height, columns scroll internally */}
+        <main className="flex min-h-0 flex-col overflow-hidden px-6 pb-10 pt-4 sm:px-8">
+          {/* Compact warning banners — only when present */}
+          {isRefreshError && (
+            <section
+              className="mb-1 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-900"
+              role="alert"
+            >
+              <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" />
+              <span>
+                {t('status.refreshError')}: {error}
+              </span>
+            </section>
+          )}
+
+          {boardExportController.currentExportError && (
+            <section
+              className="mb-1 flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-800"
+              role="alert"
+            >
+              <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" />
+              <span>
+                {t('status.exportError')}:{' '}
+                {boardExportController.currentExportError}
+              </span>
+            </section>
+          )}
+
+          {projectionStatus === 'partial' && (
+            <section
+              className="mb-1 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-900"
+              role="alert"
+            >
+              <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" />
+              <span>{t('status.projectionPartial')}</span>
+            </section>
+          )}
+
+          {/* Board / error / loading / empty — fills remaining height */}
+          <div
+            className={
+              viewMode === 'board'
+                ? 'min-h-0 flex-1 overflow-hidden'
+                : 'min-h-0 flex-1 overflow-y-auto'
+            }
           >
-            {t('header.createRecord')}
-          </Button>
-          <Button
-            type="button"
-            onClick={snapshotController.openSnapshots}
-            icon={<CameraIcon className="h-4 w-4" />}
-          >
-            {t('header.snapshots')}
-          </Button>
-          <Button
-            type="button"
-            onClick={boardExportController.exportCurrentMarkdown}
-            disabled={boardExportController.isCurrentExporting || !projection}
-            icon={
-              boardExportController.isCurrentExporting ? (
-                <ArrowPathIcon className="h-4 w-4 animate-spin" />
+            {isInitialError && (
+              <section
+                className="grid gap-1.5 rounded-lg border-2 border-red-300 bg-red-50 p-5 text-red-800"
+                role="alert"
+              >
+                <strong>{t('status.loadError')}</strong>
+                <span>{error}</span>
+              </section>
+            )}
+
+            {isInitialLoad && (
+              <section className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">
+                {t('status.loading')}
+              </section>
+            )}
+
+            {projectionStatus === 'blocked' && (
+              <section
+                className="grid gap-2 rounded-lg border-2 border-red-300 bg-red-50 p-5 text-red-800"
+                role="alert"
+              >
+                <p className="flex items-center gap-2 font-semibold">
+                  <ExclamationTriangleIcon className="h-5 w-5" />
+                  {t('status.projectionBlocked')}
+                </p>
+                <p>
+                  {active
+                    ? t('status.projectionBlockedActive')
+                    : t('status.projectionBlockedInactive')}
+                </p>
+                {hasIssues && <p>{t('status.projectionIssues')}</p>}
+              </section>
+            )}
+
+            {projection &&
+              projectionStatus !== 'blocked' &&
+              records.length === 0 && (
+                <EmptyState hasActiveFilters={active} hasIssues={hasIssues} />
+              )}
+
+            {projection &&
+              projectionStatus !== 'blocked' &&
+              records.length > 0 &&
+              (viewMode === 'board' ? (
+                <BoardView
+                  records={records}
+                  config={config}
+                  profiles={profiles}
+                  assetOptions={assetOptions}
+                  relationTargetOptions={relationTargetOptions}
+                  movingRecordId={statusMoveController.movingRecordId}
+                  moveErrors={statusMoveController.moveErrors}
+                  visibleColumnIds={visibleBoardColumnIds}
+                  onCardClick={openDetail}
+                  onMoveStatus={statusMoveController.moveRecordStatus}
+                  onToastHint={setToastMessage}
+                />
               ) : (
-                <ArrowDownTrayIcon className="h-4 w-4" />
-              )
-            }
-          >
-            {boardExportController.isCurrentExporting
-              ? t('header.exporting')
-              : t('header.exportCurrentBoard')}
-          </Button>
-          <Button
-            type="button"
-            onClick={() => setIsContextExportOpen(true)}
-            disabled={!projection}
-            icon={<DocumentTextIcon className="h-4 w-4" />}
-          >
-            {t('header.contextPack')}
-          </Button>
-          <Button
-            type="button"
-            onClick={agentDraftController.openDrawer}
-            disabled={!projection}
-            icon={<QueueListIcon className="h-4 w-4" />}
-          >
-            {t('header.agentDrafts')}
-          </Button>
-          <Button
-            type="button"
-            onClick={() => setIsSettingsOpen(true)}
-            icon={<Cog6ToothIcon className="h-4 w-4" />}
-          >
-            {t('header.settings')}
-          </Button>
-          <Button
-            type="button"
-            onClick={refresh}
-            disabled={isLoading}
-            icon={
-              <ArrowPathIcon
-                className={isLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'}
+                <section className="grid gap-3.5" aria-label="Current records">
+                  {records.map((record) => (
+                    <RecordCard
+                      key={record.body.id}
+                      record={record}
+                      profiles={profiles}
+                      assetOptions={assetOptions}
+                      relationTargetOptions={relationTargetOptions}
+                      onCardClick={openDetail}
+                    />
+                  ))}
+                </section>
+              ))}
+
+            {viewMode !== 'board' && (
+              <IssuesPanel
+                blockedRecords={blockedRecords}
+                diagnostics={diagnostics}
               />
-            }
-          >
-            {isLoading ? t('header.refreshing') : t('header.refresh')}
-          </Button>
-        </div>
-      </header>
+            )}
+          </div>
+        </main>
+      </div>
 
-      <BoardFilters
-        q={draftFilters.q}
-        tags={draftFilters.tags}
-        tagMatch={draftFilters.tagMatch}
-        includeArchived={draftFilters.includeArchived}
-        assignee={draftFilters.assignee}
-        assetId={draftFilters.assetId}
-        relationTarget={draftFilters.relationTarget}
-        knownTags={config ? knownTags : projectionKnownTags}
-        statusTags={statusTags}
-        priorityTags={priorityTags}
-        assetOptions={assetOptions}
-        relationTargetOptions={relationTargetOptions}
-        profileOptions={profileOptions}
-        metadataLoading={metadataLoading}
-        metadataError={metadataError}
-        onQChange={setQ}
-        onAddTag={addTag}
-        onRemoveTag={removeTag}
-        onTagMatchChange={setTagMatch}
-        onIncludeArchivedChange={setIncludeArchived}
-        onAssigneeChange={setAssignee}
-        onAssetIdChange={updateAssetId}
-        onRelationTargetChange={updateRelationTarget}
-        onOpenAdvanced={() => setIsAdvancedFiltersOpen(true)}
-        onClearFilters={() => {
-          setQ('')
-          draftFilters.tags.forEach((t) => removeTag(t))
-          setTagMatch('all')
-          setAssignee('')
-          updateAssetId('')
-          updateRelationTarget('')
-          setIncludeArchived(false)
-        }}
-      />
-
-      {isInitialError && (
-        <section
-          className="mt-4 grid gap-1.5 rounded-lg border-2 border-red-300 bg-red-50 p-5 text-red-800"
-          role="alert"
-        >
-          <strong>{t('status.loadError')}</strong>
-          <span>{error}</span>
-        </section>
-      )}
-
-      {isRefreshError && (
-        <section
-          className="mt-4 grid gap-1.5 rounded-lg border border-amber-300 bg-amber-50 p-5 text-amber-900"
-          role="alert"
-        >
-          <strong>{t('status.refreshError')}</strong>
-          <span>{error}</span>
-        </section>
-      )}
-
-      {boardExportController.currentExportError && (
-        <section
-          className="mt-4 grid gap-1.5 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800"
-          role="alert"
-        >
-          <strong>{t('status.exportError')}</strong>
-          <span>{boardExportController.currentExportError}</span>
-        </section>
-      )}
-
-      {isInitialLoad && (
-        <section className="mt-4 rounded-lg border border-slate-200 bg-white p-5 text-slate-500">
-          {t('status.loading')}
-        </section>
-      )}
-
-      {projectionStatus === 'partial' && (
-        <section
-          className="mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900"
-          role="alert"
-        >
-          <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />
-          <span className="text-sm font-medium">
-            {t('status.projectionPartial')}
-          </span>
-        </section>
-      )}
-
-      {projectionStatus === 'blocked' && (
-        <section
-          className="mt-4 grid gap-2 rounded-lg border-2 border-red-300 bg-red-50 p-5 text-red-800"
-          role="alert"
-        >
-          <p className="flex items-center gap-2 font-semibold">
-            <ExclamationTriangleIcon className="h-5 w-5" />
-            {t('status.projectionBlocked')}
-          </p>
-          <p>
-            {active
-              ? t('status.projectionBlockedActive')
-              : t('status.projectionBlockedInactive')}
-          </p>
-          {hasIssues && <p>{t('status.projectionIssues')}</p>}
-        </section>
-      )}
-
-      {projection && projectionStatus !== 'blocked' && records.length === 0 && (
-        <EmptyState hasActiveFilters={active} hasIssues={hasIssues} />
-      )}
-
-      {projection &&
-        projectionStatus !== 'blocked' &&
-        records.length > 0 &&
-        (viewMode === 'board' ? (
-          <BoardView
-            records={records}
-            config={config}
-            profiles={profiles}
-            assetOptions={assetOptions}
-            relationTargetOptions={relationTargetOptions}
-            movingRecordId={statusMoveController.movingRecordId}
-            moveErrors={statusMoveController.moveErrors}
-            visibleColumnIds={visibleBoardColumnIds}
-            onCardClick={openDetail}
-            onMoveStatus={statusMoveController.moveRecordStatus}
-          />
-        ) : (
-          <section className="mt-4 grid gap-3.5" aria-label="Current records">
-            {records.map((record) => (
-              <RecordCard
-                key={record.body.id}
-                record={record}
-                profiles={profiles}
-                assetOptions={assetOptions}
-                relationTargetOptions={relationTargetOptions}
-                onCardClick={openDetail}
-              />
-            ))}
-          </section>
-        ))}
-
-      <IssuesPanel blockedRecords={blockedRecords} diagnostics={diagnostics} />
+      {/* ── Drawers ── */}
 
       <RecordDetailDrawer
         open={detailRecord !== null}
@@ -682,29 +740,16 @@ export function BoardCurrentPage() {
         createError={agentDraftController.createError}
         isReviewing={agentDraftController.isReviewing}
         reviewError={agentDraftController.reviewError}
-        isHandoffLoading={agentDraftController.isHandoffLoading}
-        handoffError={agentDraftController.handoffError}
-        handoffFeedback={agentDraftController.handoffFeedback}
         onSelectDraft={agentDraftController.loadDraftDetail}
         onRefreshList={agentDraftController.loadDraftList}
         onClose={agentDraftController.closeDrawer}
         onUpdateReview={agentDraftController.updateDraftReview}
-        onCopyHandoff={agentDraftController.copyHandoff}
-        onDownloadHandoff={agentDraftController.downloadHandoff}
-        responses={agentDraftController.responses}
-        selectedResponse={agentDraftController.selectedResponse}
-        isResponseListLoading={agentDraftController.isResponseListLoading}
-        isResponseDetailLoading={agentDraftController.isResponseDetailLoading}
-        isResponseCreating={agentDraftController.isResponseCreating}
-        responseListError={agentDraftController.responseListError}
-        responseDetailError={agentDraftController.responseDetailError}
-        responseCreateError={agentDraftController.responseCreateError}
-        onLoadResponseDetail={agentDraftController.loadResponseDetail}
-        onSaveResponse={agentDraftController.saveResponse}
         suggestions={agentDraftController.suggestions}
         selectedSuggestion={agentDraftController.selectedSuggestion}
         isSuggestionListLoading={agentDraftController.isSuggestionListLoading}
-        isSuggestionDetailLoading={agentDraftController.isSuggestionDetailLoading}
+        isSuggestionDetailLoading={
+          agentDraftController.isSuggestionDetailLoading
+        }
         isSuggestionGenerating={agentDraftController.isSuggestionGenerating}
         suggestionListError={agentDraftController.suggestionListError}
         suggestionDetailError={agentDraftController.suggestionDetailError}
@@ -798,6 +843,23 @@ export function BoardCurrentPage() {
         onRelationTargetChange={updateRelationTarget}
         onClose={() => setIsAdvancedFiltersOpen(false)}
       />
-    </main>
+
+      {/* Toast for board hints */}
+      {toastMessage && (
+        <div className="fixed bottom-4 right-4 z-40 max-w-sm rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-lg">
+          <div className="flex items-start gap-3">
+            <span className="flex-1">{toastMessage}</span>
+            <button
+              type="button"
+              className="shrink-0 text-slate-400 hover:text-slate-600"
+              onClick={() => setToastMessage(null)}
+              aria-label={t('toast.close')}
+            >
+              <XMarkIcon className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

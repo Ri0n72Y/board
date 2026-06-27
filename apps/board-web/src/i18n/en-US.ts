@@ -12,6 +12,7 @@ const enUS = {
     'header.refresh': 'Refresh',
     'header.refreshing': 'Refreshing...',
     'header.settings': 'Settings',
+    'header.more': 'More',
 
     // ─── View mode toggle ───
     'viewMode.list': 'List View',
@@ -704,7 +705,8 @@ const enUS = {
     'summary.archived': 'Archived',
     'summary.blocked': 'Blocked',
 
-    // ─── Status Badge ───
+    // ─── Badges / Toast ───
+    'toast.close': 'Close',
     'badge.loading': 'loading',
     'badge.clean': 'clean',
     'badge.partial': 'partial',

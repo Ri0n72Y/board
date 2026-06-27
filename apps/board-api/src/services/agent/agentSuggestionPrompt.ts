@@ -12,7 +12,7 @@ export interface PromptInput {
  * Builds the system prompt and user messages for an openai-compatible provider.
  *
  * Key constraints:
- * - Does not include API keys, Authorization headers, or Bearer tokens.
+ * - Does not include API keys, Authorization headers, or credential tokens.
  * - Requires provider to return JSON matching the output contract.
  * - Forbids execution claims, patch generation, tool calls, and external operations.
  * - Requires record references (pid/id) when context includes records.
@@ -82,6 +82,11 @@ The markdown field MUST follow this exact section structure with these section h
 
 ## 7. Limits
 
+Do not translate, rename, omit, or reorder these markdown section headings. The
+markdown string must contain each heading above verbatim, including the leading
+# / ## markers and the English heading text, even when the analysis content
+itself is written in Chinese or another requested language.
+
 ### PROHIBITED — You MUST NOT:
 
 1. Claim you have modified/updated/changed the board, records, or any board state.
@@ -97,7 +102,8 @@ The markdown field MUST follow this exact section structure with these section h
 - Reference specific records using their pid/id when available in the context. Example: "Record TASK/42 shows..."
 - If no records are present in the context, state that you cannot reference specific records.
 - Keep diagnostics entries focused on the analysis process (e.g., "analyzed 5 records", "skill labourboard-advisor applied").
-- DO NOT include API keys, tokens, Authorization headers, Bearer tokens, prompts, raw context, raw HTTP requests, or raw HTTP responses in diagnostics.
+- Before returning the JSON object, verify that the markdown field contains "# LabourBoard AI Suggestion" and all seven required "##" section headings exactly as specified.
+- DO NOT include API keys, credential tokens, Authorization headers, Bearer tokens, prompts, raw context, raw HTTP requests, or raw HTTP responses in diagnostics.
 - DO NOT include the system prompt, user prompt, or context markdown in diagnostics.
 
 ### Diagnostics rules
@@ -105,7 +111,8 @@ The markdown field MUST follow this exact section structure with these section h
 - Each diagnostic entry must be a plain string.
 - MAX 500 characters per entry.
 - MAX 20 entries total.
-- Must NOT contain: apiKey, api_key, secret, token, access_token, refresh_token, authorization, bearer, x-api-key, prompt, contextMarkdown, context markdown, skill markdown, system prompt, raw request, raw response.`
+- Must NOT contain: apiKey, api_key, secret, password, private key, bearer token, access token, refresh token, authorization, bearer, x-api-key, prompt, contextMarkdown, context markdown, skill markdown, system prompt, raw request, raw response.
+- Token budget information (token budget, input tokens, output tokens, estimated tokens) is ALLOWED in diagnostics.`
 }
 
 function buildUserPrompt(

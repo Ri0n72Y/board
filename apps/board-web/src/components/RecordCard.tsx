@@ -22,11 +22,15 @@ import {
 import { formatProfileCompact } from '../utils/profileDisplay'
 import type { MoveStatusOption } from '../utils/statusMove'
 
-/** Tags that, when clicked, should NOT trigger card detail open. */
+/** Tags that, when clicked inside a card, should NOT trigger card detail open. */
 const INTERACTIVE_SELECTOR =
-  'button, a, input, select, textarea, [role="button"], [role="link"], [data-card-interactive="true"]'
+  'button, a, input, select, textarea, [data-card-interactive="true"]'
 
-function isInteractiveTarget(target: EventTarget | null): boolean {
+function isInteractiveTarget(
+  target: EventTarget | null,
+  currentTarget: EventTarget
+): boolean {
+  if (target === currentTarget) return false
   if (!(target instanceof Element)) return false
   return target.closest(INTERACTIVE_SELECTOR) !== null
 }
@@ -44,7 +48,7 @@ interface RecordCardProps {
   onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
   onMoveStatus?: (
     record: RecordResponse<RecordItem<RecordBody>>,
-    targetStatusTag: Tag,
+    targetStatusTag: Tag
   ) => void
 }
 
@@ -64,17 +68,19 @@ export function RecordCard({
   const current = record.body
   const body = asDisplayBody(current.body)
   const title = body.title ?? current.pid
-  const currentStatus = current.tags.find((tag) => tag.startsWith('status:')) ?? null
+  const currentStatus =
+    current.tags.find((tag) => tag.startsWith('status:')) ?? null
   const profile = lookupProfile(profiles ?? null, current.assignee ?? '')
   const assigneeDisplay = formatProfileCompact(
     current.assignee,
     profile,
     t('record.unassigned'),
-    t('record.unknownMember'),
+    t('record.unknownMember')
   )
 
   const handleClick = (event: React.MouseEvent) => {
-    if (isInteractiveTarget(event.target as EventTarget)) return
+    if (isInteractiveTarget(event.target as EventTarget, event.currentTarget))
+      return
     onCardClick?.(record)
   }
 
@@ -89,53 +95,56 @@ export function RecordCard({
   if (compact) {
     return (
       <article
-        className="grid cursor-pointer gap-3 rounded-lg border border-slate-200 bg-white p-3 transition hover:border-slate-400 hover:shadow-sm"
+        className="flex h-fit w-full cursor-pointer flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 transition hover:border-slate-400 hover:shadow-sm"
         onClick={handleClick}
         role="button"
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >
-        <div className="grid gap-2">
-          <div className="min-w-0">
-            <p className="mb-1 font-mono text-xs text-slate-500">
-              {current.pid}
-            </p>
-            <h3 className="wrap-break-word text-base font-semibold leading-tight text-slate-950">
-              {title}
-            </h3>
-          </div>
+        <div className="min-w-0 shrink-0">
+          <p className="mb-0.5 font-mono text-xs text-slate-500">
+            {current.pid}
+          </p>
+          <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-slate-950">
+            {title}
+          </h3>
         </div>
 
-        <AssigneeCompact
-          pk={current.assignee}
-          profile={profile}
-          displayText={assigneeDisplay}
-        />
+        <div className="min-w-0 shrink-0">
+          <AssigneeCompact
+            pk={current.assignee}
+            profile={profile}
+            displayText={assigneeDisplay}
+          />
+        </div>
 
         {current.tags.length > 0 ? (
-          <TagChipRow tags={current.tags} readonly />
+          <div className="max-h-7 shrink-0 overflow-hidden">
+            <TagChipRow tags={current.tags} readonly />
+          </div>
         ) : (
-          <p className="text-sm text-slate-500">{t('record.noTags')}</p>
+          <p className="text-xs text-slate-400">{t('record.noTags')}</p>
         )}
 
         <ReferenceList
           label={t('record.assets')}
           values={current.assets ?? []}
           options={assetOptions}
-          maxVisible={2}
+          maxVisible={1}
           compact
         />
 
         <RelationsList
           relations={current.relations ?? []}
           relationTargetOptions={relationTargetOptions}
-          maxVisible={2}
+          maxVisible={1}
           compact
         />
 
         {onMoveStatus && moveStatusOptions.length > 0 && (
           <div
             data-card-interactive="true"
+            className="shrink-0 border-t border-slate-100 pt-2"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           >
@@ -144,7 +153,9 @@ export function RecordCard({
               options={moveStatusOptions}
               isMoving={isMovingStatus}
               error={moveStatusError}
-              onMove={(targetStatusTag) => onMoveStatus(record, targetStatusTag)}
+              onMove={(targetStatusTag) =>
+                onMoveStatus(record, targetStatusTag)
+              }
             />
           </div>
         )}
@@ -154,7 +165,7 @@ export function RecordCard({
 
   return (
     <article
-      className="grid cursor-pointer gap-4 rounded-lg border border-slate-200 bg-white p-5 transition hover:border-slate-400 hover:shadow-sm"
+      className="grid cursor-pointer gap-4 rounded-lg border border-slate-200 bg-white p-5 transition hover:border-slate-400 hover:shadow-sm max-w-3xl"
       onClick={handleClick}
       role="button"
       tabIndex={0}
@@ -176,7 +187,10 @@ export function RecordCard({
 
       <dl className="grid gap-2 sm:grid-cols-2">
         <MetaItem label={t('record.schema')} value={current.schema} />
-        <MetaItem label={t('record.created')} value={formatDate(record.createdAt)} />
+        <MetaItem
+          label={t('record.created')}
+          value={formatDate(record.createdAt)}
+        />
       </dl>
 
       {(body.description || body.content) && (
@@ -266,7 +280,11 @@ function ReferenceList({
       {summary.visible.length > 0 ? (
         <ul className="grid gap-1.5">
           {summary.visible.map((item, index) => (
-            <ReferenceListItem item={item} key={`${item.value}:${index}`} />
+            <ReferenceListItem
+              item={item}
+              key={`${item.value}:${index}`}
+              compact={compact}
+            />
           ))}
           {summary.hiddenCount > 0 && (
             <li className="text-xs font-medium text-slate-500">
@@ -281,9 +299,22 @@ function ReferenceList({
   )
 }
 
-function ReferenceListItem({ item }: { item: ReferenceDisplayItem }) {
+function ReferenceListItem({
+  item,
+  compact = false,
+}: {
+  item: ReferenceDisplayItem
+  compact?: boolean
+}) {
   return (
-    <li className="min-w-0 wrap-break-word text-xs text-slate-700" title={item.meta}>
+    <li
+      className={
+        compact
+          ? 'min-w-0 truncate text-xs text-slate-700'
+          : 'min-w-0 wrap-break-word text-xs text-slate-700'
+      }
+      title={item.meta}
+    >
       {item.label}
     </li>
   )
@@ -302,19 +333,28 @@ function RelationsList({
 }) {
   const { t } = useTranslation()
   const visibleRelations = (relations ?? []).slice(0, maxVisible)
-  const hiddenCount = Math.max((relations?.length ?? 0) - visibleRelations.length, 0)
+  const hiddenCount = Math.max(
+    (relations?.length ?? 0) - visibleRelations.length,
+    0
+  )
   const translate: RelationTranslator = (key, options) =>
     t(key, { defaultValue: options?.defaultValue ?? key })
   if (compact && (!relations || relations.length === 0)) return null
 
   return (
     <section className={compact ? 'grid gap-1.5' : 'grid gap-2'}>
-      <h3 className="text-sm font-semibold text-slate-500">{t('record.relations')}</h3>
+      <h3 className="text-sm font-semibold text-slate-500">
+        {t('record.relations')}
+      </h3>
       {relations && relations.length > 0 ? (
         <ul className="grid gap-1.5">
           {visibleRelations.map((relation, index) => (
             <li
-              className="min-w-0 wrap-break-word text-xs text-slate-700"
+              className={
+                compact
+                  ? 'min-w-0 truncate text-xs text-slate-700'
+                  : 'min-w-0 wrap-break-word text-xs text-slate-700'
+              }
               key={`${relation.constraint}:${relation.target}:${index}`}
               title={relation.target}
             >

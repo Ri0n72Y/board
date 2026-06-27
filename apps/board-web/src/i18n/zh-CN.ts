@@ -12,6 +12,7 @@ const zhCN = {
     'header.refresh': '刷新',
     'header.refreshing': '刷新中...',
     'header.settings': '设置',
+    'header.more': '更多',
 
     // ─── View mode toggle ───
     'viewMode.list': '列表视图',
@@ -650,7 +651,8 @@ const zhCN = {
     'summary.archived': '已归档',
     'summary.blocked': '已阻塞',
 
-    // ─── Status Badge ───
+    // ─── Badges / Toast ───
+    'toast.close': '关闭',
     'badge.loading': '加载中',
     'badge.clean': '正常',
     'badge.partial': '部分',
