@@ -22,6 +22,15 @@ import {
 import { formatProfileCompact } from '../utils/profileDisplay'
 import type { MoveStatusOption } from '../utils/statusMove'
 
+/** Tags that, when clicked, should NOT trigger card detail open. */
+const INTERACTIVE_SELECTOR =
+  'button, a, input, select, textarea, [role="button"], [role="link"], [data-card-interactive="true"]'
+
+function isInteractiveTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false
+  return target.closest(INTERACTIVE_SELECTOR) !== null
+}
+
 interface RecordCardProps {
   record: RecordResponse<RecordItem<RecordBody>>
   /** Profiles for assignee name resolution. */
@@ -64,7 +73,18 @@ export function RecordCard({
     t('record.unknownMember'),
   )
 
-  const handleClick = () => onCardClick?.(record)
+  const handleClick = (event: React.MouseEvent) => {
+    if (isInteractiveTarget(event.target as EventTarget)) return
+    onCardClick?.(record)
+  }
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.target !== event.currentTarget) return
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onCardClick?.(record)
+    }
+  }
 
   if (compact) {
     return (
@@ -73,9 +93,7 @@ export function RecordCard({
         onClick={handleClick}
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') handleClick()
-        }}
+        onKeyDown={handleKeyDown}
       >
         <div className="grid gap-2">
           <div className="min-w-0">
@@ -116,13 +134,19 @@ export function RecordCard({
         />
 
         {onMoveStatus && moveStatusOptions.length > 0 && (
-          <MoveStatusControl
-            currentStatus={currentStatus}
-            options={moveStatusOptions}
-            isMoving={isMovingStatus}
-            error={moveStatusError}
-            onMove={(targetStatusTag) => onMoveStatus(record, targetStatusTag)}
-          />
+          <div
+            data-card-interactive="true"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <MoveStatusControl
+              currentStatus={currentStatus}
+              options={moveStatusOptions}
+              isMoving={isMovingStatus}
+              error={moveStatusError}
+              onMove={(targetStatusTag) => onMoveStatus(record, targetStatusTag)}
+            />
+          </div>
         )}
       </article>
     )
@@ -134,9 +158,7 @@ export function RecordCard({
       onClick={handleClick}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') handleClick()
-      }}
+      onKeyDown={handleKeyDown}
     >
       <div className="grid gap-3 sm:flex sm:justify-between">
         <div>

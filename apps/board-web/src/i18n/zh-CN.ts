@@ -244,7 +244,7 @@ const zhCN = {
     'snapshot.loadingList': '正在加载快照...',
     'snapshot.empty': '尚无快照。',
     'snapshot.noReason': '无原因',
-    'snapshot.recordsCount': '{count} 条记录',
+    'snapshot.recordsCount': '{{count}} 条记录',
     'snapshot.loadingDetail': '正在加载快照详情...',
     'snapshot.selectHint': '选择一个快照以查看其静态记录。',
     'snapshot.detailTitle': '快照详情',
@@ -384,7 +384,7 @@ const zhCN = {
     'agent.queue.creating': '正在创建草稿...',
     'agent.queue.loading': '正在加载草稿...',
     'agent.queue.empty': '尚无 Agent 草稿。',
-    'agent.queue.emptyFilter': '无{status}草稿。',
+    'agent.queue.emptyFilter': '无{{status}}草稿。',
     'agent.queue.emptyHint':
       '从导出面板保存上下文包为 Agent 草稿，可在此处审核。',
     'agent.queue.records': '条记录',
@@ -428,7 +428,7 @@ const zhCN = {
     'agent.timeline.reviewPendingHint': '正式移交或响应录入前需标记为已审核。',
     'agent.timeline.reviewed': '已人工审核',
     'agent.timeline.reviewedDesc': '此草稿可以进行正式移交和手动响应录入。',
-    'agent.timeline.reviewedNote': '备注：{note}',
+    'agent.timeline.reviewedNote': '备注：{{note}}',
     'agent.timeline.discarded': '已丢弃',
     'agent.timeline.discardedDesc': '此草稿无法进行正式移交或手动响应录入。',
     'agent.timeline.handoffReady': '正式移交就绪',
@@ -440,10 +440,10 @@ const zhCN = {
     'agent.timeline.handoffLockedDesc': '请先审核此草稿再生成正式移交。',
     'agent.timeline.handoffDisabled': '正式移交已禁用',
     'agent.timeline.handoffDisabledDesc': '已丢弃的草稿无法生成正式移交。',
-    'agent.timeline.responses': '手动粘贴的响应（{count}）',
+    'agent.timeline.responses': '手动粘贴的响应（{{count}}）',
     'agent.timeline.responsesDesc':
       '响应是手动粘贴的记录。它们不是已应用的补丁，不会变更看板。',
-    'agent.timeline.responsesMore': '+{count} 条更多响应',
+    'agent.timeline.responsesMore': '+{{count}} 条更多响应',
     'agent.timeline.noResponses': '尚无手动响应',
     'agent.timeline.noResponsesDesc':
       '使用移交后将外部 Agent 响应手动粘贴于此。',
@@ -481,7 +481,7 @@ const zhCN = {
     'agent.response.pasteDiscarded': '响应粘贴不可用',
     'agent.response.pasteDiscardedDesc':
       '已丢弃的草稿无法接收 Agent 响应。请重置为草稿后重新审核。',
-    'agent.response.listTitle': '已粘贴的响应（{count}）',
+    'agent.response.listTitle': '已粘贴的响应（{{count}}）',
     'agent.response.loadingResponses': '正在加载响应...',
     'agent.response.listFailed': '响应列表加载失败',
     'agent.response.detailFailed': '响应详情加载失败',

@@ -354,6 +354,7 @@ export function BoardCurrentPage() {
 
   const handleDetailHistory = useCallback(
     (record: RecordResponse<RecordItem<RecordBody>>) => {
+      setDetailRecord(null)
       historyController.openHistory(record)
     },
     [historyController],

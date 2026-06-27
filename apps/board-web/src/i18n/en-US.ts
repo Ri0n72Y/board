@@ -258,7 +258,7 @@ const enUS = {
     'snapshot.loadingList': 'Loading snapshots...',
     'snapshot.empty': 'No snapshots yet.',
     'snapshot.noReason': 'No reason',
-    'snapshot.recordsCount': '{count} records',
+    'snapshot.recordsCount': '{{count}} records',
     'snapshot.loadingDetail': 'Loading snapshot detail...',
     'snapshot.selectHint': 'Select a snapshot to view its static records.',
     'snapshot.detailTitle': 'Snapshot detail',
@@ -411,7 +411,7 @@ const enUS = {
     'agent.queue.creating': 'Creating draft...',
     'agent.queue.loading': 'Loading drafts...',
     'agent.queue.empty': 'No agent drafts yet.',
-    'agent.queue.emptyFilter': 'No {status} drafts.',
+    'agent.queue.emptyFilter': 'No {{status}} drafts.',
     'agent.queue.emptyHint':
       'Save a Context Pack from the Export drawer as an Agent Draft to review here.',
     'agent.queue.records': 'records',
@@ -459,7 +459,7 @@ const enUS = {
     'agent.timeline.reviewed': 'Human Reviewed',
     'agent.timeline.reviewedDesc':
       'This draft is eligible for formal handoff and manual response intake.',
-    'agent.timeline.reviewedNote': 'Note: {note}',
+    'agent.timeline.reviewedNote': 'Note: {{note}}',
     'agent.timeline.discarded': 'Discarded',
     'agent.timeline.discardedDesc':
       'This draft is not eligible for formal handoff or manual response intake.',
@@ -475,10 +475,10 @@ const enUS = {
     'agent.timeline.handoffDisabled': 'Formal Handoff Disabled',
     'agent.timeline.handoffDisabledDesc':
       'Discarded drafts cannot generate formal handoff.',
-    'agent.timeline.responses': 'Manual Responses Pasted ({count})',
+    'agent.timeline.responses': 'Manual Responses Pasted ({{count}})',
     'agent.timeline.responsesDesc':
       'Responses are manually pasted records. They are not applied patches and do not mutate the board.',
-    'agent.timeline.responsesMore': '+{count} more responses',
+    'agent.timeline.responsesMore': '+{{count}} more responses',
     'agent.timeline.noResponses': 'No Manual Responses Yet',
     'agent.timeline.noResponsesDesc':
       'Paste an external Agent response manually after using the handoff.',
@@ -517,7 +517,7 @@ const enUS = {
     'agent.response.pasteDiscarded': 'Response paste not available',
     'agent.response.pasteDiscardedDesc':
       'Discarded drafts cannot receive Agent responses. Reset to Draft and review again if needed.',
-    'agent.response.listTitle': 'Pasted Responses ({count})',
+    'agent.response.listTitle': 'Pasted Responses ({{count}})',
     'agent.response.loadingResponses': 'Loading responses...',
     'agent.response.listFailed': 'Response list failed',
     'agent.response.detailFailed': 'Response detail failed',

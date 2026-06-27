@@ -78,7 +78,10 @@ interface AgentSuggestionPanelProps {
   suggestionListError?: string | null
   suggestionDetailError?: string | null
   suggestionGenerateError?: string | null
-  onGenerateSuggestion?: (draftId: string) => void | Promise<unknown>
+  onGenerateSuggestion?: (
+    draftId: string,
+    instruction?: string,
+  ) => void | Promise<unknown>
   onSelectSuggestion?: (suggestionId: string) => void
 }
 

@@ -114,11 +114,11 @@ export function BoardView({
           {t('board.horizontalScrollHint')}
         </p>
         <div className="overflow-x-auto pb-3 [scrollbar-width:thin]">
-          <div className="grid min-w-max gap-3 sm:auto-cols-[20rem] sm:grid-flow-col sm:grid-cols-none">
+          <div className="grid min-w-full auto-cols-[minmax(20rem,1fr)] grid-flow-col gap-3">
           {columns.map((column) => (
             <section
               key={column.id}
-              className="grid max-h-[calc(100svh-16rem)] min-h-80 grid-rows-[auto_minmax(0,1fr)] gap-3 rounded-lg border border-slate-200 bg-slate-100 p-3 sm:w-80"
+              className="grid max-h-[calc(100svh-16rem)] min-h-80 grid-rows-[auto_minmax(0,1fr)] gap-3 rounded-lg border border-slate-200 bg-slate-100 p-3"
               aria-label={column.label}
             >
               <header className="sticky top-0 z-10 flex min-w-0 items-center justify-between gap-3 bg-slate-100 pb-1">
