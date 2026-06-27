@@ -325,6 +325,17 @@ export function EditRecordDrawer({
               </section>
             )}
 
+            {initialPatchDescription && (
+              <section className="grid gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <p className="font-semibold">
+                  {t('edit.initialPatchDescriptionNotice')}
+                </p>
+                <p className="break-words font-mono text-xs leading-relaxed">
+                  {initialPatchDescription}
+                </p>
+              </section>
+            )}
+
             <div className="grid gap-3 sm:grid-cols-2">
               <ReadOnlyMeta
                 label={t('record.schema')}

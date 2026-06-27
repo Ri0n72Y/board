@@ -317,6 +317,7 @@ export function BoardCurrentPage() {
   const openEdit = useCallback(
     (record: RecordResponse<RecordItem<RecordBody>>) => {
       setIsCreateOpen(false)
+      setEditInitialPatchDescription(undefined)
       setEditRecord(record)
     },
     []

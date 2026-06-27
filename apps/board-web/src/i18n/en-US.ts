@@ -230,6 +230,8 @@ const enUS = {
     'edit.errorTitleRequired': 'Title is required.',
     'edit.errorStatusTagRequired': 'Status is required.',
     'edit.errorNoChanges': 'No changes to save.',
+    'edit.initialPatchDescriptionNotice':
+      'This patch will include a human-draft description from an AI suggestion.',
     'edit.saving': 'Saving...',
     'edit.saveButton': 'Save patch',
     'edit.conflictError':
