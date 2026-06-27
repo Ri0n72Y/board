@@ -135,6 +135,9 @@ export function AgentPatchDraftPanel({
           options={recordOptions}
           placeholder={t('agent.patchDraft.searchPlaceholder')}
         />
+        <p className="text-[10px] leading-relaxed text-slate-500">
+          {t('agent.patchDraft.visibleRecordsHint')}
+        </p>
 
         {/* Patch description preview */}
         <div className="grid gap-1">

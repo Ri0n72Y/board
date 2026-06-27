@@ -325,16 +325,10 @@ export function EditRecordDrawer({
               </section>
             )}
 
-            {initialPatchDescription && (
-              <section className="grid gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                <p className="font-semibold">
-                  {t('edit.initialPatchDescriptionNotice')}
-                </p>
-                <p className="break-words font-mono text-xs leading-relaxed">
-                  {initialPatchDescription}
-                </p>
-              </section>
-            )}
+            <InitialPatchDescriptionNotice
+              description={initialPatchDescription}
+              label={t('edit.initialPatchDescriptionNotice')}
+            />
 
             <div className="grid gap-3 sm:grid-cols-2">
               <ReadOnlyMeta
@@ -587,6 +581,25 @@ function ReadOnlyMeta({ label, value }: { label: string; value: string }) {
       <dt className="text-xs font-bold uppercase text-slate-500">{label}</dt>
       <dd className="m-0 wrap-break-word text-slate-950">{value}</dd>
     </div>
+  )
+}
+
+function InitialPatchDescriptionNotice({
+  description,
+  label,
+}: {
+  description?: string
+  label: string
+}) {
+  if (!description) return null
+
+  return (
+    <section className="grid gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <p className="font-semibold">{label}</p>
+      <p className="break-words font-mono text-xs leading-relaxed">
+        {description}
+      </p>
+    </section>
   )
 }
 

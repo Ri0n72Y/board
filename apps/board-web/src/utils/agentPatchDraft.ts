@@ -19,16 +19,6 @@ export function buildPatchDraftDescription(
 }
 
 /**
- * Build summary line for the patch draft confirmation UI.
- */
-export function buildPatchDraftSummaryLine(
-  suggestionId: string,
-  suggestionTitle: string,
-): string {
-  return `AI suggestion ${suggestionId.slice(0, 8)}: ${suggestionTitle}`
-}
-
-/**
  * Extract candidate record PIDs (e.g. "CARD-5", "TASK/42") from suggestion markdown.
  * Returns deduplicated list.  This is a *hint* only — the user must still manually
  * select the target record.
@@ -58,24 +48,4 @@ export function canCreatePatchDraft(suggestion: AgentSuggestionDetail | null): b
   if (!suggestion) return false
   if (!suggestion.title && !suggestion.markdown) return false
   return true
-}
-
-/**
- * Check whether a patch draft payload contains any record-level changes beyond
- * a pure-description note patch.
- */
-export function patchDraftHasContentChanges(payload: {
-  body?: Record<string, unknown>
-  tagChanges?: unknown
-  assignee?: unknown
-  assets?: unknown
-  relations?: unknown
-}): boolean {
-  return !!(
-    payload.body ||
-    payload.tagChanges ||
-    payload.assignee !== undefined ||
-    payload.assets ||
-    payload.relations
-  )
 }

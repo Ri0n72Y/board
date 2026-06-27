@@ -1,4 +1,15 @@
-import type { AgentDraftDetail, AgentDraftStatus, AgentDraftSummary, AgentResponseDetail, AgentResponseSummary, AgentSuggestionDetail, AgentSuggestionSummary, RecordBody, RecordItem, RecordResponse } from '@labour-board/shared'
+import type {
+  AgentDraftDetail,
+  AgentDraftStatus,
+  AgentDraftSummary,
+  AgentResponseDetail,
+  AgentResponseSummary,
+  AgentSuggestionDetail,
+  AgentSuggestionSummary,
+  RecordBody,
+  RecordItem,
+  RecordResponse,
+} from '@labour-board/shared'
 import { useTranslation } from 'react-i18next'
 import { Button } from './ui/Button'
 import { AgentDraftQueuePanel } from './agentDrafts/AgentDraftQueuePanel'
@@ -13,7 +24,7 @@ import { AgentManualWorkflowTimeline } from './agentDrafts/AgentManualWorkflowTi
 import { AgentSuggestionSection } from './agentDrafts/AgentSuggestionSection'
 import { ErrorBlock } from './agentDrafts/ErrorBlock'
 
-interface AgentDraftsDrawerProps {
+interface AgentDraftsDrawerBaseProps {
   open: boolean
   drafts: AgentDraftSummary[]
   selectedDraft: AgentDraftDetail | null
@@ -28,7 +39,19 @@ interface AgentDraftsDrawerProps {
   isHandoffLoading?: boolean
   handoffError?: string | null
   handoffFeedback?: string | null
-  // Agent Response
+  onSelectDraft: (draftId: string) => void
+  onRefreshList: () => void
+  onClose: () => void
+  onUpdateReview?: (
+    draftId: string,
+    status: AgentDraftStatus,
+    reviewNote?: string,
+  ) => void
+  onCopyHandoff?: (draftId: string) => void
+  onDownloadHandoff?: (draftId: string) => void
+}
+
+interface AgentResponsePanelProps {
   responses?: AgentResponseSummary[]
   selectedResponse?: AgentResponseDetail | null
   isResponseListLoading?: boolean
@@ -37,15 +60,16 @@ interface AgentDraftsDrawerProps {
   responseListError?: string | null
   responseDetailError?: string | null
   responseCreateError?: string | null
-  onSelectDraft: (draftId: string) => void
-  onRefreshList: () => void
-  onClose: () => void
-  onUpdateReview?: (draftId: string, status: AgentDraftStatus, reviewNote?: string) => void
-  onCopyHandoff?: (draftId: string) => void
-  onDownloadHandoff?: (draftId: string) => void
   onLoadResponseDetail?: (responseId: string) => void
-  onSaveResponse?: (draftId: string, responseMarkdown: string, externalAgentName?: string, responseNote?: string) => Promise<AgentResponseDetail>
-  // Agent Suggestion
+  onSaveResponse?: (
+    draftId: string,
+    responseMarkdown: string,
+    externalAgentName?: string,
+    responseNote?: string,
+  ) => Promise<AgentResponseDetail>
+}
+
+interface AgentSuggestionPanelProps {
   suggestions?: AgentSuggestionSummary[]
   selectedSuggestion?: AgentSuggestionDetail | null
   isSuggestionListLoading?: boolean
@@ -56,10 +80,17 @@ interface AgentDraftsDrawerProps {
   suggestionGenerateError?: string | null
   onGenerateSuggestion?: (draftId: string) => void | Promise<unknown>
   onSelectSuggestion?: (suggestionId: string) => void
-  // Patch Draft (2.6)
+}
+
+interface AgentPatchDraftBridgeProps {
   records?: RecordResponse<RecordItem<RecordBody>>[]
   onOpenEditor?: (recordId: string, patchDescription: string) => void
 }
+
+type AgentDraftsDrawerProps = AgentDraftsDrawerBaseProps &
+  AgentResponsePanelProps &
+  AgentSuggestionPanelProps &
+  AgentPatchDraftBridgeProps
 
 export function AgentDraftsDrawer({
   open,

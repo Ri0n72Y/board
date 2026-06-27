@@ -568,6 +568,8 @@ const enUS = {
     'agent.patchDraft.createButton': 'Create Patch Draft',
     'agent.patchDraft.selectRecord': 'Target Record',
     'agent.patchDraft.searchPlaceholder': 'Search records by PID or title...',
+    'agent.patchDraft.visibleRecordsHint':
+      'Only records visible in the current board view are listed. Clear filters if the target record is missing.',
     'agent.patchDraft.descriptionLabel': 'Patch Description',
     'agent.patchDraft.descriptionHint':
       'This description will be attached to the patch when submitted via the record editor.',

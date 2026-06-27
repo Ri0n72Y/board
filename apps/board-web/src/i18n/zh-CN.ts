@@ -225,7 +225,7 @@ const zhCN = {
     'edit.errorStatusTagRequired': '状态为必填项。',
     'edit.errorNoChanges': '没有需要保存的修改。',
     'edit.initialPatchDescriptionNotice':
-      'This patch will include a human-draft description from an AI suggestion.',
+      '此补丁将附带一段来自 AI 建议的人工草稿说明。',
     'edit.optional': '（可选）',
 
     // ─── Snapshot Drawer ───
@@ -530,6 +530,8 @@ const zhCN = {
     'agent.patchDraft.createButton': '创建补丁草稿',
     'agent.patchDraft.selectRecord': '目标记录',
     'agent.patchDraft.searchPlaceholder': '按 PID 或标题搜索记录...',
+    'agent.patchDraft.visibleRecordsHint':
+      '这里只列出当前看板视图中可见的记录。如果找不到目标记录，请先清除筛选条件。',
     'agent.patchDraft.descriptionLabel': '补丁说明',
     'agent.patchDraft.descriptionHint':
       '此说明将在记录编辑器中提交补丁时附带。',
