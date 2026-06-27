@@ -5,11 +5,10 @@ import type {
   RecordResponse,
   Tag,
 } from '@labour-board/shared'
-import { ClockIcon, PencilSquareIcon } from '@heroicons/react/20/solid'
 import { useTranslation } from 'react-i18next'
-import { Button } from './ui/Button'
 import { TagChipRow } from './BoardFilters'
 import { MoveStatusControl } from './MoveStatusControl'
+import { ProfileAvatar } from './ProfileAvatar'
 import { lookupProfile } from '../utils/board'
 import {
   formatRelationLine,
@@ -20,6 +19,7 @@ import {
   summarizeReferenceList,
   type ReferenceDisplayItem,
 } from '../utils/referenceDisplay'
+import { formatProfileCompact } from '../utils/profileDisplay'
 import type { MoveStatusOption } from '../utils/statusMove'
 
 interface RecordCardProps {
@@ -32,8 +32,7 @@ interface RecordCardProps {
   moveStatusOptions?: MoveStatusOption[]
   moveStatusError?: string | null
   isMovingStatus?: boolean
-  onHistoryClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
-  onEditClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
+  onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
   onMoveStatus?: (
     record: RecordResponse<RecordItem<RecordBody>>,
     targetStatusTag: Tag,
@@ -49,8 +48,7 @@ export function RecordCard({
   moveStatusOptions = [],
   moveStatusError,
   isMovingStatus = false,
-  onHistoryClick,
-  onEditClick,
+  onCardClick,
   onMoveStatus,
 }: RecordCardProps) {
   const { t } = useTranslation()
@@ -58,10 +56,27 @@ export function RecordCard({
   const body = asDisplayBody(current.body)
   const title = body.title ?? current.pid
   const currentStatus = current.tags.find((tag) => tag.startsWith('status:')) ?? null
+  const profile = lookupProfile(profiles ?? null, current.assignee ?? '')
+  const assigneeDisplay = formatProfileCompact(
+    current.assignee,
+    profile,
+    t('record.unassigned'),
+    t('record.unknownMember'),
+  )
+
+  const handleClick = () => onCardClick?.(record)
 
   if (compact) {
     return (
-      <article className="grid gap-3 rounded-lg border border-slate-200 bg-white p-3">
+      <article
+        className="grid cursor-pointer gap-3 rounded-lg border border-slate-200 bg-white p-3 transition hover:border-slate-400 hover:shadow-sm"
+        onClick={handleClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') handleClick()
+        }}
+      >
         <div className="grid gap-2">
           <div className="min-w-0">
             <p className="mb-1 font-mono text-xs text-slate-500">
@@ -71,36 +86,13 @@ export function RecordCard({
               {title}
             </h3>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              className="min-h-8 px-2.5 text-xs"
-              onClick={() => onEditClick?.(record)}
-              title={t('record.editTitle')}
-              icon={<PencilSquareIcon className="h-4 w-4" />}
-            >
-              {t('record.edit')}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="min-h-8 px-2.5 text-xs"
-              onClick={() => onHistoryClick?.(record)}
-              title={t('record.openHistory')}
-              icon={<ClockIcon className="h-4 w-4" />}
-            >
-              {t('record.history')}
-            </Button>
-          </div>
         </div>
 
-        <dl className="grid gap-2">
-          <MetaItem
-            label={t('record.assignee')}
-            value={formatAssignee(current.assignee, profiles, t)}
-          />
-        </dl>
+        <AssigneeCompact
+          pk={current.assignee}
+          profile={profile}
+          displayText={assigneeDisplay}
+        />
 
         {current.tags.length > 0 ? (
           <TagChipRow tags={current.tags} readonly />
@@ -137,7 +129,15 @@ export function RecordCard({
   }
 
   return (
-    <article className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5">
+    <article
+      className="grid cursor-pointer gap-4 rounded-lg border border-slate-200 bg-white p-5 transition hover:border-slate-400 hover:shadow-sm"
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') handleClick()
+      }}
+    >
       <div className="grid gap-3 sm:flex sm:justify-between">
         <div>
           <p className="mb-1 font-mono text-xs text-slate-500">{current.pid}</p>
@@ -145,33 +145,14 @@ export function RecordCard({
             {title}
           </h2>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onEditClick?.(record)}
-            title={t('record.editTitle')}
-            icon={<PencilSquareIcon className="h-4 w-4" />}
-          >
-            {t('record.edit')}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onHistoryClick?.(record)}
-            title={t('record.openHistory')}
-            icon={<ClockIcon className="h-4 w-4" />}
-          >
-            {t('record.history')}
-          </Button>
-        </div>
+        <AssigneeCompact
+          pk={current.assignee}
+          profile={profile}
+          displayText={assigneeDisplay}
+        />
       </div>
 
-      <dl className="grid gap-2 sm:grid-cols-3">
-        <MetaItem
-          label={t('record.assignee')}
-          value={formatAssignee(current.assignee, profiles, t)}
-        />
+      <dl className="grid gap-2 sm:grid-cols-2">
         <MetaItem label={t('record.schema')} value={current.schema} />
         <MetaItem label={t('record.created')} value={formatDate(record.createdAt)} />
       </dl>
@@ -205,6 +186,29 @@ export function RecordCard({
         maxVisible={3}
       />
     </article>
+  )
+}
+
+function AssigneeCompact({
+  pk,
+  profile,
+  displayText,
+}: {
+  pk?: string | null
+  profile: Profile | undefined | null
+  displayText: string
+}) {
+  if (!pk) return null
+  return (
+    <div className="flex shrink-0 items-center gap-2" title={displayText}>
+      <ProfileAvatar
+        name={profile?.name ?? pk}
+        pk={pk}
+        avatarUrl={profile?.avatarUrl ?? null}
+        size={24}
+      />
+      <span className="truncate text-xs text-slate-500">{displayText}</span>
+    </div>
   )
 }
 
@@ -307,6 +311,7 @@ function RelationsList({
     </section>
   )
 }
+
 function asDisplayBody(body: RecordBody): {
   title?: string
   description?: string
@@ -332,17 +337,4 @@ function formatDate(value: string): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   return date.toLocaleString()
-}
-
-function formatAssignee(
-  pk: string | undefined | null,
-  profiles: Profile[] | null | undefined,
-  t: (key: string) => string,
-): string {
-  if (!pk || pk.trim() === '') return t('record.unassigned')
-  const profile = lookupProfile(profiles ?? null, pk)
-  if (profile) {
-    return `${profile.name} (${pk.slice(0, 6)}…${pk.slice(-4)})`
-  }
-  return `${t('record.unknownMember')} (${pk.slice(0, 6)}…${pk.slice(-4)})`
 }

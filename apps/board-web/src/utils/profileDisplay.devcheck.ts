@@ -7,9 +7,7 @@ import {
   profileInitials,
   shortPublicKey,
   avatarColor,
-  profileToOption,
-  formatAssigneeDisplay,
-  profileOptionLabel,
+  formatProfileCompact,
   buildProfileOptions,
 } from './profileDisplay'
 
@@ -53,27 +51,17 @@ check('same pk same color', color1, color2)
 check('different pk different color (likely)', color1 !== color3, true)
 check('empty pk produces valid color', avatarColor(null).startsWith('hsl('), true)
 
-console.log('\nprofileToOption')
+console.log('\nformatProfileCompact')
 const profile = { pk: 'pk-alice', name: 'Alice Example', avatarUrl: null }
-const option = profileToOption(profile)
-check('profile option label', option.label, 'Alice Example')
-check('profile option value', option.value, 'pk-alice')
-check('profile option has description', typeof option.description, 'string')
-check('profile option has meta', option.meta, 'pk-alice')
-
-console.log('\nformatAssigneeDisplay')
-check('known profile', formatAssigneeDisplay('pk-alice', profile, 'Unassigned', 'Unknown member'), 'Alice Example (pk-alice)')
-check('unknown pk', formatAssigneeDisplay('pk-unknown', null, 'Unassigned', 'Unknown member'), 'Unknown member (pk-unknown)')
-check('empty pk', formatAssigneeDisplay('', profile, 'Unassigned', 'Unknown member'), 'Unassigned')
-check('null pk', formatAssigneeDisplay(null, profile, 'Unassigned', 'Unknown member'), 'Unassigned')
-
-console.log('\nprofileOptionLabel')
-check('found profile', profileOptionLabel('pk-alice', [profile]), 'Alice Example')
-check('unknown pk', profileOptionLabel('pk-bob', [profile]), 'Unknown member')
+check('known profile compact', formatProfileCompact('pk-alice', profile, 'Unassigned', 'Unknown member'), 'Alice Example#pk-alice')
+check('unknown pk compact', formatProfileCompact('pk-unknown', null, 'Unassigned', 'Unknown member'), 'Unknown member#pk-unkno')
+check('empty pk compact', formatProfileCompact('', profile, 'Unassigned', 'Unknown member'), 'Unassigned')
+check('null pk compact', formatProfileCompact(null, profile, 'Unassigned', 'Unknown member'), 'Unassigned')
 
 console.log('\nbuildProfileOptions')
 const options = buildProfileOptions([profile])
 check('one option built', options.length, 1)
+check('compact label format', options[0].label, 'Alice Example#pk-alice')
 check('null profiles', buildProfileOptions(null), [])
 
 console.log(`\n${passed} passed, ${failures} failed${failures > 0 ? ' ❌' : ' ✓'}`)

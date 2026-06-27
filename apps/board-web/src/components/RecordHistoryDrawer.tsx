@@ -8,10 +8,10 @@ import type {
 import {
   ExclamationTriangleIcon,
   PencilSquareIcon,
-  XMarkIcon,
 } from '@heroicons/react/20/solid'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { AnimatedDrawer } from './ui/AnimatedDrawer'
 import { Badge } from './ui/Badge'
 import { Button } from './ui/Button'
 import {
@@ -61,101 +61,78 @@ export function RecordHistoryDrawer({
     title ?? titleFromBody(finalState?.body) ?? titleFromBody(baseRecord?.body)
   const statusText = statusSummaryText(finalState ?? baseRecord, language)
 
-  if (!open) return null
+  const headerTitle =
+    displayPid && displayTitle
+      ? `${displayPid} · ${displayTitle}`
+      : displayTitle ?? displayPid ?? t('history.defaultTitle')
+
+  const footer = (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <div>
+        {history && (
+          <span className="text-sm text-slate-600">
+            {[statusText, t('history.changeCount', { count: history.patches.length })]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {editableRecord && onEditClick && (
+          <Button
+            type="button"
+            onClick={() => onEditClick(editableRecord)}
+            title={t('history.editTitle')}
+            icon={<PencilSquareIcon className="h-4 w-4" />}
+          >
+            {t('history.edit')}
+          </Button>
+        )}
+      </div>
+    </div>
+  )
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-slate-950/30"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose()
-      }}
+    <AnimatedDrawer
+      open={open}
+      onClose={onClose}
+      title={headerTitle}
+      subtitle={t('history.subtitle')}
+      closeLabel={t('history.close')}
+      size="lg"
+      footer={footer}
     >
-      <aside
-        aria-labelledby="record-history-title"
-        aria-modal="true"
-        className="ml-auto grid h-full w-full max-w-3xl grid-rows-[auto_1fr] overflow-hidden border-l border-slate-200 bg-stone-50 text-slate-950 shadow-xl"
-        role="dialog"
-      >
-        <header className="flex min-w-0 items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4">
-          <div className="min-w-0">
-            <p className="mb-1 font-mono text-xs text-slate-500">
-              {t('history.subtitle')}
-            </p>
-            <h2
-              className="wrap-break-word text-xl font-semibold leading-tight"
-              id="record-history-title"
-            >
-              {displayPid && displayTitle
-                ? `${displayPid} · ${displayTitle}`
-                : displayTitle ?? displayPid ?? t('history.defaultTitle')}
-            </h2>
-            {history && (
-              <p className="mt-1 text-sm text-slate-600">
-                {[statusText, t('history.changeCount', { count: history.patches.length })]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </p>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {editableRecord && onEditClick && (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => onEditClick(editableRecord)}
-                title={t('history.editTitle')}
-                icon={<PencilSquareIcon className="h-4 w-4" />}
-              >
-                {t('history.edit')}
-              </Button>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={onClose}
-              title={t('history.closeTitle')}
-              icon={<XMarkIcon className="h-4 w-4" />}
-            >
-              {t('history.close')}
-            </Button>
-          </div>
-        </header>
+      {isLoading && (
+        <section className="rounded-md border border-slate-200 bg-white p-4 text-slate-500">
+          {t('history.loading')}
+        </section>
+      )}
 
-        <div className="min-h-0 overflow-y-auto px-5 py-4">
-          {isLoading && (
-            <section className="rounded-md border border-slate-200 bg-white p-4 text-slate-500">
-              {t('history.loading')}
-            </section>
-          )}
+      {error && (
+        <section
+          className="grid gap-1.5 rounded-md border border-red-300 bg-red-50 p-4 text-red-800"
+          role="alert"
+        >
+          <strong>{t('history.loadError')}</strong>
+          <span>{error}</span>
+        </section>
+      )}
 
-          {error && (
-            <section
-              className="grid gap-1.5 rounded-md border border-red-300 bg-red-50 p-4 text-red-800"
-              role="alert"
-            >
-              <strong>{t('history.loadError')}</strong>
-              <span>{error}</span>
-            </section>
-          )}
+      {!isLoading && !error && history && (
+        <HistoryContent
+          history={history}
+          language={language}
+          assetOptions={assetOptions}
+          profiles={profiles ?? null}
+        />
+      )}
 
-          {!isLoading && !error && history && (
-            <HistoryContent
-              history={history}
-              language={language}
-              assetOptions={assetOptions}
-              profiles={profiles ?? null}
-            />
-          )}
-
-          {!isLoading && !error && !history && (
-            <section className="rounded-md border border-slate-200 bg-white p-4 text-slate-500">
-              {t('history.noHistory')}
-            </section>
-          )}
-        </div>
-      </aside>
-    </div>
+      {!isLoading && !error && !history && (
+        <section className="rounded-md border border-slate-200 bg-white p-4 text-slate-500">
+          {t('history.noHistory')}
+        </section>
+      )}
+    </AnimatedDrawer>
   )
 }
 

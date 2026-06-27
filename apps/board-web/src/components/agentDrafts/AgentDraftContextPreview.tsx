@@ -29,7 +29,7 @@ export function AgentDraftContextPreview({ draft }: AgentDraftContextPreviewProp
     <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold uppercase text-slate-500">
-          Context Markdown Preview
+          {t('agent.contextPreview')}
         </h3>
         {isLong && (
           <Button

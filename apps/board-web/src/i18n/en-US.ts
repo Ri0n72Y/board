@@ -131,6 +131,7 @@ const enUS = {
     'record.noRecords': 'No records',
     'record.none': 'None',
     'record.assets': 'Assets',
+    'record.close': 'Close',
     'record.relations': 'Relations',
     'record.moreAssets_one': '+{{count}} more asset',
     'record.moreAssets_other': '+{{count}} more assets',
@@ -203,7 +204,7 @@ const enUS = {
     'create.optional': ' (optional)',
 
     // ─── Edit Record Drawer ───
-    'edit.subtitle': '{pid} / {id}',
+    'edit.subtitle': '{{pid}} / {{id}}',
     'edit.title': 'Edit Record',
     'edit.closeTitle': 'Close edit record',
     'edit.close': 'Close',
@@ -262,6 +263,7 @@ const enUS = {
     'snapshot.selectHint': 'Select a snapshot to view its static records.',
     'snapshot.detailTitle': 'Snapshot detail',
     'snapshot.exportButton': 'Export Snapshot',
+    'snapshot.exporting': 'Exporting...',
     'snapshot.exportAgentContext': 'Export Agent Snapshot Context',
     'snapshot.restoreNotImplemented': 'Restore not implemented',
     'snapshot.detailCreated': 'Created',
@@ -373,6 +375,33 @@ const enUS = {
     'agent.selectHint': 'Select a draft to view its context.',
     'agent.detailFailed': 'Detail failed',
 
+    // ─── Agent Draft Context Preview ───
+    'agent.contextPreview': 'Context Markdown Preview',
+
+    // ─── Agent Draft Meta Panel ───
+    'agent.meta.title': 'Context markdown preview',
+    'agent.meta.profile': 'Profile',
+    'agent.meta.source': 'Source',
+    'agent.meta.created': 'Created',
+    'agent.meta.createdBy': 'Created by',
+    'agent.meta.status': 'Status',
+    'agent.meta.records': 'Records',
+    'agent.meta.contextGoal': 'Context goal',
+    'agent.meta.snapshot': 'Snapshot',
+    'agent.meta.none': 'None',
+    'agent.meta.copyMarkdown': 'Copy Markdown',
+    'agent.meta.download': 'Download',
+    'agent.meta.copied': 'Copied!',
+    'agent.meta.copyFailed': 'Copy failed',
+
+    // ─── Agent Draft Review Info ───
+    'agent.reviewInfo.notReviewed': 'Not reviewed yet',
+    'agent.reviewInfo.title': 'Review Info',
+    'agent.reviewInfo.reviewedAt': 'Reviewed at',
+    'agent.reviewInfo.reviewedBy': 'Reviewed by',
+    'agent.reviewInfo.reviewNote': 'Review note',
+    'agent.reviewInfo.unknown': 'unknown',
+
     // ─── Agent Draft Queue ───
     'agent.queue.title': 'Draft Queue',
     'agent.queue.refresh': 'Refresh',
@@ -419,6 +448,7 @@ const enUS = {
     'agent.timeline.tone.complete': 'complete',
     'agent.timeline.tone.pending': 'pending',
     'agent.timeline.tone.blocked': 'blocked',
+    'agent.timeline.tone.by': 'by {{name}}',
     'agent.timeline.draftCreated': 'Draft Created',
     'agent.timeline.draftCreatedDesc':
       'A static Agent context draft was created from the selected source.',
@@ -498,6 +528,12 @@ const enUS = {
     'agent.response.copyFailed': 'Copy failed',
     'agent.response.showFull': 'Show full',
     'agent.response.collapse': 'Collapse',
+    'agent.response.chars': 'chars',
+    'agent.response.meta.agent': 'Agent',
+    'agent.response.meta.pastedAt': 'Pasted at',
+    'agent.response.meta.pastedBy': 'Pasted by',
+    'agent.response.meta.length': 'Length',
+    'agent.response.meta.note': 'Note',
 
     // ─── Formal Handoff Section ───
     'agent.handoff.sectionTitle': 'Formal Handoff',

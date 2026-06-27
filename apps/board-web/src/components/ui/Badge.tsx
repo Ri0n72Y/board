@@ -19,7 +19,7 @@ export function Badge({ color = 'slate', children, className, ...props }: BadgeP
   return (
     <span
       className={cn(
-        'inline-flex min-h-8 items-center rounded-full px-3 text-xs font-bold uppercase',
+        'inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 text-xs font-bold uppercase',
         colorClass[color],
         className
       )}

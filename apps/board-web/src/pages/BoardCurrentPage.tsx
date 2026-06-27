@@ -29,6 +29,7 @@ import { EmptyState } from '../components/EmptyState'
 import { ExportContextDrawer } from '../components/ExportContextDrawer'
 import { IssuesPanel } from '../components/IssuesPanel'
 import { RecordCard } from '../components/RecordCard'
+import { RecordDetailDrawer } from '../components/RecordDetailDrawer'
 import { RecordHistoryDrawer } from '../components/RecordHistoryDrawer'
 import { SnapshotDrawer } from '../components/SnapshotDrawer'
 import { AgentDraftsDrawer } from '../components/AgentDraftsDrawer'
@@ -124,6 +125,9 @@ export function BoardCurrentPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
   const [viewMode, setViewMode] = useState<BoardViewMode>('board')
+  const [detailRecord, setDetailRecord] = useState<RecordResponse<
+    RecordItem<RecordBody>
+  > | null>(null)
   const [selectedAssetOption, setSelectedAssetOption] =
     useState<RecordReferenceOption | null>(null)
   const [selectedRelationTargetOption, setSelectedRelationTargetOption] =
@@ -328,6 +332,33 @@ export function BoardCurrentPage() {
     setEditInitialPatchDescription(undefined)
   }, [])
 
+  // ── Card detail ──
+  const openDetail = useCallback(
+    (record: RecordResponse<RecordItem<RecordBody>>) => {
+      setDetailRecord(record)
+    },
+    [],
+  )
+
+  const closeDetail = useCallback(() => {
+    setDetailRecord(null)
+  }, [])
+
+  const handleDetailEdit = useCallback(
+    (record: RecordResponse<RecordItem<RecordBody>>) => {
+      setDetailRecord(null)
+      openEdit(record)
+    },
+    [openEdit],
+  )
+
+  const handleDetailHistory = useCallback(
+    (record: RecordResponse<RecordItem<RecordBody>>) => {
+      historyController.openHistory(record)
+    },
+    [historyController],
+  )
+
   // Opens EditRecordDrawer from a patch draft with suggestion-sourced description.
   const handleOpenPatchEditor = useCallback(
     (recordId: string, patchDescription: string) => {
@@ -355,17 +386,17 @@ export function BoardCurrentPage() {
   })
 
   return (
-    <main className="mx-auto min-h-svh w-full max-w-295 bg-stone-50 px-4 py-5 text-slate-950 sm:px-7 sm:py-7">
-      <header className="mb-5 grid gap-4 sm:flex sm:items-start sm:justify-between">
+    <main className="mx-auto min-h-svh w-full max-w-295 bg-stone-50 px-4 py-3 text-slate-950 sm:px-6 sm:py-4">
+      <header className="mb-3 grid gap-3 sm:flex sm:items-start sm:justify-between">
         <div>
-          <p className="mb-1 text-xs font-bold uppercase text-slate-500">
+          <p className="mb-0.5 text-xs font-bold uppercase text-slate-500">
             {t('header.currentBoard')}
           </p>
-          <h1 className="text-3xl font-bold leading-tight text-slate-950">
+          <h1 className="text-2xl font-bold leading-tight text-slate-950">
             {t('header.appTitle')}
           </h1>
         </div>
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={projectionStatus} />
           <ViewModeToggle value={viewMode} onChange={setViewMode} />
           <Button
@@ -555,8 +586,7 @@ export function BoardCurrentPage() {
             movingRecordId={statusMoveController.movingRecordId}
             moveErrors={statusMoveController.moveErrors}
             visibleColumnIds={visibleBoardColumnIds}
-            onHistoryClick={historyController.openHistory}
-            onEditClick={openEdit}
+            onCardClick={openDetail}
             onMoveStatus={statusMoveController.moveRecordStatus}
           />
         ) : (
@@ -568,14 +598,22 @@ export function BoardCurrentPage() {
                 profiles={profiles}
                 assetOptions={assetOptions}
                 relationTargetOptions={relationTargetOptions}
-                onHistoryClick={historyController.openHistory}
-                onEditClick={openEdit}
+                onCardClick={openDetail}
               />
             ))}
           </section>
         ))}
 
       <IssuesPanel blockedRecords={blockedRecords} diagnostics={diagnostics} />
+
+      <RecordDetailDrawer
+        open={detailRecord !== null}
+        record={detailRecord}
+        profiles={profiles}
+        onClose={closeDetail}
+        onEditClick={handleDetailEdit}
+        onHistoryClick={handleDetailHistory}
+      />
 
       <RecordHistoryDrawer
         open={historyController.historySelection !== null}

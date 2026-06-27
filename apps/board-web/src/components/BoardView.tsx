@@ -29,8 +29,7 @@ interface BoardViewProps {
   profiles?: Profile[] | null
   assetOptions: RecordReferenceOption[]
   relationTargetOptions: RecordReferenceOption[]
-  onHistoryClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
-  onEditClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
+  onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
   movingRecordId?: string | null
   moveErrors?: Record<string, string>
   visibleColumnIds?: string[] | null
@@ -46,8 +45,7 @@ export function BoardView({
   profiles,
   assetOptions,
   relationTargetOptions,
-  onHistoryClick,
-  onEditClick,
+  onCardClick,
   movingRecordId,
   moveErrors,
   visibleColumnIds,
@@ -120,7 +118,7 @@ export function BoardView({
           {columns.map((column) => (
             <section
               key={column.id}
-              className="grid max-h-[calc(100svh-18rem)] min-h-80 grid-rows-[auto_minmax(0,1fr)] gap-3 rounded-lg border border-slate-200 bg-slate-100 p-3 sm:w-80"
+              className="grid max-h-[calc(100svh-16rem)] min-h-80 grid-rows-[auto_minmax(0,1fr)] gap-3 rounded-lg border border-slate-200 bg-slate-100 p-3 sm:w-80"
               aria-label={column.label}
             >
               <header className="sticky top-0 z-10 flex min-w-0 items-center justify-between gap-3 bg-slate-100 pb-1">
@@ -147,8 +145,7 @@ export function BoardView({
                       moveStatusOptions={moveStatusOptions}
                       isMovingStatus={movingRecordId === record.body.id}
                       moveStatusError={moveErrors?.[record.body.id] ?? null}
-                      onHistoryClick={onHistoryClick}
-                      onEditClick={onEditClick}
+                      onCardClick={onCardClick}
                       onMoveStatus={onMoveStatus}
                     />
                   ))}

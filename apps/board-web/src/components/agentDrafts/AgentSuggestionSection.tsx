@@ -22,7 +22,7 @@ interface AgentSuggestionSectionProps {
   listError: string | null
   detailError: string | null
   generateError: string | null
-  onGenerate: (draftId: string) => void | Promise<unknown>
+  onGenerate: (draftId: string, instruction?: string) => void | Promise<unknown>
   onSelectSuggestion: (id: string) => void
   records?: RecordResponse<RecordItem<RecordBody>>[]
   onOpenEditor?: (recordId: string, patchDescription: string) => void
@@ -43,13 +43,18 @@ export function AgentSuggestionSection({
   records,
   onOpenEditor,
 }: AgentSuggestionSectionProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const isReviewed = draft.status === 'reviewed'
 
   const handleGenerate = () => {
+    // Pass current UI language as instruction so generated content follows UI language.
+    const languageInstruction =
+      i18n.resolvedLanguage === 'zh-CN'
+        ? '请使用中文输出；标签、标题、摘要、建议内容应与当前中文界面一致。'
+        : 'Use English for titles, summaries, labels, and generated suggestion content.'
     // Wrap in void to prevent unhandled promise rejection;
     // the hook already handles errors via generateError state.
-    void Promise.resolve(onGenerate(draft.id)).catch(() => undefined)
+    void Promise.resolve(onGenerate(draft.id, languageInstruction)).catch(() => undefined)
   }
 
   return (

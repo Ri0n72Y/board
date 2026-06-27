@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { AgentDraftDetail } from '@labour-board/shared'
 import { ArrowDownTrayIcon, ClipboardDocumentIcon } from '@heroicons/react/20/solid'
+import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/Button'
 import { AgentDraftStatusBadge } from './AgentDraftStatusBadge'
 import { MetaItem } from './MetaItem'
@@ -12,9 +13,9 @@ interface AgentDraftMetaPanelProps {
 }
 
 export function AgentDraftMetaPanel({ draft }: AgentDraftMetaPanelProps) {
+  const { t } = useTranslation()
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
 
-  // Clear copy feedback when draft changes
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset on namespaced parent key change
     setCopyFeedback(null)
@@ -22,8 +23,8 @@ export function AgentDraftMetaPanel({ draft }: AgentDraftMetaPanelProps) {
 
   const copyMarkdown = () => {
     navigator.clipboard.writeText(draft.contextMarkdown).then(
-      () => { setCopyFeedback('Copied!'); setTimeout(() => setCopyFeedback(null), 2000) },
-      () => setCopyFeedback('Copy failed'),
+      () => { setCopyFeedback(t('agent.meta.copied')); setTimeout(() => setCopyFeedback(null), 2000) },
+      () => setCopyFeedback(t('agent.meta.copyFailed')),
     )
   }
 
@@ -43,22 +44,22 @@ export function AgentDraftMetaPanel({ draft }: AgentDraftMetaPanelProps) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" onClick={copyMarkdown} icon={<ClipboardDocumentIcon className="h-4 w-4" />}>
-            {copyFeedback ?? 'Copy Markdown'}
+            {copyFeedback ?? t('agent.meta.copyMarkdown')}
           </Button>
           <Button type="button" onClick={downloadMarkdown} icon={<ArrowDownTrayIcon className="h-4 w-4" />}>
-            Download
+            {t('agent.meta.download')}
           </Button>
         </div>
       </div>
       <dl className="grid gap-2 sm:grid-cols-2">
-        <MetaItem label="Profile" value={draft.profile} />
-        <MetaItem label="Source" value={draft.source} />
-        <MetaItem label="Created" value={formatDate(draft.createdAt)} />
-        <MetaItem label="Created by" value={draft.createdBy} mono />
-        <MetaItem label="Status" value={draft.status} />
-        <MetaItem label="Records" value={draft.recordCount.toString()} />
-        <MetaItem label="Context goal" value={draft.contextGoal ?? 'None'} />
-        {draft.snapshotId && <MetaItem label="Snapshot" value={draft.snapshotId} mono />}
+        <MetaItem label={t('agent.meta.profile')} value={draft.profile} />
+        <MetaItem label={t('agent.meta.source')} value={draft.source} />
+        <MetaItem label={t('agent.meta.created')} value={formatDate(draft.createdAt)} />
+        <MetaItem label={t('agent.meta.createdBy')} value={draft.createdBy} mono />
+        <MetaItem label={t('agent.meta.status')} value={draft.status} />
+        <MetaItem label={t('agent.meta.records')} value={draft.recordCount.toString()} />
+        <MetaItem label={t('agent.meta.contextGoal')} value={draft.contextGoal ?? t('agent.meta.none')} />
+        {draft.snapshotId && <MetaItem label={t('agent.meta.snapshot')} value={draft.snapshotId} mono />}
       </dl>
     </section>
   )

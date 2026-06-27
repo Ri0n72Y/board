@@ -124,6 +124,7 @@ const zhCN = {
     'record.noRecords': '无记录',
     'record.none': '无',
     'record.assets': '资产',
+    'record.close': '关闭',
     'record.relations': '关联',
     'record.moreAssets': '+{{count}} 更多资产',
     'record.moreRelations': '+{{count}} 更多关联',
@@ -193,7 +194,7 @@ const zhCN = {
     'create.optional': '（可选）',
 
     // ─── Edit Record Drawer ───
-    'edit.subtitle': '{pid} / {id}',
+    'edit.subtitle': '{{pid}} / {{id}}',
     'edit.title': '编辑记录',
     'edit.closeTitle': '关闭编辑记录',
     'edit.close': '关闭',
@@ -248,6 +249,7 @@ const zhCN = {
     'snapshot.selectHint': '选择一个快照以查看其静态记录。',
     'snapshot.detailTitle': '快照详情',
     'snapshot.exportButton': '导出快照',
+    'snapshot.exporting': '导出中...',
     'snapshot.exportAgentContext': '导出 Agent 快照上下文',
     'snapshot.restoreNotImplemented': '恢复功能未实现',
     'snapshot.detailCreated': '创建时间',
@@ -347,6 +349,32 @@ const zhCN = {
     'agent.selectHint': '选择一个上下文草稿以查看内容。',
     'agent.detailFailed': '详情加载失败',
 
+    // ─── Agent Draft Context Preview ───
+    'agent.contextPreview': '上下文 Markdown 预览',
+
+    // ─── Agent Draft Meta Panel ───
+    'agent.meta.profile': '配置',
+    'agent.meta.source': '来源',
+    'agent.meta.created': '创建时间',
+    'agent.meta.createdBy': '创建者',
+    'agent.meta.status': '状态',
+    'agent.meta.records': '记录数',
+    'agent.meta.contextGoal': '上下文目标',
+    'agent.meta.snapshot': '快照',
+    'agent.meta.none': '无',
+    'agent.meta.copyMarkdown': '复制 Markdown',
+    'agent.meta.download': '下载',
+    'agent.meta.copied': '已复制！',
+    'agent.meta.copyFailed': '复制失败',
+
+    // ─── Agent Draft Review Info ───
+    'agent.reviewInfo.notReviewed': '尚未审核',
+    'agent.reviewInfo.title': '审核信息',
+    'agent.reviewInfo.reviewedAt': '审核时间',
+    'agent.reviewInfo.reviewedBy': '审核人',
+    'agent.reviewInfo.reviewNote': '审核备注',
+    'agent.reviewInfo.unknown': '未知',
+
     // ─── Agent Draft Queue ───
     'agent.queue.title': '草稿队列',
     'agent.queue.refresh': '刷新',
@@ -391,6 +419,7 @@ const zhCN = {
     'agent.timeline.tone.complete': '已完成',
     'agent.timeline.tone.pending': '待处理',
     'agent.timeline.tone.blocked': '已阻塞',
+    'agent.timeline.tone.by': '由 {{name}}',
     'agent.timeline.draftCreated': '草稿已创建',
     'agent.timeline.draftCreatedDesc':
       '从所选来源创建了静态 Agent 上下文草稿。',
@@ -463,6 +492,12 @@ const zhCN = {
     'agent.response.copyFailed': '复制失败',
     'agent.response.showFull': '显示全部',
     'agent.response.collapse': '收起',
+    'agent.response.chars': '字符',
+    'agent.response.meta.agent': 'Agent',
+    'agent.response.meta.pastedAt': '粘贴时间',
+    'agent.response.meta.pastedBy': '粘贴者',
+    'agent.response.meta.length': '长度',
+    'agent.response.meta.note': '备注',
 
     // ─── Formal Handoff Section ───
     'agent.handoff.sectionTitle': '正式移交',

@@ -1,4 +1,5 @@
 import type { AgentDraftDetail, AgentResponseSummary } from '@labour-board/shared'
+import { useTranslation } from 'react-i18next'
 import { formatDate } from './format'
 
 interface AgentManualWorkflowTimelineProps {
@@ -42,6 +43,7 @@ function TimelineItem({
   meta?: string
   children?: React.ReactNode
 }) {
+  const { t } = useTranslation()
   const cls = TONE_CLASS[tone]
 
   return (
@@ -52,7 +54,7 @@ function TimelineItem({
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <span className={`rounded px-1.5 py-0.5 text-xs font-bold uppercase ${cls.badge}`}>
-            {tone}
+            {t(`agent.timeline.tone.${tone}`)}
           </span>
           <strong className="text-sm font-semibold text-slate-950">{title}</strong>
         </div>
@@ -75,34 +77,33 @@ export function AgentManualWorkflowTimeline({
   draft,
   responses,
 }: AgentManualWorkflowTimelineProps) {
+  const { t } = useTranslation()
   const responseCount = responses.length
   const recentResponses = responses.slice(0, 3)
 
   return (
     <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
       <h3 className="text-sm font-semibold uppercase text-slate-500">
-        Manual Workflow Overview
+        {t('agent.timeline.title')}
       </h3>
 
       {/* ── Derived readonly disclaimer ── */}
       <div className="grid gap-1 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-        <p>
-          This timeline is derived from the current draft, review metadata, handoff readiness, and pasted responses.
-        </p>
-        <p>It is not a persistent audit log.</p>
-        <p>No AI call, patch, or board mutation is performed by this timeline.</p>
+        <p>{t('agent.timeline.disclaimer1')}</p>
+        <p>{t('agent.timeline.disclaimer2')}</p>
+        <p>{t('agent.timeline.disclaimer3')}</p>
       </div>
 
       {/* ── 1. Draft Created ── */}
       <TimelineItem
         tone="complete"
-        title="Draft Created"
-        meta={`${formatDate(draft.createdAt)} by ${draft.createdBy}`}
+        title={t('agent.timeline.draftCreated')}
+        meta={`${formatDate(draft.createdAt)} ${t('agent.timeline.tone.by', { name: draft.createdBy })}`}
       >
-        <p>A static Agent context draft was created from the selected source.</p>
+        <p>{t('agent.timeline.draftCreatedDesc')}</p>
         <p>
-          {draft.source} · {draft.profile} · {draft.recordCount} records
-          {draft.snapshotId ? ` · snapshot ${draft.snapshotId.slice(0, 8)}` : ''}
+          {draft.source} · {draft.profile} · {draft.recordCount} {t('agent.queue.records')}
+          {draft.snapshotId ? ` · ${t('agent.meta.snapshot').toLowerCase()} ${draft.snapshotId.slice(0, 8)}` : ''}
         </p>
       </TimelineItem>
 
@@ -110,27 +111,27 @@ export function AgentManualWorkflowTimeline({
 
       {/* ── 2. Human Review ── */}
       {draft.status === 'draft' ? (
-        <TimelineItem tone="pending" title="Human Review Pending">
-          <p>Not reviewed yet.</p>
-          <p>Mark Reviewed is required before formal handoff or response intake.</p>
+        <TimelineItem tone="pending" title={t('agent.timeline.reviewPending')}>
+          <p>{t('agent.timeline.reviewPendingDesc')}</p>
+          <p>{t('agent.timeline.reviewPendingHint')}</p>
         </TimelineItem>
       ) : draft.status === 'reviewed' ? (
         <TimelineItem
           tone="complete"
-          title="Human Reviewed"
-          meta={draft.reviewedAt ? `${formatDate(draft.reviewedAt)} by ${draft.reviewedBy ?? 'unknown'}` : undefined}
+          title={t('agent.timeline.reviewed')}
+          meta={draft.reviewedAt ? `${formatDate(draft.reviewedAt)} ${t('agent.timeline.tone.by', { name: draft.reviewedBy ?? t('agent.reviewInfo.unknown') })}` : undefined}
         >
-          <p>This draft is eligible for formal handoff and manual response intake.</p>
-          {draft.reviewNote && <p className="italic">Note: {draft.reviewNote}</p>}
+          <p>{t('agent.timeline.reviewedDesc')}</p>
+          {draft.reviewNote && <p className="italic">{t('agent.timeline.reviewedNote', { note: draft.reviewNote })}</p>}
         </TimelineItem>
       ) : (
         <TimelineItem
           tone="blocked"
-          title="Discarded"
-          meta={draft.reviewedAt ? `${formatDate(draft.reviewedAt)} by ${draft.reviewedBy}` : undefined}
+          title={t('agent.timeline.discarded')}
+          meta={draft.reviewedAt ? `${formatDate(draft.reviewedAt)} ${t('agent.timeline.tone.by', { name: draft.reviewedBy })}` : undefined}
         >
-          <p>This draft is not eligible for formal handoff or manual response intake.</p>
-          {draft.reviewNote && <p className="italic">Note: {draft.reviewNote}</p>}
+          <p>{t('agent.timeline.discardedDesc')}</p>
+          {draft.reviewNote && <p className="italic">{t('agent.timeline.reviewedNote', { note: draft.reviewNote })}</p>}
         </TimelineItem>
       )}
 
@@ -138,18 +139,18 @@ export function AgentManualWorkflowTimeline({
 
       {/* ── 3. Formal Handoff Readiness ── */}
       {draft.status === 'reviewed' ? (
-        <TimelineItem tone="complete" title="Formal Handoff Ready">
-          <p>Reviewed drafts can generate a formal handoff markdown.</p>
-          <p>Handoff is manual only.</p>
-          <p>It does not execute the Agent. It does not mutate LabourBoard.</p>
+        <TimelineItem tone="complete" title={t('agent.timeline.handoffReady')}>
+          <p>{t('agent.timeline.handoffReadyDesc')}</p>
+          <p>{t('agent.timeline.handoffManual')}</p>
+          <p>{t('agent.timeline.handoffNoMutation')}</p>
         </TimelineItem>
       ) : draft.status === 'draft' ? (
-        <TimelineItem tone="pending" title="Formal Handoff Locked">
-          <p>Review this draft before generating formal handoff.</p>
+        <TimelineItem tone="pending" title={t('agent.timeline.handoffLocked')}>
+          <p>{t('agent.timeline.handoffLockedDesc')}</p>
         </TimelineItem>
       ) : (
-        <TimelineItem tone="blocked" title="Formal Handoff Disabled">
-          <p>Discarded drafts cannot generate formal handoff.</p>
+        <TimelineItem tone="blocked" title={t('agent.timeline.handoffDisabled')}>
+          <p>{t('agent.timeline.handoffDisabledDesc')}</p>
         </TimelineItem>
       )}
 
@@ -159,18 +160,16 @@ export function AgentManualWorkflowTimeline({
       {responseCount > 0 ? (
         <TimelineItem
           tone="complete"
-          title={`Manual Responses Pasted (${responseCount})`}
+          title={t('agent.timeline.responses', { count: responseCount })}
         >
-          <p>
-            Responses are manually pasted records. They are not applied patches and do not mutate the board.
-          </p>
+          <p>{t('agent.timeline.responsesDesc')}</p>
           <ol className="grid gap-1.5 mt-1">
             {recentResponses.map((r) => (
               <li key={r.id} className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-[11px]">
                 <span className="text-slate-400">{formatDate(r.pastedAt)}</span>
                 <span>
-                  <span className="font-medium text-slate-700">{r.externalAgentName ?? 'Manual Paste'}</span>
-                  <span className="text-slate-400"> · {r.responseLength.toLocaleString()} chars{` · `}{r.pastedBy}</span>
+                  <span className="font-medium text-slate-700">{r.externalAgentName ?? t('agent.response.manualPaste')}</span>
+                  <span className="text-slate-400"> · {r.responseLength.toLocaleString()} {t('agent.response.chars')}{` · `}{r.pastedBy}</span>
                 </span>
                 {r.responseNote && (
                   <span className="col-start-2 text-slate-500">«{r.responseNote}»</span>
@@ -179,20 +178,20 @@ export function AgentManualWorkflowTimeline({
             ))}
           </ol>
           {responseCount > 3 && (
-            <p className="mt-1 text-xs text-slate-500">+{responseCount - 3} more responses</p>
+            <p className="mt-1 text-xs text-slate-500">{t('agent.timeline.responsesMore', { count: responseCount - 3 })}</p>
           )}
         </TimelineItem>
       ) : draft.status === 'reviewed' ? (
-        <TimelineItem tone="pending" title="No Manual Responses Yet">
-          <p>Paste an external Agent response manually after using the handoff.</p>
+        <TimelineItem tone="pending" title={t('agent.timeline.noResponses')}>
+          <p>{t('agent.timeline.noResponsesDesc')}</p>
         </TimelineItem>
       ) : draft.status === 'draft' ? (
-        <TimelineItem tone="pending" title="No Manual Responses">
-          <p>Review this draft before pasting an external Agent response.</p>
+        <TimelineItem tone="pending" title={t('agent.timeline.noResponsesLocked')}>
+          <p>{t('agent.timeline.noResponsesLockedDesc')}</p>
         </TimelineItem>
       ) : (
-        <TimelineItem tone="blocked" title="No Manual Responses">
-          <p>Discarded drafts cannot receive Agent responses.</p>
+        <TimelineItem tone="blocked" title={t('agent.timeline.noResponsesBlocked')}>
+          <p>{t('agent.timeline.noResponsesBlockedDesc')}</p>
         </TimelineItem>
       )}
     </section>

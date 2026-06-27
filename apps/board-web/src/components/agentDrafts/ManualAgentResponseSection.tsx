@@ -37,14 +37,12 @@ export function ManualAgentResponseSection({
   onSaveResponse,
 }: ManualAgentResponseSectionProps) {
   const { t } = useTranslation()
-  // Form state
   const [responseAgentName, setResponseAgentName] = useState('')
   const [responseNote, setResponseNote] = useState('')
   const [responseMarkdown, setResponseMarkdown] = useState('')
   const [responseFormError, setResponseFormError] = useState<string | null>(null)
   const [responseCopyFeedback, setResponseCopyFeedback] = useState<string | null>(null)
 
-  // Clear form when draft changes
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset on namespaced parent key change
     setResponseAgentName('')
@@ -53,7 +51,6 @@ export function ManualAgentResponseSection({
     setResponseFormError(null)
   }, [draft.id])
 
-  // Clear copy feedback when selected response changes
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset on selection change
     setResponseCopyFeedback(null)
@@ -62,7 +59,7 @@ export function ManualAgentResponseSection({
   const handleSaveResponse = () => {
     const trimmed = responseMarkdown.trim()
     if (!trimmed) {
-      setResponseFormError('Response Markdown is required.')
+      setResponseFormError(t('agent.response.markdownRequired'))
       return
     }
     setResponseFormError(null)
@@ -80,8 +77,8 @@ export function ManualAgentResponseSection({
 
   const copyResponseMarkdown = (markdown: string) => {
     navigator.clipboard.writeText(markdown).then(
-      () => { setResponseCopyFeedback('Copied!'); setTimeout(() => setResponseCopyFeedback(null), 2000) },
-      () => setResponseCopyFeedback('Copy failed'),
+      () => { setResponseCopyFeedback(t('agent.response.copied')); setTimeout(() => setResponseCopyFeedback(null), 2000) },
+      () => setResponseCopyFeedback(t('agent.response.copyFailed')),
     )
   }
 
@@ -125,7 +122,7 @@ export function ManualAgentResponseSection({
               className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
               value={responseNote}
               onChange={(e) => setResponseNote(e.target.value)}
-              placeholder="e.g. First manual response"
+              placeholder={t('agent.response.notePlaceholder')}
               maxLength={2000}
             />
           </label>
@@ -174,13 +171,13 @@ export function ManualAgentResponseSection({
       {responses.length > 0 && (
         <div className="grid gap-2">
           <h4 className="text-xs font-bold uppercase text-slate-400">
-            Pasted Responses ({responses.length})
+            {t('agent.response.listTitle', { count: responses.length })}
           </h4>
           {isResponseListLoading && (
-            <p className="text-xs text-slate-500">Loading responses...</p>
+            <p className="text-xs text-slate-500">{t('agent.response.loadingResponses')}</p>
           )}
           {responseListError && (
-            <ErrorBlock title="Response list failed" message={responseListError} />
+            <ErrorBlock title={t('agent.response.listFailed')} message={responseListError} />
           )}
           <ol className="grid gap-1.5">
             {responses.map((r) => (
@@ -196,12 +193,12 @@ export function ManualAgentResponseSection({
                 >
                   <span className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-slate-950">
-                      {r.externalAgentName ?? 'Manual Paste'}
+                      {r.externalAgentName ?? t('agent.response.manualPaste')}
                     </span>
-                    <Badge>{r.responseLength.toLocaleString()} chars</Badge>
+                    <Badge>{r.responseLength.toLocaleString()} {t('agent.response.chars')}</Badge>
                   </span>
                   <span className="text-xs text-slate-400">
-                    {formatDate(r.pastedAt)} by {r.pastedBy}
+                    {formatDate(r.pastedAt)} {t('agent.timeline.tone.by', { name: r.pastedBy })}
                   </span>
                   {r.responseNote && (
                     <span className="wrap-break-word text-xs text-slate-600">{r.responseNote}</span>
@@ -215,10 +212,10 @@ export function ManualAgentResponseSection({
 
       {/* Response detail */}
       {isResponseDetailLoading && (
-        <p className="text-xs text-slate-500">Loading response detail...</p>
+        <p className="text-xs text-slate-500">{t('agent.response.loadingDetail')}</p>
       )}
       {responseDetailError && (
-        <ErrorBlock title="Response detail failed" message={responseDetailError} />
+        <ErrorBlock title={t('agent.response.detailFailed')} message={responseDetailError} />
       )}
       {selectedResponse && !isResponseDetailLoading && (
         <div className="grid gap-3 rounded-md border border-blue-200 bg-blue-50 p-4">
@@ -235,20 +232,16 @@ export function ManualAgentResponseSection({
           </div>
 
           <div className="grid gap-1 rounded-md bg-white p-3 text-xs text-slate-600">
-            <p>
-              This response was pasted manually.
-              No AI call was made by LabourBoard.
-              No patch or board mutation has been performed.
-            </p>
+            <p>{t('agent.response.notAppliedDesc')}</p>
           </div>
 
           <dl className="grid gap-2 sm:grid-cols-2">
-            <MetaItem label="Agent" value={selectedResponse.externalAgentName ?? 'Manual Paste'} />
-            <MetaItem label="Pasted at" value={formatDate(selectedResponse.pastedAt)} />
-            <MetaItem label="Pasted by" value={selectedResponse.pastedBy} mono />
-            <MetaItem label="Length" value={`${selectedResponse.responseLength.toLocaleString()} chars`} />
+            <MetaItem label={t('agent.response.meta.agent')} value={selectedResponse.externalAgentName ?? t('agent.response.manualPaste')} />
+            <MetaItem label={t('agent.response.meta.pastedAt')} value={formatDate(selectedResponse.pastedAt)} />
+            <MetaItem label={t('agent.response.meta.pastedBy')} value={selectedResponse.pastedBy} mono />
+            <MetaItem label={t('agent.response.meta.length')} value={`${selectedResponse.responseLength.toLocaleString()} ${t('agent.response.chars')}`} />
             {selectedResponse.responseNote && (
-              <MetaItem label="Note" value={selectedResponse.responseNote} />
+              <MetaItem label={t('agent.response.meta.note')} value={selectedResponse.responseNote} />
             )}
           </dl>
 
@@ -270,7 +263,7 @@ export function ManualAgentResponseSection({
           </div>
 
           <div className="rounded-md border border-slate-200 bg-white p-3">
-            <pre className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-slate-800">
+            <pre className="min-w-0 max-h-64 overflow-y-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-slate-800">
               {selectedResponse.responseMarkdown}
             </pre>
           </div>

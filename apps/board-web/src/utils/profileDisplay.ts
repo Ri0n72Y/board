@@ -64,65 +64,36 @@ export function avatarColor(pk: string | undefined | null): string {
 }
 
 /**
- * Build a search-select-friendly option from a profile.
- * Label: name
- * Description: short pk
- * Meta: full pk
- * Value: pk
+ * Format display text for a profile: <nickname>#<pk first 8 chars>.
+ * Unknown profile: <unknownLabel>#<pk first 8 chars>.
+ * Empty pk: <unassignedLabel>.
  */
-export function profileToOption(profile: Profile): {
-  value: string
-  label: string
-  description: string
-  meta: string
-} {
-  return {
-    value: profile.pk,
-    label: profile.name,
-    description: shortPublicKey(profile.pk),
-    meta: profile.pk,
-  }
-}
-
-/**
- * Format assignee display for cards, history, etc.
- * Known profile: "Name (shortPk)"
- * Unknown pk: "Unknown member (shortPk)"
- * Empty: "Unassigned"
- */
-export function formatAssigneeDisplay(
+export function formatProfileCompact(
   pk: string | undefined | null,
   profile: Profile | undefined | null,
   unassignedLabel: string,
   unknownLabel: string,
 ): string {
   if (!pk || pk.trim() === '') return unassignedLabel
-  const shortPk = shortPublicKey(pk)
+  const shortPk = pk.slice(0, 8)
   if (profile) {
-    return `${profile.name} (${shortPk})`
+    return `${profile.name}#${shortPk}`
   }
-  return `${unknownLabel} (${shortPk})`
-}
-
-/**
- * Get option label for displaying a profile in search select display.
- * For unknown pk: "Unknown member" with description as short pk.
- */
-export function profileOptionLabel(
-  pk: string,
-  profiles: Profile[] | null,
-): string {
-  if (!profiles) return shortPublicKey(pk) || pk
-  const profile = profiles.find((p) => p.pk === pk)
-  return profile ? profile.name : `Unknown member`
+  return `${unknownLabel}#${shortPk}`
 }
 
 /**
  * Build profile SearchSelect options from profile list.
+ * Label uses compact format: "<name>#<shortPk>".
  */
 export function buildProfileOptions(
   profiles: Profile[] | null,
 ): { value: string; label: string; description: string; meta: string }[] {
   if (!profiles) return []
-  return profiles.map(profileToOption)
+  return profiles.map((p) => ({
+    value: p.pk,
+    label: `${p.name}#${p.pk.slice(0, 8)}`,
+    description: p.pk,
+    meta: p.pk,
+  }))
 }
