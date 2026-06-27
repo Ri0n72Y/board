@@ -482,11 +482,11 @@ export function BoardCurrentPage() {
                     key={item.key}
                     type="button"
                     className="block w-full px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-                    onClick={() => {
+                    onClick={(event) => {
                       item.action()
-                      // Close the <details>
-                      const details = document.querySelector('details[open]')
-                      if (details) details.removeAttribute('open')
+                      event.currentTarget
+                        .closest('details')
+                        ?.removeAttribute('open')
                     }}
                     disabled={item.disabled}
                   >

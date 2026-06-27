@@ -105,6 +105,8 @@ export function BoardView({
     }
     if (parts.length > 0) {
       onToastHint?.(parts.join(' '))
+    } else {
+      onToastHint?.(null)
     }
   }, [hiddenSummary, t, onToastHint])
 
