@@ -151,9 +151,11 @@ export function RecordDetailDrawer({
 
   if (!open || !record || !current) return null
 
-  const profile = lookupProfile(profiles ?? null, current.assignee ?? '')
+  const activeRecord = record
+  const activeCurrent = current
+  const profile = lookupProfile(profiles ?? null, activeCurrent.assignee ?? '')
   const assigneeDisplay = formatProfileCompact(
-    current.assignee,
+    activeCurrent.assignee,
     profile,
     t('record.unassigned'),
     t('record.unknownMember'),
@@ -186,7 +188,7 @@ export function RecordDetailDrawer({
       setPendingAction({ type: 'history' })
       return
     }
-    onHistoryClick(record)
+    onHistoryClick(activeRecord)
   }
 
   function cancelDiscard() {
@@ -203,14 +205,14 @@ export function RecordDetailDrawer({
       return
     }
     if (action.type === 'history') {
-      onHistoryClick(record)
+      onHistoryClick(activeRecord)
       return
     }
     editState.beginEdit(action.section)
   }
 
   async function save() {
-    const validation = buildPatchDraft(editState.draft, current)
+    const validation = buildPatchDraft(editState.draft, activeCurrent)
     if (!validation.ok) {
       const message = t(validation.error)
       setError(message)
@@ -227,13 +229,13 @@ export function RecordDetailDrawer({
     setError(null)
 
     try {
-      if (!baseHead || baseHead.recordId !== current.id) {
+      if (!baseHead || baseHead.recordId !== activeCurrent.id) {
         setError(t('edit.headMissing'))
         setIsSaving(false)
         return
       }
 
-      const head = await fetchRecordHead(current.id, controller.signal)
+      const head = await fetchRecordHead(activeCurrent.id, controller.signal)
       if (requestIdRef.current !== requestId || controller.signal.aborted) return
       if (!head.exists) {
         setError(t('edit.headMissing'))
@@ -253,11 +255,11 @@ export function RecordDetailDrawer({
         currentVersion: baseHead.currentVersion,
         ...validation.patch,
       }
-      await submitRecordPatch(current.id, payload, controller.signal)
+      await submitRecordPatch(activeCurrent.id, payload, controller.signal)
       if (requestIdRef.current !== requestId || controller.signal.aborted) return
 
       setSavedDisplayBody({
-        recordId: current.id,
+        recordId: activeCurrent.id,
         body: {
           title: editState.draft.title.trim(),
           description: editState.draft.summary.trim(),
@@ -319,8 +321,8 @@ export function RecordDetailDrawer({
       <AnimatedDrawer
         open={open}
         onClose={requestClose}
-        title={body.title || current.pid}
-        subtitle={current.pid}
+        title={body.title || activeCurrent.pid}
+        subtitle={activeCurrent.pid}
         size="md"
         closeLabel={t('record.close')}
         footer={footer}
@@ -335,11 +337,11 @@ export function RecordDetailDrawer({
             </section>
           )}
 
-          {current.assignee && (
+          {activeCurrent.assignee && (
             <section className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4">
               <ProfileAvatar
-                name={profile?.name ?? current.assignee}
-                pk={current.assignee}
+                name={profile?.name ?? activeCurrent.assignee}
+                pk={activeCurrent.assignee}
                 avatarUrl={profile?.avatarUrl ?? null}
                 size={32}
               />
@@ -353,8 +355,8 @@ export function RecordDetailDrawer({
           )}
 
           <dl className="grid gap-2 sm:grid-cols-2">
-            <MetaItem label={t('record.schema')} value={current.schema} />
-            <MetaItem label={t('record.created')} value={formatDate(record.createdAt)} />
+            <MetaItem label={t('record.schema')} value={activeCurrent.schema} />
+            <MetaItem label={t('record.created')} value={formatDate(activeRecord.createdAt)} />
           </dl>
 
           <EditableSection
@@ -376,7 +378,7 @@ export function RecordDetailDrawer({
             }
           >
             <p className="text-sm leading-relaxed text-slate-800">
-              {body.title || current.pid}
+              {body.title || activeCurrent.pid}
             </p>
           </EditableSection>
 
@@ -428,22 +430,22 @@ export function RecordDetailDrawer({
             </pre>
           </EditableSection>
 
-          {current.tags.length > 0 && (
+          {activeCurrent.tags.length > 0 && (
             <section className="rounded-lg border border-slate-200 bg-white p-4">
               <h3 className="mb-2 text-xs font-bold uppercase text-slate-500">
                 {t('filters.tag')}
               </h3>
-              <TagChipRow tags={current.tags} readonly />
+              <TagChipRow tags={activeCurrent.tags} readonly />
             </section>
           )}
 
-          {(current.assets?.length ?? 0) > 0 && (
+          {(activeCurrent.assets?.length ?? 0) > 0 && (
             <section className="rounded-lg border border-slate-200 bg-white p-4">
               <h3 className="mb-2 text-xs font-bold uppercase text-slate-500">
                 {t('record.assets')}
               </h3>
               <ul className="grid gap-1">
-                {current.assets?.map((asset) => (
+                {activeCurrent.assets?.map((asset) => (
                   <li
                     key={asset}
                     className="truncate font-mono text-xs text-slate-700"
@@ -456,13 +458,13 @@ export function RecordDetailDrawer({
             </section>
           )}
 
-          {(current.relations?.length ?? 0) > 0 && (
+          {(activeCurrent.relations?.length ?? 0) > 0 && (
             <section className="rounded-lg border border-slate-200 bg-white p-4">
               <h3 className="mb-2 text-xs font-bold uppercase text-slate-500">
                 {t('record.relations')}
               </h3>
               <ul className="grid gap-1">
-                {current.relations?.map((rel, index) => (
+                {activeCurrent.relations?.map((rel, index) => (
                   <li
                     key={`${rel.constraint}:${rel.target}:${index}`}
                     className="truncate text-xs text-slate-700"
