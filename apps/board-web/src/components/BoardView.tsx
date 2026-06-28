@@ -22,6 +22,9 @@ import { getMoveStatusOptions } from '../utils/statusMove'
 import type { MoveStatusOption } from '../utils/statusMove'
 import { formatTagLabel } from '../utils/tagDisplay'
 import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
+import { dismissToast, toastInfo } from '../utils/toasts'
+
+const BOARD_HIDDEN_COLUMNS_TOAST_ID = 'board-hidden-columns'
 
 interface BoardViewProps {
   records: RecordResponse<RecordItem<RecordBody>>[]
@@ -51,7 +54,6 @@ export function BoardView({
   moveErrors,
   visibleColumnIds,
   onMoveStatus,
-  onToastHint,
 }: BoardViewProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
@@ -88,7 +90,7 @@ export function BoardView({
     [allColumns],
   )
 
-  // Show hidden columns notice as toast
+  // Show hidden columns notice as a non-blocking toast.
   useEffect(() => {
     const parts: string[] = []
     if (hiddenSummary.hiddenRecordCount > 0) {
@@ -104,11 +106,11 @@ export function BoardView({
       }))
     }
     if (parts.length > 0) {
-      onToastHint?.(parts.join(' '))
+      toastInfo(parts.join(' '), BOARD_HIDDEN_COLUMNS_TOAST_ID)
     } else {
-      onToastHint?.(null)
+      dismissToast(BOARD_HIDDEN_COLUMNS_TOAST_ID)
     }
-  }, [hiddenSummary, t, onToastHint])
+  }, [hiddenSummary, t])
 
   return (
     <section className="h-full min-h-0" aria-label="Current records board">
