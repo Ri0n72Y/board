@@ -87,7 +87,7 @@ export function RecordDetailDrawer({
   onHistoryClick,
 }: RecordDetailDrawerProps) {
   const { t, i18n } = useTranslation()
-  const lang = i18n.resolvedLanguage
+  const lang = i18n.resolvedLanguage ?? i18n.language ?? 'en'
   const effectiveFilters = useBoardCurrentStore((state) => state.effectiveFilters)
   const loadCurrentBoard = useBoardCurrentStore((state) => state.loadCurrentBoard)
   const config = useBoardMetadataStore((state) => state.config)
