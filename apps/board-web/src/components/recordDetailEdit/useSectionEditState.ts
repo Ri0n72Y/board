@@ -22,20 +22,32 @@ export function useSectionEditState<TSection extends string, TDraft>({
     [editingSections]
   )
 
-  const beginEdit = useCallback((section: TSection) => {
-    setSelectedSection(section)
-    setEditingSections((current) =>
-      current.includes(section) ? current : [...current, section]
-    )
-  }, [])
+  const beginEdit = useCallback(
+    (section: TSection) => {
+      setSelectedSection(section)
+      if (editingSections.length === 0) {
+        setDraft(initialDraft())
+      }
+      setEditingSections((current) =>
+        current.includes(section) ? current : [...current, section]
+      )
+    },
+    [editingSections.length, initialDraft]
+  )
 
-  const requestSection = useCallback((section: TSection) => {
-    setSelectedSection(section)
-    setEditingSections((current) =>
-      current.includes(section) ? current : [...current, section]
-    )
-    return true
-  }, [])
+  const requestSection = useCallback(
+    (section: TSection) => {
+      setSelectedSection(section)
+      if (editingSections.length === 0) {
+        setDraft(initialDraft())
+      }
+      setEditingSections((current) =>
+        current.includes(section) ? current : [...current, section]
+      )
+      return true
+    },
+    [editingSections.length, initialDraft]
+  )
 
   const requestClose = useCallback(() => {
     if (editingSections.length > 0 && dirty) {
