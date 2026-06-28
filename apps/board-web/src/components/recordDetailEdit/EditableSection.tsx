@@ -23,6 +23,7 @@ export function EditableSection({
   onEdit,
 }: EditableSectionProps) {
   const canEdit = Boolean(onEdit && !disabled)
+  const content = editing && editor ? editor : children
   return (
     <section
       className={cn(
@@ -42,20 +43,15 @@ export function EditableSection({
           <h3 className="shrink-0 text-xs font-bold uppercase text-slate-500">
             {title}
           </h3>
-          <div
-            className="min-w-0 flex-1 text-right"
-            onClick={(event) => event.stopPropagation()}
-          >
-            {children}
-          </div>
+          <div className="min-w-0 flex-1 text-right">{content}</div>
         </div>
       ) : (
         <>
           <h3 className="mb-2 text-xs font-bold uppercase text-slate-500">
             {title}
           </h3>
-          <div onClick={(event) => event.stopPropagation()}>
-            {editing && editor ? editor : children}
+          <div onClick={editing ? (event) => event.stopPropagation() : undefined}>
+            {content}
           </div>
         </>
       )}
