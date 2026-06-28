@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next'
 import { fetchRecordHead } from '../api/recordHead'
 import { RecordPatchConflictError, submitRecordPatch } from '../api/patches'
 import type { SubmitRecordPatchPayload } from '../api/patches'
+import { useBoardCurrentStore } from '../stores/boardCurrentStore'
 import { lookupProfile } from '../utils/board'
 import {
   asEditableBody,
@@ -43,6 +44,15 @@ type PendingAction =
   | { type: 'history' }
   | { type: 'edit'; section: DetailEditSection }
 
+interface SavedDisplayBody {
+  recordId: string
+  body: {
+    title: string
+    description: string
+    content: string
+  }
+}
+
 interface RecordDetailDrawerProps {
   open: boolean
   record: RecordResponse<RecordItem<RecordBody>> | null
@@ -66,21 +76,25 @@ export function RecordDetailDrawer({
   onHistoryClick,
 }: RecordDetailDrawerProps) {
   const { t } = useTranslation()
+  const effectiveFilters = useBoardCurrentStore((state) => state.effectiveFilters)
+  const loadCurrentBoard = useBoardCurrentStore((state) => state.loadCurrentBoard)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [baseHead, setBaseHead] = useState<BaseHead | null>(null)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
+  const [savedDisplayBody, setSavedDisplayBody] = useState<SavedDisplayBody | null>(null)
   const requestIdRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
 
   const current = record?.body ?? null
-  const body = useMemo(
-    () => (current ? asEditableBody(current.body) : emptyBody()),
-    [current],
-  )
+  const body = useMemo(() => {
+    if (!current) return emptyBody()
+    if (savedDisplayBody?.recordId === current.id) return savedDisplayBody.body
+    return asEditableBody(current.body)
+  }, [current, savedDisplayBody])
   const initialDraft = useCallback(
-    () => (current ? initialFormState(current) : emptyFormState()),
-    [current],
+    () => (current ? initialFormState(current, body) : emptyFormState()),
+    [body, current],
   )
   const isDraftDirty = useCallback(
     (draft: EditPatchFormState) => Boolean(current && buildPatchDraft(draft, current).ok),
@@ -242,11 +256,19 @@ export function RecordDetailDrawer({
       await submitRecordPatch(current.id, payload, controller.signal)
       if (requestIdRef.current !== requestId || controller.signal.aborted) return
 
+      setSavedDisplayBody({
+        recordId: current.id,
+        body: {
+          title: editState.draft.title.trim(),
+          description: editState.draft.summary.trim(),
+          content: editState.draft.details.trim(),
+        },
+      })
       setIsSaving(false)
       abortRef.current = null
       toastSuccess('Record saved')
       editState.finishSave(editState.editingSection)
-      onClose()
+      await loadCurrentBoard(effectiveFilters)
     } catch (caught: unknown) {
       if (
         requestIdRef.current !== requestId ||
@@ -468,13 +490,15 @@ export function RecordDetailDrawer({
   )
 }
 
-function initialFormState(record: RecordItem<RecordBody>): EditPatchFormState {
-  const body = asEditableBody(record.body)
+function initialFormState(
+  record: RecordItem<RecordBody>,
+  body: { title: string; description: string; content: string },
+): EditPatchFormState {
   const statusTag = record.tags.find((tag) => tag.startsWith('status:')) ?? ''
   const priorityTag = record.tags.find((tag) => tag.startsWith('priority:')) ?? ''
   const otherTags = record.tags.filter(
     (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:'),
-  )
+  ) as Tag[]
 
   return {
     title: body.title,
