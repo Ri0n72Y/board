@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type MutableRefObject,
+  type ReactNode,
 } from 'react'
 import type {
   Profile,
@@ -700,11 +701,11 @@ function ReadOnlyInfoSection({
   children,
 }: {
   title: string
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
-    <section className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-      <h3 className="mb-2 text-xs font-bold uppercase text-blue-700">
+    <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <h3 className="mb-2 text-xs font-bold uppercase text-slate-500">
         {title}
       </h3>
       {children}
