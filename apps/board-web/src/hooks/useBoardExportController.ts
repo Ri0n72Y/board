@@ -9,6 +9,7 @@ import { exportCurrentBoard } from '../api/exports'
 import type { BoardCurrentFilters } from '../utils/boardFilterUrl'
 import { hasEffectiveFilters } from '../utils/board'
 import { downloadTextFile } from '../utils/download'
+import { toastError, toastSuccess, toastWarning } from '../utils/toasts'
 
 interface UseBoardExportControllerParams {
   appliedFilters: BoardCurrentFilters
@@ -79,6 +80,7 @@ export function useBoardExportController({
           return
         }
         downloadTextFile(data.filename, data.content)
+        toastSuccess(`Exported ${data.filename}`)
       })
       .catch((unknownError: unknown) => {
         if (
@@ -88,7 +90,9 @@ export function useBoardExportController({
         ) {
           return
         }
-        setCurrentExportError(errorMessage(unknownError))
+        const message = errorMessage(unknownError)
+        setCurrentExportError(message)
+        toastError(`Export failed: ${message}`)
       })
       .finally(() => {
         if (currentExportRequestIdRef.current !== requestId) return
@@ -106,6 +110,7 @@ export function useBoardExportController({
       )
       if (validationError) {
         setContextExportError(validationError)
+        toastWarning(validationError)
         return false
       }
 
@@ -145,6 +150,7 @@ export function useBoardExportController({
             return
           }
           downloadTextFile(data.filename, data.content)
+          toastSuccess(`Exported ${data.filename}`)
         })
         .catch((unknownError: unknown) => {
           if (
@@ -154,7 +160,9 @@ export function useBoardExportController({
           ) {
             return
           }
-          setContextExportError(errorMessage(unknownError))
+          const message = errorMessage(unknownError)
+          setContextExportError(message)
+          toastError(`Context export failed: ${message}`)
         })
         .finally(() => {
           if (contextExportRequestIdRef.current !== requestId) return
