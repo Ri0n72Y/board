@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dnd-kit/react": "^0.5.0",
     "@headlessui/react": "^2.2.10",
     "@heroicons/react": "^2.2.0",
     "@labour-board/shared": "workspace:*",
