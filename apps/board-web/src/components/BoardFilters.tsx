@@ -39,6 +39,8 @@ interface BoardFiltersProps {
     label: string
     description?: string
     meta?: string
+    avatarUrl?: string | null
+    avatarInitials?: string
   }[]
   metadataLoading?: boolean
   metadataError?: MetadataErrorState
@@ -114,8 +116,8 @@ export function BoardFilters({
         </span>
       )}
 
-      {/* Main filter row — compact, single row, no wrap */}
-      <div className="flex min-h-9 flex-nowrap items-center gap-6 overflow-hidden">
+      {/* Main filter row — compact, single row, dropdowns visible */}
+      <div className="flex min-h-9 flex-nowrap items-center gap-6 overflow-visible">
         <div className="relative min-w-0 flex-[1_1_32rem]">
           <MagnifyingGlassIcon className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
           <input
@@ -258,45 +260,36 @@ export function TagChipRow({
   if (tags.length === 0) return null
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {label && (
-        <span className="text-xs font-bold text-slate-500">{label}</span>
-      )}
-      {tags.map((tag) =>
-        readonly || !onTagClick ? (
-          <span className={chipClassName({ selected, readonly })} key={tag}>
-            {formatTagLabel(tag, lang)}
-          </span>
-        ) : (
-          <button
-            className={chipClassName({ selected })}
-            key={tag}
-            type="button"
-            onClick={() => onTagClick(tag)}
-            title={
-              selected
-                ? t('filters.removeTagFilter')
-                : t('filters.addTagFilter')
-            }
-          >
-            {formatTagLabel(tag, lang)}
-          </button>
-        )
-      )}
+    <div className="grid gap-1.5">
+      {label && <span className="text-xs font-bold text-slate-500">{label}</span>}
+      <div className="flex flex-wrap gap-1.5">
+        {tags.map((tag) => {
+          const interactive = !readonly && onTagClick
+          return (
+            <button
+              key={tag}
+              type="button"
+              className={chipClassName({ selected })}
+              disabled={!interactive}
+              onClick={() => interactive?.(tag)}
+              title={
+                interactive ? t('filters.toggleTag') : formatTagLabel(tag, lang)
+              }
+            >
+              {formatTagLabel(tag, lang)}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
-function chipClassName({
-  selected,
-  readonly,
-}: {
-  selected: boolean
-  readonly?: boolean
-}) {
+export function chipClassName({ selected }: { selected?: boolean }) {
   return cn(
-    'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 font-mono text-xs leading-tight text-slate-700 break-all',
-    selected && 'border border-emerald-700 bg-emerald-100 text-emerald-800',
-    readonly && 'border border-slate-200'
+    'inline-flex min-h-[28px] max-w-full items-center rounded-full px-2.5 font-mono text-xs leading-tight break-all transition',
+    selected
+      ? 'border border-emerald-700 bg-emerald-100 text-emerald-800'
+      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
   )
 }
