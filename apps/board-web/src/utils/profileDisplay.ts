@@ -88,12 +88,21 @@ export function formatProfileCompact(
  */
 export function buildProfileOptions(
   profiles: Profile[] | null,
-): { value: string; label: string; description: string; meta: string }[] {
+): {
+  value: string
+  label: string
+  description: string
+  meta: string
+  avatarUrl?: string | null
+  avatarInitials?: string
+}[] {
   if (!profiles) return []
   return profiles.map((p) => ({
     value: p.pk,
     label: `${p.name}#${p.pk.slice(0, 8)}`,
     description: p.pk,
     meta: p.pk,
+    avatarUrl: p.avatarUrl ?? null,
+    avatarInitials: profileInitials(p.name, p.pk),
   }))
 }
