@@ -34,7 +34,8 @@ export function EditableSection({
         editing && 'border-emerald-300 bg-emerald-50/30',
         dirty && 'shadow-[0_0_0_2px_rgba(16,185,129,0.35)]'
       )}
-      onClick={() => {
+      onClick={(event) => {
+        event.stopPropagation()
         if (!editing && canEdit) onEdit?.()
       }}
     >
@@ -50,9 +51,7 @@ export function EditableSection({
           <h3 className="mb-2 text-xs font-bold uppercase text-slate-500">
             {title}
           </h3>
-          <div onClick={editing ? (event) => event.stopPropagation() : undefined}>
-            {content}
-          </div>
+          <div>{content}</div>
         </>
       )}
     </section>
