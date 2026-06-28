@@ -88,8 +88,12 @@ export function RecordDetailDrawer({
 }: RecordDetailDrawerProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage ?? i18n.language ?? 'en'
-  const effectiveFilters = useBoardCurrentStore((state) => state.effectiveFilters)
-  const loadCurrentBoard = useBoardCurrentStore((state) => state.loadCurrentBoard)
+  const effectiveFilters = useBoardCurrentStore(
+    (state) => state.effectiveFilters
+  )
+  const loadCurrentBoard = useBoardCurrentStore(
+    (state) => state.loadCurrentBoard
+  )
   const config = useBoardMetadataStore((state) => state.config)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -113,16 +117,19 @@ export function RecordDetailDrawer({
   }, [current, savedDisplayRecord])
   const baselineRecord = useMemo(
     () => (current ? buildBaselineRecord(current, displayRecord) : null),
-    [current, displayRecord],
+    [current, displayRecord]
   )
   const initialDraft = useCallback(
-    () => (baselineRecord ? initialFormState(baselineRecord, displayRecord.body) : emptyFormState()),
-    [baselineRecord, displayRecord.body],
+    () =>
+      baselineRecord
+        ? initialFormState(baselineRecord, displayRecord.body)
+        : emptyFormState(),
+    [baselineRecord, displayRecord.body]
   )
   const isDraftDirty = useCallback(
     (draft: EditPatchFormState) =>
       Boolean(baselineRecord && buildPatchDraft(draft, baselineRecord).ok),
-    [baselineRecord],
+    [baselineRecord]
   )
   const editState = useSectionEditState<DetailEditSection, EditPatchFormState>({
     initialDraft,
@@ -144,7 +151,8 @@ export function RecordDetailDrawer({
 
     void fetchRecordHead(current.id, controller.signal)
       .then((head) => {
-        if (requestIdRef.current !== requestId || controller.signal.aborted) return
+        if (requestIdRef.current !== requestId || controller.signal.aborted)
+          return
         if (!head.exists) {
           setError(t('edit.headMissing'))
           return
@@ -164,7 +172,9 @@ export function RecordDetailDrawer({
         ) {
           return
         }
-        setError(caught instanceof Error ? caught.message : t('edit.errorGeneral'))
+        setError(
+          caught instanceof Error ? caught.message : t('edit.errorGeneral')
+        )
       })
       .finally(() => {
         if (requestIdRef.current === requestId) abortRef.current = null
@@ -186,7 +196,7 @@ export function RecordDetailDrawer({
     displayAssignee,
     profile,
     t('record.unassigned'),
-    t('record.unknownMember'),
+    t('record.unknownMember')
   )
   const profileOptions = getProfileOptions(profiles ?? null)
   const configuredStatusTags = getConfigStatusTags(config)
@@ -203,7 +213,7 @@ export function RecordDetailDrawer({
   const otherTagOptions = uniqueTags([
     ...configuredOtherTags,
     ...displayTags.filter(
-      (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:'),
+      (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:')
     ),
   ])
   const otherTagSelectOptions = otherTagOptions.map((tag) => ({
@@ -287,7 +297,8 @@ export function RecordDetailDrawer({
       }
 
       const head = await fetchRecordHead(activeCurrent.id, controller.signal)
-      if (requestIdRef.current !== requestId || controller.signal.aborted) return
+      if (requestIdRef.current !== requestId || controller.signal.aborted)
+        return
       if (!head.exists) {
         setError(t('edit.headMissing'))
         setIsSaving(false)
@@ -307,10 +318,15 @@ export function RecordDetailDrawer({
         ...validation.patch,
       }
       await submitRecordPatch(activeCurrent.id, payload, controller.signal)
-      if (requestIdRef.current !== requestId || controller.signal.aborted) return
+      if (requestIdRef.current !== requestId || controller.signal.aborted)
+        return
 
-      const updatedHead = await fetchRecordHead(activeCurrent.id, controller.signal)
-      if (requestIdRef.current !== requestId || controller.signal.aborted) return
+      const updatedHead = await fetchRecordHead(
+        activeCurrent.id,
+        controller.signal
+      )
+      if (requestIdRef.current !== requestId || controller.signal.aborted)
+        return
       if (updatedHead.exists) {
         setBaseHead({
           recordId: activeCurrent.id,
@@ -413,7 +429,10 @@ export function RecordDetailDrawer({
                 label={t('record.assignee')}
                 value={editState.draft.assignee || null}
                 onChange={(next) =>
-                  editState.setDraft((draft) => ({ ...draft, assignee: next ?? '' }))
+                  editState.setDraft((draft) => ({
+                    ...draft,
+                    assignee: next ?? '',
+                  }))
                 }
                 options={profileOptions}
                 placeholder={t('edit.assigneePlaceholder')}
@@ -441,7 +460,10 @@ export function RecordDetailDrawer({
 
           <dl className="grid gap-2 sm:grid-cols-2">
             <MetaItem label={t('record.schema')} value={activeCurrent.schema} />
-            <MetaItem label={t('record.created')} value={formatDate(activeRecord.createdAt)} />
+            <MetaItem
+              label={t('record.created')}
+              value={formatDate(activeRecord.createdAt)}
+            />
           </dl>
 
           <EditableSection
@@ -456,7 +478,10 @@ export function RecordDetailDrawer({
                 className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
                 value={editState.draft.title}
                 onChange={(event) =>
-                  editState.setDraft((draft) => ({ ...draft, title: event.target.value }))
+                  editState.setDraft((draft) => ({
+                    ...draft,
+                    title: event.target.value,
+                  }))
                 }
                 disabled={isSaving}
               />
@@ -480,7 +505,10 @@ export function RecordDetailDrawer({
                 rows={3}
                 value={editState.draft.summary}
                 onChange={(event) =>
-                  editState.setDraft((draft) => ({ ...draft, summary: event.target.value }))
+                  editState.setDraft((draft) => ({
+                    ...draft,
+                    summary: event.target.value,
+                  }))
                 }
                 disabled={isSaving}
               />
@@ -504,13 +532,16 @@ export function RecordDetailDrawer({
                 rows={7}
                 value={editState.draft.details}
                 onChange={(event) =>
-                  editState.setDraft((draft) => ({ ...draft, details: event.target.value }))
+                  editState.setDraft((draft) => ({
+                    ...draft,
+                    details: event.target.value,
+                  }))
                 }
                 disabled={isSaving}
               />
             }
           >
-            <pre className="max-h-60 overflow-y-auto whitespace-pre-wrap break-words rounded bg-slate-50 p-3 text-sm leading-relaxed text-slate-800">
+            <pre className="max-h-60 overflow-y-auto whitespace-pre-wrap wrap-break-word rounded bg-slate-50 p-3 text-sm leading-relaxed text-slate-800">
               {displayBody.content || '—'}
             </pre>
           </EditableSection>
@@ -532,7 +563,10 @@ export function RecordDetailDrawer({
                   required
                   disabled={isSaving}
                   onSelect={(tag) =>
-                    editState.setDraft((draft) => ({ ...draft, statusTag: tag }))
+                    editState.setDraft((draft) => ({
+                      ...draft,
+                      statusTag: tag,
+                    }))
                   }
                 />
                 <TagOptionGrid
@@ -558,7 +592,7 @@ export function RecordDetailDrawer({
                     editState.setDraft((draft) => ({
                       ...draft,
                       otherTags: nextTags.filter((tag) =>
-                        otherTagOptions.includes(tag as Tag),
+                        otherTagOptions.includes(tag as Tag)
                       ) as Tag[],
                     }))
                   }
@@ -677,12 +711,13 @@ function TagOptionGrid({
 
 function initialFormState(
   record: RecordItem<RecordBody>,
-  body: { title: string; description: string; content: string },
+  body: { title: string; description: string; content: string }
 ): EditPatchFormState {
   const statusTag = record.tags.find((tag) => tag.startsWith('status:')) ?? ''
-  const priorityTag = record.tags.find((tag) => tag.startsWith('priority:')) ?? ''
+  const priorityTag =
+    record.tags.find((tag) => tag.startsWith('priority:')) ?? ''
   const otherTags = record.tags.filter(
-    (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:'),
+    (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:')
   ) as Tag[]
 
   return {
@@ -729,10 +764,12 @@ function emptyDisplayRecord(): DisplayRecordState {
 
 function buildBaselineRecord(
   record: RecordItem<RecordBody>,
-  displayRecord: DisplayRecordState,
+  displayRecord: DisplayRecordState
 ): RecordItem<RecordBody> {
   const sourceBody =
-    record.body && typeof record.body === 'object' && !Array.isArray(record.body)
+    record.body &&
+    typeof record.body === 'object' &&
+    !Array.isArray(record.body)
       ? (record.body as Record<string, unknown>)
       : {}
   return {
@@ -755,7 +792,7 @@ function buildDraftTags(form: EditPatchFormState): Tag[] {
       form.priorityTag.trim() as Tag,
       ...form.otherTags,
       ...form.unsupportedTags,
-    ].filter(Boolean) as Tag[],
+    ].filter(Boolean) as Tag[]
   )
 }
 
@@ -781,7 +818,7 @@ function formatDate(value: string): string {
 function abortRequest(
   requestIdRef: MutableRefObject<number>,
   abortRef: MutableRefObject<AbortController | null>,
-  setIsSaving?: (value: boolean) => void,
+  setIsSaving?: (value: boolean) => void
 ) {
   requestIdRef.current += 1
   abortRef.current?.abort()
