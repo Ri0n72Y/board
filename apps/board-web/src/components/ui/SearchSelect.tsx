@@ -354,16 +354,29 @@ function OptionLine({
     : choice.meta
 
   return (
-    <>
-      <span className={cn('truncate font-medium', mode === 'tag' && 'font-sans')}>
-        {label}
+    <span className="flex min-w-0 items-center gap-2">
+      {choice.avatarUrl ? (
+        <img
+          src={choice.avatarUrl}
+          alt=""
+          className="h-6 w-6 shrink-0 rounded-full object-cover"
+        />
+      ) : choice.avatarInitials ? (
+        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-700">
+          {choice.avatarInitials}
+        </span>
+      ) : null}
+      <span className="grid min-w-0 gap-0.5">
+        <span className={cn('truncate font-medium', mode === 'tag' && 'font-sans')}>
+          {label}
+        </span>
+        {choice.description && (
+          <span className="truncate text-xs text-slate-500">{choice.description}</span>
+        )}
+        {meta && (
+          <span className="break-all font-mono text-xs text-slate-400">{meta}</span>
+        )}
       </span>
-      {choice.description && (
-        <span className="truncate text-xs text-slate-500">{choice.description}</span>
-      )}
-      {meta && (
-        <span className="break-all font-mono text-xs text-slate-400">{meta}</span>
-      )}
-    </>
+    </span>
   )
 }
