@@ -25,7 +25,7 @@ export function normalizeBoardFilterQuery(
 ): NormalizedBoardFilterQuery {
   return {
     tags: query.tags?.filter((tag) => tag.trim().length > 0) ?? [],
-    tagMatch: query.tagMatch === 'any' ? 'any' : 'all',
+    tagMatch: query.tagMatch === 'all' ? 'all' : 'any',
     assignee: normalizeString(query.assignee),
     assetId: normalizeString(query.assetId),
     relationTarget: normalizeString(query.relationTarget),
@@ -76,9 +76,9 @@ function matchesTags(
   record: BoardRecord,
   query: NormalizedBoardFilterQuery
 ): boolean {
-  return query.tagMatch === 'any'
-    ? query.tags.some((tag) => record.body.tags.includes(tag))
-    : query.tags.every((tag) => record.body.tags.includes(tag))
+  return query.tagMatch === 'all'
+    ? query.tags.every((tag) => record.body.tags.includes(tag))
+    : query.tags.some((tag) => record.body.tags.includes(tag))
 }
 
 function matchesBoardFilterText(record: BoardRecord, query: string): boolean {
