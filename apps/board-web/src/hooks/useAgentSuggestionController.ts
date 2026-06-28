@@ -12,6 +12,7 @@ import {
   updateAgentSuggestionReview,
 } from '../api/agentSuggestions'
 import { extractApiErrorMessage } from '../api/apiError'
+import { toastError, toastSuccess } from '../utils/toasts'
 
 export function useAgentSuggestionController() {
   const [suggestions, setSuggestions] = useState<AgentSuggestionSummary[]>([])
@@ -159,9 +160,9 @@ export function useAgentSuggestionController() {
           ) {
             throw new Error('aborted')
           }
-          // Insert into suggestion list
           setSuggestions((prev) => [data.suggestion, ...prev])
           setSelectedSuggestion(data.suggestion)
+          toastSuccess('AI suggestion generated')
           return data.suggestion
         })
         .catch((err: unknown) => {
@@ -174,6 +175,7 @@ export function useAgentSuggestionController() {
           }
           const message = extractApiErrorMessage(err)
           setGenerateError(message)
+          toastError(`AI suggestion failed: ${message}`)
           throw err
         })
         .finally(() => {
@@ -213,6 +215,7 @@ export function useAgentSuggestionController() {
               s.id === data.suggestion.id ? data.suggestion : s,
             ),
           )
+          toastSuccess('Suggestion review updated')
         })
         .catch((err: unknown) => {
           if (
@@ -221,7 +224,9 @@ export function useAgentSuggestionController() {
             axios.isCancel(err)
           )
             return
-          setReviewError(extractApiErrorMessage(err))
+          const message = extractApiErrorMessage(err)
+          setReviewError(message)
+          toastError(`Review update failed: ${message}`)
         })
         .finally(() => {
           if (reviewRequestIdRef.current !== requestId) return
