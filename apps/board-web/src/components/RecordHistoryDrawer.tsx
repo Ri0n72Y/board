@@ -107,6 +107,37 @@ export function RecordHistoryDrawer({
       size="lg"
       footer={footer}
     >
+      <RecordHistoryContent
+        history={history}
+        isLoading={isLoading}
+        error={error}
+        language={language}
+        assetOptions={assetOptions}
+        profiles={profiles ?? null}
+      />
+    </AnimatedDrawer>
+  )
+}
+
+export function RecordHistoryContent({
+  history,
+  isLoading,
+  error,
+  language,
+  assetOptions,
+  profiles,
+}: {
+  history: RecordHistoryResponse | null
+  isLoading: boolean
+  error: string | null
+  language?: string
+  assetOptions: RecordReferenceOption[]
+  profiles?: Profile[] | null
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <>
       {isLoading && (
         <section className="rounded-md border border-slate-200 bg-white p-4 text-slate-500">
           {t('history.loading')}
@@ -124,7 +155,7 @@ export function RecordHistoryDrawer({
       )}
 
       {!isLoading && !error && history && (
-        <HistoryContent
+        <HistoryTimeline
           history={history}
           language={language}
           assetOptions={assetOptions}
@@ -137,11 +168,11 @@ export function RecordHistoryDrawer({
           {t('history.noHistory')}
         </section>
       )}
-    </AnimatedDrawer>
+    </>
   )
 }
 
-function HistoryContent({
+function HistoryTimeline({
   history,
   language,
   assetOptions,
