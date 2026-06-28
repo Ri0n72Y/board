@@ -14,7 +14,11 @@ describe('RecordService history (getRecordHistory)', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       currentVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
     })
 
     const history = await service.getRecordHistory(recordId)
@@ -36,8 +40,24 @@ describe('RecordService history (getRecordHistory)', () => {
     })
     const recordId = envelope.body.id
 
-    await repo.appendPatch(makePatchDoc('patch-1', recordId, null, { tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }))
-    await repo.appendPatch(makePatchDoc('patch-2', recordId, null, { tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] } }))
+    await repo.appendPatch(
+      makePatchDoc('patch-1', recordId, null, {
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
+      })
+    )
+    await repo.appendPatch(
+      makePatchDoc('patch-2', recordId, null, {
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
+      })
+    )
 
     const history = await service.getRecordHistory(recordId)
     expect(history).not.toBeNull()
@@ -60,7 +80,9 @@ describe('RecordService history (getRecordHistory)', () => {
     const recordId = envelope.body.id
 
     await repo.appendPatch(makePatchDoc('patch-1', recordId, null))
-    await repo.appendPatch(makePatchDoc('patch-2', recordId, 'non-existent-parent'))
+    await repo.appendPatch(
+      makePatchDoc('patch-2', recordId, 'non-existent-parent')
+    )
 
     const history = await service.getRecordHistory(recordId)
     expect(history).not.toBeNull()
@@ -162,7 +184,11 @@ describe('RecordService history (getRecordHistory)', () => {
     const r1 = await service.createRecordPatch(recordId, {
       parentId: null,
       currentVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
     })
     const r2 = await service.createRecordPatch(recordId, {
       parentId: r1!.patch.body.id,
@@ -181,7 +207,9 @@ describe('RecordService history (getRecordHistory)', () => {
     expect(history!.replay).toBeDefined()
     expect(history!.replay!.steps).toHaveLength(3)
     expect(history!.replay!.finalState.tags).toEqual(['status:wip'])
-    expect(history!.replay!.finalState.body).toMatchObject({ description: 'Updated' })
+    expect(history!.replay!.finalState.body).toMatchObject({
+      description: 'Updated',
+    })
     expect(history!.replay!.finalState.assignee).toBe('alice')
     expect(history!.replay!.steps[0].patch.body.id).toBe(r1!.patch.body.id)
     expect(history!.replay!.steps[1].patch.body.id).toBe(r2!.patch.body.id)
@@ -199,7 +227,11 @@ describe('RecordService history (getRecordHistory)', () => {
     const r1 = await service.createRecordPatch(recordId, {
       parentId: null,
       currentVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
     })
     const r2 = await service.createRecordPatch(recordId, {
       parentId: r1!.patch.body.id,
@@ -224,7 +256,9 @@ describe('RecordService history (getRecordHistory)', () => {
 
     const headAfter = await service.getSnapshotHead()
     expect(headAfter.version).toBe(beforeVersion)
-    expect(headAfter.records[recordId]?.lastPatchId ?? null).toBe(beforeLastPatchId)
+    expect(headAfter.records[recordId]?.lastPatchId ?? null).toBe(
+      beforeLastPatchId
+    )
     expect(headAfter).toEqual(beforeHeadSnapshot)
   })
 })

@@ -13,7 +13,7 @@ import type { InternalAgentProviderRuntimeConfig } from './agentProviderConfig.j
 // ─── Helpers ───
 
 function makeConfig(
-  overrides?: Partial<InternalAgentProviderRuntimeConfig>,
+  overrides?: Partial<InternalAgentProviderRuntimeConfig>
 ): InternalAgentProviderRuntimeConfig {
   return {
     kind: 'openai-compatible',
@@ -33,7 +33,7 @@ function makeConfig(
 }
 
 function makeInput(
-  overrides?: Partial<AgentSuggestionProviderInput>,
+  overrides?: Partial<AgentSuggestionProviderInput>
 ): AgentSuggestionProviderInput {
   return {
     contextMarkdown: '# Test Context\n\nSome markdown content.',
@@ -56,17 +56,14 @@ function makeInput(
   }
 }
 
-function fakeFetch(
-  status: number,
-  body: string | object,
-): typeof fetch {
+function fakeFetch(status: number, body: string | object): typeof fetch {
   return ((_url: string | URL | Request, _init?: RequestInit) => {
     const bodyStr = typeof body === 'string' ? body : JSON.stringify(body)
     return Promise.resolve(
       new Response(bodyStr, {
         status,
         headers: { 'Content-Type': 'application/json' },
-      }),
+      })
     )
   }) as typeof fetch
 }
@@ -132,8 +129,8 @@ describe('OpenAICompatibleSuggestionProvider', () => {
     expect(
       () =>
         new OpenAICompatibleSuggestionProvider(
-          makeConfig({ baseUrl: undefined }),
-        ),
+          makeConfig({ baseUrl: undefined })
+        )
     ).toThrow(AgentProviderUnavailableError)
   })
 
@@ -141,15 +138,14 @@ describe('OpenAICompatibleSuggestionProvider', () => {
     expect(
       () =>
         new OpenAICompatibleSuggestionProvider(
-          makeConfig({ apiKey: undefined }),
-        ),
+          makeConfig({ apiKey: undefined })
+        )
     ).toThrow(AgentProviderUnavailableError)
   })
 
   it('throws AgentProviderUnavailableError when model is missing', () => {
     expect(
-      () =>
-        new OpenAICompatibleSuggestionProvider(makeConfig({ model: '' })),
+      () => new OpenAICompatibleSuggestionProvider(makeConfig({ model: '' }))
     ).toThrow(AgentProviderUnavailableError)
   })
 
@@ -157,8 +153,8 @@ describe('OpenAICompatibleSuggestionProvider', () => {
     expect(
       () =>
         new OpenAICompatibleSuggestionProvider(
-          makeConfig({ baseUrl: 'api.openai.com/v1' }),
-        ),
+          makeConfig({ baseUrl: 'api.openai.com/v1' })
+        )
     ).toThrow(AgentProviderUnavailableError)
   })
 
@@ -166,8 +162,8 @@ describe('OpenAICompatibleSuggestionProvider', () => {
     expect(
       () =>
         new OpenAICompatibleSuggestionProvider(
-          makeConfig({ baseUrl: 'https://' }),
-        ),
+          makeConfig({ baseUrl: 'https://' })
+        )
     ).toThrow(AgentProviderUnavailableError)
   })
 
@@ -176,7 +172,7 @@ describe('OpenAICompatibleSuggestionProvider', () => {
   it('success response creates valid AgentSuggestionProviderOutput', async () => {
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig(),
-      fakeFetch(200, successChoiceResponse(validOutput())),
+      fakeFetch(200, successChoiceResponse(validOutput()))
     )
     const output = await provider.generate(makeInput())
     expect(output.title).toBe('Test Analysis')
@@ -202,20 +198,23 @@ describe('OpenAICompatibleSuggestionProvider', () => {
 
   it('Authorization header contains Bearer key', async () => {
     let capturedAuth = ''
-    const captureFetch = ((_url: string | URL | Request, init?: RequestInit) => {
+    const captureFetch = ((
+      _url: string | URL | Request,
+      init?: RequestInit
+    ) => {
       capturedAuth =
         (init?.headers as Record<string, string>)?.Authorization ?? ''
       return Promise.resolve(
         new Response(JSON.stringify(successChoiceResponse(validOutput())), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
-        }),
+        })
       )
     }) as typeof fetch
 
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig({ apiKey: 'my-secret-key' }),
-      captureFetch,
+      captureFetch
     )
     await provider.generate(makeInput())
     expect(capturedAuth).toBe('Bearer my-secret-key')
@@ -224,7 +223,7 @@ describe('OpenAICompatibleSuggestionProvider', () => {
   it('output JSON does not expose API key', async () => {
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig({ apiKey: 'my-secret-key' }),
-      fakeFetch(200, successChoiceResponse(validOutput())),
+      fakeFetch(200, successChoiceResponse(validOutput()))
     )
     const output = await provider.generate(makeInput())
     const json = JSON.stringify(output)
@@ -236,19 +235,21 @@ describe('OpenAICompatibleSuggestionProvider', () => {
 
   it('request body includes model', async () => {
     let capturedBody = ''
-    const captureFetch = ((_url: string | URL | Request, init?: RequestInit) => {
+    const captureFetch = ((
+      _url: string | URL | Request,
+      init?: RequestInit
+    ) => {
       capturedBody = (init?.body as string) ?? ''
       return Promise.resolve(
-        new Response(
-          JSON.stringify(successChoiceResponse(validOutput())),
-          { status: 200 },
-        ),
+        new Response(JSON.stringify(successChoiceResponse(validOutput())), {
+          status: 200,
+        })
       )
     }) as typeof fetch
 
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig({ model: 'gpt-test' }),
-      captureFetch,
+      captureFetch
     )
     await provider.generate(makeInput())
     const parsed = JSON.parse(capturedBody)
@@ -257,19 +258,21 @@ describe('OpenAICompatibleSuggestionProvider', () => {
 
   it('request body includes messages', async () => {
     let capturedBody = ''
-    const captureFetch = ((_url: string | URL | Request, init?: RequestInit) => {
+    const captureFetch = ((
+      _url: string | URL | Request,
+      init?: RequestInit
+    ) => {
       capturedBody = (init?.body as string) ?? ''
       return Promise.resolve(
-        new Response(
-          JSON.stringify(successChoiceResponse(validOutput())),
-          { status: 200 },
-        ),
+        new Response(JSON.stringify(successChoiceResponse(validOutput())), {
+          status: 200,
+        })
       )
     }) as typeof fetch
 
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig(),
-      captureFetch,
+      captureFetch
     )
     await provider.generate(makeInput())
     const parsed = JSON.parse(capturedBody)
@@ -280,19 +283,21 @@ describe('OpenAICompatibleSuggestionProvider', () => {
 
   it('request body uses configured max_tokens', async () => {
     let capturedBody = ''
-    const captureFetch = ((_url: string | URL | Request, init?: RequestInit) => {
+    const captureFetch = ((
+      _url: string | URL | Request,
+      init?: RequestInit
+    ) => {
       capturedBody = (init?.body as string) ?? ''
       return Promise.resolve(
-        new Response(
-          JSON.stringify(successChoiceResponse(validOutput())),
-          { status: 200 },
-        ),
+        new Response(JSON.stringify(successChoiceResponse(validOutput())), {
+          status: 200,
+        })
       )
     }) as typeof fetch
 
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig({ maxEstimatedOutputTokens: 9999 }),
-      captureFetch,
+      captureFetch
     )
     await provider.generate(makeInput())
     const parsed = JSON.parse(capturedBody)
@@ -304,20 +309,20 @@ describe('OpenAICompatibleSuggestionProvider', () => {
   it('HTTP 429 throws AgentProviderRateLimitedError', async () => {
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig(),
-      fakeFetch(429, '{}'),
+      fakeFetch(429, '{}')
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderRateLimitedError,
+      AgentProviderRateLimitedError
     )
   })
 
   it('HTTP 401 throws AgentProviderUnavailableError without key leakage', async () => {
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig({ apiKey: 'secret-key' }),
-      fakeFetch(401, '{}'),
+      fakeFetch(401, '{}')
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderUnavailableError,
+      AgentProviderUnavailableError
     )
     try {
       await provider.generate(makeInput())
@@ -330,10 +335,10 @@ describe('OpenAICompatibleSuggestionProvider', () => {
   it('HTTP 403 throws AgentProviderUnavailableError without key leakage', async () => {
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig({ apiKey: 'secret-key' }),
-      fakeFetch(403, '{}'),
+      fakeFetch(403, '{}')
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderUnavailableError,
+      AgentProviderUnavailableError
     )
     try {
       await provider.generate(makeInput())
@@ -345,30 +350,30 @@ describe('OpenAICompatibleSuggestionProvider', () => {
   it('HTTP 500 throws AgentProviderHttpError', async () => {
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig(),
-      fakeFetch(500, '{}'),
+      fakeFetch(500, '{}')
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderHttpError,
+      AgentProviderHttpError
     )
   })
 
   it('HTTP 502 throws AgentProviderHttpError', async () => {
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig(),
-      fakeFetch(502, '{}'),
+      fakeFetch(502, '{}')
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderHttpError,
+      AgentProviderHttpError
     )
   })
 
   it('HTTP 400 throws AgentProviderHttpError', async () => {
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig(),
-      fakeFetch(400, '{}'),
+      fakeFetch(400, '{}')
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderHttpError,
+      AgentProviderHttpError
     )
   })
 
@@ -377,20 +382,20 @@ describe('OpenAICompatibleSuggestionProvider', () => {
   it('response JSON parse fail → AgentProviderOutputValidationError', async () => {
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig(),
-      fakeFetch(200, 'not-json-at-all{{{'),
+      fakeFetch(200, 'not-json-at-all{{{')
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderOutputValidationError,
+      AgentProviderOutputValidationError
     )
   })
 
   it('response missing choices → AgentProviderOutputValidationError', async () => {
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig(),
-      fakeFetch(200, { choices: [] }),
+      fakeFetch(200, { choices: [] })
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderOutputValidationError,
+      AgentProviderOutputValidationError
     )
   })
 
@@ -399,10 +404,10 @@ describe('OpenAICompatibleSuggestionProvider', () => {
       makeConfig(),
       fakeFetch(200, {
         choices: [{ message: { content: 'just plain text, not json' } }],
-      }),
+      })
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderOutputValidationError,
+      AgentProviderOutputValidationError
     )
   })
 
@@ -411,10 +416,10 @@ describe('OpenAICompatibleSuggestionProvider', () => {
       makeConfig(),
       fakeFetch(200, {
         choices: [{ message: { content: '[1, 2, 3]' } }],
-      }),
+      })
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderOutputValidationError,
+      AgentProviderOutputValidationError
     )
   })
 
@@ -428,7 +433,7 @@ describe('OpenAICompatibleSuggestionProvider', () => {
     })
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig(),
-      fakeFetch(200, resp),
+      fakeFetch(200, resp)
     )
     const output = await provider.generate(makeInput())
     // Adapter passes through raw value — quality layer will reject undefined
@@ -446,7 +451,7 @@ describe('OpenAICompatibleSuggestionProvider', () => {
     })
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig(),
-      fakeFetch(200, resp),
+      fakeFetch(200, resp)
     )
     const output = await provider.generate(makeInput())
     // Adapter passes raw array — quality layer will reject the number
@@ -464,7 +469,7 @@ describe('OpenAICompatibleSuggestionProvider', () => {
     })
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig(),
-      fakeFetch(200, resp),
+      fakeFetch(200, resp)
     )
     const output = await provider.generate(makeInput())
     expect(output.diagnostics).toHaveLength(25)
@@ -475,7 +480,7 @@ describe('OpenAICompatibleSuggestionProvider', () => {
   it('timeout abort throws AgentProviderTimeoutError', async () => {
     const abortableFetch = ((
       _url: string | URL | Request,
-      init?: RequestInit,
+      init?: RequestInit
     ) => {
       return new Promise<Response>((_resolve, reject) => {
         if (init?.signal) {
@@ -484,7 +489,7 @@ describe('OpenAICompatibleSuggestionProvider', () => {
             reject(
               Object.assign(new Error('The operation was aborted.'), {
                 name: 'AbortError',
-              }),
+              })
             )
             return
           }
@@ -494,10 +499,10 @@ describe('OpenAICompatibleSuggestionProvider', () => {
               reject(
                 Object.assign(new Error('The operation was aborted.'), {
                   name: 'AbortError',
-                }),
+                })
               )
             },
-            { once: true },
+            { once: true }
           )
         }
       })
@@ -505,10 +510,10 @@ describe('OpenAICompatibleSuggestionProvider', () => {
 
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig({ requestTimeoutMs: 10 }),
-      abortableFetch,
+      abortableFetch
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderTimeoutError,
+      AgentProviderTimeoutError
     )
   })
 
@@ -523,10 +528,10 @@ describe('OpenAICompatibleSuggestionProvider', () => {
 
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig({ retryMaxAttempts: 0 }),
-      countFetch,
+      countFetch
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderHttpError,
+      AgentProviderHttpError
     )
     expect(callCount).toBe(1)
   })
@@ -541,10 +546,10 @@ describe('OpenAICompatibleSuggestionProvider', () => {
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig({ retryMaxAttempts: 2 }),
       countFetch,
-      () => Promise.resolve(), // 0 delay
+      () => Promise.resolve() // 0 delay
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderHttpError,
+      AgentProviderHttpError
     )
     expect(callCount).toBe(3)
   })
@@ -559,10 +564,10 @@ describe('OpenAICompatibleSuggestionProvider', () => {
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig({ retryMaxAttempts: 2 }),
       countFetch,
-      () => Promise.resolve(),
+      () => Promise.resolve()
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderUnavailableError,
+      AgentProviderUnavailableError
     )
     expect(callCount).toBe(1)
   })
@@ -575,17 +580,17 @@ describe('OpenAICompatibleSuggestionProvider', () => {
         new Response('not json {{{', {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
-        }),
+        })
       )
     }) as typeof fetch
 
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig({ retryMaxAttempts: 3 }),
       countFetch,
-      () => Promise.resolve(),
+      () => Promise.resolve()
     )
     await expect(provider.generate(makeInput())).rejects.toThrow(
-      AgentProviderOutputValidationError,
+      AgentProviderOutputValidationError
     )
     expect(callCount).toBe(1)
   })
@@ -595,7 +600,7 @@ describe('OpenAICompatibleSuggestionProvider', () => {
   it('raw response is not stored in diagnostics', async () => {
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig(),
-      fakeFetch(200, successChoiceResponse(validOutput())),
+      fakeFetch(200, successChoiceResponse(validOutput()))
     )
     const output = await provider.generate(makeInput())
     const diagStr = JSON.stringify(output.diagnostics)
@@ -609,7 +614,7 @@ describe('OpenAICompatibleSuggestionProvider', () => {
   it('output model matches configured model', async () => {
     const provider = new OpenAICompatibleSuggestionProvider(
       makeConfig({ model: 'gpt-4-test' }),
-      fakeFetch(200, successChoiceResponse(validOutput())),
+      fakeFetch(200, successChoiceResponse(validOutput()))
     )
     const output = await provider.generate(makeInput())
     expect(output.model).toBe('gpt-4-test')

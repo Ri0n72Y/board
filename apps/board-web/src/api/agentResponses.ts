@@ -11,13 +11,16 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
 
 export async function createAgentResponse(
   draftId: string,
-  input: Pick<CreateAgentResponseInput, 'source' | 'responseMarkdown' | 'externalAgentName' | 'responseNote'>,
-  signal?: AbortSignal,
+  input: Pick<
+    CreateAgentResponseInput,
+    'source' | 'responseMarkdown' | 'externalAgentName' | 'responseNote'
+  >,
+  signal?: AbortSignal
 ): Promise<CreateAgentResponseResponse> {
   const response = await axios.post<ApiResponse<CreateAgentResponseResponse>>(
     `${apiBaseUrl}/agent/drafts/${encodeURIComponent(draftId)}/responses`,
     input,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {
@@ -29,11 +32,11 @@ export async function createAgentResponse(
 
 export async function fetchAgentResponses(
   draftId: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<ListAgentResponsesResponse> {
   const response = await axios.get<ApiResponse<ListAgentResponsesResponse>>(
     `${apiBaseUrl}/agent/drafts/${encodeURIComponent(draftId)}/responses`,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {
@@ -45,11 +48,11 @@ export async function fetchAgentResponses(
 
 export async function fetchAgentResponse(
   responseId: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<GetAgentResponseResponse> {
   const response = await axios.get<ApiResponse<GetAgentResponseResponse>>(
     `${apiBaseUrl}/agent/responses/${encodeURIComponent(responseId)}`,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {

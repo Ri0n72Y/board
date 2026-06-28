@@ -10,9 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { AnimatedDrawer } from './ui/AnimatedDrawer'
 import { Button } from './ui/Button'
 import { TextInput } from './ui/TextInput'
-import {
-  shortPublicKey,
-} from '../utils/profileDisplay'
+import { shortPublicKey } from '../utils/profileDisplay'
 import { useBoardMetadataStore } from '../stores/boardMetadataStore'
 import { ProfileAvatar } from './ProfileAvatar'
 import { cn } from '../lib/cn'
@@ -63,9 +61,7 @@ export function ProfileManagerDrawer({
     const q = search.trim().toLowerCase()
     if (!q) return profiles
     return profiles.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.pk.toLowerCase().includes(q),
+      (p) => p.name.toLowerCase().includes(q) || p.pk.toLowerCase().includes(q)
     )
   }, [profiles, search])
 
@@ -111,7 +107,11 @@ export function ProfileManagerDrawer({
       })
       closeForm()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t('profileManager.errorGeneral'))
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : t('profileManager.errorGeneral')
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -136,7 +136,11 @@ export function ProfileManagerDrawer({
       })
       closeForm()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t('profileManager.errorGeneral'))
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : t('profileManager.errorGeneral')
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -280,9 +284,7 @@ function ProfileManagerProfileItem({
             )
           }
         >
-          {justCopied
-            ? t('profileManager.copied')
-            : t('profileManager.copyPk')}
+          {justCopied ? t('profileManager.copied') : t('profileManager.copyPk')}
         </Button>
         <Button
           type="button"
@@ -353,10 +355,7 @@ function ProfileManagerFormCard({
 
       {/* PK */}
       <div className="grid gap-1.5">
-        <label
-          htmlFor={pkId}
-          className="text-xs font-bold text-slate-500"
-        >
+        <label htmlFor={pkId} className="text-xs font-bold text-slate-500">
           {t('profileManager.pk')}
         </label>
         {isCreate ? (
@@ -378,16 +377,13 @@ function ProfileManagerFormCard({
 
       {/* Name */}
       <div className="grid gap-1.5">
-        <label
-          htmlFor={nameId}
-          className="text-xs font-bold text-slate-500"
-        >
+        <label htmlFor={nameId} className="text-xs font-bold text-slate-500">
           {t('profileManager.name')}
         </label>
         <input
           id={nameId}
           className={cn(
-            'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50',
+            'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50'
           )}
           value={form.name}
           onChange={(e) => onChangeName(e.target.value)}
@@ -408,7 +404,7 @@ function ProfileManagerFormCard({
         <input
           id={avatarUrlId}
           className={cn(
-            'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50',
+            'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50'
           )}
           value={form.avatarUrl}
           onChange={(e) => onChangeAvatarUrl(e.target.value)}

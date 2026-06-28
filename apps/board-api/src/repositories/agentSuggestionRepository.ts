@@ -11,7 +11,7 @@ export interface AgentSuggestionRepository {
   findById(id: string): Promise<AgentSuggestionDetail | null>
   updateReview(
     id: string,
-    status: AgentSuggestionStatus,
+    status: AgentSuggestionStatus
   ): Promise<AgentSuggestionDetail | null>
 }
 
@@ -50,12 +50,12 @@ function toSummary(suggestion: AgentSuggestionDetail): AgentSuggestionSummary {
 
 // ─── Memory repository ───
 
-export class MemoryAgentSuggestionRepository
-  implements AgentSuggestionRepository
-{
+export class MemoryAgentSuggestionRepository implements AgentSuggestionRepository {
   private suggestions: AgentSuggestionDetail[] = []
 
-  async create(suggestion: AgentSuggestionDetail): Promise<AgentSuggestionDetail> {
+  async create(
+    suggestion: AgentSuggestionDetail
+  ): Promise<AgentSuggestionDetail> {
     const clone = cloneDetail(suggestion)
     this.suggestions.push(clone)
     return cloneDetail(clone)
@@ -75,7 +75,7 @@ export class MemoryAgentSuggestionRepository
 
   async updateReview(
     id: string,
-    status: AgentSuggestionStatus,
+    status: AgentSuggestionStatus
   ): Promise<AgentSuggestionDetail | null> {
     const index = this.suggestions.findIndex((item) => item.id === id)
     if (index === -1) return null
@@ -91,16 +91,16 @@ export class MemoryAgentSuggestionRepository
 
 // ─── Mongo repository ───
 
-export class MongoAgentSuggestionRepository
-  implements AgentSuggestionRepository
-{
+export class MongoAgentSuggestionRepository implements AgentSuggestionRepository {
   private readonly collection: Collection<Document>
 
   constructor(collection: Collection<Document>) {
     this.collection = collection
   }
 
-  async create(suggestion: AgentSuggestionDetail): Promise<AgentSuggestionDetail> {
+  async create(
+    suggestion: AgentSuggestionDetail
+  ): Promise<AgentSuggestionDetail> {
     await this.collection.insertOne(toSuggestionDoc(suggestion))
     return cloneDetail(suggestion)
   }
@@ -126,12 +126,12 @@ export class MongoAgentSuggestionRepository
 
   async updateReview(
     id: string,
-    status: AgentSuggestionStatus,
+    status: AgentSuggestionStatus
   ): Promise<AgentSuggestionDetail | null> {
     const result = await this.collection.findOneAndUpdate(
       suggestionFilter({ id }),
       { $set: { status } },
-      { returnDocument: 'after' },
+      { returnDocument: 'after' }
     )
     return result ? fromSuggestionDoc(result) : null
   }
@@ -146,7 +146,7 @@ function suggestionFilter(extra?: Filter<Document>): Filter<Document> {
 }
 
 function toSuggestionDoc(
-  suggestion: AgentSuggestionDetail,
+  suggestion: AgentSuggestionDetail
 ): OptionalId<Document> {
   return {
     kind: 'agentSuggestion',

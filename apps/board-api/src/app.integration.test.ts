@@ -18,7 +18,10 @@ async function createTestApp(): Promise<Hono> {
   return app
 }
 
-async function appendArchivedStatus(app: Hono, recordId: string): Promise<void> {
+async function appendArchivedStatus(
+  app: Hono,
+  recordId: string
+): Promise<void> {
   const headResponse = await app.request(`/api/v0/records/${recordId}/head`)
   const headPayload = await headResponse.json()
   const archiveResponse = await app.request(
@@ -84,19 +87,20 @@ describe('app integration smoke', () => {
     const recordId = createPayload.data.body.id as string
 
     // Create patch
-    const patchRes = await app.request(
-      `/api/v0/records/${recordId}/patches`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          parentId: null,
-          currentVersion: 0,
-          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
-          body: { description: 'Patched in integration' },
-        }),
-        headers: { 'content-type': 'application/json' },
-      }
-    )
+    const patchRes = await app.request(`/api/v0/records/${recordId}/patches`, {
+      method: 'POST',
+      body: JSON.stringify({
+        parentId: null,
+        currentVersion: 0,
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
+        body: { description: 'Patched in integration' },
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
     expect(patchRes.status).toBe(201)
 
     // Board current should show replayed state
@@ -137,7 +141,11 @@ describe('app integration smoke', () => {
       body: JSON.stringify({
         parentId: null,
         currentVersion: 0,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -170,7 +178,11 @@ describe('app integration smoke', () => {
       body: JSON.stringify({
         parentId: null,
         currentVersion: 0,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -211,7 +223,11 @@ describe('app integration smoke', () => {
       body: JSON.stringify({
         parentId: null,
         currentVersion: 0,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -219,9 +235,7 @@ describe('app integration smoke', () => {
     await appendArchivedStatus(app, recordId)
 
     // History
-    const historyRes = await app.request(
-      `/api/v0/records/${recordId}/history`
-    )
+    const historyRes = await app.request(`/api/v0/records/${recordId}/history`)
     const historyPayload = await historyRes.json()
     expect(historyPayload.data.status).toBe('complete')
     expect(historyPayload.data.replay).toBeDefined()
@@ -266,7 +280,11 @@ describe('app integration smoke', () => {
       body: JSON.stringify({
         parentId: null,
         currentVersion: 0,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
       }),
       headers: { 'content-type': 'application/json' },
     })

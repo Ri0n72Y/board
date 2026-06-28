@@ -37,8 +37,8 @@ export function filterSearchSelectOptions({
       ? options
       : options.filter((option) =>
           getSearchTokens(option, mode, language).some((token) =>
-            normalizeSearchText(token).includes(normalizedQuery),
-          ),
+            normalizeSearchText(token).includes(normalizedQuery)
+          )
         )
 
   if (!allowCustomValue || !query.trim()) return matched
@@ -48,7 +48,7 @@ export function filterSearchSelectOptions({
   const hasExactValueOrLabel = options.some(
     (option) =>
       normalizeSearchText(option.value) === normalizedCustomValue ||
-      normalizeSearchText(option.label) === normalizedCustomValue,
+      normalizeSearchText(option.label) === normalizedCustomValue
   )
   if (hasExactValueOrLabel) return matched
 
@@ -61,16 +61,14 @@ export function filterSearchSelectOptions({
 
   if (matched.length > 0) return [...matched, customOption]
 
-  return [
-    customOption,
-  ]
+  return [customOption]
 }
 
 export function getSearchSelectDisplayLabel(
   option: SearchSelectOption | undefined,
   value: string,
   mode: SearchSelectMode,
-  language?: string,
+  language?: string
 ): string {
   if (mode === 'tag') return formatTagLabel(value, language)
   return option?.label ?? value
@@ -78,7 +76,7 @@ export function getSearchSelectDisplayLabel(
 
 export function addSearchSelectValue(
   current: readonly string[],
-  value: string,
+  value: string
 ): string[] {
   if (current.includes(value)) return [...current]
   return [...current, value]
@@ -86,13 +84,13 @@ export function addSearchSelectValue(
 
 export function removeSearchSelectValue(
   current: readonly string[],
-  value: string,
+  value: string
 ): string[] {
   return current.filter((item) => item !== value)
 }
 
 export function canSelectSearchSelectChoice(
-  choice: SearchSelectChoice | undefined,
+  choice: SearchSelectChoice | undefined
 ): choice is SearchSelectChoice {
   return Boolean(choice && !choice.disabled)
 }
@@ -100,7 +98,7 @@ export function canSelectSearchSelectChoice(
 function getSearchTokens(
   option: SearchSelectOption,
   mode: SearchSelectMode,
-  language?: string,
+  language?: string
 ): string[] {
   const tokens = [
     option.value,

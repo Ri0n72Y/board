@@ -80,8 +80,9 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
   const boardConfigState = await loadBoardConfigState(env)
   const boardConfig = boardConfigState.config
   const agentRuntimeConfig = loadAgentRuntimeConfig(process.env)
-  const internalAgentProviderConfig =
-    loadInternalAgentProviderRuntimeConfig(process.env)
+  const internalAgentProviderConfig = loadInternalAgentProviderRuntimeConfig(
+    process.env
+  )
   const agentProviderConfig = stripPrivateAgentProviderConfig(
     internalAgentProviderConfig
   )
@@ -105,15 +106,14 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
           )) as Collection<Document>
         )
       : new MemorySnapshotHeadRepository(recordRepository)
-  const snapshotRepository: SnapshotRepository =
-    env.mongodbUri
-      ? new MongoSnapshotRepository(
-          (await getSnapshotsCollection<Document>(
-            env.mongodbUri,
-            env.mongodbDb
-          )) as Collection<Document>
-        )
-      : new MemorySnapshotRepository()
+  const snapshotRepository: SnapshotRepository = env.mongodbUri
+    ? new MongoSnapshotRepository(
+        (await getSnapshotsCollection<Document>(
+          env.mongodbUri,
+          env.mongodbDb
+        )) as Collection<Document>
+      )
+    : new MemorySnapshotRepository()
   const profileRepository: ProfileRepository = env.mongodbUri
     ? new MongoProfileRepository(
         await getProfilesCollection(env.mongodbUri, env.mongodbDb)

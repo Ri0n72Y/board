@@ -46,12 +46,12 @@ export function AgentPatchDraftPanel({
 
   const patchDescription = useMemo(
     () => buildPatchDraftDescription(suggestionId, suggestionTitle),
-    [suggestionId, suggestionTitle],
+    [suggestionId, suggestionTitle]
   )
 
   const pidCandidates = useMemo(
     () => extractPidCandidates(suggestionMarkdown ?? ''),
-    [suggestionMarkdown],
+    [suggestionMarkdown]
   )
 
   const recordOptions = useMemo(
@@ -68,12 +68,12 @@ export function AgentPatchDraftPanel({
           meta: r.body.id,
         }
       }),
-    [records, lang],
+    [records, lang]
   )
 
   const selectedRecord = useMemo(
     () => records.find((r) => r.body.id === selectedRecordId) ?? null,
-    [records, selectedRecordId],
+    [records, selectedRecordId]
   )
 
   const handleOpenEditor = () => {

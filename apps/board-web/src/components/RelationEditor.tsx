@@ -45,11 +45,15 @@ export function RelationEditor({
       currentRecordId
         ? targetOptions.filter((option) => option.value !== currentRecordId)
         : targetOptions,
-    [currentRecordId, targetOptions],
+    [currentRecordId, targetOptions]
   )
 
   function update(index: number, relation: RelationRef) {
-    onChange(value.map((current, currentIndex) => (currentIndex === index ? relation : current)))
+    onChange(
+      value.map((current, currentIndex) =>
+        currentIndex === index ? relation : current
+      )
+    )
   }
 
   function remove(index: number) {
@@ -75,7 +79,11 @@ export function RelationEditor({
           variant="ghost"
           className="min-h-8 px-2.5 text-xs"
           onClick={addRelation}
-          disabled={disabled || constraintOptions.length === 0 || targetOptions.length === 0}
+          disabled={
+            disabled ||
+            constraintOptions.length === 0 ||
+            targetOptions.length === 0
+          }
           icon={<PlusIcon className="h-4 w-4" />}
         >
           {t('relations.add')}
@@ -83,12 +91,12 @@ export function RelationEditor({
       </div>
 
       {targetOptions.length === 0 && (
-        <p className="text-sm text-slate-500">{t('relations.noTargetOptions')}</p>
+        <p className="text-sm text-slate-500">
+          {t('relations.noTargetOptions')}
+        </p>
       )}
 
-      {hasSelf && (
-        <InlineWarning>{t('relations.selfWarning')}</InlineWarning>
-      )}
+      {hasSelf && <InlineWarning>{t('relations.selfWarning')}</InlineWarning>}
 
       {hasDuplicate && (
         <InlineWarning>{t('relations.duplicateWarning')}</InlineWarning>
@@ -98,11 +106,9 @@ export function RelationEditor({
         <div className="grid gap-3">
           {value.map((relation, index) => {
             const isExistingSelf = Boolean(
-              currentRecordId && relation.target.trim() === currentRecordId,
+              currentRecordId && relation.target.trim() === currentRecordId
             )
-            const rowTargets = isExistingSelf
-              ? targetOptions
-              : availableTargets
+            const rowTargets = isExistingSelf ? targetOptions : availableTargets
             const targetTitle = relation.target
               ? formatRelationTarget(relation.target, targetOptions)
               : undefined
@@ -166,7 +172,10 @@ export function RelationEditor({
                   disabled={disabled}
                 />
                 {targetTitle && (
-                  <p className="break-all text-xs text-slate-500" title={relation.target}>
+                  <p
+                    className="break-all text-xs text-slate-500"
+                    title={relation.target}
+                  >
                     {targetTitle}
                   </p>
                 )}

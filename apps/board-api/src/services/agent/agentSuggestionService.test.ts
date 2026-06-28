@@ -1,9 +1,15 @@
 import { describe, expect, it, beforeEach } from 'vitest'
-import type { AgentDraftDetail, AgentSuggestionDetail } from '@labour-board/shared'
+import type {
+  AgentDraftDetail,
+  AgentSuggestionDetail,
+} from '@labour-board/shared'
 import type { AgentProviderRuntimeConfig } from '../../config/agentProviderConfig.js'
 import { MemoryAgentDraftRepository } from '../../repositories/agentDraftRepository.js'
 import { MemoryAgentSuggestionRepository } from '../../repositories/agentSuggestionRepository.js'
-import { AgentSkillService, SkillNotFoundError } from '../agent/agentSkillService.js'
+import {
+  AgentSkillService,
+  SkillNotFoundError,
+} from '../agent/agentSkillService.js'
 import {
   AgentProviderUnavailableError,
   DisabledAgentSuggestionProvider,
@@ -23,7 +29,9 @@ import {
   AgentSuggestionValidationError,
 } from '../agent/agentSuggestionService.js'
 
-function makeReviewedDraft(overrides?: Partial<AgentDraftDetail>): AgentDraftDetail {
+function makeReviewedDraft(
+  overrides?: Partial<AgentDraftDetail>
+): AgentDraftDetail {
   return {
     id: crypto.randomUUID(),
     title: 'Test Draft',
@@ -52,7 +60,7 @@ function makeReviewedDraft(overrides?: Partial<AgentDraftDetail>): AgentDraftDet
 }
 
 function makeProviderConfig(
-  overrides?: Partial<AgentProviderRuntimeConfig>,
+  overrides?: Partial<AgentProviderRuntimeConfig>
 ): AgentProviderRuntimeConfig {
   return {
     kind: 'mock',
@@ -75,7 +83,7 @@ class InvalidOutputProvider implements AgentSuggestionProvider {
   readonly realProvider = false
 
   async generate(
-    _input: AgentSuggestionProviderInput,
+    _input: AgentSuggestionProviderInput
   ): Promise<AgentSuggestionProviderOutput> {
     return {
       title: 'Invalid',
@@ -97,7 +105,7 @@ class DiagnosticsProvider extends MockAgentSuggestionProvider {
   }
 
   override async generate(
-    input: AgentSuggestionProviderInput,
+    input: AgentSuggestionProviderInput
   ): Promise<AgentSuggestionProviderOutput> {
     const output = await super.generate(input)
     return {
@@ -124,7 +132,7 @@ describe('AgentSuggestionService', () => {
       draftRepo,
       skillService,
       provider,
-      makeProviderConfig(),
+      makeProviderConfig()
     )
   })
 
@@ -142,41 +150,41 @@ describe('AgentSuggestionService', () => {
   })
 
   it('missing draft returns NotFound', async () => {
-    await expect(
-      svc.createSuggestion('nonexistent', {}),
-    ).rejects.toThrow(AgentSuggestionNotFoundError)
+    await expect(svc.createSuggestion('nonexistent', {})).rejects.toThrow(
+      AgentSuggestionNotFoundError
+    )
   })
 
   it('draft status "draft" returns NotAllowed', async () => {
     const draft = makeReviewedDraft({ status: 'draft' })
     await draftRepo.create(draft)
-    await expect(
-      svc.createSuggestion(draft.id, {}),
-    ).rejects.toThrow(AgentSuggestionNotAllowedError)
+    await expect(svc.createSuggestion(draft.id, {})).rejects.toThrow(
+      AgentSuggestionNotAllowedError
+    )
   })
 
   it('draft status "discarded" returns NotAllowed', async () => {
     const draft = makeReviewedDraft({ status: 'discarded' })
     await draftRepo.create(draft)
-    await expect(
-      svc.createSuggestion(draft.id, {}),
-    ).rejects.toThrow(AgentSuggestionNotAllowedError)
+    await expect(svc.createSuggestion(draft.id, {})).rejects.toThrow(
+      AgentSuggestionNotAllowedError
+    )
   })
 
   it('missing reviewedAt returns NotAllowed', async () => {
     const draft = makeReviewedDraft({ reviewedAt: undefined })
     await draftRepo.create(draft)
-    await expect(
-      svc.createSuggestion(draft.id, {}),
-    ).rejects.toThrow(AgentSuggestionNotAllowedError)
+    await expect(svc.createSuggestion(draft.id, {})).rejects.toThrow(
+      AgentSuggestionNotAllowedError
+    )
   })
 
   it('missing reviewedBy returns NotAllowed', async () => {
     const draft = makeReviewedDraft({ reviewedBy: undefined })
     await draftRepo.create(draft)
-    await expect(
-      svc.createSuggestion(draft.id, {}),
-    ).rejects.toThrow(AgentSuggestionNotAllowedError)
+    await expect(svc.createSuggestion(draft.id, {})).rejects.toThrow(
+      AgentSuggestionNotAllowedError
+    )
   })
 
   // ─── contextHash ───
@@ -212,7 +220,7 @@ describe('AgentSuggestionService', () => {
 
     // SkillNotFoundError is thrown by skillService, maps to validation
     await expect(
-      svc.createSuggestion(draft.id, { skillIds: ['unknown-skill'] }),
+      svc.createSuggestion(draft.id, { skillIds: ['unknown-skill'] })
     ).rejects.toThrow(SkillNotFoundError)
   })
 
@@ -292,7 +300,9 @@ describe('AgentSuggestionService', () => {
       outputValidationStatus: 'passed',
       realProvider: false,
     })
-    expect(suggestion.audit?.contextCharCount).toBe(draft.contextMarkdown.length)
+    expect(suggestion.audit?.contextCharCount).toBe(
+      draft.contextMarkdown.length
+    )
     expect(suggestion.audit?.estimatedInputTokens).toBeGreaterThan(0)
     expect(suggestion.audit?.estimatedOutputTokens).toBeGreaterThan(0)
     expect(suggestion.audit?.maxOutputChars).toBe(50_000)
@@ -346,11 +356,11 @@ describe('AgentSuggestionService', () => {
       draftRepo,
       skillService,
       provider,
-      makeProviderConfig({ maxInputChars: 1 }),
+      makeProviderConfig({ maxInputChars: 1 })
     )
 
     await expect(
-      budgetLimitedService.createSuggestion(draft.id, {}),
+      budgetLimitedService.createSuggestion(draft.id, {})
     ).rejects.toThrow(AgentProviderBudgetExceededError)
     expect(await suggestionRepo.listByDraftId(draft.id)).toHaveLength(0)
   })
@@ -365,18 +375,18 @@ describe('AgentSuggestionService', () => {
       new DisabledAgentSuggestionProvider(
         'disabled',
         'none',
-        'provider disabled',
+        'provider disabled'
       ),
       makeProviderConfig({
         kind: 'disabled',
         model: 'none',
         enabled: false,
-      }),
+      })
     )
 
-    await expect(disabledService.createSuggestion(draft.id, {})).rejects.toThrow(
-      AgentProviderUnavailableError,
-    )
+    await expect(
+      disabledService.createSuggestion(draft.id, {})
+    ).rejects.toThrow(AgentProviderUnavailableError)
     expect(await suggestionRepo.listByDraftId(draft.id)).toHaveLength(0)
   })
 
@@ -388,11 +398,11 @@ describe('AgentSuggestionService', () => {
       draftRepo,
       skillService,
       new InvalidOutputProvider(),
-      makeProviderConfig(),
+      makeProviderConfig()
     )
 
     await expect(
-      invalidOutputService.createSuggestion(draft.id, {}),
+      invalidOutputService.createSuggestion(draft.id, {})
     ).rejects.toThrow(AgentProviderOutputValidationError)
     expect(await suggestionRepo.listByDraftId(draft.id)).toHaveLength(0)
   })
@@ -405,11 +415,11 @@ describe('AgentSuggestionService', () => {
       draftRepo,
       skillService,
       new DiagnosticsProvider(['Authorization: Bearer secret']),
-      makeProviderConfig(),
+      makeProviderConfig()
     )
 
     await expect(
-      invalidDiagnosticsService.createSuggestion(draft.id, {}),
+      invalidDiagnosticsService.createSuggestion(draft.id, {})
     ).rejects.toThrow(AgentProviderOutputValidationError)
     expect(await suggestionRepo.listByDraftId(draft.id)).toHaveLength(0)
   })
@@ -422,7 +432,7 @@ describe('AgentSuggestionService', () => {
       draftRepo,
       skillService,
       new DiagnosticsProvider(['Mock provider diagnostic.']),
-      makeProviderConfig(),
+      makeProviderConfig()
     )
 
     const suggestion = await diagnosticsService.createSuggestion(draft.id, {})
@@ -494,8 +504,8 @@ Test.`
               },
             ],
           }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } },
-        ),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        )
       )) as typeof fetch
 
     const internalConfig: InternalAgentProviderRuntimeConfig = {
@@ -515,7 +525,7 @@ Test.`
 
     const realProvider = new OpenAICompatibleSuggestionProvider(
       internalConfig,
-      fakeFetcher,
+      fakeFetcher
     )
 
     const publicConfig: AgentProviderRuntimeConfig = {
@@ -536,7 +546,7 @@ Test.`
       draftRepo,
       skillService,
       realProvider,
-      publicConfig,
+      publicConfig
     )
 
     const draft = makeReviewedDraft()

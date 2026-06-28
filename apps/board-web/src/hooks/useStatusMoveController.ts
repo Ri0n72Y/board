@@ -34,10 +34,7 @@ export function useStatusMoveController({
   useEffect(() => abortStatusMove, [abortStatusMove])
 
   const moveRecordStatus = useCallback(
-    (
-      record: RecordResponse<RecordItem<RecordBody>>,
-      targetStatusTag: Tag,
-    ) => {
+    (record: RecordResponse<RecordItem<RecordBody>>, targetStatusTag: Tag) => {
       const recordId = record.body.id
       if (isStatusMoveNoop(record.body.tags, targetStatusTag)) return
 
@@ -66,7 +63,7 @@ export function useStatusMoveController({
 
         const change = buildMovedStatusTagChanges(
           record.body.tags,
-          targetStatusTag,
+          targetStatusTag
         )
         if (!change.ok) {
           throw new Error(change.error)
@@ -80,7 +77,7 @@ export function useStatusMoveController({
             tagChanges: change.tagChanges,
             description: `Move ${change.from} -> ${targetStatusTag}`,
           },
-          controller.signal,
+          controller.signal
         )
         if (
           statusMoveRequestIdRef.current !== requestId ||
@@ -111,7 +108,7 @@ export function useStatusMoveController({
           statusMoveAbortRef.current = null
         })
     },
-    [onMoved],
+    [onMoved]
   )
 
   return {

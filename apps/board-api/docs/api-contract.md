@@ -337,17 +337,17 @@ Missing baseUrl, apiKey, or model → factory returns `DisabledAgentSuggestionPr
 
 ### Error Mapping (Extended)
 
-| Error | HTTP Status | Code |
-|-------|------------|------|
-| Config missing / provider disabled | 503 | `PROVIDER_UNAVAILABLE` |
-| Request timeout | 504 | `PROVIDER_TIMEOUT` |
-| HTTP 429 | 429 | `PROVIDER_RATE_LIMITED` |
-| HTTP 401/403 | 503 | `PROVIDER_UNAVAILABLE` (key not exposed) |
-| HTTP 5xx | 502 | `PROVIDER_HTTP_ERROR` |
-| HTTP 4xx (other) | 502 | `PROVIDER_HTTP_ERROR` |
-| Response JSON parse failed | 502 | `PROVIDER_OUTPUT_INVALID` |
-| Provider output object invalid | 502 | `PROVIDER_OUTPUT_INVALID` |
-| Budget exceeded | 413 | `PROVIDER_BUDGET_EXCEEDED` |
+| Error                              | HTTP Status | Code                                     |
+| ---------------------------------- | ----------- | ---------------------------------------- |
+| Config missing / provider disabled | 503         | `PROVIDER_UNAVAILABLE`                   |
+| Request timeout                    | 504         | `PROVIDER_TIMEOUT`                       |
+| HTTP 429                           | 429         | `PROVIDER_RATE_LIMITED`                  |
+| HTTP 401/403                       | 503         | `PROVIDER_UNAVAILABLE` (key not exposed) |
+| HTTP 5xx                           | 502         | `PROVIDER_HTTP_ERROR`                    |
+| HTTP 4xx (other)                   | 502         | `PROVIDER_HTTP_ERROR`                    |
+| Response JSON parse failed         | 502         | `PROVIDER_OUTPUT_INVALID`                |
+| Provider output object invalid     | 502         | `PROVIDER_OUTPUT_INVALID`                |
+| Budget exceeded                    | 413         | `PROVIDER_BUDGET_EXCEEDED`               |
 
 ### Timeout & Retry
 
@@ -388,6 +388,7 @@ Missing baseUrl, apiKey, or model → factory returns `DisabledAgentSuggestionPr
 Profile is application-layer auxiliary data, keyed by public key.
 
 LabourBoard:
+
 - Does not store private keys.
 - Does not implement account/password login.
 - All registered profiles have equal permissions (no role/ACL in MVP 2.2).
@@ -397,9 +398,9 @@ Profile shape:
 
 ```ts
 interface Profile {
-  pk: string           // public key — stable identity, unique
-  name: string         // display name, required
-  avatarUrl?: string | null  // optional http/https URL
+  pk: string // public key — stable identity, unique
+  name: string // display name, required
+  avatarUrl?: string | null // optional http/https URL
   createdAt?: string
   updatedAt?: string
 }
@@ -407,16 +408,17 @@ interface Profile {
 
 Routes:
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| GET | `/api/v0/profiles` | List all profiles (sorted by name, then pk) |
-| GET | `/api/v0/profiles/:pk` | Read one profile |
-| POST | `/api/v0/profiles` | Create a profile |
-| PATCH | `/api/v0/profiles/:pk` | Update name / avatarUrl |
+| Method | Path                   | Purpose                                     |
+| ------ | ---------------------- | ------------------------------------------- |
+| GET    | `/api/v0/profiles`     | List all profiles (sorted by name, then pk) |
+| GET    | `/api/v0/profiles/:pk` | Read one profile                            |
+| POST   | `/api/v0/profiles`     | Create a profile                            |
+| PATCH  | `/api/v0/profiles/:pk` | Update name / avatarUrl                     |
 
 `DELETE /api/v0/profiles/:pk` does not exist.
 
 Input rules:
+
 - `pk` and `name` are trimmed before save.
 - `name` must be non-empty after trim.
 - `avatarUrl` empty/whitespace is saved as `null`.
@@ -426,6 +428,7 @@ Input rules:
 - PATCH body.pk must match path pk (both trimmed).
 
 Assignee integration:
+
 - Record `assignee` still stores the public key.
 - Assignee UI uses profile SearchSelect (search by name or pk).
 - URL filter `assignee` still uses public key.

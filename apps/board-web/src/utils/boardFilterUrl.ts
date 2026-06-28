@@ -25,7 +25,7 @@ export const DEFAULT_BOARD_CURRENT_FILTERS: BoardCurrentFilters = {
 }
 
 export function parseBoardFilterUrl(
-  input: URLSearchParams | string,
+  input: URLSearchParams | string
 ): BoardCurrentFilters {
   const params = toSearchParams(input)
   const rawTags: string[] = []
@@ -46,7 +46,7 @@ export function parseBoardFilterUrl(
 }
 
 export function serializeBoardFilterUrl(
-  filters: BoardCurrentFilters | BoardCurrentQuery,
+  filters: BoardCurrentFilters | BoardCurrentQuery
 ): URLSearchParams {
   const normalized = normalizeBoardFilterUrl(filters)
   const params = new URLSearchParams()
@@ -65,7 +65,7 @@ export function serializeBoardFilterUrl(
 }
 
 export function normalizeBoardFilterUrl(
-  filters: BoardCurrentFilters | BoardCurrentQuery,
+  filters: BoardCurrentFilters | BoardCurrentQuery
 ): BoardCurrentFilters {
   return {
     q: normalizeString(filters.q),
@@ -84,7 +84,7 @@ export function boardFilterUrlQuery(filters: BoardCurrentFilters): string {
 
 export function appendBoardFilterUrlParams(
   params: URLSearchParams,
-  filters: BoardCurrentQuery | undefined,
+  filters: BoardCurrentQuery | undefined
 ): void {
   if (!filters) return
   for (const [key, value] of serializeBoardFilterUrl(filters)) {
@@ -102,14 +102,14 @@ export function rawBoardFilterSearchQuery(search: string): string {
 
 export function shouldReplaceBoardFilterUrl(
   search: string,
-  nextQuery: string,
+  nextQuery: string
 ): boolean {
   return rawBoardFilterSearchQuery(search) !== nextQuery
 }
 
 export function areBoardFiltersEqual(
   left: BoardCurrentFilters,
-  right: BoardCurrentFilters,
+  right: BoardCurrentFilters
 ): boolean {
   return boardFilterUrlQuery(left) === boardFilterUrlQuery(right)
 }

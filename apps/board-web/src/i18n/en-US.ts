@@ -28,7 +28,8 @@ const enUS = {
     'settings.membersHint': 'Manage team member profiles and avatars.',
     'settings.manageMembers': 'Manage Members',
     'settings.visibleColumns': 'Visible columns',
-    'settings.visibleColumnsHint': 'Choose which board status columns are shown.',
+    'settings.visibleColumnsHint':
+      'Choose which board status columns are shown.',
     'settings.visibleColumnsEmptyFallback':
       'Clearing every column restores the default columns.',
 
@@ -151,7 +152,8 @@ const enUS = {
     'relations.none': 'No relations',
     'relations.more_one': '+{{count}} more relation',
     'relations.more_other': '+{{count}} more relations',
-    'relations.selfWarning': 'This record already contains a self relation. It is preserved, but new self relations are not selectable.',
+    'relations.selfWarning':
+      'This record already contains a self relation. It is preserved, but new self relations are not selectable.',
     'relations.duplicateWarning': 'Duplicate relations will be saved once.',
     'relations.noTargetOptions': 'No relation targets',
     'relations.constraint.dependsOn': 'Depends on',
@@ -219,7 +221,8 @@ const enUS = {
     'edit.priorityTag': 'Priority',
     'edit.otherTags': 'Other tags',
     'edit.unsupportedTags': 'Unsupported tags (read-only)',
-    'edit.unsupportedHint': 'These tags are not in the current config. They will be preserved but cannot be added.',
+    'edit.unsupportedHint':
+      'These tags are not in the current config. They will be preserved but cannot be added.',
     'edit.assignee': 'Assignee',
     'edit.assigneePlaceholder': 'Select member',
     'edit.assets': 'Assets',

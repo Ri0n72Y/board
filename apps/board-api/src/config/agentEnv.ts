@@ -16,7 +16,8 @@ export function loadAgentRuntimeConfig(
   env: NodeJS.ProcessEnv = process.env
 ): AgentRuntimeConfig {
   const enabled = env.AGENT_ENABLED === 'true'
-  const hasApiKey = typeof env.AGENT_API_KEY === 'string' && env.AGENT_API_KEY.trim().length > 0
+  const hasApiKey =
+    typeof env.AGENT_API_KEY === 'string' && env.AGENT_API_KEY.trim().length > 0
   const timeoutMs = parseTimeout(env.AGENT_TIMEOUT_MS)
 
   return {
@@ -28,8 +29,7 @@ export function loadAgentRuntimeConfig(
     hasApiKey,
     ...(enabled && !hasApiKey
       ? {
-          disabledReason:
-            'AGENT_API_KEY is required when AGENT_ENABLED=true',
+          disabledReason: 'AGENT_API_KEY is required when AGENT_ENABLED=true',
         }
       : {}),
   }

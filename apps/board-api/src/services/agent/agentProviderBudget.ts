@@ -16,12 +16,12 @@ export function estimateTokensByChars(text: string): number {
 export function buildSuggestionBudgetInput(
   contextMarkdown: string,
   skillSnapshots: AgentSkillSnapshot[],
-  instruction?: string,
+  instruction?: string
 ): SuggestionBudgetInput {
   const contextCharCount = contextMarkdown.length
   const skillCharCount = skillSnapshots.reduce(
     (sum, skill) => sum + skill.markdown.length,
-    0,
+    0
   )
   const instructionCharCount = instruction?.length ?? 0
   const totalInputChars =
@@ -38,17 +38,17 @@ export function buildSuggestionBudgetInput(
 
 export function checkSuggestionBudget(
   input: SuggestionBudgetInput,
-  config: AgentProviderRuntimeConfig,
+  config: AgentProviderRuntimeConfig
 ): void {
   if (input.totalInputChars > config.maxInputChars) {
     throw new AgentProviderBudgetExceededError(
-      `Agent suggestion input exceeds maxInputChars: totalInputChars=${input.totalInputChars}, maxInputChars=${config.maxInputChars}.`,
+      `Agent suggestion input exceeds maxInputChars: totalInputChars=${input.totalInputChars}, maxInputChars=${config.maxInputChars}.`
     )
   }
 
   if (input.estimatedInputTokens > config.maxEstimatedInputTokens) {
     throw new AgentProviderBudgetExceededError(
-      `Agent suggestion input exceeds maxEstimatedInputTokens: estimatedInputTokens=${input.estimatedInputTokens}, maxEstimatedInputTokens=${config.maxEstimatedInputTokens}.`,
+      `Agent suggestion input exceeds maxEstimatedInputTokens: estimatedInputTokens=${input.estimatedInputTokens}, maxEstimatedInputTokens=${config.maxEstimatedInputTokens}.`
     )
   }
 }

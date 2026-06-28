@@ -9,10 +9,7 @@ import type {
 } from '@labour-board/shared'
 import { useTranslation } from 'react-i18next'
 import { RecordCard } from './RecordCard'
-import {
-  getStatusColumns,
-  groupRecordsByStatus,
-} from '../utils/boardView'
+import { getStatusColumns, groupRecordsByStatus } from '../utils/boardView'
 import {
   getUncategorizedColumnLabel,
   resolveVisibleColumnIds,
@@ -38,7 +35,7 @@ interface BoardViewProps {
   visibleColumnIds?: string[] | null
   onMoveStatus?: (
     record: RecordResponse<RecordItem<RecordBody>>,
-    targetStatusTag: Tag,
+    targetStatusTag: Tag
   ) => void
   onToastHint?: (msg: string | null) => void
 }
@@ -58,7 +55,10 @@ export function BoardView({
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
   const hiddenNoticeKeyRef = useRef<string | null>(null)
-  const tagLabel = useCallback((tag: string) => formatTagLabel(tag, lang), [lang])
+  const tagLabel = useCallback(
+    (tag: string) => formatTagLabel(tag, lang),
+    [lang]
+  )
   const uncategorizedLabel = getUncategorizedColumnLabel(lang)
   const columns = useMemo(() => {
     const statusColumns = getStatusColumns(config, records, tagLabel, {
@@ -67,7 +67,7 @@ export function BoardView({
     const groupedColumns = groupRecordsByStatus(records, statusColumns)
     const selectedIds = resolveVisibleColumnIds(
       groupedColumns.map((column) => column.id),
-      visibleColumnIds,
+      visibleColumnIds
     )
     const visible = new Set(selectedIds)
     return groupedColumns.filter((column) => visible.has(column.id))
@@ -82,13 +82,13 @@ export function BoardView({
     () =>
       summarizeHiddenColumns(
         allColumns,
-        columns.map((column) => column.id),
+        columns.map((column) => column.id)
       ),
-    [allColumns, columns],
+    [allColumns, columns]
   )
   const moveStatusOptions: MoveStatusOption[] = useMemo(
     () => getMoveStatusOptions(allColumns),
-    [allColumns],
+    [allColumns]
   )
   const hiddenNoticeKey = visibleColumnIds?.join('|') ?? 'default'
 
@@ -99,16 +99,20 @@ export function BoardView({
 
     const parts: string[] = []
     if (hiddenSummary.hiddenRecordCount > 0) {
-      parts.push(t('board.hiddenColumnsNotice', {
-        count: hiddenSummary.hiddenColumnCount,
-        columns: hiddenSummary.hiddenColumnCount,
-        records: hiddenSummary.hiddenRecordCount,
-      }))
+      parts.push(
+        t('board.hiddenColumnsNotice', {
+          count: hiddenSummary.hiddenColumnCount,
+          columns: hiddenSummary.hiddenColumnCount,
+          records: hiddenSummary.hiddenRecordCount,
+        })
+      )
     }
     if (hiddenSummary.hiddenUncategorizedRecordCount > 0) {
-      parts.push(t('board.hiddenUncategorizedNotice', {
-        count: hiddenSummary.hiddenUncategorizedRecordCount,
-      }))
+      parts.push(
+        t('board.hiddenUncategorizedNotice', {
+          count: hiddenSummary.hiddenUncategorizedRecordCount,
+        })
+      )
     }
     if (parts.length > 0) {
       toastInfo(parts.join(' '), BOARD_HIDDEN_COLUMNS_TOAST_ID)

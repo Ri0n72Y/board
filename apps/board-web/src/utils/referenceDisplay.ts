@@ -12,14 +12,14 @@ export type ReferenceDisplayItem = {
 
 export function formatReferenceLabel(
   value: string,
-  options: readonly RecordReferenceOption[],
+  options: readonly RecordReferenceOption[]
 ): string {
   return formatReferenceItem(value, options).label
 }
 
 export function formatReferenceItem(
   value: string,
-  options: readonly RecordReferenceOption[],
+  options: readonly RecordReferenceOption[]
 ): ReferenceDisplayItem {
   const trimmed = value.trim()
   const option = options.find((candidate) => candidate.value === trimmed)
@@ -41,7 +41,7 @@ export function formatReferenceItem(
 
 export function formatReferenceList(
   values: readonly string[] | undefined,
-  options: readonly RecordReferenceOption[],
+  options: readonly RecordReferenceOption[]
 ): ReferenceDisplayItem[] {
   return (values ?? [])
     .map((value) => value.trim())
@@ -52,7 +52,7 @@ export function formatReferenceList(
 export function summarizeReferenceList(
   values: readonly string[] | undefined,
   options: readonly RecordReferenceOption[],
-  maxVisible: number,
+  maxVisible: number
 ): {
   visible: ReferenceDisplayItem[]
   hiddenCount: number

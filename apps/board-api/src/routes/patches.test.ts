@@ -69,7 +69,11 @@ describe('createPatchesRoute', () => {
     const { id } = await createCard(app)
 
     const { patchId } = await createPatchViaRecords(app, id, null, 0, {
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
       description: 'Find me',
     })
 
@@ -118,7 +122,11 @@ describe('createPatchesRoute', () => {
     const { id } = await createCard(app)
 
     const { patchId: firstId } = await createPatchViaRecords(app, id, null, 0, {
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
     })
     await createPatchViaRecords(app, id, firstId, 1, {
       body: { description: 'Second' },
@@ -169,7 +177,14 @@ describe('createPatchesRoute', () => {
 
     const response = await app.request('/api/v0/patches', {
       method: 'POST',
-      body: JSON.stringify({ targetId: 'record-1', tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
+      body: JSON.stringify({
+        targetId: 'record-1',
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
+      }),
       headers: { 'content-type': 'application/json' },
     })
 
@@ -184,7 +199,11 @@ describe('createPatchesRoute', () => {
     const { id } = await createCard(app)
 
     await createPatchViaRecords(app, id, null, 0, {
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
     })
 
     // GET /api/v0/records/:id returns the record, not the patch
@@ -208,7 +227,11 @@ describe('createPatchesRoute', () => {
       body: JSON.stringify({
         parentId: null,
         currentVersion: 0,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
       }),
       headers: {
         'content-type': 'application/json',
@@ -231,7 +254,11 @@ describe('createPatchesRoute', () => {
       body: JSON.stringify({
         parentId: null,
         currentVersion: 0,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
       }),
       headers: {
         'content-type': 'application/json',
@@ -253,7 +280,11 @@ describe('createPatchesRoute', () => {
       body: JSON.stringify({
         parentId: null,
         currentVersion: 0,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
       }),
       headers: {
         'content-type': 'application/json',

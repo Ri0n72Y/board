@@ -54,7 +54,9 @@ describe('GET /api/v0/board/current/export', () => {
     const { app, repo } = createAppWithSeededBoard()
     await seedBoard(repo)
 
-    const response = await app.request('/api/v0/board/current/export?level=summary')
+    const response = await app.request(
+      '/api/v0/board/current/export?level=summary'
+    )
     const payload = await response.json()
 
     expect(response.status).toBe(200)
@@ -186,7 +188,9 @@ describe('GET /api/v0/board/current/export', () => {
     })
     expect(byRelationTargetText.meta.recordCount).toBe(2)
     expect(byRelationTargetText.content).toContain('#### CARD-1 - Match Source')
-    expect(byRelationTargetText.content).toContain('#### CARD-2 - Outside Target')
+    expect(byRelationTargetText.content).toContain(
+      '#### CARD-2 - Outside Target'
+    )
   })
 
   it('routes current-board export includeArchived through unified filters', async () => {
@@ -222,7 +226,9 @@ describe('GET /api/v0/board/current/export', () => {
     const excludedPayload = await excluded.json()
     expect(excluded.status).toBe(200)
     expect(excludedPayload.data.meta.recordCount).toBe(0)
-    expect(excludedPayload.data.content).not.toContain('#### CARD-2 - Archived Title')
+    expect(excludedPayload.data.content).not.toContain(
+      '#### CARD-2 - Archived Title'
+    )
 
     const included = await app.request(
       '/api/v0/board/current/export?level=filtered&q=Archived%20Title&includeArchived=true'
@@ -230,7 +236,9 @@ describe('GET /api/v0/board/current/export', () => {
     const includedPayload = await included.json()
     expect(included.status).toBe(200)
     expect(includedPayload.data.meta.recordCount).toBe(1)
-    expect(includedPayload.data.content).toContain('#### CARD-2 - Archived Title')
+    expect(includedPayload.data.content).toContain(
+      '#### CARD-2 - Archived Title'
+    )
   })
 
   it('exports related records and meta level', async () => {
@@ -264,14 +272,20 @@ describe('GET /api/v0/board/current/export', () => {
     const source = await repo.findByPid('CARD-5')
     const target = await repo.findByPid('CARD-4')
 
-    const full = await app.request('/api/v0/board/current/export?profile=agent-full')
+    const full = await app.request(
+      '/api/v0/board/current/export?profile=agent-full'
+    )
     const fullPayload = await full.json()
     expect(full.status).toBe(200)
     expect(fullPayload.data.filename).toMatch(/current-board-agent-full-.*\.md/)
-    expect(fullPayload.data.content).toContain('# LabourBoard Agent Context Pack')
+    expect(fullPayload.data.content).toContain(
+      '# LabourBoard Agent Context Pack'
+    )
     expect(fullPayload.data.content).toContain('## Context Metadata')
     expect(fullPayload.data.content).toContain('## Agent Reading Instructions')
-    expect(fullPayload.data.content).toContain('This file is not execution authorization')
+    expect(fullPayload.data.content).toContain(
+      'This file is not execution authorization'
+    )
     expect(fullPayload.data.content).toContain('## Board Summary')
     expect(fullPayload.data.content).toContain('## Records By Status')
     expect(fullPayload.data.content).toContain('asset:deck-system')
@@ -293,7 +307,9 @@ describe('GET /api/v0/board/current/export', () => {
     const cardPayload = await card.json()
     expect(card.status).toBe(200)
     expect(cardPayload.data.meta.profile).toBe('agent-card')
-    expect(cardPayload.data.content).toContain(`- Center Record ID: ${source?.id}`)
+    expect(cardPayload.data.content).toContain(
+      `- Center Record ID: ${source?.id}`
+    )
     expect(cardPayload.data.content).toContain('CARD-5')
     expect(cardPayload.data.content).toContain(source?.id)
     expect(cardPayload.data.content).not.toContain('#### CARD-4')
@@ -319,7 +335,9 @@ describe('GET /api/v0/board/current/export', () => {
     expect(sprintPayload.data.content).toContain('## Sprint Export: sprint:1')
     expect(sprintPayload.data.meta.recordCount).toBe(9)
 
-    const human = await app.request('/api/v0/board/current/export?profile=human-summary')
+    const human = await app.request(
+      '/api/v0/board/current/export?profile=human-summary'
+    )
     const humanPayload = await human.json()
     expect(human.status).toBe(200)
     expect(humanPayload.data.content).toContain('- Profile: human-summary')
@@ -329,13 +347,19 @@ describe('GET /api/v0/board/current/export', () => {
   it('returns 400 for invalid export combinations', async () => {
     const { app } = createAppWithSeededBoard()
 
-    const missingCard = await app.request('/api/v0/board/current/export?level=card')
+    const missingCard = await app.request(
+      '/api/v0/board/current/export?level=card'
+    )
     expect(missingCard.status).toBe(400)
 
-    const missingSprint = await app.request('/api/v0/board/current/export?level=sprint')
+    const missingSprint = await app.request(
+      '/api/v0/board/current/export?level=sprint'
+    )
     expect(missingSprint.status).toBe(400)
 
-    const invalidLevel = await app.request('/api/v0/board/current/export?level=bad')
+    const invalidLevel = await app.request(
+      '/api/v0/board/current/export?level=bad'
+    )
     expect(invalidLevel.status).toBe(400)
 
     const invalidProfile = await app.request(
@@ -473,7 +497,9 @@ describe('GET /api/v0/board/current/export', () => {
     expect(exported.content).toContain('- ASSET-1 - Battle Scene')
     expect(exported.content).toContain('raw id: asset-record-1')
     expect(exported.content).toContain('unknown-...567890')
-    expect(exported.content).toContain('raw id: unknown-asset-reference-1234567890')
+    expect(exported.content).toContain(
+      'raw id: unknown-asset-reference-1234567890'
+    )
     expect(exported.content).toContain('Depends on ASSET-1 - Battle Scene')
     expect(exported.content).toContain('constraint: dependsOn')
     expect(exported.content).toContain('target id: asset-record-1')
@@ -498,7 +524,9 @@ describe('GET /api/v0/board/current/export', () => {
       includeRelations: false,
     })
     expect(withoutRelations.content).not.toContain('- relations:')
-    expect(withoutRelations.content).not.toContain('## Relations / Requirement Graph')
+    expect(withoutRelations.content).not.toContain(
+      '## Relations / Requirement Graph'
+    )
   })
 
   it('resolves card export references from records outside the selected card', () => {

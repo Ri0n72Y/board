@@ -128,7 +128,7 @@ export function summarizePatch(
     const rawValue = patch.assignee ?? null
     const displayValue = formatAssignee
       ? formatAssignee(rawValue)
-      : rawValue ?? copy.unassigned
+      : (rawValue ?? copy.unassigned)
     lines.push({
       label: copy.assignee,
       value: displayValue,
@@ -155,8 +155,8 @@ export function summarizePatch(
     const relationSummary = patch.relations
       .map((relation) =>
         formatRelationLine(relation, targetOptions, (key, options) =>
-          relationLabelFromKey(key, options?.defaultValue, copy),
-        ),
+          relationLabelFromKey(key, options?.defaultValue, copy)
+        )
       )
       .join(relationListDelimiter(language))
     lines.push({
@@ -175,7 +175,7 @@ export function formatRelationConstraint(
   translate: (key: string, fallback: string) => string
 ): string {
   return formatSharedRelationConstraint(constraint, (key, options) =>
-    translate(key, options?.defaultValue ?? constraint),
+    translate(key, options?.defaultValue ?? constraint)
   )
 }
 
@@ -183,7 +183,10 @@ export function formatRelationTarget(
   target: string,
   references: Record<string, HistoryReference> | undefined
 ): string {
-  return formatSharedRelationTarget(target, relationTargetOptionsFromReferences(references))
+  return formatSharedRelationTarget(
+    target,
+    relationTargetOptionsFromReferences(references)
+  )
 }
 
 export function shortRecordId(id: string): string {
@@ -201,7 +204,10 @@ export function formatRelations(
   const relationTranslate: RelationTranslator = (key, options) =>
     translate(key, options?.defaultValue ?? key)
   return (relations ?? []).map((relation) => {
-    const constraint = formatSharedRelationConstraint(relation.constraint, relationTranslate)
+    const constraint = formatSharedRelationConstraint(
+      relation.constraint,
+      relationTranslate
+    )
     const target = formatSharedRelationTarget(relation.target, targetOptions)
     const description = relation.description?.trim()
     return description
@@ -213,7 +219,7 @@ export function formatRelations(
 export function formatAssets(
   assets: readonly string[] | undefined,
   assetOptions: readonly RecordReferenceOption[],
-  language: string | undefined,
+  language: string | undefined
 ): string {
   return formatReferenceList(assets, assetOptions)
     .map((item) => item.label)
@@ -224,7 +230,9 @@ export function debugInitiallyOpen(): false {
   return false
 }
 
-export function titleFromBody(body: RecordBody | undefined): string | undefined {
+export function titleFromBody(
+  body: RecordBody | undefined
+): string | undefined {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return undefined
   const value = (body as Record<string, unknown>).title
   return typeof value === 'string' && value.trim() ? value : undefined
@@ -269,7 +277,7 @@ function relationListDelimiter(language: string | undefined): string {
 function relationLabelFromKey(
   key: string,
   fallback: string | undefined,
-  copy: HistorySummaryCopy,
+  copy: HistorySummaryCopy
 ): string {
   const relationPrefix = 'relations.constraint.'
   const historyPrefix = 'history.relation.'

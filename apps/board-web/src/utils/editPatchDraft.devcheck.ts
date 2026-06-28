@@ -33,7 +33,11 @@ const baseForm: EditPatchFormState = {
   relations: [{ constraint: 'blocks', target: 'record-2' }],
 }
 
-assertBodyPatch('title only', { ...baseForm, title: 'New title' }, { title: 'New title' })
+assertBodyPatch(
+  'title only',
+  { ...baseForm, title: 'New title' },
+  { title: 'New title' }
+)
 assertBodyPatch(
   'description only',
   { ...baseForm, summary: 'New description' },
@@ -54,8 +58,14 @@ assert(!unchanged.ok, 'unchanged form should not produce a patch')
 
 const sameAssets = buildPatchDraft({ ...baseForm, title: 'New title' }, current)
 assert(sameAssets.ok, 'title patch should be valid')
-assert(!('assets' in sameAssets.patch), 'unchanged assets must not be submitted')
-assert(!('relations' in sameAssets.patch), 'unchanged relations must not be submitted')
+assert(
+  !('assets' in sameAssets.patch),
+  'unchanged assets must not be submitted'
+)
+assert(
+  !('relations' in sameAssets.patch),
+  'unchanged relations must not be submitted'
+)
 
 assert(
   !hasEditHeadChanged(
@@ -82,13 +92,15 @@ assert(
 function assertBodyPatch(
   name: string,
   form: EditPatchFormState,
-  expected: NonNullable<ReturnType<typeof buildPatchDraft> extends infer R
-    ? R extends { ok: true; patch: infer P }
-      ? P extends { body?: infer B }
-        ? B
+  expected: NonNullable<
+    ReturnType<typeof buildPatchDraft> extends infer R
+      ? R extends { ok: true; patch: infer P }
+        ? P extends { body?: infer B }
+          ? B
+          : never
         : never
       : never
-    : never>
+  >
 ) {
   const result = buildPatchDraft(form, current)
   assert(result.ok, `${name} should be valid`)
@@ -98,7 +110,10 @@ function assertBodyPatch(
 function assertJsonEqual(actual: unknown, expected: unknown, label: string) {
   const actualJson = JSON.stringify(actual)
   const expectedJson = JSON.stringify(expected)
-  assert(actualJson === expectedJson, `${label}: expected ${expectedJson}, got ${actualJson}`)
+  assert(
+    actualJson === expectedJson,
+    `${label}: expected ${expectedJson}, got ${actualJson}`
+  )
 }
 
 function assert(condition: unknown, message: string): asserts condition {

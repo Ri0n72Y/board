@@ -39,7 +39,11 @@ describe('recordPatchRoute', () => {
       body: JSON.stringify({
         parentId: null,
         currentVersion: 0,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
         body: { description: 'Patched via new route' },
         description: 'Route-level patch',
       }),
@@ -52,7 +56,11 @@ describe('recordPatchRoute', () => {
     expect(payload.data.patch.body).toMatchObject({
       targetId: recordId,
       parentId: null,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
       description: 'Route-level patch',
     })
     expect(payload.data.patch.body).not.toHaveProperty('currentVersion')
@@ -72,7 +80,11 @@ describe('recordPatchRoute', () => {
         body: JSON.stringify({
           parentId: null,
           currentVersion: 0,
-          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+          tagChanges: {
+            change: [
+              { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+            ],
+          },
         }),
         headers: { 'content-type': 'application/json' },
       }
@@ -105,7 +117,11 @@ describe('recordPatchRoute', () => {
         targetId: recordId,
         parentId: null,
         currentVersion: 0,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -119,22 +135,52 @@ describe('recordPatchRoute', () => {
   it.each([
     {
       name: 'parentId is missing',
-      body: { currentVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } },
+      body: {
+        currentVersion: 0,
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
+      },
       message: 'parentId is required',
     },
     {
       name: 'currentVersion is missing',
-      body: { parentId: null, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } },
+      body: {
+        parentId: null,
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
+      },
       message: 'currentVersion is required',
     },
     {
       name: 'parentId has wrong type',
-      body: { parentId: 1, currentVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } },
+      body: {
+        parentId: 1,
+        currentVersion: 0,
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
+      },
       message: 'parentId must be a string or null',
     },
     {
       name: 'currentVersion has wrong type',
-      body: { parentId: null, currentVersion: '0', tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } },
+      body: {
+        parentId: null,
+        currentVersion: '0',
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
+      },
       message: 'currentVersion must be a number',
     },
   ])('POST /:id/patches returns 400 when $name', async ({ body, message }) => {
@@ -190,7 +236,9 @@ describe('recordPatchRoute', () => {
     expect(response.status).toBe(400)
     expect(payload.ok).toBe(false)
     expect(payload.error.code).toBe('INVALID_PATCH')
-    expect(payload.error.message).toContain('Patch must contain at least one change')
+    expect(payload.error.message).toContain(
+      'Patch must contain at least one change'
+    )
   })
 
   it('POST /:id/patches returns 400 for body: null', async () => {
@@ -288,7 +336,9 @@ describe('recordPatchRoute', () => {
     expect(response.status).toBe(400)
     expect(payload.ok).toBe(false)
     expect(payload.error.code).toBe('INVALID_PATCH')
-    expect(payload.error.message).toBe('Unsupported relation constraint: invalidRelation')
+    expect(payload.error.message).toBe(
+      'Unsupported relation constraint: invalidRelation'
+    )
   })
 
   it('POST /:id/patches returns 400 when patching an archived record', async () => {
@@ -306,18 +356,23 @@ describe('recordPatchRoute', () => {
     const createPayload = await createResponse.json()
     const recordId = createPayload.data.body.id as string
 
-    const archiveHeadResponse = await app.request(`/api/v0/records/${recordId}/head`)
+    const archiveHeadResponse = await app.request(
+      `/api/v0/records/${recordId}/head`
+    )
     const archiveHeadPayload = await archiveHeadResponse.json()
-    const archiveResponse = await app.request(`/api/v0/records/${recordId}/patches`, {
-      method: 'POST',
-      body: JSON.stringify({
-        parentId: archiveHeadPayload.data.lastPatchId,
-        currentVersion: archiveHeadPayload.data.currentVersion,
-        tagChanges: { add: ['status:archived'] },
-        description: 'Archive record',
-      }),
-      headers: { 'content-type': 'application/json' },
-    })
+    const archiveResponse = await app.request(
+      `/api/v0/records/${recordId}/patches`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          parentId: archiveHeadPayload.data.lastPatchId,
+          currentVersion: archiveHeadPayload.data.currentVersion,
+          tagChanges: { add: ['status:archived'] },
+          description: 'Archive record',
+        }),
+        headers: { 'content-type': 'application/json' },
+      }
+    )
     expect(archiveResponse.status).toBe(201)
     const headResponse = await app.request(`/api/v0/records/${recordId}/head`)
     const headPayload = await headResponse.json()
@@ -327,7 +382,11 @@ describe('recordPatchRoute', () => {
       body: JSON.stringify({
         parentId: headPayload.data.lastPatchId,
         currentVersion: headPayload.data.currentVersion,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -336,7 +395,9 @@ describe('recordPatchRoute', () => {
     expect(response.status).toBe(400)
     expect(payload.ok).toBe(false)
     expect(payload.error.code).toBe('INVALID_PATCH')
-    expect(payload.error.message).toBe(`Cannot patch archived record ${recordId}`)
+    expect(payload.error.message).toBe(
+      `Cannot patch archived record ${recordId}`
+    )
   })
 
   it('POST /:id/patches returns 409 when currentVersion mismatches', async () => {
@@ -359,7 +420,11 @@ describe('recordPatchRoute', () => {
       body: JSON.stringify({
         parentId: null,
         currentVersion: 5,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -388,13 +453,29 @@ describe('recordPatchRoute', () => {
 
     await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, currentVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
+      body: JSON.stringify({
+        parentId: null,
+        currentVersion: 0,
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
+      }),
       headers: { 'content-type': 'application/json' },
     })
 
     const response = await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, currentVersion: 1, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] } }),
+      body: JSON.stringify({
+        parentId: null,
+        currentVersion: 1,
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
+      }),
       headers: { 'content-type': 'application/json' },
     })
     const payload = await response.json()
@@ -420,27 +501,43 @@ describe('recordPatchRoute', () => {
     const createPayload = await createResponse.json()
     const recordId = createPayload.data.body.id as string
 
-    const firstResponse = await app.request(`/api/v0/records/${recordId}/patches`, {
-      method: 'POST',
-      body: JSON.stringify({ parentId: null, currentVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
-      headers: { 'content-type': 'application/json' },
-    })
+    const firstResponse = await app.request(
+      `/api/v0/records/${recordId}/patches`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          parentId: null,
+          currentVersion: 0,
+          tagChanges: {
+            change: [
+              { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+            ],
+          },
+        }),
+        headers: { 'content-type': 'application/json' },
+      }
+    )
     const firstPayload = await firstResponse.json()
     expect(firstResponse.status).toBe(201)
 
-    const secondResponse = await app.request(`/api/v0/records/${recordId}/patches`, {
-      method: 'POST',
-      body: JSON.stringify({
-        parentId: firstPayload.data.patch.body.id,
-        currentVersion: 1,
-        body: { description: 'Second change' },
-      }),
-      headers: { 'content-type': 'application/json' },
-    })
+    const secondResponse = await app.request(
+      `/api/v0/records/${recordId}/patches`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          parentId: firstPayload.data.patch.body.id,
+          currentVersion: 1,
+          body: { description: 'Second change' },
+        }),
+        headers: { 'content-type': 'application/json' },
+      }
+    )
     const secondPayload = await secondResponse.json()
 
     expect(secondResponse.status).toBe(201)
-    expect(secondPayload.data.patch.body.parentId).toBe(firstPayload.data.patch.body.id)
+    expect(secondPayload.data.patch.body.parentId).toBe(
+      firstPayload.data.patch.body.id
+    )
     expect(secondPayload.data).toHaveProperty('newCurrentVersion')
     expect(secondPayload.data.newCurrentVersion).toBe(2)
     expect(secondPayload.data).not.toHaveProperty('current')
@@ -463,8 +560,19 @@ describe('recordPatchRoute', () => {
 
     const response = await app.request(`/api/v0/records/${recordId}/patches`, {
       method: 'POST',
-      body: JSON.stringify({ parentId: null, currentVersion: 0, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } }),
-      headers: { 'content-type': 'application/json', 'x-actor-id': 'patcher-42' },
+      body: JSON.stringify({
+        parentId: null,
+        currentVersion: 0,
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
+      }),
+      headers: {
+        'content-type': 'application/json',
+        'x-actor-id': 'patcher-42',
+      },
     })
     const payload = await response.json()
 

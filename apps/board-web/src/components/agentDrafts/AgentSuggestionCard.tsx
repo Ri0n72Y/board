@@ -23,14 +23,14 @@ export function AgentSuggestionCard({
   const { t } = useTranslation()
   const visibleHighlights = keyStableTextItems(
     suggestion.highlights.slice(0, 3),
-    `suggestion:${suggestion.id}:highlight`,
+    `suggestion:${suggestion.id}:highlight`
   )
 
   const statusClass =
     STATUS_CLASSES[suggestion.status] ?? STATUS_CLASSES.generated
   const statusLabel = t(
     `agent.suggestions.status.${suggestion.status}`,
-    suggestion.status,
+    suggestion.status
   )
 
   return (
@@ -40,7 +40,7 @@ export function AgentSuggestionCard({
         'w-full rounded-lg border p-3 text-left transition-colors',
         isSelected
           ? 'border-indigo-300 bg-indigo-50'
-          : 'border-slate-200 bg-white hover:border-slate-300',
+          : 'border-slate-200 bg-white hover:border-slate-300'
       )}
       onClick={() => onSelect(suggestion.id)}
     >
@@ -51,7 +51,7 @@ export function AgentSuggestionCard({
         <span
           className={cn(
             'inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase leading-tight',
-            statusClass,
+            statusClass
           )}
         >
           {statusLabel}

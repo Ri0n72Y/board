@@ -1,8 +1,5 @@
 import { Hono } from 'hono'
-import type {
-  ApiResponse,
-  RecordHistoryResponse,
-} from '@labour-board/shared'
+import type { ApiResponse, RecordHistoryResponse } from '@labour-board/shared'
 import { error, ok } from '../../http/responses.js'
 import type { RecordService } from '../../services/recordService.js'
 

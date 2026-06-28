@@ -177,7 +177,8 @@ check('toSuggestionCardViewModel has no skill markdown', () => {
   const vm = toSuggestionCardViewModel(summary)
   // Verify all keys are present except markdown/skillSnapshots
   const keys = Object.keys(vm)
-  if (keys.includes('markdown')) throw new Error('card vm must not have markdown')
+  if (keys.includes('markdown'))
+    throw new Error('card vm must not have markdown')
   if (keys.includes('skillSnapshots'))
     throw new Error('card vm must not have skillSnapshots')
 })

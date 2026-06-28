@@ -25,32 +25,38 @@ function assert(condition: boolean, label: string) {
 }
 
 function assertEq<T>(actual: T, expected: T, label: string) {
-  assert(JSON.stringify(actual) === JSON.stringify(expected), `${label} → ${JSON.stringify(actual)}`)
+  assert(
+    JSON.stringify(actual) === JSON.stringify(expected),
+    `${label} → ${JSON.stringify(actual)}`
+  )
 }
 
 // ─── buildPatchDraftDescription ───
 console.log('\nbuildPatchDraftDescription')
 assert(
-  buildPatchDraftDescription('8f045dd0-something', 'DeepSeek test suggestion').startsWith(
-    'Human patch drafted from AI suggestion 8f045dd0',
-  ),
-  'starts with correct prefix',
+  buildPatchDraftDescription(
+    '8f045dd0-something',
+    'DeepSeek test suggestion'
+  ).startsWith('Human patch drafted from AI suggestion 8f045dd0'),
+  'starts with correct prefix'
 )
 assert(
-  buildPatchDraftDescription('8f045dd0-something', 'DeepSeek test suggestion').includes(
-    'DeepSeek test suggestion',
-  ),
-  'includes suggestion title',
+  buildPatchDraftDescription(
+    '8f045dd0-something',
+    'DeepSeek test suggestion'
+  ).includes('DeepSeek test suggestion'),
+  'includes suggestion title'
 )
 assert(
-  buildPatchDraftDescription('8f045dd0-something', 'DeepSeek test suggestion').includes(
-    'Reviewed and submitted manually',
-  ),
-  'includes manual submission marker',
+  buildPatchDraftDescription(
+    '8f045dd0-something',
+    'DeepSeek test suggestion'
+  ).includes('Reviewed and submitted manually'),
+  'includes manual submission marker'
 )
 assert(
   buildPatchDraftDescription('abc', '  ').includes('Untitled AI suggestion'),
-  'falls back to untitled for whitespace title',
+  'falls back to untitled for whitespace title'
 )
 // Must NOT contain full markdown, prompt, raw response
 const desc = buildPatchDraftDescription('test-id', 'Test')
@@ -59,31 +65,31 @@ assert(!desc.includes('```json'), 'does not contain markdown fence')
 // ─── extractPidCandidates ───
 console.log('\nextractPidCandidates')
 assertEq(extractPidCandidates(''), [], 'empty string → empty')
-assertEq(extractPidCandidates('CARD-5 needs work'), ['CARD-5'], 'extracts CARD-5')
+assertEq(
+  extractPidCandidates('CARD-5 needs work'),
+  ['CARD-5'],
+  'extracts CARD-5'
+)
 assertEq(
   extractPidCandidates('See TASK/42 and TASK/43'),
   ['TASK/42', 'TASK/43'],
-  'extracts multiple TASK/ pids',
+  'extracts multiple TASK/ pids'
 )
 assertEq(
   extractPidCandidates('SYS/001 is the system record, CARD-5 is the card'),
   ['SYS/001', 'CARD-5'],
-  'extracts mixed pid formats',
+  'extracts mixed pid formats'
 )
 assertEq(
   extractPidCandidates('CARD-5 CARD-5 again'),
   ['CARD-5'],
-  'deduplicates repeated pids',
+  'deduplicates repeated pids'
 )
-assertEq(
-  extractPidCandidates('no pids here just text'),
-  [],
-  'no pids → empty',
-)
+assertEq(extractPidCandidates('no pids here just text'), [], 'no pids → empty')
 assertEq(
   extractPidCandidates('ASSET-abc-def and ASSET/xyz'),
   ['ASSET-abc-def', 'ASSET/xyz'],
-  'extracts ASSET- and ASSET/ patterns',
+  'extracts ASSET- and ASSET/ patterns'
 )
 
 // ─── canCreatePatchDraft ───
@@ -96,7 +102,7 @@ assert(
     title: 'Test',
     markdown: 'some markdown',
   } as unknown as AgentSuggestionDetail),
-  'with title+markdown → true',
+  'with title+markdown → true'
 )
 assert(
   canCreatePatchDraft({
@@ -105,7 +111,7 @@ assert(
     title: '',
     markdown: 'some markdown',
   } as unknown as AgentSuggestionDetail),
-  'no title but has markdown → true',
+  'no title but has markdown → true'
 )
 assert(
   !canCreatePatchDraft({
@@ -114,7 +120,7 @@ assert(
     title: '',
     markdown: '',
   } as unknown as AgentSuggestionDetail),
-  'empty title and markdown → false',
+  'empty title and markdown → false'
 )
 
 // ─── Summary ───

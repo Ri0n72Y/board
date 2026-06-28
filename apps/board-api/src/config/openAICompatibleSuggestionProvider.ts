@@ -13,9 +13,7 @@ import { AgentProviderOutputValidationError } from '../services/agent/agentSugge
 import type { InternalAgentProviderRuntimeConfig } from './agentProviderConfig.js'
 import { buildSuggestionPrompt } from '../services/agent/agentSuggestionPrompt.js'
 
-export class OpenAICompatibleSuggestionProvider
-  implements AgentSuggestionProvider
-{
+export class OpenAICompatibleSuggestionProvider implements AgentSuggestionProvider {
   readonly kind = 'openai-compatible'
   readonly model: string
   readonly realProvider = true
@@ -31,21 +29,21 @@ export class OpenAICompatibleSuggestionProvider
   constructor(
     config: InternalAgentProviderRuntimeConfig,
     fetchFn?: typeof fetch,
-    delayFn?: (ms: number) => Promise<void>,
+    delayFn?: (ms: number) => Promise<void>
   ) {
     if (!config.baseUrl || config.baseUrl.trim() === '') {
       throw new AgentProviderUnavailableError(
-        'openai-compatible provider requires AGENT_SUGGESTION_BASE_URL to be set.',
+        'openai-compatible provider requires AGENT_SUGGESTION_BASE_URL to be set.'
       )
     }
     if (!config.apiKey || config.apiKey.trim() === '') {
       throw new AgentProviderUnavailableError(
-        'openai-compatible provider requires AGENT_SUGGESTION_API_KEY to be set.',
+        'openai-compatible provider requires AGENT_SUGGESTION_API_KEY to be set.'
       )
     }
     if (!config.model || config.model.trim() === '') {
       throw new AgentProviderUnavailableError(
-        'openai-compatible provider requires AGENT_SUGGESTION_MODEL to be set.',
+        'openai-compatible provider requires AGENT_SUGGESTION_MODEL to be set.'
       )
     }
 
@@ -61,7 +59,7 @@ export class OpenAICompatibleSuggestionProvider
   }
 
   async generate(
-    input: AgentSuggestionProviderInput,
+    input: AgentSuggestionProviderInput
   ): Promise<AgentSuggestionProviderOutput> {
     const { systemPrompt, userPrompt } = buildSuggestionPrompt({
       contextMarkdown: input.contextMarkdown,
@@ -102,10 +100,7 @@ export class OpenAICompatibleSuggestionProvider
     }
   }
 
-  private async sendWithRetry(
-    url: string,
-    body: unknown,
-  ): Promise<string> {
+  private async sendWithRetry(url: string, body: unknown): Promise<string> {
     let lastError: Error | undefined
 
     for (let attempt = 0; attempt <= this.retryMaxAttempts; attempt++) {
@@ -148,12 +143,12 @@ export class OpenAICompatibleSuggestionProvider
       clearTimeout(timer)
       if (isAbortError(err)) {
         throw new AgentProviderTimeoutError(
-          `Provider request timed out after ${this.requestTimeoutMs}ms.`,
+          `Provider request timed out after ${this.requestTimeoutMs}ms.`
         )
       }
       throw new AgentProviderHttpError(
         `Provider request failed: ${err instanceof Error ? err.message : String(err)}`,
-        502,
+        502
       )
     } finally {
       clearTimeout(timer)
@@ -164,26 +159,26 @@ export class OpenAICompatibleSuggestionProvider
 
       if (response.status === 429) {
         throw new AgentProviderRateLimitedError(
-          `Provider rate limited (HTTP 429).`,
+          `Provider rate limited (HTTP 429).`
         )
       }
 
       if (response.status === 401 || response.status === 403) {
         throw new AgentProviderUnavailableError(
-          `Provider authentication failed (HTTP ${response.status}). Verify the API key configuration.`,
+          `Provider authentication failed (HTTP ${response.status}). Verify the API key configuration.`
         )
       }
 
       if (response.status >= 500) {
         throw new AgentProviderHttpError(
           `Provider returned HTTP ${response.status}.`,
-          response.status,
+          response.status
         )
       }
 
       throw new AgentProviderHttpError(
         `Provider returned HTTP ${response.status}.`,
-        response.status,
+        response.status
       )
     }
 
@@ -199,7 +194,7 @@ function parseResponseJson(raw: string): unknown {
     return JSON.parse(raw)
   } catch {
     throw new AgentProviderOutputValidationError(
-      'Provider response is not valid JSON.',
+      'Provider response is not valid JSON.'
     )
   }
 }
@@ -207,7 +202,7 @@ function parseResponseJson(raw: string): unknown {
 function extractMessageContent(parsed: unknown): string {
   if (!parsed || typeof parsed !== 'object') {
     throw new AgentProviderOutputValidationError(
-      'Provider response is not a JSON object.',
+      'Provider response is not a JSON object.'
     )
   }
 
@@ -215,21 +210,21 @@ function extractMessageContent(parsed: unknown): string {
 
   if (!Array.isArray(resp.choices) || resp.choices.length === 0) {
     throw new AgentProviderOutputValidationError(
-      'Provider response missing choices array.',
+      'Provider response missing choices array.'
     )
   }
 
   const choice = resp.choices[0] as Record<string, unknown> | undefined
   if (!choice || !choice.message || typeof choice.message !== 'object') {
     throw new AgentProviderOutputValidationError(
-      'Provider response missing message in first choice.',
+      'Provider response missing message in first choice.'
     )
   }
 
   const message = choice.message as Record<string, unknown>
   if (typeof message.content !== 'string') {
     throw new AgentProviderOutputValidationError(
-      'Provider response message content is not a string.',
+      'Provider response message content is not a string.'
     )
   }
 
@@ -257,13 +252,13 @@ function parseOutputJson(content: string): Record<string, unknown> {
       }
     } catch {
       throw new AgentProviderOutputValidationError(
-        'Provider output contains an invalid JSON code block.',
+        'Provider output contains an invalid JSON code block.'
       )
     }
   }
 
   throw new AgentProviderOutputValidationError(
-    'Provider output is not valid JSON and does not contain a JSON code block.',
+    'Provider output is not valid JSON and does not contain a JSON code block.'
   )
 }
 
@@ -275,7 +270,7 @@ function validateAndNormalizeBaseUrl(raw: string): string {
   // Must be http:// or https://
   if (!/^https?:\/\//i.test(trimmed)) {
     throw new AgentProviderUnavailableError(
-      'AGENT_SUGGESTION_BASE_URL must start with http:// or https://.',
+      'AGENT_SUGGESTION_BASE_URL must start with http:// or https://.'
     )
   }
 
@@ -283,7 +278,7 @@ function validateAndNormalizeBaseUrl(raw: string): string {
     new URL(trimmed)
   } catch {
     throw new AgentProviderUnavailableError(
-      'AGENT_SUGGESTION_BASE_URL is not a valid URL.',
+      'AGENT_SUGGESTION_BASE_URL is not a valid URL.'
     )
   }
 

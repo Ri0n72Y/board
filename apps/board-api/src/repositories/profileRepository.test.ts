@@ -30,13 +30,15 @@ describe('MemoryProfileRepository', () => {
       repository.update('member-1', {
         name: 'Ada Lovelace',
         avatarUrl: 'https://example.com/ada.png',
-      }),
+      })
     ).resolves.toMatchObject({
       pk: 'member-1',
       name: 'Ada Lovelace',
       avatarUrl: 'https://example.com/ada.png',
     })
-    await expect(repository.update('missing', { name: 'X' })).resolves.toBeNull()
+    await expect(
+      repository.update('missing', { name: 'X' })
+    ).resolves.toBeNull()
   })
 
   it('list returns sorted by name then pk', async () => {
@@ -123,7 +125,7 @@ describe('MongoProfileRepository', () => {
     }
 
     const repository = new MongoProfileRepository(
-      collectionMethods as unknown as Collection<Profile & Document>,
+      collectionMethods as unknown as Collection<Profile & Document>
     )
 
     await expect(repository.list()).resolves.toEqual([stubProfile])
@@ -135,7 +137,7 @@ describe('MongoProfileRepository', () => {
     await expect(repository.findByPk('member-1')).resolves.toEqual(stubProfile)
 
     await expect(
-      repository.update('member-1', { name: 'Ada Lovelace' }),
+      repository.update('member-1', { name: 'Ada Lovelace' })
     ).resolves.toMatchObject({ name: 'Ada Lovelace' })
     expect(replacements).toHaveLength(1)
   })

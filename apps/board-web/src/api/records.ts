@@ -14,13 +14,13 @@ export type CreatedRecordResponse = RecordResponse<RecordItem<RecordBody>>
 
 export async function createRecord(
   payload: CreateRecordPayload,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<CreatedRecordResponse> {
   try {
     const response = await axios.post<ApiResponse<CreatedRecordResponse>>(
       `${apiBaseUrl}/records`,
       payload,
-      { signal },
+      { signal }
     )
 
     if (!response.data.ok) {

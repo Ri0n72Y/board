@@ -213,13 +213,13 @@ Phase 1 Agent workflow is manual and non-executing:
 
 - `openai-compatible` provider now makes real HTTP calls to the configured base URL.
 - All provider HTTP errors are mapped to distinct status codes visible in the frontend error display:
-
   - `503 PROVIDER_UNAVAILABLE` — config missing or auth failure
   - `504 PROVIDER_TIMEOUT` — request timeout
   - `429 PROVIDER_RATE_LIMITED` — provider rate limiting
   - `502 PROVIDER_HTTP_ERROR` — provider HTTP 5xx or unexpected 4xx
   - `413 PROVIDER_BUDGET_EXCEEDED` — input budget exceeded
   - `502 PROVIDER_OUTPUT_INVALID` — response parse failure or output validation failure
+
 - Board-web displays these errors via the existing `generateError` state and `ErrorBlock` component.
 - Board-web has no changes to provider key handling: no key input, no selector, no toggle, no config UI.
 - Suggestion detail displays `realProvider` (true for openai-compatible, false for mock) in the audit panel.

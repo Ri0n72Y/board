@@ -18,7 +18,9 @@ export function MoveStatusControl({
   onMove,
 }: MoveStatusControlProps) {
   const { t } = useTranslation()
-  const availableOptions = options.filter((option) => option.tag !== currentStatus)
+  const availableOptions = options.filter(
+    (option) => option.tag !== currentStatus
+  )
   const disabled = isMoving || availableOptions.length === 0
 
   return (

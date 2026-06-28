@@ -59,7 +59,7 @@ export function AdvancedFiltersDrawer({
         label: formatTagLabel(tag, lang),
         meta: tag,
       })),
-    [knownTags, lang],
+    [knownTags, lang]
   )
 
   const tagMatchOptions = useMemo(
@@ -67,7 +67,7 @@ export function AdvancedFiltersDrawer({
       { value: 'all' as const, label: t('filters.tagMatchAll') },
       { value: 'any' as const, label: t('filters.tagMatchAny') },
     ],
-    [t],
+    [t]
   )
 
   return (
@@ -115,7 +115,9 @@ export function AdvancedFiltersDrawer({
           <Select
             label={t('filters.tagMatch')}
             value={tagMatch}
-            onChange={(event) => onTagMatchChange(event.target.value as BoardCurrentTagMatch)}
+            onChange={(event) =>
+              onTagMatchChange(event.target.value as BoardCurrentTagMatch)
+            }
             options={tagMatchOptions}
           />
         </section>
@@ -165,8 +167,14 @@ export function AdvancedFiltersDrawer({
                         ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 font-mono text-xs leading-tight text-emerald-800 break-all'
                         : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 font-mono text-xs leading-tight text-slate-700 break-all hover:bg-slate-200'
                     }
-                    onClick={() => (isActive ? onRemoveTag(tag as Tag) : onAddTag(tag))}
-                    title={isActive ? t('filters.removeTagFilter') : t('filters.addTagFilter')}
+                    onClick={() =>
+                      isActive ? onRemoveTag(tag as Tag) : onAddTag(tag)
+                    }
+                    title={
+                      isActive
+                        ? t('filters.removeTagFilter')
+                        : t('filters.addTagFilter')
+                    }
                   >
                     {formatTagLabel(tag, lang)}
                   </button>

@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
-import type { AgentResponseDetail, AgentResponseSummary } from '@labour-board/shared'
+import type {
+  AgentResponseDetail,
+  AgentResponseSummary,
+} from '@labour-board/shared'
 import {
   createAgentResponse,
   fetchAgentResponse,
@@ -9,7 +12,8 @@ import {
 
 export function useAgentResponseController() {
   const [responses, setResponses] = useState<AgentResponseSummary[]>([])
-  const [selectedResponse, setSelectedResponse] = useState<AgentResponseDetail | null>(null)
+  const [selectedResponse, setSelectedResponse] =
+    useState<AgentResponseDetail | null>(null)
   const [isListLoading, setIsListLoading] = useState(false)
   const [isDetailLoading, setIsDetailLoading] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
@@ -61,11 +65,17 @@ export function useAgentResponseController() {
 
     void fetchAgentResponses(draftId, controller.signal)
       .then((data) => {
-        if (listRequestIdRef.current !== requestId || controller.signal.aborted) return
+        if (listRequestIdRef.current !== requestId || controller.signal.aborted)
+          return
         setResponses(data.responses)
       })
       .catch((err: unknown) => {
-        if (listRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) return
+        if (
+          listRequestIdRef.current !== requestId ||
+          controller.signal.aborted ||
+          axios.isCancel(err)
+        )
+          return
         setListError(err instanceof Error ? err.message : String(err))
       })
       .finally(() => {
@@ -88,11 +98,20 @@ export function useAgentResponseController() {
 
     void fetchAgentResponse(responseId, controller.signal)
       .then((data) => {
-        if (detailRequestIdRef.current !== requestId || controller.signal.aborted) return
+        if (
+          detailRequestIdRef.current !== requestId ||
+          controller.signal.aborted
+        )
+          return
         setSelectedResponse(data.response)
       })
       .catch((err: unknown) => {
-        if (detailRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) return
+        if (
+          detailRequestIdRef.current !== requestId ||
+          controller.signal.aborted ||
+          axios.isCancel(err)
+        )
+          return
         setDetailError(err instanceof Error ? err.message : String(err))
       })
       .finally(() => {
@@ -107,7 +126,7 @@ export function useAgentResponseController() {
       draftId: string,
       responseMarkdown: string,
       externalAgentName?: string,
-      responseNote?: string,
+      responseNote?: string
     ): Promise<AgentResponseDetail> => {
       const requestId = createRequestIdRef.current + 1
       createRequestIdRef.current = requestId
@@ -123,13 +142,20 @@ export function useAgentResponseController() {
         {
           source: 'manual-paste',
           responseMarkdown,
-          ...(externalAgentName?.trim() ? { externalAgentName: externalAgentName.trim() } : {}),
-          ...(responseNote?.trim() ? { responseNote: responseNote.trim() } : {}),
+          ...(externalAgentName?.trim()
+            ? { externalAgentName: externalAgentName.trim() }
+            : {}),
+          ...(responseNote?.trim()
+            ? { responseNote: responseNote.trim() }
+            : {}),
         },
-        controller.signal,
+        controller.signal
       )
         .then((data) => {
-          if (createRequestIdRef.current !== requestId || controller.signal.aborted) {
+          if (
+            createRequestIdRef.current !== requestId ||
+            controller.signal.aborted
+          ) {
             throw new Error('aborted')
           }
           // Insert into response list
@@ -138,7 +164,11 @@ export function useAgentResponseController() {
           return data.response
         })
         .catch((err: unknown) => {
-          if (createRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) {
+          if (
+            createRequestIdRef.current !== requestId ||
+            controller.signal.aborted ||
+            axios.isCancel(err)
+          ) {
             throw err
           }
           const message = err instanceof Error ? err.message : String(err)
@@ -151,7 +181,7 @@ export function useAgentResponseController() {
           createAbortRef.current = null
         })
     },
-    [],
+    []
   )
 
   return {

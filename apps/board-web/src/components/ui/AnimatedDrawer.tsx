@@ -71,7 +71,7 @@ export function AnimatedDrawer({
               <DialogPanel
                 className={cn(
                   'grid h-full w-full grid-rows-[auto_1fr_auto] overflow-hidden border-l border-slate-200 bg-stone-50 text-slate-950 shadow-xl',
-                  SIZE_CLASS[size],
+                  SIZE_CLASS[size]
                 )}
               >
                 {/* Header */}

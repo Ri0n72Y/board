@@ -19,20 +19,20 @@ export function useSectionEditState<TSection extends string, TDraft>({
 
   const isEditing = useCallback(
     (section: TSection) => editingSections.includes(section),
-    [editingSections],
+    [editingSections]
   )
 
   const beginEdit = useCallback((section: TSection) => {
     setSelectedSection(section)
     setEditingSections((current) =>
-      current.includes(section) ? current : [...current, section],
+      current.includes(section) ? current : [...current, section]
     )
   }, [])
 
   const requestSection = useCallback((section: TSection) => {
     setSelectedSection(section)
     setEditingSections((current) =>
-      current.includes(section) ? current : [...current, section],
+      current.includes(section) ? current : [...current, section]
     )
     return true
   }, [])
@@ -56,12 +56,15 @@ export function useSectionEditState<TSection extends string, TDraft>({
     setPendingExit(false)
   }, [initialDraft])
 
-  const finishSave = useCallback((section?: TSection | null) => {
-    setDraft(initialDraft())
-    setEditingSections([])
-    setSelectedSection(section ?? selectedSection)
-    setPendingExit(false)
-  }, [initialDraft, selectedSection])
+  const finishSave = useCallback(
+    (section?: TSection | null) => {
+      setDraft(initialDraft())
+      setEditingSections([])
+      setSelectedSection(section ?? selectedSection)
+      setPendingExit(false)
+    },
+    [initialDraft, selectedSection]
+  )
 
   return {
     selectedSection,

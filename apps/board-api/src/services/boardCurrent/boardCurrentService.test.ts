@@ -72,7 +72,11 @@ describe('boardCurrentService', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       currentVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
       body: { description: 'Updated via patch' },
     })
 
@@ -142,7 +146,11 @@ describe('boardCurrentService', () => {
     await service.createRecordPatch(first.body.id, {
       parentId: null,
       currentVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
     })
 
     await service.create({
@@ -388,7 +396,11 @@ describe('boardCurrentService', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       currentVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
     })
     await appendArchivePatch(service, recordId)
 
@@ -429,9 +441,9 @@ describe('boardCurrentService', () => {
     // Head is corrupted by the multi-root patches 鈥?top-level diagnostics
     expect(board.snapshotHeadVersion).toBe(-1)
     expect(board.diagnostics).toBeDefined()
-    expect(board.diagnostics!.some(
-      (d) => d.code === 'SNAPSHOT_HEAD_INTEGRITY_ERROR'
-    )).toBe(true)
+    expect(
+      board.diagnostics!.some((d) => d.code === 'SNAPSHOT_HEAD_INTEGRITY_ERROR')
+    ).toBe(true)
     expect(board.diagnostics![0].message).toContain('corrupted')
 
     // Per-record diagnostics still present
@@ -439,9 +451,11 @@ describe('boardCurrentService', () => {
     expect(board.blockedRecords).toHaveLength(1)
     expect(board.blockedRecords[0].recordId).toBe(recordId)
     expect(board.blockedRecords[0].status).toBe('conflicted')
-    expect(board.blockedRecords[0].diagnostics.some(
-      (d) => d.code === 'MULTIPLE_ROOTS'
-    )).toBe(true)
+    expect(
+      board.blockedRecords[0].diagnostics.some(
+        (d) => d.code === 'MULTIPLE_ROOTS'
+      )
+    ).toBe(true)
     expect(board.summary.blockedRecords).toBe(1)
     // Has blocked records + corrupted head 鈫?blocked
     expect(board.summary.projectionStatus).toBe('blocked')
@@ -470,9 +484,9 @@ describe('boardCurrentService', () => {
     expect(board.blockedRecords[0].status).toBe('conflicted')
     // Top-level diagnostics from corrupted head
     expect(board.snapshotHeadVersion).toBe(-1)
-    expect(board.diagnostics!.some(
-      (d) => d.code === 'SNAPSHOT_HEAD_INTEGRITY_ERROR'
-    )).toBe(true)
+    expect(
+      board.diagnostics!.some((d) => d.code === 'SNAPSHOT_HEAD_INTEGRITY_ERROR')
+    ).toBe(true)
   })
 
   // 鈹€鈹€ Snapshot head integrity error 鈹€鈹€
@@ -492,9 +506,9 @@ describe('boardCurrentService', () => {
 
     expect(board.snapshotHeadVersion).toBe(-1)
     expect(board.diagnostics).toBeDefined()
-    expect(board.diagnostics!.some(
-      (d) => d.code === 'SNAPSHOT_HEAD_INTEGRITY_ERROR'
-    )).toBe(true)
+    expect(
+      board.diagnostics!.some((d) => d.code === 'SNAPSHOT_HEAD_INTEGRITY_ERROR')
+    ).toBe(true)
     expect(board.records).toEqual([])
     expect(board.blockedRecords).toEqual([])
     // No base records + corrupted head 鈫?blocked, not empty
@@ -524,9 +538,9 @@ describe('boardCurrentService', () => {
 
     // Head corrupted, top-level diagnostics present
     expect(board.snapshotHeadVersion).toBe(-1)
-    expect(board.diagnostics!.some(
-      (d) => d.code === 'SNAPSHOT_HEAD_INTEGRITY_ERROR'
-    )).toBe(true)
+    expect(
+      board.diagnostics!.some((d) => d.code === 'SNAPSHOT_HEAD_INTEGRITY_ERROR')
+    ).toBe(true)
     // Surviving record still visible
     expect(board.records).toHaveLength(1)
     expect(board.records[0].body.body.title).toBe('Surviving record')
@@ -556,15 +570,17 @@ describe('boardCurrentService', () => {
     })
 
     // Top-level has head integrity error
-    expect(board.diagnostics!.some(
-      (d) => d.code === 'SNAPSHOT_HEAD_INTEGRITY_ERROR'
-    )).toBe(true)
+    expect(
+      board.diagnostics!.some((d) => d.code === 'SNAPSHOT_HEAD_INTEGRITY_ERROR')
+    ).toBe(true)
 
     // Per-record diagnostics still present
     expect(board.blockedRecords).toHaveLength(1)
-    expect(board.blockedRecords[0].diagnostics.some(
-      (d) => d.code === 'MULTIPLE_ROOTS'
-    )).toBe(true)
+    expect(
+      board.blockedRecords[0].diagnostics.some(
+        (d) => d.code === 'MULTIPLE_ROOTS'
+      )
+    ).toBe(true)
   })
 
   // 鈹€鈹€ Side-effect-free 鈹€鈹€
@@ -600,18 +616,17 @@ describe('boardCurrentService', () => {
       body: { title: 'No leak test' },
     })
 
-    const patchesBefore = (await service.listPatchesByTargetId(
-      envelope.body.id
-    )).length
+    const patchesBefore = (
+      await service.listPatchesByTargetId(envelope.body.id)
+    ).length
 
     await getBoardCurrentProjection({
       repository: repo,
       snapshotHeadRepository: head,
     })
 
-    const patchesAfter = (await service.listPatchesByTargetId(
-      envelope.body.id
-    )).length
+    const patchesAfter = (await service.listPatchesByTargetId(envelope.body.id))
+      .length
     expect(patchesAfter).toBe(patchesBefore)
   })
 
@@ -624,9 +639,7 @@ describe('boardCurrentService', () => {
       body: { title: 'No mutation test' },
     })
 
-    const recordBefore = structuredClone(
-      await repo.findById(envelope.body.id)
-    )
+    const recordBefore = structuredClone(await repo.findById(envelope.body.id))
 
     await getBoardCurrentProjection({
       repository: repo,

@@ -83,7 +83,11 @@ describe('GET /api/v0/board/current', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       currentVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
       body: { description: 'Updated via patch' },
     })
 
@@ -111,7 +115,11 @@ describe('GET /api/v0/board/current', () => {
     await service.createRecordPatch(envelope.body.id, {
       parentId: null,
       currentVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
     })
 
     const wipRes = await app.request(
@@ -164,7 +172,11 @@ describe('GET /api/v0/board/current', () => {
     await service.createRecordPatch(envelope.body.id, {
       parentId: null,
       currentVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
       assignee: 'member-current',
       assets: [target.body.id],
       relations: [{ constraint: 'blocks', target: target.body.id }],
@@ -215,9 +227,7 @@ describe('GET /api/v0/board/current', () => {
     })
     await appendArchivePatch(service, envelope.body.id)
 
-    const res = await app.request(
-      '/api/v0/board/current?includeArchived=true'
-    )
+    const res = await app.request('/api/v0/board/current?includeArchived=true')
     expect(res.status).toBe(200)
 
     const payload = await res.json()
@@ -240,13 +250,15 @@ describe('GET /api/v0/board/current', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       currentVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
     })
     await appendArchivePatch(service, recordId)
 
-    const res = await app.request(
-      '/api/v0/board/current?includeArchived=true'
-    )
+    const res = await app.request('/api/v0/board/current?includeArchived=true')
     expect(res.status).toBe(200)
 
     const payload = await res.json()
@@ -282,9 +294,11 @@ describe('GET /api/v0/board/current', () => {
     expect(payload.data.blockedRecords[0].recordId).toBe(recordId)
     expect(payload.data.blockedRecords[0].status).toBe('conflicted')
     expect(payload.data.blockedRecords[0].diagnostics).toBeDefined()
-    expect(payload.data.blockedRecords[0].diagnostics.some(
-      (d: { code: string }) => d.code === 'MULTIPLE_ROOTS'
-    )).toBe(true)
+    expect(
+      payload.data.blockedRecords[0].diagnostics.some(
+        (d: { code: string }) => d.code === 'MULTIPLE_ROOTS'
+      )
+    ).toBe(true)
     expect(payload.data.summary.blockedRecords).toBe(1)
   })
 
@@ -306,9 +320,11 @@ describe('GET /api/v0/board/current', () => {
     const payload = await res.json()
     expect(payload.data.snapshotHeadVersion).toBe(-1)
     expect(payload.data.diagnostics).toBeDefined()
-    expect(payload.data.diagnostics.some(
-      (d: { code: string }) => d.code === 'SNAPSHOT_HEAD_INTEGRITY_ERROR'
-    )).toBe(true)
+    expect(
+      payload.data.diagnostics.some(
+        (d: { code: string }) => d.code === 'SNAPSHOT_HEAD_INTEGRITY_ERROR'
+      )
+    ).toBe(true)
     expect(payload.data.summary.projectionStatus).toBe('blocked')
     // blockedStatus must not be 'empty' when head is corrupted
     expect(payload.data.summary.projectionStatus).not.toBe('empty')
@@ -357,7 +373,11 @@ describe('GET /api/v0/board/current', () => {
     await service.createRecordPatch(envelope.body.id, {
       parentId: null,
       currentVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
     })
 
     const headBefore = structuredClone(await service.getSnapshotHead())
@@ -378,15 +398,14 @@ describe('GET /api/v0/board/current', () => {
       body: { title: 'No leak' },
     })
 
-    const patchesBefore = (await service.listPatchesByTargetId(
-      envelope.body.id
-    )).length
+    const patchesBefore = (
+      await service.listPatchesByTargetId(envelope.body.id)
+    ).length
 
     await app.request('/api/v0/board/current')
 
-    const patchesAfter = (await service.listPatchesByTargetId(
-      envelope.body.id
-    )).length
+    const patchesAfter = (await service.listPatchesByTargetId(envelope.body.id))
+      .length
     expect(patchesAfter).toBe(patchesBefore)
   })
 

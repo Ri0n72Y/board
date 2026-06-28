@@ -40,18 +40,18 @@ This is the **LabourBoard** monorepo — a structured project management board w
 
 ## Build, Test, and Development Commands
 
-| Command | Scope | Purpose |
-|---------|-------|---------|
-| `pnpm --filter @labour-board/shared build` | Shared | Build shared types first — required before API/Web |
-| `pnpm --filter @labour-board/api dev` | API | Start API server with hot reload on http://localhost:8787 |
-| `pnpm --filter @labour-board/web dev` | Web | Start Vite dev server |
-| `pnpm --filter @labour-board/api test` | API | Run Vitest test suite (478+ tests) |
-| `pnpm --filter @labour-board/api typecheck` | API | Check TypeScript (src + test configs) |
-| `pnpm --filter @labour-board/web typecheck` | Web | Check TypeScript (`tsc -b` with project refs) |
-| `pnpm --filter @labour-board/web lint` | Web | Run ESLint on all TS/TSX files |
-| `pnpm --filter @labour-board/web build` | Web | Typecheck then Vite production build |
-| `pnpm format` | Root | Format all files with Prettier |
-| `pnpm dev` | Root | Run API + Web dev servers in parallel |
+| Command                                     | Scope  | Purpose                                                   |
+| ------------------------------------------- | ------ | --------------------------------------------------------- |
+| `pnpm --filter @labour-board/shared build`  | Shared | Build shared types first — required before API/Web        |
+| `pnpm --filter @labour-board/api dev`       | API    | Start API server with hot reload on http://localhost:8787 |
+| `pnpm --filter @labour-board/web dev`       | Web    | Start Vite dev server                                     |
+| `pnpm --filter @labour-board/api test`      | API    | Run Vitest test suite (478+ tests)                        |
+| `pnpm --filter @labour-board/api typecheck` | API    | Check TypeScript (src + test configs)                     |
+| `pnpm --filter @labour-board/web typecheck` | Web    | Check TypeScript (`tsc -b` with project refs)             |
+| `pnpm --filter @labour-board/web lint`      | Web    | Run ESLint on all TS/TSX files                            |
+| `pnpm --filter @labour-board/web build`     | Web    | Typecheck then Vite production build                      |
+| `pnpm format`                               | Root   | Format all files with Prettier                            |
+| `pnpm dev`                                  | Root   | Run API + Web dev servers in parallel                     |
 
 **Devchecks**: Standalone utility test scripts run via `tsx`:
 

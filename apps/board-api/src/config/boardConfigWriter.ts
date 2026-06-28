@@ -2,7 +2,10 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { parseDocument, stringify } from 'yaml'
 import type { BoardConfig } from '@labour-board/shared'
 import { isRecord } from '../utils/object.js'
-import { BoardConfigError, type BoardConfigPidWriter } from './boardConfigTypes.js'
+import {
+  BoardConfigError,
+  type BoardConfigPidWriter,
+} from './boardConfigTypes.js'
 
 export function createBoardConfigPidWriter(
   configPath: string,

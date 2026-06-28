@@ -16,18 +16,18 @@ import {
 eq(
   boardFilterUrlQuery(DEFAULT_BOARD_CURRENT_FILTERS),
   '',
-  'default filters serialize to an empty query',
+  'default filters serialize to an empty query'
 )
 
 eq(
   boardFilterUrlQuery({ ...DEFAULT_BOARD_CURRENT_FILTERS, q: ' search me ' }),
   'q=search+me',
-  'q serializes when non-empty and trims whitespace',
+  'q serializes when non-empty and trims whitespace'
 )
 eq(
   parseBoardFilterUrl('q=search+me').q,
   'search me',
-  'q parses from URLSearchParams encoding',
+  'q parses from URLSearchParams encoding'
 )
 
 eq(
@@ -36,29 +36,29 @@ eq(
     tags: ['status:todo', 'priority:high'],
   }),
   'tags=status%3Atodo&tags=priority%3Ahigh',
-  'tags serialize as repeatable params',
+  'tags serialize as repeatable params'
 )
 eq(
   parseBoardFilterUrl('tags=status%3Atodo&tags=priority%3Ahigh').tags,
   ['status:todo', 'priority:high'],
-  'repeatable tags parse in URL order',
+  'repeatable tags parse in URL order'
 )
 
 eq(
   parseBoardFilterUrl('tag=status%3Atodo&tags=priority%3Ahigh').tags,
   ['status:todo', 'priority:high'],
-  'tag compatibility input merges into tags',
+  'tag compatibility input merges into tags'
 )
 
 eq(
   boardFilterUrlQuery({ ...DEFAULT_BOARD_CURRENT_FILTERS, tagMatch: 'any' }),
   'tagMatch=any',
-  'tagMatch=any serializes',
+  'tagMatch=any serializes'
 )
 eq(
   boardFilterUrlQuery({ ...DEFAULT_BOARD_CURRENT_FILTERS, tagMatch: 'all' }),
   '',
-  'tagMatch=all is omitted',
+  'tagMatch=all is omitted'
 )
 
 eq(
@@ -67,7 +67,7 @@ eq(
     includeArchived: true,
   }),
   'includeArchived=true',
-  'includeArchived=true serializes',
+  'includeArchived=true serializes'
 )
 eq(
   boardFilterUrlQuery({
@@ -75,7 +75,7 @@ eq(
     includeArchived: false,
   }),
   '',
-  'includeArchived=false is omitted',
+  'includeArchived=false is omitted'
 )
 
 eq(
@@ -86,41 +86,39 @@ eq(
     relationTarget: ' record-2 ',
   }),
   'assignee=pk1&assetId=asset-1&relationTarget=record-2',
-  'assignee, assetId, and relationTarget serialize when non-empty',
+  'assignee, assetId, and relationTarget serialize when non-empty'
 )
 eq(
-  parseBoardFilterUrl(
-    'assignee=pk1&assetId=asset-1&relationTarget=record-2',
-  ),
+  parseBoardFilterUrl('assignee=pk1&assetId=asset-1&relationTarget=record-2'),
   {
     ...DEFAULT_BOARD_CURRENT_FILTERS,
     assignee: 'pk1',
     assetId: 'asset-1',
     relationTarget: 'record-2',
   },
-  'assignee, assetId, and relationTarget parse',
+  'assignee, assetId, and relationTarget parse'
 )
 
 eq(
   parseBoardFilterUrl(
-    'q=%20%20&tags=%20&tags=status%3Atodo&tags=status%3Atodo&assignee=%20',
+    'q=%20%20&tags=%20&tags=status%3Atodo&tags=status%3Atodo&assignee=%20'
   ),
   {
     ...DEFAULT_BOARD_CURRENT_FILTERS,
     tags: ['status:todo'],
   },
-  'blank values are removed and duplicate tags are deduped',
+  'blank values are removed and duplicate tags are deduped'
 )
 
 eq(
   parseBoardFilterUrl('tagMatch=bad').tagMatch,
   'all',
-  'invalid tagMatch falls back to all',
+  'invalid tagMatch falls back to all'
 )
 eq(
   parseBoardFilterUrl('includeArchived=false').includeArchived,
   false,
-  'includeArchived only parses true as true',
+  'includeArchived only parses true as true'
 )
 
 const fullFilters: BoardCurrentFilters = {
@@ -136,56 +134,53 @@ const fullFilters: BoardCurrentFilters = {
 eq(
   boardFilterUrlQuery(fullFilters),
   'q=query&tags=status%3Atodo&tags=priority%3Ahigh&tagMatch=any&includeArchived=true&assignee=pk1&assetId=asset-1&relationTarget=record-2',
-  'query params serialize in stable order',
+  'query params serialize in stable order'
 )
 
 eq(
   boardFilterSearchToQuery(
-    'relationTarget=record-2&tag=status%3Atodo&q=query&includeArchived=true&tagMatch=any&assetId=asset-1&assignee=pk1&tags=priority%3Ahigh',
+    'relationTarget=record-2&tag=status%3Atodo&q=query&includeArchived=true&tagMatch=any&assetId=asset-1&assignee=pk1&tags=priority%3Ahigh'
   ),
   'q=query&tags=status%3Atodo&tags=priority%3Ahigh&tagMatch=any&includeArchived=true&assignee=pk1&assetId=asset-1&relationTarget=record-2',
-  'serialize(parse(query)) canonicalizes query order and compatibility params',
+  'serialize(parse(query)) canonicalizes query order and compatibility params'
 )
 
 eq(
   parseBoardFilterUrl(boardFilterUrlQuery(fullFilters)),
   normalizeBoardFilterUrl(fullFilters),
-  'parse(serialize(filters)) returns normalized filters',
+  'parse(serialize(filters)) returns normalized filters'
 )
 
 eq(
   shouldReplaceBoardFilterUrl('?tag=status%3Atodo', 'tags=status%3Atodo'),
   true,
-  'raw tag compatibility query should be replaced with canonical tags query',
+  'raw tag compatibility query should be replaced with canonical tags query'
 )
 eq(
   shouldReplaceBoardFilterUrl(
     '?relationTarget=r&tags=b&q=x&tags=a',
-    'q=x&tags=b&tags=a&relationTarget=r',
+    'q=x&tags=b&tags=a&relationTarget=r'
   ),
   true,
-  'unstable raw query order should be replaced with stable canonical order',
+  'unstable raw query order should be replaced with stable canonical order'
 )
 eq(
   boardFilterSearchToQuery('tagMatch=all&includeArchived=false&q=%20'),
   '',
-  'default and blank values canonicalize to empty query',
+  'default and blank values canonicalize to empty query'
 )
 eq(
-  shouldReplaceBoardFilterUrl(
-    '?tagMatch=all&includeArchived=false&q=%20',
-    '',
-  ),
+  shouldReplaceBoardFilterUrl('?tagMatch=all&includeArchived=false&q=%20', ''),
   true,
-  'raw default-only query should be replaced with empty query',
+  'raw default-only query should be replaced with empty query'
 )
 eq(
   shouldReplaceBoardFilterUrl(
     '?q=x&tags=b&tags=a&relationTarget=r',
-    'q=x&tags=b&tags=a&relationTarget=r',
+    'q=x&tags=b&tags=a&relationTarget=r'
   ),
   false,
-  'canonical raw query should not be replaced',
+  'canonical raw query should not be replaced'
 )
 
 console.log('boardFilterUrl devcheck passed')
@@ -193,7 +188,7 @@ console.log('boardFilterUrl devcheck passed')
 function eq<T>(actual: T, expected: T, label: string) {
   if (JSON.stringify(actual) !== JSON.stringify(expected)) {
     throw new Error(
-      `${label}\nexpected: ${JSON.stringify(expected)}\nactual: ${JSON.stringify(actual)}`,
+      `${label}\nexpected: ${JSON.stringify(expected)}\nactual: ${JSON.stringify(actual)}`
     )
   }
 }

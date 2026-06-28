@@ -23,7 +23,11 @@ interface ExportContext {
   options: Required<
     Pick<
       BoardExportOptions,
-      'format' | 'includeAssets' | 'includeContent' | 'includeDiagnostics' | 'includeRelations'
+      | 'format'
+      | 'includeAssets'
+      | 'includeContent'
+      | 'includeDiagnostics'
+      | 'includeRelations'
     >
   > &
     BoardExportOptions
@@ -42,7 +46,8 @@ export function buildBoardMarkdownExport(
     format: 'markdown',
     includeAssets: options.includeAssets ?? true,
     includeContent:
-      options.includeContent ?? (options.level === 'full' || options.level === 'card'),
+      options.includeContent ??
+      (options.level === 'full' || options.level === 'card'),
     includeDiagnostics: options.includeDiagnostics ?? true,
     includeRelations: options.includeRelations ?? true,
   }
@@ -67,8 +72,12 @@ export function buildBoardMarkdownExport(
       level: normalized.level,
       recordCount: context.records.length,
       generatedAt,
-      ...(normalized.snapshotId ? { sourceSnapshotId: normalized.snapshotId } : {}),
-      ...(normalized.filters ? { filters: normalized.filters as Record<string, unknown> } : {}),
+      ...(normalized.snapshotId
+        ? { sourceSnapshotId: normalized.snapshotId }
+        : {}),
+      ...(normalized.filters
+        ? { filters: normalized.filters as Record<string, unknown> }
+        : {}),
     },
   }
 }
@@ -146,10 +155,7 @@ function buildMarkdownHeader(context: ExportContext): string {
     lines.push(`- ${s.snapshotReason}: ${context.options.snapshotReason}`)
   }
 
-  lines.push(
-    '',
-    s.howToUse,
-  )
+  lines.push('', s.howToUse)
 
   return lines.join('\n')
 }
@@ -174,7 +180,10 @@ function buildStatusOverviewSection(context: ExportContext): string {
   return buildCountTable(
     s.statusOverview,
     s.status,
-    countBy(context.records, (record) => getStatusTag(record) ?? s.uncategorized)
+    countBy(
+      context.records,
+      (record) => getStatusTag(record) ?? s.uncategorized
+    )
   )
 }
 
@@ -190,7 +199,10 @@ function buildSprintOverviewSection(context: ExportContext): string {
 function buildRecordsByStatusSection(context: ExportContext): string {
   const s = getContextPackStrings(context.options.language)
   const lines = [s.recordsByStatus]
-  const groups = groupBy(context.records, (record) => getStatusTag(record) ?? s.uncategorized)
+  const groups = groupBy(
+    context.records,
+    (record) => getStatusTag(record) ?? s.uncategorized
+  )
 
   for (const [status, records] of groups) {
     lines.push('', `### ${status}`)
@@ -205,7 +217,10 @@ function buildRecordsByStatusSection(context: ExportContext): string {
 function buildSingleRecordSection(context: ExportContext): string {
   const s = getContextPackStrings(context.options.language)
   const record = context.records[0]
-  return [s.record, record ? buildRecordMarkdown(record, context) : s.recordNotFound].join('\n\n')
+  return [
+    s.record,
+    record ? buildRecordMarkdown(record, context) : s.recordNotFound,
+  ].join('\n\n')
 }
 
 function buildRelatedRecordsSection(context: ExportContext): string {
@@ -225,7 +240,10 @@ function buildRelatedRecordsSection(context: ExportContext): string {
 
 function buildSprintSection(context: ExportContext): string {
   const sprint = context.options.sprintTag ?? 'sprint'
-  return [`## Sprint Export: ${sprint}`, buildRecordsByStatusSection(context)].join('\n\n')
+  return [
+    `## Sprint Export: ${sprint}`,
+    buildRecordsByStatusSection(context),
+  ].join('\n\n')
 }
 
 function buildRelationsSection(context: ExportContext): string {
@@ -248,7 +266,9 @@ function buildRelationsSection(context: ExportContext): string {
         `  ${s.targetId}: ${formatted.target.rawId}`
       )
       if (relation.description) {
-        lines.push(`  ${s.relationDescription}: ${markdownInline(relation.description)}`)
+        lines.push(
+          `  ${s.relationDescription}: ${markdownInline(relation.description)}`
+        )
       }
     }
   }
@@ -274,7 +294,9 @@ function buildAssetsIndexSection(context: ExportContext): string {
     return lines.join('\n')
   }
 
-  for (const [asset, pids] of [...assets.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+  for (const [asset, pids] of [...assets.entries()].sort(([a], [b]) =>
+    a.localeCompare(b)
+  )) {
     const reference = formatExportReference(asset, context.references)
     lines.push(`- ${reference.label}`, `  ${s.rawId}: ${reference.rawId}`)
     for (const pid of pids.sort()) {
@@ -308,7 +330,10 @@ function buildDiagnosticsSection(context: ExportContext): string {
   return lines.join('\n')
 }
 
-function buildRecordMarkdown(record: BoardRecord, context: ExportContext): string {
+function buildRecordMarkdown(
+  record: BoardRecord,
+  context: ExportContext
+): string {
   const s = getContextPackStrings(context.options.language)
   const body = record.body
   const lines = [
@@ -347,7 +372,9 @@ function selectRecordsForLevel(
 ): BoardRecord[] {
   const filteredRecords = filterBoardRecords(records, options.filters)
   if (options.level === 'card') {
-    return filteredRecords.filter((record) => record.body.id === options.recordId)
+    return filteredRecords.filter(
+      (record) => record.body.id === options.recordId
+    )
   }
   if (options.level === 'related' && options.recordId) {
     return selectRelatedRecords(filteredRecords, options.recordId)
@@ -356,28 +383,41 @@ function selectRecordsForLevel(
     return filteredRecords.filter((record) => {
       const outgoing = (record.body.relations ?? []).length > 0
       const incoming = filteredRecords.some((other) =>
-        (other.body.relations ?? []).some((relation) => relation.target === record.body.id)
+        (other.body.relations ?? []).some(
+          (relation) => relation.target === record.body.id
+        )
       )
       return outgoing || incoming
     })
   }
   if (options.level === 'sprint') {
-    const sprintTag = options.sprintTag ?? inferSingleSprintTag(options.filters?.tags)
+    const sprintTag =
+      options.sprintTag ?? inferSingleSprintTag(options.filters?.tags)
     return sprintTag
-      ? filteredRecords.filter((record) => record.body.tags.includes(sprintTag as Tag))
+      ? filteredRecords.filter((record) =>
+          record.body.tags.includes(sprintTag as Tag)
+        )
       : []
   }
   return filteredRecords
 }
 
-function selectRelatedRecords(records: BoardRecord[], recordId: string): BoardRecord[] {
+function selectRelatedRecords(
+  records: BoardRecord[],
+  recordId: string
+): BoardRecord[] {
   const selected = new Set<string>([recordId])
   const center = records.find((record) => record.body.id === recordId)
   if (center) {
-    for (const relation of center.body.relations ?? []) selected.add(relation.target)
+    for (const relation of center.body.relations ?? [])
+      selected.add(relation.target)
   }
   for (const record of records) {
-    if ((record.body.relations ?? []).some((relation) => relation.target === recordId)) {
+    if (
+      (record.body.relations ?? []).some(
+        (relation) => relation.target === recordId
+      )
+    ) {
       selected.add(record.body.id)
     }
   }
@@ -388,7 +428,10 @@ function makeBoardExportFilename(
   options: BoardExportOptions,
   generatedAt: string
 ): string {
-  const source = options.source === 'snapshot' ? `snapshot-${options.snapshotId ?? 'unknown'}` : 'current-board'
+  const source =
+    options.source === 'snapshot'
+      ? `snapshot-${options.snapshotId ?? 'unknown'}`
+      : 'current-board'
   return `${source}-${options.level}-${generatedAt.slice(0, 19).replace(/[:T]/g, '-')}.md`
 }
 
@@ -401,7 +444,9 @@ function buildCountTable(
   if (counts.size === 0) {
     lines.push('| none | 0 |')
   } else {
-    for (const [key, count] of [...counts.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+    for (const [key, count] of [...counts.entries()].sort(([a], [b]) =>
+      a.localeCompare(b)
+    )) {
       lines.push(`| ${key} | ${count} |`)
     }
   }
@@ -491,7 +536,8 @@ function formatRecordRelations(
   context: ExportContext,
   s: ReturnType<typeof getContextPackStrings>
 ): string[] {
-  if (!relations || relations.length === 0) return [`- ${s.relations}: ${s.none}`]
+  if (!relations || relations.length === 0)
+    return [`- ${s.relations}: ${s.none}`]
   const lines = [`- ${s.relations}:`]
   for (const relation of relations) {
     const formatted = formatExportRelation(
@@ -505,7 +551,9 @@ function formatRecordRelations(
       `    ${s.targetId}: ${formatted.target.rawId}`
     )
     if (relation.description) {
-      lines.push(`    ${s.relationDescription}: ${markdownInline(relation.description)}`)
+      lines.push(
+        `    ${s.relationDescription}: ${markdownInline(relation.description)}`
+      )
     }
   }
   return lines

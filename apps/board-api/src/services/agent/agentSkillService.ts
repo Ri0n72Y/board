@@ -8,7 +8,7 @@ import type {
 } from '@labour-board/shared'
 
 const SKILLS_BASE_DIR = resolve(
-  join(import.meta.dirname, '..', '..', '..', 'config', 'skills'),
+  join(import.meta.dirname, '..', '..', '..', 'config', 'skills')
 )
 
 const BUILT_IN_SKILL_ID = 'labourboard-advisor'
@@ -104,7 +104,9 @@ export class AgentSkillService {
    * Unknown skillIds cause a SkillNotFoundError.
    * Duplicate skillIds are deduplicated.
    */
-  async resolveSkillSnapshots(skillIds?: string[]): Promise<AgentSkillSnapshot[]> {
+  async resolveSkillSnapshots(
+    skillIds?: string[]
+  ): Promise<AgentSkillSnapshot[]> {
     const normalized: string[] = []
 
     // LabourBoard advisor always first
@@ -114,7 +116,9 @@ export class AgentSkillService {
     if (skillIds && skillIds.length > 0) {
       for (const raw of skillIds) {
         if (typeof raw !== 'string') {
-          throw new SkillNotFoundError('each skillId must be a non-empty string')
+          throw new SkillNotFoundError(
+            'each skillId must be a non-empty string'
+          )
         }
         const trimmed = raw.trim()
         if (trimmed.length === 0) {
@@ -168,7 +172,7 @@ export class AgentSkillService {
       normalized !== normalizedBase
     ) {
       throw new SkillPathTraversalError(
-        `Skill path traversal rejected: ${filePath}`,
+        `Skill path traversal rejected: ${filePath}`
       )
     }
   }

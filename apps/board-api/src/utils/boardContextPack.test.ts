@@ -83,7 +83,9 @@ describe('buildBoardContextPack', () => {
     expect(exported.meta.profile).toBe('human-summary')
     expect(exported.content).toContain('# LabourBoard Agent Context Pack')
     expect(exported.content).toContain('## Agent Reading Instructions')
-    expect(exported.content).toContain('This file is not execution authorization')
+    expect(exported.content).toContain(
+      'This file is not execution authorization'
+    )
     expect(exported.content).toContain('## Board Summary')
     expect(exported.content).toContain('- Profile: human-summary')
     expect(exported.content).not.toContain('```text')
@@ -103,7 +105,9 @@ describe('buildBoardContextPack', () => {
     expect(exported.content).toContain('raw id: asset:deck-system')
     expect(exported.content).toContain('Depends on CARD-2 - Related Target')
     expect(exported.content).toContain('constraint: dependsOn')
-    expect(exported.content).toContain('target id: 22222222-2222-5222-8222-222222222222')
+    expect(exported.content).toContain(
+      'target id: 22222222-2222-5222-8222-222222222222'
+    )
     expect(exported.content).toContain('description: Related card')
     expect(exported.content).toContain('Full content stays here.')
     expect(exported.content).toContain('## Diagnostics')

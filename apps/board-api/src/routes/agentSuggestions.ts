@@ -27,7 +27,7 @@ import { AgentProviderBudgetExceededError } from '../services/agent/agentProvide
 import { AgentProviderOutputValidationError } from '../services/agent/agentSuggestionQuality.js'
 
 export function createAgentSuggestionsRoute(
-  agentSuggestionService: AgentSuggestionService,
+  agentSuggestionService: AgentSuggestionService
 ): Hono {
   const route = new Hono()
 
@@ -40,11 +40,11 @@ export function createAgentSuggestionsRoute(
       const suggestion = await agentSuggestionService.createSuggestion(
         draftId,
         input,
-        actor,
+        actor
       )
       return c.json<ApiResponse<CreateAgentSuggestionResponse>>(
         ok({ suggestion }),
-        201,
+        201
       )
     } catch (caught) {
       if (caught instanceof AgentSuggestionValidationError) {
@@ -85,10 +85,9 @@ export function createAgentSuggestionsRoute(
   route.get('/drafts/:draftId/suggestions', async (c) => {
     const draftId = c.req.param('draftId')
     try {
-      const suggestions =
-        await agentSuggestionService.listSuggestions(draftId)
+      const suggestions = await agentSuggestionService.listSuggestions(draftId)
       return c.json<ApiResponse<ListAgentSuggestionsResponse>>(
-        ok({ suggestions }),
+        ok({ suggestions })
       )
     } catch (caught) {
       if (caught instanceof AgentSuggestionNotFoundError) {
@@ -101,20 +100,18 @@ export function createAgentSuggestionsRoute(
   // GET /agent/suggestions/:suggestionId
   route.get('/suggestions/:suggestionId', async (c) => {
     const suggestion = await agentSuggestionService.getSuggestion(
-      c.req.param('suggestionId'),
+      c.req.param('suggestionId')
     )
     if (!suggestion) {
       return c.json(
         error(
           'NOT_FOUND',
-          `Agent suggestion ${c.req.param('suggestionId')} not found`,
+          `Agent suggestion ${c.req.param('suggestionId')} not found`
         ),
-        404,
+        404
       )
     }
-    return c.json<ApiResponse<GetAgentSuggestionResponse>>(
-      ok({ suggestion }),
-    )
+    return c.json<ApiResponse<GetAgentSuggestionResponse>>(ok({ suggestion }))
   })
 
   // PATCH /agent/suggestions/:suggestionId/review (optional)
@@ -125,19 +122,19 @@ export function createAgentSuggestionsRoute(
       const suggestion = await agentSuggestionService.updateReview(
         c.req.param('suggestionId'),
         input,
-        actor,
+        actor
       )
       if (!suggestion) {
         return c.json(
           error(
             'NOT_FOUND',
-            `Agent suggestion ${c.req.param('suggestionId')} not found`,
+            `Agent suggestion ${c.req.param('suggestionId')} not found`
           ),
-          404,
+          404
         )
       }
       return c.json<ApiResponse<UpdateAgentSuggestionReviewResponse>>(
-        ok({ suggestion }),
+        ok({ suggestion })
       )
     } catch (caught) {
       if (caught instanceof AgentSuggestionValidationError) {
@@ -156,19 +153,17 @@ export function createAgentSuggestionsRoute(
 // ─── Parsers ───
 
 async function parseCreateSuggestionInput(
-  request: Request,
+  request: Request
 ): Promise<CreateAgentSuggestionInput> {
-  if (
-    !request.headers.get('content-type')?.includes('application/json')
-  ) {
+  if (!request.headers.get('content-type')?.includes('application/json')) {
     throw new AgentSuggestionValidationError(
-      'Content-Type must be application/json',
+      'Content-Type must be application/json'
     )
   }
   const raw = (await request.json()) as unknown
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     throw new AgentSuggestionValidationError(
-      'Request body must be a JSON object',
+      'Request body must be a JSON object'
     )
   }
   const body = raw as Record<string, unknown>
@@ -218,37 +213,33 @@ async function parseCreateSuggestionInput(
       const item = body.skillIds[i]
       if (typeof item !== 'string') {
         throw new AgentSuggestionValidationError(
-          `skillIds[${i}] must be a string`,
+          `skillIds[${i}] must be a string`
         )
       }
       if (item.trim().length === 0) {
         throw new AgentSuggestionValidationError(
-          `skillIds[${i}] must not be empty`,
+          `skillIds[${i}] must not be empty`
         )
       }
     }
-    input.skillIds = (body.skillIds as string[]).map(
-      (s: string) => s.trim(),
-    )
+    input.skillIds = (body.skillIds as string[]).map((s: string) => s.trim())
   }
 
   return input
 }
 
 async function parseUpdateReviewInput(
-  request: Request,
+  request: Request
 ): Promise<UpdateAgentSuggestionReviewInput> {
-  if (
-    !request.headers.get('content-type')?.includes('application/json')
-  ) {
+  if (!request.headers.get('content-type')?.includes('application/json')) {
     throw new AgentSuggestionValidationError(
-      'Content-Type must be application/json',
+      'Content-Type must be application/json'
     )
   }
   const raw = (await request.json()) as unknown
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     throw new AgentSuggestionValidationError(
-      'Request body must be a JSON object',
+      'Request body must be a JSON object'
     )
   }
   const body = raw as Record<string, unknown>
@@ -263,7 +254,7 @@ async function parseUpdateReviewInput(
     !VALID_STATUSES.includes(body.status as AgentSuggestionStatus)
   ) {
     throw new AgentSuggestionValidationError(
-      `status is required and must be one of: ${VALID_STATUSES.join(', ')}`,
+      `status is required and must be one of: ${VALID_STATUSES.join(', ')}`
     )
   }
 

@@ -20,7 +20,7 @@ export class AgentResponseService {
 
   constructor(
     agentResponseRepository: AgentResponseRepository,
-    agentDraftRepository: AgentDraftRepository,
+    agentDraftRepository: AgentDraftRepository
   ) {
     this.agentResponseRepository = agentResponseRepository
     this.agentDraftRepository = agentDraftRepository
@@ -29,7 +29,7 @@ export class AgentResponseService {
   async createResponse(
     draftId: string,
     input: CreateAgentResponseInput,
-    actor?: PublicKey,
+    actor?: PublicKey
   ): Promise<AgentResponseDetail> {
     // 1. Check draft exists
     const draft = await this.agentDraftRepository.findById(draftId)
@@ -40,14 +40,14 @@ export class AgentResponseService {
     // 2. Draft must be reviewed
     if (draft.status !== 'reviewed') {
       throw new AgentResponseNotAllowedError(
-        `Draft status "${draft.status}" is not "reviewed". Only reviewed drafts can receive Agent responses.`,
+        `Draft status "${draft.status}" is not "reviewed". Only reviewed drafts can receive Agent responses.`
       )
     }
 
     // 3. Reviewed metadata must exist
     if (!draft.reviewedAt || !draft.reviewedBy) {
       throw new AgentResponseNotAllowedError(
-        'Draft is missing reviewedAt or reviewedBy metadata.',
+        'Draft is missing reviewedAt or reviewedBy metadata.'
       )
     }
 
@@ -97,9 +97,7 @@ export class AgentResponseService {
     return this.agentResponseRepository.listByDraftId(draftId)
   }
 
-  async getResponse(
-    responseId: string,
-  ): Promise<AgentResponseDetail | null> {
+  async getResponse(responseId: string): Promise<AgentResponseDetail | null> {
     return this.agentResponseRepository.findById(responseId)
   }
 
@@ -109,26 +107,24 @@ export class AgentResponseService {
       !input.source ||
       !VALID_SOURCES.includes(input.source as AgentResponseSource)
     ) {
-      throw new AgentResponseValidationError(
-        `source must be "manual-paste"`,
-      )
+      throw new AgentResponseValidationError(`source must be "manual-paste"`)
     }
 
     // responseMarkdown required
     if (typeof input.responseMarkdown !== 'string') {
       throw new AgentResponseValidationError(
-        'responseMarkdown is required and must be a string',
+        'responseMarkdown is required and must be a string'
       )
     }
     const trimmed = input.responseMarkdown.trim()
     if (trimmed.length === 0) {
       throw new AgentResponseValidationError(
-        'responseMarkdown must not be empty',
+        'responseMarkdown must not be empty'
       )
     }
     if (trimmed.length > MAX_RESPONSE_MARKDOWN_LENGTH) {
       throw new AgentResponseValidationError(
-        `responseMarkdown must not exceed ${MAX_RESPONSE_MARKDOWN_LENGTH} characters`,
+        `responseMarkdown must not exceed ${MAX_RESPONSE_MARKDOWN_LENGTH} characters`
       )
     }
 
@@ -139,12 +135,12 @@ export class AgentResponseService {
     ) {
       if (typeof input.externalAgentName !== 'string') {
         throw new AgentResponseValidationError(
-          'externalAgentName must be a string',
+          'externalAgentName must be a string'
         )
       }
       if (input.externalAgentName.length > MAX_EXTERNAL_AGENT_NAME_LENGTH) {
         throw new AgentResponseValidationError(
-          `externalAgentName must not exceed ${MAX_EXTERNAL_AGENT_NAME_LENGTH} characters`,
+          `externalAgentName must not exceed ${MAX_EXTERNAL_AGENT_NAME_LENGTH} characters`
         )
       }
     }
@@ -152,13 +148,11 @@ export class AgentResponseService {
     // responseNote optional, max length
     if (input.responseNote !== undefined && input.responseNote !== null) {
       if (typeof input.responseNote !== 'string') {
-        throw new AgentResponseValidationError(
-          'responseNote must be a string',
-        )
+        throw new AgentResponseValidationError('responseNote must be a string')
       }
       if (input.responseNote.length > MAX_RESPONSE_NOTE_LENGTH) {
         throw new AgentResponseValidationError(
-          `responseNote must not exceed ${MAX_RESPONSE_NOTE_LENGTH} characters`,
+          `responseNote must not exceed ${MAX_RESPONSE_NOTE_LENGTH} characters`
         )
       }
     }

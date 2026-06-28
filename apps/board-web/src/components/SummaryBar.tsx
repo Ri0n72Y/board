@@ -13,7 +13,9 @@ export function SummaryBar({ projection, compact = false }: SummaryBarProps) {
 
   return (
     <Panel
-      className={cn(compact ? 'mt-3 overflow-hidden p-0' : 'mt-4 overflow-hidden p-0')}
+      className={cn(
+        compact ? 'mt-3 overflow-hidden p-0' : 'mt-4 overflow-hidden p-0'
+      )}
       aria-label="Projection summary"
     >
       <div className={cn('grid', compact ? 'grid-cols-2' : 'sm:grid-cols-5')}>
@@ -61,7 +63,9 @@ function SummaryItem({
       <span className="text-xs font-bold uppercase text-slate-500">
         {label}
       </span>
-      <strong className={cn(compact ? 'text-base' : 'text-xl', 'text-slate-950')}>
+      <strong
+        className={cn(compact ? 'text-base' : 'text-xl', 'text-slate-950')}
+      >
         {value}
       </strong>
     </div>

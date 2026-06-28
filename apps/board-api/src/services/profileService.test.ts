@@ -45,29 +45,29 @@ describe('ProfileService', () => {
     const service = createService()
 
     await expect(
-      service.update('missing', { name: 'Missing' }),
+      service.update('missing', { name: 'Missing' })
     ).resolves.toBeNull()
   })
 
   it('rejects invalid profile input', async () => {
     const service = createService()
 
+    await expect(service.create({ pk: '', name: 'No key' })).rejects.toThrow(
+      ProfileValidationError
+    )
     await expect(
-      service.create({ pk: '', name: 'No key' }),
-    ).rejects.toThrow(ProfileValidationError)
-    await expect(
-      service.create({ pk: 'member-1', name: 1 as unknown as string }),
+      service.create({ pk: 'member-1', name: 1 as unknown as string })
     ).rejects.toThrow('Profile name must be a string')
   })
 
   it('rejects blank profile names', async () => {
     const service = createService()
 
+    await expect(service.create({ pk: 'member-1', name: '' })).rejects.toThrow(
+      ProfileValidationError
+    )
     await expect(
-      service.create({ pk: 'member-1', name: '' }),
-    ).rejects.toThrow(ProfileValidationError)
-    await expect(
-      service.create({ pk: 'member-1', name: '   ' }),
+      service.create({ pk: 'member-1', name: '   ' })
     ).rejects.toThrow(ProfileValidationError)
   })
 
@@ -76,7 +76,7 @@ describe('ProfileService', () => {
     await service.create({ pk: 'member-1', name: 'Ada' })
 
     await expect(
-      service.create({ pk: 'member-1', name: 'Other Ada' }),
+      service.create({ pk: 'member-1', name: 'Other Ada' })
     ).rejects.toThrow(ProfileConflictError)
   })
 
@@ -88,7 +88,7 @@ describe('ProfileService', () => {
         pk: 'member-1',
         name: 'Ada',
         avatarUrl: 'ftp://bad.example.com',
-      }),
+      })
     ).rejects.toThrow(ProfileValidationError)
   })
 
@@ -96,10 +96,10 @@ describe('ProfileService', () => {
     const service = createService()
 
     await expect(
-      service.create({ pk: 'member-1', name: 'Ada', avatarUrl: '' }),
+      service.create({ pk: 'member-1', name: 'Ada', avatarUrl: '' })
     ).resolves.toMatchObject({ avatarUrl: null })
     await expect(
-      service.create({ pk: 'member-2', name: 'Bob' }),
+      service.create({ pk: 'member-2', name: 'Bob' })
     ).resolves.toMatchObject({ avatarUrl: null })
   })
 
@@ -112,7 +112,7 @@ describe('ProfileService', () => {
     })
 
     await expect(
-      service.update('member-1', { avatarUrl: '' }),
+      service.update('member-1', { avatarUrl: '' })
     ).resolves.toMatchObject({ avatarUrl: null })
   })
 
@@ -124,7 +124,7 @@ describe('ProfileService', () => {
         pk: 'member-x',
         name: 'X',
         privateKey: 'secret' as unknown as string,
-      } as never),
+      } as never)
     ).rejects.toThrow(ProfileValidationError)
 
     await expect(
@@ -132,7 +132,7 @@ describe('ProfileService', () => {
         pk: 'member-x',
         name: 'X',
         password: 'secret' as unknown as string,
-      } as never),
+      } as never)
     ).rejects.toThrow(ProfileValidationError)
 
     await expect(
@@ -140,7 +140,7 @@ describe('ProfileService', () => {
         pk: 'member-x',
         name: 'X',
         secretKey: 'secret' as unknown as string,
-      } as never),
+      } as never)
     ).rejects.toThrow(ProfileValidationError)
 
     await expect(
@@ -148,7 +148,7 @@ describe('ProfileService', () => {
         pk: 'member-x',
         name: 'X',
         seedPhrase: 'secret' as unknown as string,
-      } as never),
+      } as never)
     ).rejects.toThrow(ProfileValidationError)
   })
 
@@ -160,7 +160,7 @@ describe('ProfileService', () => {
       service.update('member-a', {
         pk: 'member-b',
         name: 'Bob',
-      }),
+      })
     ).rejects.toThrow(ProfileValidationError)
   })
 
@@ -206,7 +206,7 @@ describe('ProfileService', () => {
     await service.create({ pk: '  member-1  ', name: 'First' })
 
     await expect(
-      service.create({ pk: 'member-1', name: 'Second' }),
+      service.create({ pk: 'member-1', name: 'Second' })
     ).rejects.toThrow(ProfileConflictError)
   })
 
@@ -249,7 +249,7 @@ describe('ProfileService', () => {
       service.update('member-a', {
         pk: '  member-b  ',
         name: 'Bob',
-      }),
+      })
     ).rejects.toThrow(ProfileValidationError)
   })
 
@@ -263,7 +263,7 @@ describe('ProfileService', () => {
         pk: 'member-1',
         name: 'Ada',
         avatarUrl: 123 as unknown as string,
-      }),
+      })
     ).rejects.toThrow(ProfileValidationError)
   })
 
@@ -274,7 +274,7 @@ describe('ProfileService', () => {
     await expect(
       service.update('member-a', {
         pk: 123 as unknown as string,
-      }),
+      })
     ).rejects.toThrow(ProfileValidationError)
   })
 
@@ -285,7 +285,7 @@ describe('ProfileService', () => {
     await expect(
       service.update('member-a', {
         avatarUrl: 456 as unknown as string,
-      }),
+      })
     ).rejects.toThrow(ProfileValidationError)
   })
 })

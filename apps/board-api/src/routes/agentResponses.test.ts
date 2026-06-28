@@ -46,7 +46,8 @@ describe('Agent Responses route', () => {
       method: 'POST',
       body: JSON.stringify({
         source: 'manual-paste',
-        responseMarkdown: '# Codex Analysis\n\nHere is my analysis of the board context.',
+        responseMarkdown:
+          '# Codex Analysis\n\nHere is my analysis of the board context.',
         externalAgentName: 'Codex',
         responseNote: 'First manual response',
       }),
@@ -59,8 +60,12 @@ describe('Agent Responses route', () => {
     expect(payload.data.response).toBeDefined()
     const resp = payload.data.response
     expect(resp.source).toBe('manual-paste')
-    expect(resp.responseMarkdown).toBe('# Codex Analysis\n\nHere is my analysis of the board context.')
-    expect(resp.responseLength).toBe('# Codex Analysis\n\nHere is my analysis of the board context.'.length)
+    expect(resp.responseMarkdown).toBe(
+      '# Codex Analysis\n\nHere is my analysis of the board context.'
+    )
+    expect(resp.responseLength).toBe(
+      '# Codex Analysis\n\nHere is my analysis of the board context.'.length
+    )
     expect(resp.externalAgentName).toBe('Codex')
     expect(resp.responseNote).toBe('First manual response')
     expect(typeof resp.pastedAt).toBe('string')
@@ -154,14 +159,17 @@ describe('Agent Responses route', () => {
 
   it('POST /api/v0/agent/drafts/:id/responses returns 404 for missing draft', async () => {
     const app = await createTestApp()
-    const res = await app.request('/api/v0/agent/drafts/nonexistent/responses', {
-      method: 'POST',
-      body: JSON.stringify({
-        source: 'manual-paste',
-        responseMarkdown: 'test',
-      }),
-      headers: { 'content-type': 'application/json' },
-    })
+    const res = await app.request(
+      '/api/v0/agent/drafts/nonexistent/responses',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          source: 'manual-paste',
+          responseMarkdown: 'test',
+        }),
+        headers: { 'content-type': 'application/json' },
+      }
+    )
     expect(res.status).toBe(404)
     const payload = await res.json()
     expect(payload.error.code).toBe('NOT_FOUND')
@@ -341,8 +349,12 @@ describe('Agent Responses route', () => {
     const payload = await res.json()
     expect(payload.data.responses.length).toBe(2)
     // Both responses should be present (order may depend on insertion if same timestamp)
-    const lengths = payload.data.responses.map((r: { responseLength: number }) => r.responseLength).sort((a: number, b: number) => a - b)
-    expect(lengths).toEqual(['First response'.length, 'Second response'.length].sort((a, b) => a - b))
+    const lengths = payload.data.responses
+      .map((r: { responseLength: number }) => r.responseLength)
+      .sort((a: number, b: number) => a - b)
+    expect(lengths).toEqual(
+      ['First response'.length, 'Second response'.length].sort((a, b) => a - b)
+    )
   })
 
   // ── Get response detail ──
@@ -351,15 +363,18 @@ describe('Agent Responses route', () => {
     const app = await createTestApp()
     const draftId = await createReviewedDraft(app)
 
-    const createRes = await app.request(`/api/v0/agent/drafts/${draftId}/responses`, {
-      method: 'POST',
-      body: JSON.stringify({
-        source: 'manual-paste',
-        responseMarkdown: '# Detail test\n\nSome content.',
-        externalAgentName: 'ChatGPT',
-      }),
-      headers: { 'content-type': 'application/json' },
-    })
+    const createRes = await app.request(
+      `/api/v0/agent/drafts/${draftId}/responses`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          source: 'manual-paste',
+          responseMarkdown: '# Detail test\n\nSome content.',
+          externalAgentName: 'ChatGPT',
+        }),
+        headers: { 'content-type': 'application/json' },
+      }
+    )
     const responseId = (await createRes.json()).data.response.id
 
     const res = await app.request(`/api/v0/agent/responses/${responseId}`)
@@ -429,7 +444,9 @@ describe('Agent Responses route', () => {
     })
 
     const boardAfter = await app.request('/api/v0/board/current')
-    expect((await boardAfter.json()).data.records.length).toBe(recordCountBefore)
+    expect((await boardAfter.json()).data.records.length).toBe(
+      recordCountBefore
+    )
 
     const snapshotsRes = await app.request('/api/v0/snapshots')
     expect((await snapshotsRes.json()).data.snapshots.length).toBe(0)
@@ -461,14 +478,17 @@ describe('Agent Responses route', () => {
     const app = await createTestApp()
     const draftId = await createReviewedDraft(app)
 
-    const createRes = await app.request(`/api/v0/agent/drafts/${draftId}/responses`, {
-      method: 'POST',
-      body: JSON.stringify({
-        source: 'manual-paste',
-        responseMarkdown: 'Analysis result',
-      }),
-      headers: { 'content-type': 'application/json' },
-    })
+    const createRes = await app.request(
+      `/api/v0/agent/drafts/${draftId}/responses`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          source: 'manual-paste',
+          responseMarkdown: 'Analysis result',
+        }),
+        headers: { 'content-type': 'application/json' },
+      }
+    )
     const responseId = (await createRes.json()).data.response.id
 
     const res = await app.request(`/api/v0/agent/responses/${responseId}`)

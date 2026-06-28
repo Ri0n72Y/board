@@ -47,22 +47,26 @@ describe('agentProviderBudget', () => {
   it('context too large fails', () => {
     const input = buildSuggestionBudgetInput('x'.repeat(21), [], undefined)
     expect(() => checkSuggestionBudget(input, config)).toThrow(
-      AgentProviderBudgetExceededError,
+      AgentProviderBudgetExceededError
     )
   })
 
   it('skill markdown too large fails', () => {
     const input = buildSuggestionBudgetInput('', [skill('x'.repeat(21))])
     expect(() => checkSuggestionBudget(input, config)).toThrow(
-      AgentProviderBudgetExceededError,
+      AgentProviderBudgetExceededError
     )
   })
 
   it('instruction contributes to limit', () => {
-    const input = buildSuggestionBudgetInput('12345678', [skill('12345678')], '12345')
+    const input = buildSuggestionBudgetInput(
+      '12345678',
+      [skill('12345678')],
+      '12345'
+    )
     expect(input.instructionCharCount).toBe(5)
     expect(() => checkSuggestionBudget(input, config)).toThrow(
-      AgentProviderBudgetExceededError,
+      AgentProviderBudgetExceededError
     )
   })
 

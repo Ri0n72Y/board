@@ -4,9 +4,7 @@ import type {
   BoardCurrentProjection,
   BoardExportOptions,
 } from '../interfaces/index.js'
-import {
-  getAgentContextProfileDefinition,
-} from '../constants/index.js'
+import { getAgentContextProfileDefinition } from '../constants/index.js'
 import { buildBoardMarkdownExport } from './boardExport.js'
 import { getContextPackStrings } from './contextPackI18n.js'
 
@@ -18,7 +16,12 @@ export function buildBoardContextPack(
   const exportOptions = normalizeContextPackOptions(options, generatedAt)
   const exported = buildBoardMarkdownExport(projection, exportOptions)
   const content = [
-    buildContextPackHeader(projection, options, exportOptions, exported.meta.recordCount),
+    buildContextPackHeader(
+      projection,
+      options,
+      exportOptions,
+      exported.meta.recordCount
+    ),
     stripTitleAndExportMetadata(exported.content),
   ]
     .filter(Boolean)
@@ -26,7 +29,11 @@ export function buildBoardContextPack(
 
   return {
     ...exported,
-    filename: makeContextPackFilename(exportOptions, options.profile, generatedAt),
+    filename: makeContextPackFilename(
+      exportOptions,
+      options.profile,
+      generatedAt
+    ),
     content: `${content.trimEnd()}\n`,
     meta: {
       ...exported.meta,
@@ -63,7 +70,9 @@ function buildContextPackHeader(
 ): string {
   const definition = getAgentContextProfileDefinition(options.profile)
   const s = getContextPackStrings(exportOptions.language)
-  const filters = exportOptions.filters ? JSON.stringify(exportOptions.filters) : s.none
+  const filters = exportOptions.filters
+    ? JSON.stringify(exportOptions.filters)
+    : s.none
   const lines = [
     s.title,
     '',
@@ -80,8 +89,10 @@ function buildContextPackHeader(
     `- ${s.profileDescription}: ${definition.description}`,
   ]
 
-  if (exportOptions.recordId) lines.push(`- ${s.centerRecordId}: ${exportOptions.recordId}`)
-  if (exportOptions.sprintTag) lines.push(`- ${s.sprintTag}: ${exportOptions.sprintTag}`)
+  if (exportOptions.recordId)
+    lines.push(`- ${s.centerRecordId}: ${exportOptions.recordId}`)
+  if (exportOptions.sprintTag)
+    lines.push(`- ${s.sprintTag}: ${exportOptions.sprintTag}`)
   if (exportOptions.snapshotCreatedAt) {
     lines.push(`- ${s.snapshotCreatedAt}: ${exportOptions.snapshotCreatedAt}`)
   }
@@ -117,15 +128,20 @@ function describeIncludedRecords(
   exportOptions: BoardExportOptions
 ): string {
   const definition = getAgentContextProfileDefinition(options.profile)
-  if (options.profile === 'agent-card') return `single center card ${exportOptions.recordId}`
+  if (options.profile === 'agent-card')
+    return `single center card ${exportOptions.recordId}`
   if (options.profile === 'agent-related' && exportOptions.recordId) {
     return `center card ${exportOptions.recordId} plus direct incoming and outgoing relations`
   }
-  if (options.profile === 'agent-related') return 'records participating in relation graph'
-  if (options.profile === 'agent-sprint') return `records tagged ${exportOptions.sprintTag}`
-  if (options.profile === 'agent-filtered') return 'records matching current export filters'
+  if (options.profile === 'agent-related')
+    return 'records participating in relation graph'
+  if (options.profile === 'agent-sprint')
+    return `records tagged ${exportOptions.sprintTag}`
+  if (options.profile === 'agent-filtered')
+    return 'records matching current export filters'
   if (options.profile === 'human-summary') return definition.description
-  if (options.profile === 'agent-snapshot') return 'records captured in the static snapshot checkpoint'
+  if (options.profile === 'agent-snapshot')
+    return 'records captured in the static snapshot checkpoint'
   return 'full current board projection'
 }
 
@@ -144,7 +160,10 @@ function describeExcluded(
 
 function stripTitleAndExportMetadata(content: string): string {
   return content
-    .replace(/^# LabourBoard (Current Board|Snapshot) Export\n\n## Export Metadata\n(?:- .*\n)+\n/m, '')
+    .replace(
+      /^# LabourBoard (Current Board|Snapshot) Export\n\n## Export Metadata\n(?:- .*\n)+\n/m,
+      ''
+    )
     .trim()
 }
 
@@ -158,7 +177,8 @@ function makeContextPackFilename(
       ? `snapshot-${options.snapshotId ?? 'unknown'}`
       : 'current-board'
   const center =
-    options.recordId && (profile === 'agent-card' || profile === 'agent-related')
+    options.recordId &&
+    (profile === 'agent-card' || profile === 'agent-related')
       ? `-${options.recordId}`
       : ''
   return `${source}-${profile}${center}-${generatedAt.slice(0, 19).replace(/[:T]/g, '-')}.md`

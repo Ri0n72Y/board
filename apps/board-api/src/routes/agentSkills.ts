@@ -9,7 +9,7 @@ import type { AgentSkillService } from '../services/agent/agentSkillService.js'
 import { SkillNotFoundError } from '../services/agent/agentSkillService.js'
 
 export function createAgentSkillsRoute(
-  agentSkillService: AgentSkillService,
+  agentSkillService: AgentSkillService
 ): Hono {
   const route = new Hono()
 
@@ -24,7 +24,7 @@ export function createAgentSkillsRoute(
       if (!skill) {
         return c.json(
           error('NOT_FOUND', `Agent skill ${c.req.param('skillId')} not found`),
-          404,
+          404
         )
       }
       return c.json<ApiResponse<GetAgentSkillResponse>>(ok({ skill }))

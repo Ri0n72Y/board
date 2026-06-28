@@ -6,15 +6,9 @@ import type {
 } from '@labour-board/shared'
 import type { ProfileRepository } from '../repositories/profileRepository.js'
 
-const SENSITIVE_KEYS = [
-  'privateKey',
-  'password',
-  'secretKey',
-  'seedPhrase',
-]
+const SENSITIVE_KEYS = ['privateKey', 'password', 'secretKey', 'seedPhrase']
 
-const AVATAR_URL_RE =
-  /^https?:\/\/.+/
+const AVATAR_URL_RE = /^https?:\/\/.+/
 
 export class ProfileValidationError extends Error {
   constructor(message: string) {
@@ -69,7 +63,7 @@ export class ProfileService {
 
   async update(
     pk: PublicKey,
-    input: UpdateProfileInput,
+    input: UpdateProfileInput
   ): Promise<Profile | null> {
     const pathPk = pk.trim()
 
@@ -80,13 +74,8 @@ export class ProfileService {
     const normalized = normalizeUpdateProfileInput(input)
 
     // 3. body.pk must match path pk (both trimmed)
-    if (
-      normalized.pk !== undefined &&
-      normalized.pk !== pathPk
-    ) {
-      throw new ProfileValidationError(
-        'Body pk must match URL path pk',
-      )
+    if (normalized.pk !== undefined && normalized.pk !== pathPk) {
+      throw new ProfileValidationError('Body pk must match URL path pk')
     }
 
     // 4. validate normalized values
@@ -105,7 +94,7 @@ export class ProfileService {
 /* ─── Normalization ─── */
 
 function normalizeCreateProfileInput(
-  input: CreateProfileInput,
+  input: CreateProfileInput
 ): CreateProfileInput {
   return {
     pk: input.pk.trim(),
@@ -115,7 +104,7 @@ function normalizeCreateProfileInput(
 }
 
 function normalizeUpdateProfileInput(
-  input: UpdateProfileInput,
+  input: UpdateProfileInput
 ): UpdateProfileInput {
   const normalized: UpdateProfileInput = {}
   if (input.pk !== undefined) {
@@ -131,7 +120,7 @@ function normalizeUpdateProfileInput(
 }
 
 function normalizeAvatarUrl(
-  value: string | null | undefined,
+  value: string | null | undefined
 ): string | null | undefined {
   if (value === null || value === undefined) return value
   // Empty or whitespace-only → null
@@ -186,7 +175,7 @@ function assertNonEmptyPk(pk: string): void {
 function assertNonEmptyName(name: string): void {
   if (typeof name !== 'string' || name.length === 0) {
     throw new ProfileValidationError(
-      'Profile name is required and must not be empty',
+      'Profile name is required and must not be empty'
     )
   }
 }
@@ -197,9 +186,7 @@ function assertValidAvatarUrl(avatarUrl: string | null | undefined): void {
     throw new ProfileValidationError('avatarUrl must be a string URL or null')
   }
   if (!AVATAR_URL_RE.test(avatarUrl)) {
-    throw new ProfileValidationError(
-      'avatarUrl must be an http or https URL',
-    )
+    throw new ProfileValidationError('avatarUrl must be an http or https URL')
   }
 }
 
@@ -207,7 +194,7 @@ function assertNoSensitiveKeys(input: Record<string, unknown>): void {
   for (const key of SENSITIVE_KEYS) {
     if (key in input) {
       throw new ProfileValidationError(
-        `Field "${key}" is not accepted in profile input`,
+        `Field "${key}" is not accepted in profile input`
       )
     }
   }

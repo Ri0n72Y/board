@@ -80,7 +80,7 @@ export function useRecordHistoryController() {
         pid: record.body.pid,
       })
     },
-    [loadHistory],
+    [loadHistory]
   )
 
   const closeHistory = useCallback(() => {

@@ -1,7 +1,4 @@
-import {
-  ChevronDownIcon,
-  XMarkIcon,
-} from '@heroicons/react/20/solid'
+import { ChevronDownIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import {
   useEffect,
   useId,
@@ -88,31 +85,35 @@ export function SearchSelect({
         language,
         allowCustomValue,
       }),
-    [allowCustomValue, debouncedQuery, language, mode, options],
+    [allowCustomValue, debouncedQuery, language, mode, options]
   )
 
   const selectedValues = useMemo(
-    () =>
-      multiple
-        ? values
-        : value
-          ? [value]
-          : [],
-    [multiple, value, values],
+    () => (multiple ? values : value ? [value] : []),
+    [multiple, value, values]
   )
   const selectedSet = useMemo(() => new Set(selectedValues), [selectedValues])
   const visibleChoices = useMemo(
-    () => (multiple ? choices.filter((choice) => !selectedSet.has(choice.value)) : choices),
-    [choices, multiple, selectedSet],
+    () =>
+      multiple
+        ? choices.filter((choice) => !selectedSet.has(choice.value))
+        : choices,
+    [choices, multiple, selectedSet]
   )
 
   const clampedHighlight = Math.min(
     highlightedIndex,
-    Math.max(visibleChoices.length - 1, 0),
+    Math.max(visibleChoices.length - 1, 0)
   )
-  const currentValue = !multiple && value
-    ? getSearchSelectDisplayLabel(optionByValue.get(value), value, mode, language)
-    : ''
+  const currentValue =
+    !multiple && value
+      ? getSearchSelectDisplayLabel(
+          optionByValue.get(value),
+          value,
+          mode,
+          language
+        )
+      : ''
   const inputValue = isOpen || multiple ? query : currentValue
 
   function open() {
@@ -202,7 +203,8 @@ export function SearchSelect({
       ref={rootRef}
       className="relative grid w-full gap-1.5"
       onBlur={(event) => {
-        if (!rootRef.current?.contains(event.relatedTarget as Node | null)) close()
+        if (!rootRef.current?.contains(event.relatedTarget as Node | null))
+          close()
       }}
     >
       {label && (
@@ -230,7 +232,7 @@ export function SearchSelect({
                   optionByValue.get(selectedValue),
                   selectedValue,
                   mode,
-                  language,
+                  language
                 )}
               </span>
               <XMarkIcon className="h-3.5 w-3.5 shrink-0" />
@@ -278,9 +280,13 @@ export function SearchSelect({
             onClick={() => (isOpen ? close() : open())}
             disabled={disabled}
             title={isOpen ? t('searchSelect.close') : t('searchSelect.open')}
-            aria-label={isOpen ? t('searchSelect.close') : t('searchSelect.open')}
+            aria-label={
+              isOpen ? t('searchSelect.close') : t('searchSelect.open')
+            }
           >
-            <ChevronDownIcon className={cn('h-4 w-4 transition', isOpen && 'rotate-180')} />
+            <ChevronDownIcon
+              className={cn('h-4 w-4 transition', isOpen && 'rotate-180')}
+            />
           </button>
         </div>
       </div>
@@ -301,7 +307,9 @@ export function SearchSelect({
                   choice.disabled
                     ? 'cursor-not-allowed text-slate-300'
                     : 'text-slate-700 hover:bg-emerald-50 hover:text-slate-950',
-                  index === clampedHighlight && !choice.disabled && 'bg-emerald-50 text-slate-950',
+                  index === clampedHighlight &&
+                    !choice.disabled &&
+                    'bg-emerald-50 text-slate-950'
                 )}
                 onMouseDown={(event) => event.preventDefault()}
                 onMouseEnter={() => setHighlightedIndex(index)}
@@ -312,23 +320,26 @@ export function SearchSelect({
               >
                 {choice.custom ? (
                   <>
-                    <span className="font-medium">{t('searchSelect.useCustomValue')}</span>
+                    <span className="font-medium">
+                      {t('searchSelect.useCustomValue')}
+                    </span>
                     <span className="break-all font-mono text-xs text-slate-500">
                       {choice.value}
                     </span>
                   </>
                 ) : (
-                  <OptionLine
-                    choice={choice}
-                    mode={mode}
-                    language={language}
-                  />
+                  <OptionLine choice={choice} mode={mode} language={language} />
                 )}
               </button>
             ))
           ) : (
             <p className="px-3 py-2 text-sm text-slate-500">
-              {emptyText ?? t(options.length === 0 ? 'searchSelect.noOptions' : 'searchSelect.empty')}
+              {emptyText ??
+                t(
+                  options.length === 0
+                    ? 'searchSelect.noOptions'
+                    : 'searchSelect.empty'
+                )}
             </p>
           )}
         </div>
@@ -346,12 +357,18 @@ function OptionLine({
   mode: SearchSelectMode
   language?: string
 }) {
-  const label = getSearchSelectDisplayLabel(choice, choice.value, mode, language)
-  const meta = mode === 'tag'
-    ? choice.value !== label
-      ? choice.value
+  const label = getSearchSelectDisplayLabel(
+    choice,
+    choice.value,
+    mode,
+    language
+  )
+  const meta =
+    mode === 'tag'
+      ? choice.value !== label
+        ? choice.value
+        : choice.meta
       : choice.meta
-    : choice.meta
 
   return (
     <span className="flex min-w-0 items-center gap-2">
@@ -367,14 +384,20 @@ function OptionLine({
         </span>
       ) : null}
       <span className="grid min-w-0 gap-0.5">
-        <span className={cn('truncate font-medium', mode === 'tag' && 'font-sans')}>
+        <span
+          className={cn('truncate font-medium', mode === 'tag' && 'font-sans')}
+        >
           {label}
         </span>
         {choice.description && (
-          <span className="truncate text-xs text-slate-500">{choice.description}</span>
+          <span className="truncate text-xs text-slate-500">
+            {choice.description}
+          </span>
         )}
         {meta && (
-          <span className="break-all font-mono text-xs text-slate-400">{meta}</span>
+          <span className="break-all font-mono text-xs text-slate-400">
+            {meta}
+          </span>
         )}
       </span>
     </span>

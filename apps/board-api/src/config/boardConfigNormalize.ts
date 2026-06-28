@@ -161,5 +161,7 @@ function normalizePidLatest(value: unknown): BoardConfig['pid']['latest'] {
 }
 
 function invalidConfig(configPath: string, reason: string): BoardConfigError {
-  return new BoardConfigError(`Invalid board config at ${configPath}: ${reason}`)
+  return new BoardConfigError(
+    `Invalid board config at ${configPath}: ${reason}`
+  )
 }

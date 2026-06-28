@@ -78,10 +78,7 @@ export function useAgentSuggestionController() {
 
     void fetchAgentSuggestions(draftId, controller.signal)
       .then((data) => {
-        if (
-          listRequestIdRef.current !== requestId ||
-          controller.signal.aborted
-        )
+        if (listRequestIdRef.current !== requestId || controller.signal.aborted)
           return
         setSuggestions(data.suggestions)
       })
@@ -151,7 +148,7 @@ export function useAgentSuggestionController() {
       return createAgentSuggestion(
         draftId,
         { instruction: instruction?.trim() || undefined },
-        controller.signal,
+        controller.signal
       )
         .then((data) => {
           if (
@@ -184,7 +181,7 @@ export function useAgentSuggestionController() {
           generateAbortRef.current = null
         })
     },
-    [],
+    []
   )
 
   const reviewSuggestion = useCallback(
@@ -201,7 +198,7 @@ export function useAgentSuggestionController() {
       void updateAgentSuggestionReview(
         suggestionId,
         { status },
-        controller.signal,
+        controller.signal
       )
         .then((data) => {
           if (
@@ -211,9 +208,7 @@ export function useAgentSuggestionController() {
             return
           setSelectedSuggestion(data.suggestion)
           setSuggestions((prev) =>
-            prev.map((s) =>
-              s.id === data.suggestion.id ? data.suggestion : s,
-            ),
+            prev.map((s) => (s.id === data.suggestion.id ? data.suggestion : s))
           )
           toastSuccess('Suggestion review updated')
         })
@@ -234,7 +229,7 @@ export function useAgentSuggestionController() {
           reviewAbortRef.current = null
         })
     },
-    [],
+    []
   )
 
   return {

@@ -45,10 +45,13 @@ export function recordMatchesBoardFilter(
     return false
   }
   if (normalized.assignee && body.assignee !== normalized.assignee) return false
-  if (normalized.assetId && !body.assets?.includes(normalized.assetId)) return false
+  if (normalized.assetId && !body.assets?.includes(normalized.assetId))
+    return false
   if (
     normalized.relationTarget &&
-    !body.relations?.some((relation) => relation.target === normalized.relationTarget)
+    !body.relations?.some(
+      (relation) => relation.target === normalized.relationTarget
+    )
   ) {
     return false
   }

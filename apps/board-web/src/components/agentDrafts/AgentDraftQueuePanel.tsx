@@ -41,7 +41,7 @@ export function AgentDraftQueuePanel({
       { value: 'reviewed', label: t('agent.status.reviewed') },
       { value: 'discarded', label: t('agent.status.discarded') },
     ],
-    [t],
+    [t]
   )
 
   const filteredDrafts = useMemo(
@@ -49,7 +49,7 @@ export function AgentDraftQueuePanel({
       statusFilter === 'all'
         ? drafts
         : drafts.filter((d) => d.status === statusFilter),
-    [drafts, statusFilter],
+    [drafts, statusFilter]
   )
 
   return (
@@ -65,7 +65,11 @@ export function AgentDraftQueuePanel({
             className="min-h-8 px-2.5 text-xs"
             onClick={onRefreshList}
             disabled={isListLoading}
-            icon={<ArrowPathIcon className={isListLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />}
+            icon={
+              <ArrowPathIcon
+                className={isListLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'}
+              />
+            }
           >
             {t('agent.queue.refresh')}
           </Button>
@@ -88,8 +92,15 @@ export function AgentDraftQueuePanel({
           ))}
         </div>
 
-        {createError && <ErrorBlock title={t('agent.queue.createFailed')} message={createError} />}
-        {listError && <ErrorBlock title={t('agent.queue.listFailed')} message={listError} />}
+        {createError && (
+          <ErrorBlock
+            title={t('agent.queue.createFailed')}
+            message={createError}
+          />
+        )}
+        {listError && (
+          <ErrorBlock title={t('agent.queue.listFailed')} message={listError} />
+        )}
 
         {isCreating && (
           <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
@@ -127,18 +138,26 @@ export function AgentDraftQueuePanel({
                   onClick={() => onSelectDraft(draft.id)}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-slate-950">{draft.title}</span>
+                    <span className="text-sm font-semibold text-slate-950">
+                      {draft.title}
+                    </span>
                     <AgentDraftStatusBadge status={draft.status} />
                   </span>
                   {draft.contextGoal && (
-                    <span className="wrap-break-word text-xs text-slate-600">{draft.contextGoal}</span>
+                    <span className="wrap-break-word text-xs text-slate-600">
+                      {draft.contextGoal}
+                    </span>
                   )}
                   <span className="flex flex-wrap items-center gap-1.5">
                     <Badge>{draft.profile}</Badge>
                     <Badge>{draft.source}</Badge>
-                    <Badge>{draft.recordCount.toString()} {t('agent.queue.records')}</Badge>
+                    <Badge>
+                      {draft.recordCount.toString()} {t('agent.queue.records')}
+                    </Badge>
                   </span>
-                  <span className="text-xs text-slate-400">{formatDate(draft.createdAt)}</span>
+                  <span className="text-xs text-slate-400">
+                    {formatDate(draft.createdAt)}
+                  </span>
                 </button>
               </li>
             ))}

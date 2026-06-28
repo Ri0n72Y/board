@@ -33,7 +33,10 @@ function assert(expr: boolean, msg: string) {
 }
 
 function eq<T>(actual: T, expected: T, label: string) {
-  assert(Object.is(actual, expected), `${label} expected "${expected}" got "${actual}"`)
+  assert(
+    Object.is(actual, expected),
+    `${label} expected "${expected}" got "${actual}"`
+  )
 }
 
 const t = (key: string, options?: { defaultValue?: string }) =>
@@ -41,13 +44,15 @@ const t = (key: string, options?: { defaultValue?: string }) =>
     'relations.constraint.dependsOn': 'Depends on',
     'relations.constraint.blocks': 'Blocks',
     'relations.constraint.blockedBy': 'Blocked by',
-  })[key] ?? options?.defaultValue ?? key
+  })[key] ??
+  options?.defaultValue ??
+  key
 
 function record(
   id: string,
   pid: string,
   title: string,
-  relations: RecordItem<RecordBody>['relations'] = [],
+  relations: RecordItem<RecordBody>['relations'] = []
 ): RecordResponse<RecordItem<RecordBody>> {
   return {
     createdBy: 'member',
@@ -83,21 +88,25 @@ const targetOptions: RecordReferenceOption[] = [
   },
 ]
 
-eq(formatRelationConstraint('dependsOn', t), 'Depends on', 'known constraint i18n')
+eq(
+  formatRelationConstraint('dependsOn', t),
+  'Depends on',
+  'known constraint i18n'
+)
 eq(
   formatRelationConstraint('unknownConstraint', t),
   'unknownConstraint',
-  'unknown constraint fallback raw',
+  'unknown constraint fallback raw'
 )
 eq(
   formatRelationTarget('record-b', targetOptions),
   'CARD-2 - Beta',
-  'target id resolves to PID + title',
+  'target id resolves to PID + title'
 )
 eq(
   formatRelationTarget('1234567890abcdef', targetOptions),
   '12345678...cdef',
-  'unknown target fallback short id',
+  'unknown target fallback short id'
 )
 eq(
   dedupeRelations([
@@ -105,7 +114,7 @@ eq(
     { constraint: 'dependsOn', target: 'record-b', description: 'same' },
   ]).length,
   1,
-  'duplicate relation dedupe',
+  'duplicate relation dedupe'
 )
 eq(
   normalizeRelationDrafts([
@@ -114,58 +123,67 @@ eq(
     { constraint: 'dependsOn', target: 'record-b' },
   ]).length,
   1,
-  'empty relation row removed',
+  'empty relation row removed'
 )
 eq(
   normalizeRelationDrafts([
     { constraint: 'dependsOn', target: 'record-b', description: '  note  ' },
   ])[0]?.description,
   'note',
-  'description trim',
+  'description trim'
 )
 assert(
   sameRelations(
     [{ constraint: 'dependsOn', target: 'record-b', description: ' note ' }],
-    [{ constraint: 'dependsOn', target: 'record-b', description: 'note' }],
+    [{ constraint: 'dependsOn', target: 'record-b', description: 'note' }]
   ),
-  'sameRelations detects no change',
+  'sameRelations detects no change'
 )
 assert(
   !sameRelations([], [{ constraint: 'dependsOn', target: 'record-b' }]),
-  'sameRelations detects added relation',
+  'sameRelations detects added relation'
 )
 assert(
   !sameRelations([{ constraint: 'dependsOn', target: 'record-b' }], []),
-  'sameRelations detects removed relation',
+  'sameRelations detects removed relation'
 )
 assert(
   !sameRelations(
     [{ constraint: 'dependsOn', target: 'record-b', description: 'old' }],
-    [{ constraint: 'dependsOn', target: 'record-b', description: 'new' }],
+    [{ constraint: 'dependsOn', target: 'record-b', description: 'new' }]
   ),
-  'sameRelations detects changed description',
+  'sameRelations detects changed description'
 )
 assert(
-  hasSelfRelation([{ constraint: 'dependsOn', target: 'record-a' }], 'record-a'),
-  'self relation warning detection',
+  hasSelfRelation(
+    [{ constraint: 'dependsOn', target: 'record-a' }],
+    'record-a'
+  ),
+  'self relation warning detection'
 )
 eq(
-  formatRelationLine({ constraint: 'dependsOn', target: 'record-b' }, targetOptions, t),
+  formatRelationLine(
+    { constraint: 'dependsOn', target: 'record-b' },
+    targetOptions,
+    t
+  ),
   'Depends on CARD-2 - Beta',
-  'history relation summary displays constraint label + PID title',
+  'history relation summary displays constraint label + PID title'
 )
 assert(
   buildRelationConstraintOptions(records, t, config).some(
-    (option) => option.value === 'customConfigRelation',
+    (option) => option.value === 'customConfigRelation'
   ),
-  'constraint options include configured constraints',
+  'constraint options include configured constraints'
 )
 assert(
   buildRelationConstraintOptions(records, t, config).some(
-    (option) => option.value === 'customObservedRelation',
+    (option) => option.value === 'customObservedRelation'
   ),
-  'constraint options include observed constraints',
+  'constraint options include observed constraints'
 )
 
-console.log(`\n${failures === 0 ? 'relationDisplay devcheck passed' : `${failures} failures`}`)
+console.log(
+  `\n${failures === 0 ? 'relationDisplay devcheck passed' : `${failures} failures`}`
+)
 if (failures > 0) throw new Error(`${failures} assertions failed`)

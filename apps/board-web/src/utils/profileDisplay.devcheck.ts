@@ -49,14 +49,34 @@ const color2 = avatarColor('pk-abc')
 const color3 = avatarColor('pk-xyz')
 check('same pk same color', color1, color2)
 check('different pk different color (likely)', color1 !== color3, true)
-check('empty pk produces valid color', avatarColor(null).startsWith('hsl('), true)
+check(
+  'empty pk produces valid color',
+  avatarColor(null).startsWith('hsl('),
+  true
+)
 
 console.log('\nformatProfileCompact')
 const profile = { pk: 'pk-alice', name: 'Alice Example', avatarUrl: null }
-check('known profile compact', formatProfileCompact('pk-alice', profile, 'Unassigned', 'Unknown member'), 'Alice Example#pk-alice')
-check('unknown pk compact', formatProfileCompact('pk-unknown', null, 'Unassigned', 'Unknown member'), 'Unknown member#pk-unkno')
-check('empty pk compact', formatProfileCompact('', profile, 'Unassigned', 'Unknown member'), 'Unassigned')
-check('null pk compact', formatProfileCompact(null, profile, 'Unassigned', 'Unknown member'), 'Unassigned')
+check(
+  'known profile compact',
+  formatProfileCompact('pk-alice', profile, 'Unassigned', 'Unknown member'),
+  'Alice Example#pk-alice'
+)
+check(
+  'unknown pk compact',
+  formatProfileCompact('pk-unknown', null, 'Unassigned', 'Unknown member'),
+  'Unknown member#pk-unkno'
+)
+check(
+  'empty pk compact',
+  formatProfileCompact('', profile, 'Unassigned', 'Unknown member'),
+  'Unassigned'
+)
+check(
+  'null pk compact',
+  formatProfileCompact(null, profile, 'Unassigned', 'Unknown member'),
+  'Unassigned'
+)
 
 console.log('\nbuildProfileOptions')
 const options = buildProfileOptions([profile])
@@ -64,5 +84,7 @@ check('one option built', options.length, 1)
 check('compact label format', options[0].label, 'Alice Example#pk-alice')
 check('null profiles', buildProfileOptions(null), [])
 
-console.log(`\n${passed} passed, ${failures} failed${failures > 0 ? ' ❌' : ' ✓'}`)
+console.log(
+  `\n${passed} passed, ${failures} failed${failures > 0 ? ' ❌' : ' ✓'}`
+)
 process.exit(failures > 0 ? 1 : 0)

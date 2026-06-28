@@ -70,6 +70,7 @@ curl http://localhost:8787/api/v0/board/current
 ```
 
 The response should contain:
+
 - `data.records.length > 0`
 - Each record has `pid`, `body.id` (UUID), `tags` with `status:*` etc.
 - Chinese text in record titles and descriptions is readable UTF-8
@@ -79,11 +80,13 @@ The response should contain:
 If you can see records in MongoDB Compass but `GET /api/v0/board/current` returns `data.records = []`, check:
 
 1. **Does `.env` exist?**
+
    ```bash
    ls apps/board-api/.env
    ```
 
 2. **Does `.env` contain `MONGODB_URI` and `MONGODB_DB`?**
+
    ```bash
    cat apps/board-api/.env | grep MONGO
    ```

@@ -2,11 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import type { SnapshotDetail, SnapshotSummary } from '@labour-board/shared'
 import { exportSnapshot } from '../api/exports'
-import {
-  createSnapshot,
-  fetchSnapshot,
-  fetchSnapshots,
-} from '../api/snapshots'
+import { createSnapshot, fetchSnapshot, fetchSnapshots } from '../api/snapshots'
 import { downloadTextFile } from '../utils/download'
 import { toastError, toastSuccess } from '../utils/toasts'
 
@@ -20,15 +16,17 @@ export function useSnapshotController() {
   const [isSnapshotDetailLoading, setIsSnapshotDetailLoading] = useState(false)
   const [isSnapshotCreating, setIsSnapshotCreating] = useState(false)
   const [isSnapshotExporting, setIsSnapshotExporting] = useState(false)
-  const [snapshotListError, setSnapshotListError] = useState<string | null>(null)
+  const [snapshotListError, setSnapshotListError] = useState<string | null>(
+    null
+  )
   const [snapshotDetailError, setSnapshotDetailError] = useState<string | null>(
-    null,
+    null
   )
   const [snapshotCreateError, setSnapshotCreateError] = useState<string | null>(
-    null,
+    null
   )
   const [snapshotExportError, setSnapshotExportError] = useState<string | null>(
-    null,
+    null
   )
 
   const snapshotListRequestIdRef = useRef(0)
@@ -203,7 +201,11 @@ export function useSnapshotController() {
     setIsSnapshotExporting(true)
     setSnapshotExportError(null)
 
-    void exportSnapshot(selectedSnapshot.id, { level: 'full' }, controller.signal)
+    void exportSnapshot(
+      selectedSnapshot.id,
+      { level: 'full' },
+      controller.signal
+    )
       .then((data) => {
         if (
           snapshotExportRequestIdRef.current !== requestId ||
@@ -248,7 +250,7 @@ export function useSnapshotController() {
     void exportSnapshot(
       selectedSnapshot.id,
       { profile: 'agent-snapshot' },
-      controller.signal,
+      controller.signal
     )
       .then((data) => {
         if (

@@ -53,7 +53,7 @@ ${extra}`
 }
 
 function validOutput(
-  overrides?: Partial<AgentSuggestionProviderOutput>,
+  overrides?: Partial<AgentSuggestionProviderOutput>
 ): AgentSuggestionProviderOutput {
   return {
     title: 'Suggestion',
@@ -74,7 +74,7 @@ describe('agentSuggestionQuality', () => {
 
   it('missing title fails', () => {
     expect(() =>
-      validateSuggestionOutput(validOutput({ title: '' }), config),
+      validateSuggestionOutput(validOutput({ title: '' }), config)
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -82,14 +82,14 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ markdown: validMarkdown().replace('## 3. Risks', '') }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
   it('empty markdown fails', () => {
     expect(() =>
-      validateSuggestionOutput(validOutput({ markdown: '   ' }), config),
+      validateSuggestionOutput(validOutput({ markdown: '   ' }), config)
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -97,8 +97,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ markdown: validMarkdown('\nI applied the patch.') }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -106,8 +106,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ markdown: validMarkdown('x'.repeat(10_000)) }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -115,8 +115,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ highlights: ['One', 2 as unknown as string] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -125,7 +125,7 @@ describe('agentSuggestionQuality', () => {
       validOutput({
         highlights: ['1', '2', '3', '4', '5', '6'],
       }),
-      config,
+      config
     )
     expect(output.highlights).toEqual(['1', '2', '3', '4', '5'])
   })
@@ -136,8 +136,8 @@ describe('agentSuggestionQuality', () => {
         validOutput({
           diagnostics: 'not-array' as unknown as string[],
         }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -147,8 +147,8 @@ describe('agentSuggestionQuality', () => {
         validOutput({
           diagnostics: ['ok', 1 as unknown as string],
         }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -158,8 +158,8 @@ describe('agentSuggestionQuality', () => {
         validOutput({
           diagnostics: ['x'.repeat(501)],
         }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -169,8 +169,8 @@ describe('agentSuggestionQuality', () => {
         validOutput({
           diagnostics: ['OPENAI_API_KEY was present'],
         }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -179,7 +179,7 @@ describe('agentSuggestionQuality', () => {
       validOutput({
         diagnostics: ['Mock provider generated a bounded diagnostic.'],
       }),
-      config,
+      config
     )
     expect(output.diagnostics).toEqual([
       'Mock provider generated a bounded diagnostic.',
@@ -190,28 +190,43 @@ describe('agentSuggestionQuality', () => {
 
   it('output null fails as AgentProviderOutputValidationError', () => {
     expect(() =>
-      validateSuggestionOutput(null as unknown as AgentSuggestionProviderOutput, config),
+      validateSuggestionOutput(
+        null as unknown as AgentSuggestionProviderOutput,
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
   it('output string fails as AgentProviderOutputValidationError', () => {
     expect(() =>
-      validateSuggestionOutput('string' as unknown as AgentSuggestionProviderOutput, config),
+      validateSuggestionOutput(
+        'string' as unknown as AgentSuggestionProviderOutput,
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
   it('output array fails as AgentProviderOutputValidationError', () => {
     expect(() =>
-      validateSuggestionOutput([] as unknown as AgentSuggestionProviderOutput, config),
+      validateSuggestionOutput(
+        [] as unknown as AgentSuggestionProviderOutput,
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
   it('output object missing markdown fails', () => {
     expect(() =>
       validateSuggestionOutput(
-        { title: 'T', summary: 'S', highlights: [], provider: 'p', model: 'm' } as AgentSuggestionProviderOutput,
-        config,
-      ),
+        {
+          title: 'T',
+          summary: 'S',
+          highlights: [],
+          provider: 'p',
+          model: 'm',
+        } as AgentSuggestionProviderOutput,
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -219,8 +234,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ markdown: 123 as unknown as string }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -230,8 +245,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['some authorization header was sent'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -239,8 +254,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['used bearer token'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -248,8 +263,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['sent bearer auth'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -257,8 +272,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['the api_key was set'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -266,8 +281,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['secret key was used'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -275,8 +290,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['access_token was provided'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -284,8 +299,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['Prompt was too long'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -293,21 +308,24 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['raw response was logged'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
   it('diagnostics exceeding 20 entries fails', () => {
     const entries = Array.from({ length: 21 }, (_, i) => `diagnostic ${i + 1}`)
     expect(() =>
-      validateSuggestionOutput(validOutput({ diagnostics: entries }), config),
+      validateSuggestionOutput(validOutput({ diagnostics: entries }), config)
     ).toThrow(AgentProviderOutputValidationError)
   })
 
   it('diagnostics at exactly 20 entries passes', () => {
     const entries = Array.from({ length: 20 }, (_, i) => `diagnostic ${i + 1}`)
-    const output = validateSuggestionOutput(validOutput({ diagnostics: entries }), config)
+    const output = validateSuggestionOutput(
+      validOutput({ diagnostics: entries }),
+      config
+    )
     expect(output.diagnostics?.length).toBe(20)
   })
 
@@ -316,7 +334,7 @@ describe('agentSuggestionQuality', () => {
   it('diagnostics containing "token budget" passes', () => {
     const output = validateSuggestionOutput(
       validOutput({ diagnostics: ['token budget: 5000 tokens allocated'] }),
-      config,
+      config
     )
     expect(output.diagnostics).toBeDefined()
   })
@@ -324,7 +342,7 @@ describe('agentSuggestionQuality', () => {
   it('diagnostics containing "input tokens" passes', () => {
     const output = validateSuggestionOutput(
       validOutput({ diagnostics: ['input tokens: 1200'] }),
-      config,
+      config
     )
     expect(output.diagnostics).toBeDefined()
   })
@@ -332,7 +350,7 @@ describe('agentSuggestionQuality', () => {
   it('diagnostics containing "estimated output tokens" passes', () => {
     const output = validateSuggestionOutput(
       validOutput({ diagnostics: ['estimated output tokens: 800'] }),
-      config,
+      config
     )
     expect(output.diagnostics).toBeDefined()
   })
@@ -340,7 +358,7 @@ describe('agentSuggestionQuality', () => {
   it('diagnostics containing token usage budget sentence passes', () => {
     const output = validateSuggestionOutput(
       validOutput({ diagnostics: ['Token usage is within budget'] }),
-      config,
+      config
     )
     expect(output.diagnostics).toBeDefined()
   })
@@ -348,7 +366,7 @@ describe('agentSuggestionQuality', () => {
   it('diagnostics containing "token 预算" passes', () => {
     const output = validateSuggestionOutput(
       validOutput({ diagnostics: ['token 预算: 5000'] }),
-      config,
+      config
     )
     expect(output.diagnostics).toBeDefined()
   })
@@ -359,8 +377,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['the api key was set'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -368,8 +386,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['used Bearer token for auth'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -377,8 +395,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['access token is invalid'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -386,8 +404,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['refresh token was used'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -395,8 +413,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['Authorization header present'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -404,8 +422,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['检测到 密钥 泄露'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 
@@ -413,8 +431,8 @@ describe('agentSuggestionQuality', () => {
     expect(() =>
       validateSuggestionOutput(
         validOutput({ diagnostics: ['私钥 不应出现在日志中'] }),
-        config,
-      ),
+        config
+      )
     ).toThrow(AgentProviderOutputValidationError)
   })
 })

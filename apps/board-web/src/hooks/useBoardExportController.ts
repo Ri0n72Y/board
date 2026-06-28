@@ -32,11 +32,11 @@ export function useBoardExportController({
 }: UseBoardExportControllerParams) {
   const [isCurrentExporting, setIsCurrentExporting] = useState(false)
   const [currentExportError, setCurrentExportError] = useState<string | null>(
-    null,
+    null
   )
   const [isContextExporting, setIsContextExporting] = useState(false)
   const [contextExportError, setContextExportError] = useState<string | null>(
-    null,
+    null
   )
   const currentExportRequestIdRef = useRef(0)
   const contextExportRequestIdRef = useRef(0)
@@ -70,7 +70,7 @@ export function useBoardExportController({
         level: hasFilters ? 'filtered' : 'full',
         filters: hasFilters ? appliedFilters : undefined,
       },
-      controller.signal,
+      controller.signal
     )
       .then((data) => {
         if (
@@ -103,10 +103,12 @@ export function useBoardExportController({
 
   const exportContextPack = useCallback(
     (options: ExportContextPackOptions): boolean => {
-      const profileDefinition = getAgentContextProfileDefinition(options.profile)
+      const profileDefinition = getAgentContextProfileDefinition(
+        options.profile
+      )
       const validationError = validateContextPackOptions(
         options,
-        profileDefinition.usesCurrentFilters ? appliedFilters : undefined,
+        profileDefinition.usesCurrentFilters ? appliedFilters : undefined
       )
       if (validationError) {
         setContextExportError(validationError)
@@ -130,17 +132,21 @@ export function useBoardExportController({
           contextGoal: options.contextGoal?.trim() || undefined,
           recordId: options.recordId,
           sprintTag: options.sprintTag,
-          filters: profileDefinition.usesCurrentFilters ? appliedFilters : undefined,
+          filters: profileDefinition.usesCurrentFilters
+            ? appliedFilters
+            : undefined,
           includeDiagnostics:
-            options.includeDiagnostics ?? profileDefinition.defaultIncludeDiagnostics,
+            options.includeDiagnostics ??
+            profileDefinition.defaultIncludeDiagnostics,
           includeRelations:
-            options.includeRelations ?? profileDefinition.defaultIncludeRelations,
+            options.includeRelations ??
+            profileDefinition.defaultIncludeRelations,
           includeAssets:
             options.includeAssets ?? profileDefinition.defaultIncludeAssets,
           includeContent:
             options.includeContent ?? profileDefinition.defaultIncludeContent,
         },
-        controller.signal,
+        controller.signal
       )
         .then((data) => {
           if (
@@ -172,7 +178,7 @@ export function useBoardExportController({
 
       return true
     },
-    [appliedFilters],
+    [appliedFilters]
   )
 
   return {
@@ -187,7 +193,7 @@ export function useBoardExportController({
 
 function validateContextPackOptions(
   options: ExportContextPackOptions,
-  filters?: BoardCurrentFilters,
+  filters?: BoardCurrentFilters
 ): string | null {
   return (
     validateAgentContextProfileOptions({
@@ -196,8 +202,7 @@ function validateContextPackOptions(
       recordId: options.recordId,
       sprintTag: options.sprintTag,
       filters,
-    }) ??
-    null
+    }) ?? null
   )
 }
 

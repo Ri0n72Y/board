@@ -58,7 +58,7 @@ describe('agentProviderConfig', () => {
     expect(() =>
       loadAgentProviderRuntimeConfig({
         AGENT_SUGGESTION_PROVIDER: 'anthropic',
-      }),
+      })
     ).toThrow(AgentProviderConfigError)
   })
 
@@ -86,7 +86,7 @@ describe('agentProviderConfig', () => {
     expect(() =>
       loadAgentProviderRuntimeConfig({
         AGENT_SUGGESTION_MAX_INPUT_CHARS: '-1',
-      }),
+      })
     ).toThrow(AgentProviderConfigError)
   })
 })

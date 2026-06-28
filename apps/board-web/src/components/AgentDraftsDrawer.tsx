@@ -37,7 +37,7 @@ interface AgentDraftsDrawerProps {
   onUpdateReview?: (
     draftId: string,
     status: AgentDraftStatus,
-    reviewNote?: string,
+    reviewNote?: string
   ) => void
   // Agent Suggestion
   suggestions?: AgentSuggestionSummary[]
@@ -50,7 +50,7 @@ interface AgentDraftsDrawerProps {
   suggestionGenerateError?: string | null
   onGenerateSuggestion?: (
     draftId: string,
-    instruction?: string,
+    instruction?: string
   ) => void | Promise<unknown>
   onSelectSuggestion?: (suggestionId: string) => void
   // Patch Draft
@@ -116,14 +116,21 @@ export function AgentDraftsDrawer({
 
         <section className="min-w-0">
           {isDetailLoading && (
-            <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">{t('agent.loadingDetail')}</div>
+            <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">
+              {t('agent.loadingDetail')}
+            </div>
           )}
-          {detailError && <ErrorBlock title={t('agent.detailFailed')} message={detailError} />}
+          {detailError && (
+            <ErrorBlock title={t('agent.detailFailed')} message={detailError} />
+          )}
           {!isDetailLoading && !detailError && selectedDraft && (
             <div className="grid gap-4">
               <AgentDraftSafetyBanner />
 
-              <AgentDraftMetaPanel key={`draft-meta:${selectedDraft.id}`} draft={selectedDraft} />
+              <AgentDraftMetaPanel
+                key={`draft-meta:${selectedDraft.id}`}
+                draft={selectedDraft}
+              />
 
               <AgentDraftReviewInfo draft={selectedDraft} />
 
@@ -160,7 +167,9 @@ export function AgentDraftsDrawer({
             </div>
           )}
           {!isDetailLoading && !detailError && !selectedDraft && (
-            <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">{t('agent.selectHint')}</div>
+            <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">
+              {t('agent.selectHint')}
+            </div>
           )}
         </section>
       </div>

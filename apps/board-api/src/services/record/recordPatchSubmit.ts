@@ -142,9 +142,7 @@ export async function submitRecordPatch(
   }
 
   if (target.tags.includes('status:archived')) {
-    throw new RecordValidationError(
-      `Cannot patch archived record ${targetId}`
-    )
+    throw new RecordValidationError(`Cannot patch archived record ${targetId}`)
   }
 
   assertRecordPatchNonEmpty(input)
@@ -282,9 +280,7 @@ async function assertRecordIsNotArchivedInCurrentState(params: {
   }
   const current = replayRecordHistory(target, chain.orderedPatches).finalState
   if (current.tags.includes('status:archived')) {
-    throw new RecordValidationError(
-      `Cannot patch archived record ${targetId}`
-    )
+    throw new RecordValidationError(`Cannot patch archived record ${targetId}`)
   }
 }
 

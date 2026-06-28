@@ -93,10 +93,7 @@ async function dropDatabase(): Promise<void> {
 describe('Mongo smoke', () => {
   // Gate the entire suite
   if (!RUN_SMOKE) {
-    it.skip(
-      'Mongo smoke disabled 鈥?set RUN_MONGO_SMOKE=true to enable',
-      () => {}
-    )
+    it.skip('Mongo smoke disabled 鈥?set RUN_MONGO_SMOKE=true to enable', () => {})
     return
   }
 
@@ -158,19 +155,20 @@ describe('Mongo smoke', () => {
     const recordId: string = createPayload.data.body.id
 
     // Create patch
-    const patchRes = await app.request(
-      `/api/v0/records/${recordId}/patches`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          parentId: null,
-          currentVersion: 0,
-          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
-          body: { description: 'Mongo patch' },
-        }),
-        headers: { 'content-type': 'application/json' },
-      }
-    )
+    const patchRes = await app.request(`/api/v0/records/${recordId}/patches`, {
+      method: 'POST',
+      body: JSON.stringify({
+        parentId: null,
+        currentVersion: 0,
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
+        body: { description: 'Mongo patch' },
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
     expect(patchRes.status).toBe(201)
 
     // Board current
@@ -211,18 +209,19 @@ describe('Mongo smoke', () => {
     expect(head0.data.lastPatchId).toBeNull()
 
     // Apply a patch
-    const patchRes = await app.request(
-      `/api/v0/records/${recordId}/patches`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          parentId: null,
-          currentVersion: head0.data.currentVersion,
-          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
-        }),
-        headers: { 'content-type': 'application/json' },
-      }
-    )
+    const patchRes = await app.request(`/api/v0/records/${recordId}/patches`, {
+      method: 'POST',
+      body: JSON.stringify({
+        parentId: null,
+        currentVersion: head0.data.currentVersion,
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
     expect(patchRes.status).toBe(201)
     const patchPayload = await patchRes.json()
     const patchId: string = patchPayload.data.patch.body.id
@@ -263,14 +262,16 @@ describe('Mongo smoke', () => {
       body: JSON.stringify({
         parentId: null,
         currentVersion: 0,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
       }),
       headers: { 'content-type': 'application/json' },
     })
 
-    const historyRes = await app.request(
-      `/api/v0/records/${recordId}/history`
-    )
+    const historyRes = await app.request(`/api/v0/records/${recordId}/history`)
     expect(historyRes.status).toBe(200)
     const historyPayload = await historyRes.json()
 
@@ -302,23 +303,30 @@ describe('Mongo smoke', () => {
       body: JSON.stringify({
         parentId: null,
         currentVersion: 0,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
       }),
       headers: { 'content-type': 'application/json' },
     })
 
     const archiveHeadRes = await app.request(`/api/v0/records/${recordId}/head`)
     const archiveHead = await archiveHeadRes.json()
-    const archiveResponse = await app.request(`/api/v0/records/${recordId}/patches`, {
-      method: 'POST',
-      body: JSON.stringify({
-        parentId: archiveHead.data.lastPatchId,
-        currentVersion: archiveHead.data.currentVersion,
-        tagChanges: { add: ['status:archived'] },
-        description: 'Archive record',
-      }),
-      headers: { 'content-type': 'application/json' },
-    })
+    const archiveResponse = await app.request(
+      `/api/v0/records/${recordId}/patches`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          parentId: archiveHead.data.lastPatchId,
+          currentVersion: archiveHead.data.currentVersion,
+          tagChanges: { add: ['status:archived'] },
+          description: 'Archive record',
+        }),
+        headers: { 'content-type': 'application/json' },
+      }
+    )
     expect(archiveResponse.status).toBe(201)
 
     // Board current: archived hidden by default
@@ -362,7 +370,11 @@ describe('Mongo smoke', () => {
       body: JSON.stringify({
         parentId: null,
         currentVersion: 0,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
       }),
       headers: { 'content-type': 'application/json' },
     })
@@ -414,33 +426,35 @@ describe('Mongo smoke', () => {
     const recordId: string = (await createRes.json()).data.body.id
 
     // Client A succeeds
-    const resA = await app.request(
-      `/api/v0/records/${recordId}/patches`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          parentId: null,
-          currentVersion: 0,
-          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
-        }),
-        headers: { 'content-type': 'application/json' },
-      }
-    )
+    const resA = await app.request(`/api/v0/records/${recordId}/patches`, {
+      method: 'POST',
+      body: JSON.stringify({
+        parentId: null,
+        currentVersion: 0,
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
     expect(resA.status).toBe(201)
 
     // Client B retries with same stale currentVersion 鈫?409
-    const resB = await app.request(
-      `/api/v0/records/${recordId}/patches`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          parentId: null,
-          currentVersion: 0,
-          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
-        }),
-        headers: { 'content-type': 'application/json' },
-      }
-    )
+    const resB = await app.request(`/api/v0/records/${recordId}/patches`, {
+      method: 'POST',
+      body: JSON.stringify({
+        parentId: null,
+        currentVersion: 0,
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
     expect(resB.status).toBe(409)
 
     // Only one patch in collection
@@ -473,18 +487,19 @@ describe('Mongo smoke', () => {
     })
     const recordId: string = (await createRes.json()).data.body.id
 
-    const patchRes = await app.request(
-      `/api/v0/records/${recordId}/patches`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          parentId: null,
-          currentVersion: 0,
-          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
-        }),
-        headers: { 'content-type': 'application/json' },
-      }
-    )
+    const patchRes = await app.request(`/api/v0/records/${recordId}/patches`, {
+      method: 'POST',
+      body: JSON.stringify({
+        parentId: null,
+        currentVersion: 0,
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
     expect(patchRes.status).toBe(201)
     const firstPatchId: string = (await patchRes.json()).data.patch.body.id
 
@@ -498,14 +513,19 @@ describe('Mongo smoke', () => {
     // head (same lastPatchId, correct currentVersion).
     const secondPatch: StoredPatchDoc = {
       id: crypto.randomUUID(),
-      pid: (headBefore! as Record<string, unknown>).records &&
+      pid:
+        (headBefore! as Record<string, unknown>).records &&
         (headBefore! as any).records[recordId]
-        ? (headBefore! as any).records[recordId].lastPatchId
-        : 'missing',
+          ? (headBefore! as any).records[recordId].lastPatchId
+          : 'missing',
       targetId: recordId,
       parentId: firstPatchId,
       schema: 'CardBody',
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:done' },
+        ],
+      },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
 
@@ -602,18 +622,19 @@ describe('Mongo smoke', () => {
     })
     const recordId: string = (await createRes.json()).data.body.id
 
-    const patchRes = await app.request(
-      `/api/v0/records/${recordId}/patches`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          parentId: null,
-          currentVersion: 0,
-          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
-        }),
-        headers: { 'content-type': 'application/json' },
-      }
-    )
+    const patchRes = await app.request(`/api/v0/records/${recordId}/patches`, {
+      method: 'POST',
+      body: JSON.stringify({
+        parentId: null,
+        currentVersion: 0,
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
+      }),
+      headers: { 'content-type': 'application/json' },
+    })
     expect(patchRes.status).toBe(201)
     const firstPatchId: string = (await patchRes.json()).data.patch.body.id
 
@@ -628,7 +649,11 @@ describe('Mongo smoke', () => {
       targetId: recordId,
       parentId: firstPatchId,
       schema: 'CardBody',
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:done' },
+        ],
+      },
     } as any
 
     const repo = snapshotHeadRepository as unknown as {
@@ -653,7 +678,9 @@ describe('Mongo smoke', () => {
       get(target, prop, receiver) {
         const orig = Reflect.get(target, prop, receiver)
         if (prop === 'deleteOne') {
-          return async () => { throw cleanupError }
+          return async () => {
+            throw cleanupError
+          }
         }
         if (typeof orig === 'function') return orig.bind(target)
         return orig

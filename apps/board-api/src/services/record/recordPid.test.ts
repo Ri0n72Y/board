@@ -50,7 +50,12 @@ describe('RecordService pid allocation', () => {
     const config = cloneDefaultBoardConfig()
     const writer = createWriter()
     const repository = new MemoryRecordRepository()
-    const service = new RecordService(repository, new MemorySnapshotHeadRepository(repository), config, writer)
+    const service = new RecordService(
+      repository,
+      new MemorySnapshotHeadRepository(repository),
+      config,
+      writer
+    )
 
     const records = await Promise.all(
       Array.from({ length: 5 }, (_, index) =>
@@ -84,7 +89,11 @@ describe('RecordService pid allocation', () => {
       createdBy: 'local',
       createdAt: '2020-01-01T00:00:00.000Z',
     })
-    const service = new RecordService(repository, new MemorySnapshotHeadRepository(repository), cloneDefaultBoardConfig())
+    const service = new RecordService(
+      repository,
+      new MemorySnapshotHeadRepository(repository),
+      cloneDefaultBoardConfig()
+    )
 
     const record = await service.create({
       schema: 'CardBody',
@@ -117,7 +126,12 @@ describe('RecordService pid allocation', () => {
       createdBy: 'local',
       createdAt: '2020-01-01T00:00:00.000Z',
     })
-    const service = new RecordService(repository, new MemorySnapshotHeadRepository(repository), config, writer)
+    const service = new RecordService(
+      repository,
+      new MemorySnapshotHeadRepository(repository),
+      config,
+      writer
+    )
 
     await service.reconcilePidState()
 
@@ -137,7 +151,12 @@ describe('RecordService pid allocation', () => {
     }
     const writer = createWriter()
     const repository = new MemoryRecordRepository()
-    const service = new RecordService(repository, new MemorySnapshotHeadRepository(repository), config, writer)
+    const service = new RecordService(
+      repository,
+      new MemorySnapshotHeadRepository(repository),
+      config,
+      writer
+    )
 
     await service.reconcilePidState()
 

@@ -34,7 +34,10 @@ interface BoardCurrentState {
   setRelationTarget: (relationTarget: string) => void
   setFilters: (filters: BoardCurrentFilters) => void
   setEffectiveFilters: (filters: BoardCurrentFilters) => void
-  loadCurrentBoard: (filters: BoardCurrentFilters, signal?: AbortSignal) => Promise<void>
+  loadCurrentBoard: (
+    filters: BoardCurrentFilters,
+    signal?: AbortSignal
+  ) => Promise<void>
 }
 
 const initialFilters = getInitialFilters()
@@ -162,7 +165,8 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
 }))
 
 function getInitialFilters(): BoardCurrentFilters {
-  if (typeof window === 'undefined') return cloneFilters(DEFAULT_BOARD_CURRENT_FILTERS)
+  if (typeof window === 'undefined')
+    return cloneFilters(DEFAULT_BOARD_CURRENT_FILTERS)
   return parseBoardFilterUrl(window.location.search)
 }
 

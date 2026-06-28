@@ -82,8 +82,9 @@ describe('createSnapshotsRoute', () => {
       `/api/v0/snapshots/${createPayload.data.snapshot.id}`
     )
     const detailPayload = await detailResponse.json()
-    expect(detailPayload.data.snapshot.projection.records[0].body.body.title)
-      .toBe('Snapshot smoke')
+    expect(
+      detailPayload.data.snapshot.projection.records[0].body.body.title
+    ).toBe('Snapshot smoke')
   })
 
   it('keeps old snapshot static after later create and patch', async () => {
@@ -99,7 +100,11 @@ describe('createSnapshotsRoute', () => {
     await postPatch(app, record.id, {
       parentId: headPayload.data.lastPatchId,
       currentVersion: headPayload.data.currentVersion,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:done' },
+        ],
+      },
       body: { title: 'Static after' },
     })
 
@@ -153,8 +158,12 @@ describe('createSnapshotsRoute', () => {
 
     expect(exportResponse.status).toBe(200)
     expect(exportPayload.data.filename).toMatch(/snapshot-.*-full-.*\.md/)
-    expect(exportPayload.data.content).toContain('# LabourBoard Snapshot Export')
-    expect(exportPayload.data.content).toContain(`- Snapshot ID: ${snapshot.id}`)
+    expect(exportPayload.data.content).toContain(
+      '# LabourBoard Snapshot Export'
+    )
+    expect(exportPayload.data.content).toContain(
+      `- Snapshot ID: ${snapshot.id}`
+    )
     expect(exportPayload.data.content).toContain('玩家抽牌')
     expect(exportPayload.data.content).toContain('status:doing')
     expect(exportPayload.data.content).toContain(source?.id)
@@ -183,7 +192,9 @@ describe('createSnapshotsRoute', () => {
       '## Agent Reading Instructions'
     )
     expect(contextPayload.data.content).toContain('static checkpoint')
-    expect(contextPayload.data.content).toContain(`- Snapshot ID: ${snapshot.id}`)
+    expect(contextPayload.data.content).toContain(
+      `- Snapshot ID: ${snapshot.id}`
+    )
     expect(contextPayload.data.content).toContain(source?.id)
     expect(contextPayload.data.content).toContain('Depends on CARD-4')
     expect(contextPayload.data.content).toContain(`target id: ${target?.id}`)
@@ -192,8 +203,12 @@ describe('createSnapshotsRoute', () => {
 
   it('applies unified filters to snapshot export while preserving full reference scope', async () => {
     const { app } = createApp()
-    const asset = await createCard(app, 'Snapshot Outside Asset', ['status:todo'])
-    const target = await createCard(app, 'Snapshot Outside Target', ['status:todo'])
+    const asset = await createCard(app, 'Snapshot Outside Asset', [
+      'status:todo',
+    ])
+    const target = await createCard(app, 'Snapshot Outside Target', [
+      'status:todo',
+    ])
     await app.request('/api/v0/records', {
       method: 'POST',
       body: JSON.stringify({
@@ -222,8 +237,12 @@ describe('createSnapshotsRoute', () => {
     expect(byAssetPayload.data.content).toContain(`raw id: ${asset.id}`)
     expect(byAssetPayload.data.content).toContain('Snapshot Outside Target')
     expect(byAssetPayload.data.content).toContain(`target id: ${target.id}`)
-    expect(byAssetPayload.data.content).not.toContain('#### CARD-1 - Snapshot Outside Asset')
-    expect(byAssetPayload.data.content).not.toContain('#### CARD-2 - Snapshot Outside Target')
+    expect(byAssetPayload.data.content).not.toContain(
+      '#### CARD-1 - Snapshot Outside Asset'
+    )
+    expect(byAssetPayload.data.content).not.toContain(
+      '#### CARD-2 - Snapshot Outside Target'
+    )
 
     const byRelation = await app.request(
       `/api/v0/snapshots/${snapshot.id}/export?level=filtered&relationTarget=${target.id}`
@@ -261,13 +280,19 @@ describe('createSnapshotsRoute', () => {
     const headBefore = await recordService.getRecordCurrentHead(record.id)
 
     await createSnapshot(app, 'Head check')
-    const headAfterSnapshot = await recordService.getRecordCurrentHead(record.id)
+    const headAfterSnapshot = await recordService.getRecordCurrentHead(
+      record.id
+    )
     expect(headAfterSnapshot).toEqual(headBefore)
 
     const patchResponse = await postPatch(app, record.id, {
       parentId: headAfterSnapshot?.lastPatchId ?? null,
       currentVersion: headAfterSnapshot?.currentVersion,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:done' },
+        ],
+      },
     })
     expect(patchResponse.status).toBe(201)
   })

@@ -55,7 +55,9 @@ export function RecordHistoryDrawer({
   const baseRecord = history?.record.body
   const finalState = history?.replay?.finalState
   const editableRecord =
-    history && finalState ? { ...history.record, body: finalState } : history?.record
+    history && finalState
+      ? { ...history.record, body: finalState }
+      : history?.record
   const displayPid = pid ?? finalState?.pid ?? baseRecord?.pid ?? recordId ?? ''
   const displayTitle =
     title ?? titleFromBody(finalState?.body) ?? titleFromBody(baseRecord?.body)
@@ -64,14 +66,17 @@ export function RecordHistoryDrawer({
   const headerTitle =
     displayPid && displayTitle
       ? `${displayPid} · ${displayTitle}`
-      : displayTitle ?? displayPid ?? t('history.defaultTitle')
+      : (displayTitle ?? displayPid ?? t('history.defaultTitle'))
 
   const footer = (
     <div className="flex flex-wrap items-center justify-between gap-2">
       <div>
         {history && (
           <span className="text-sm text-slate-600">
-            {[statusText, t('history.changeCount', { count: history.patches.length })]
+            {[
+              statusText,
+              t('history.changeCount', { count: history.patches.length }),
+            ]
               .filter(Boolean)
               .join(' · ')}
           </span>
@@ -151,7 +156,12 @@ function HistoryContent({
     <div className="grid gap-4">
       <HistoryStatus history={history} />
       <BaseRecordDetails history={history} />
-      <PatchList history={history} language={language} assetOptions={assetOptions} profiles={profiles} />
+      <PatchList
+        history={history}
+        language={language}
+        assetOptions={assetOptions}
+        profiles={profiles}
+      />
       <HistoryDebug history={history} />
     </div>
   )
@@ -230,7 +240,14 @@ function PatchList({
         assetOptions,
         formatAssignee,
       }),
-    [history.patches, language, copy, history.references, assetOptions, formatAssignee]
+    [
+      history.patches,
+      language,
+      copy,
+      history.references,
+      assetOptions,
+      formatAssignee,
+    ]
   )
 
   return (
@@ -249,10 +266,7 @@ function PatchList({
       ) : (
         <ol className="grid gap-3">
           {timeline.map((item) => (
-            <PatchCard
-              item={item}
-              key={item.patch.body.id}
-            />
+            <PatchCard item={item} key={item.patch.body.id} />
           ))}
         </ol>
       )}
@@ -282,7 +296,10 @@ function PatchCard({
 
       <div className="grid gap-1.5">
         {item.lines.map((line) => (
-          <div className="text-sm text-slate-900" key={`${line.label}:${line.value}`}>
+          <div
+            className="text-sm text-slate-900"
+            key={`${line.label}:${line.value}`}
+          >
             <span className="font-semibold">{line.label}</span>
             <span>{t('history.summarySeparator')}</span>
             <span>{line.value}</span>
@@ -306,17 +323,26 @@ function HistoryDebug({ history }: { history: RecordHistoryResponse }) {
   const { t } = useTranslation()
 
   return (
-    <details open={debugInitiallyOpen()} className="rounded-md border border-slate-200 bg-white p-4">
+    <details
+      open={debugInitiallyOpen()}
+      className="rounded-md border border-slate-200 bg-white p-4"
+    >
       <summary className="cursor-pointer text-sm font-semibold text-slate-700">
         {t('history.debugInfo')}
       </summary>
       <div className="mt-3 grid gap-4">
-        <DebugJson title={t('history.finalState')} value={history.replay?.finalState} />
+        <DebugJson
+          title={t('history.finalState')}
+          value={history.replay?.finalState}
+        />
         <DebugJson
           title={t('history.diagnostics')}
           value={history.diagnostics ?? []}
         />
-        <DebugJson title={t('history.references')} value={history.references ?? {}} />
+        <DebugJson
+          title={t('history.references')}
+          value={history.references ?? {}}
+        />
       </div>
     </details>
   )

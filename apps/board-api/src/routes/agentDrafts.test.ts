@@ -266,9 +266,10 @@ describe('Agent Drafts route', () => {
       headers: { 'content-type': 'application/json' },
     })
     const detailRes = await app.request(
-      `/api/v0/agent/drafts/${(await createRes.json()).data.draft.id}`,
+      `/api/v0/agent/drafts/${(await createRes.json()).data.draft.id}`
     )
-    const markdown = (await detailRes.json()).data.draft.contextMarkdown as string
+    const markdown = (await detailRes.json()).data.draft
+      .contextMarkdown as string
     expect(markdown).toContain('Agent Reading Instructions')
     expect(markdown).toContain('not execution authorization')
     expect(markdown).toContain('Keep relation targets as UUID')
@@ -363,13 +364,13 @@ describe('Agent Drafts route', () => {
     const listRes = await app.request('/api/v0/agent/drafts')
     const listPayload = await listRes.json()
     const summary = listPayload.data.drafts.find(
-      (draft: { id: string }) => draft.id === createPayload.data.draft.id,
+      (draft: { id: string }) => draft.id === createPayload.data.draft.id
     )
     expect(summary).toBeDefined()
     expect('contextMarkdown' in summary).toBe(false)
 
     const detailRes = await app.request(
-      `/api/v0/agent/drafts/${createPayload.data.draft.id}`,
+      `/api/v0/agent/drafts/${createPayload.data.draft.id}`
     )
     const detailPayload = await detailRes.json()
     expect(detailPayload.data.draft.contextMarkdown).toBe(markdown)
@@ -426,7 +427,9 @@ describe('Agent Drafts route', () => {
     expect(byAsset.contextMarkdown).toContain('Filtered Draft Target')
     expect(byAsset.contextMarkdown).toContain(`target id: ${target.id}`)
     expect(byAsset.contextMarkdown).not.toContain('#### ASSET-')
-    expect(byAsset.contextMarkdown).not.toContain('#### CARD-1 - Filtered Draft Target')
+    expect(byAsset.contextMarkdown).not.toContain(
+      '#### CARD-1 - Filtered Draft Target'
+    )
     expect(byAsset.contextMarkdown).not.toContain('Unmatched Draft Record')
 
     const byRelation = await createAgentFilteredDraft(app, {
@@ -439,14 +442,16 @@ describe('Agent Drafts route', () => {
     const listRes = await app.request('/api/v0/agent/drafts')
     const listPayload = await listRes.json()
     const summary = listPayload.data.drafts.find(
-      (draft: { id: string }) => draft.id === byAsset.id,
+      (draft: { id: string }) => draft.id === byAsset.id
     )
     expect(summary).toBeDefined()
     expect('contextMarkdown' in summary).toBe(false)
 
     const detailRes = await app.request(`/api/v0/agent/drafts/${byAsset.id}`)
     const detailPayload = await detailRes.json()
-    expect(detailPayload.data.draft.contextMarkdown).toBe(byAsset.contextMarkdown)
+    expect(detailPayload.data.draft.contextMarkdown).toBe(
+      byAsset.contextMarkdown
+    )
   })
 
   it('agent-filtered draft includeArchived can include archived records', async () => {
@@ -461,7 +466,9 @@ describe('Agent Drafts route', () => {
       q: 'Archived Draft Source',
     })
     expect(excluded.recordCount).toBe(0)
-    expect(excluded.contextMarkdown).not.toContain('#### CARD-1 - Archived Draft Source')
+    expect(excluded.contextMarkdown).not.toContain(
+      '#### CARD-1 - Archived Draft Source'
+    )
 
     const included = await createAgentFilteredDraft(app, {
       q: 'Archived Draft Source',
@@ -509,7 +516,8 @@ describe('Agent Drafts route', () => {
       headers: { 'content-type': 'application/json' },
     })
     expect(createRes.status).toBe(201)
-    const markdown = (await createRes.json()).data.draft.contextMarkdown as string
+    const markdown = (await createRes.json()).data.draft
+      .contextMarkdown as string
 
     expect(markdown).toContain('ASSET-1 - Snapshot Asset')
     expect(markdown).toContain(`raw id: ${asset.id}`)
@@ -559,7 +567,7 @@ describe('Agent Drafts route', () => {
       headers: { 'content-type': 'application/json' },
     })
     const detailRes = await app.request(
-      `/api/v0/agent/drafts/${(await createRes.json()).data.draft.id}`,
+      `/api/v0/agent/drafts/${(await createRes.json()).data.draft.id}`
     )
     const payload = await detailRes.json()
     const json = JSON.stringify(payload.data.draft)
@@ -604,14 +612,17 @@ describe('Agent Draft Review Actions', () => {
     })
     const draftId = (await createRes.json()).data.draft.id
 
-    const patchRes = await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        status: 'reviewed',
-        reviewNote: 'Looks good',
-      }),
-      headers: { 'content-type': 'application/json' },
-    })
+    const patchRes = await app.request(
+      `/api/v0/agent/drafts/${draftId}/review`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: 'reviewed',
+          reviewNote: 'Looks good',
+        }),
+        headers: { 'content-type': 'application/json' },
+      }
+    )
     expect(patchRes.status).toBe(200)
     const payload = await patchRes.json()
     expect(payload.ok).toBe(true)
@@ -647,7 +658,9 @@ describe('Agent Draft Review Actions', () => {
     // List summary shows discarded
     const listRes = await app.request('/api/v0/agent/drafts')
     const listPayload = await listRes.json()
-    const discarded = listPayload.data.drafts.find((d: { id: string }) => d.id === draftId)
+    const discarded = listPayload.data.drafts.find(
+      (d: { id: string }) => d.id === draftId
+    )
     expect(discarded.status).toBe('discarded')
     expect(discarded.reviewedAt).toBeDefined()
   })
@@ -675,11 +688,14 @@ describe('Agent Draft Review Actions', () => {
     })
 
     // Then reset to draft, keep reviewNote
-    const resetRes = await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status: 'draft', reviewNote: 'reset note' }),
-      headers: { 'content-type': 'application/json' },
-    })
+    const resetRes = await app.request(
+      `/api/v0/agent/drafts/${draftId}/review`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'draft', reviewNote: 'reset note' }),
+        headers: { 'content-type': 'application/json' },
+      }
+    )
     const payload = await resetRes.json()
     expect(payload.data.draft.status).toBe('draft')
     expect(payload.data.draft.reviewedAt).toBeUndefined()
@@ -759,7 +775,9 @@ describe('Agent Draft Review Actions', () => {
     })
 
     const boardAfter = await app.request('/api/v0/board/current')
-    expect((await boardAfter.json()).data.records.length).toBe(recordCountBefore)
+    expect((await boardAfter.json()).data.records.length).toBe(
+      recordCountBefore
+    )
 
     const snapshotsRes = await app.request('/api/v0/snapshots')
     expect((await snapshotsRes.json()).data.snapshots.length).toBe(0)
@@ -807,11 +825,14 @@ describe('Agent Draft Review Actions', () => {
     })
     const draftId = (await createRes.json()).data.draft.id
 
-    const patchRes = await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status: 'reviewed' }),
-      headers: { 'content-type': 'application/json' },
-    })
+    const patchRes = await app.request(
+      `/api/v0/agent/drafts/${draftId}/review`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'reviewed' }),
+        headers: { 'content-type': 'application/json' },
+      }
+    )
     const json = JSON.stringify((await patchRes.json()).data.draft)
     expect(json).not.toContain('sk-')
     expect(json).not.toContain('AGENT_API_KEY')
@@ -838,7 +859,10 @@ describe('Agent Draft Handoff', () => {
     // Mark as reviewed
     await app.request(`/api/v0/agent/drafts/${draftId}/review`, {
       method: 'PATCH',
-      body: JSON.stringify({ status: 'reviewed', reviewNote: 'Approved for handoff' }),
+      body: JSON.stringify({
+        status: 'reviewed',
+        reviewNote: 'Approved for handoff',
+      }),
       headers: { 'content-type': 'application/json' },
     })
 
@@ -849,10 +873,18 @@ describe('Agent Draft Handoff', () => {
     expect(payload.data.handoff).toBeDefined()
     expect(payload.data.handoff.format).toBe('markdown')
     expect(typeof payload.data.handoff.content).toBe('string')
-    expect(payload.data.handoff.content).toContain('LabourBoard Agent Manual Handoff')
-    expect(payload.data.handoff.content).toContain('not execution authorization')
-    expect(payload.data.handoff.content).toContain('not execution authorization')
-    expect(payload.data.handoff.content).toContain('## Original Agent Context Pack')
+    expect(payload.data.handoff.content).toContain(
+      'LabourBoard Agent Manual Handoff'
+    )
+    expect(payload.data.handoff.content).toContain(
+      'not execution authorization'
+    )
+    expect(payload.data.handoff.content).toContain(
+      'not execution authorization'
+    )
+    expect(payload.data.handoff.content).toContain(
+      '## Original Agent Context Pack'
+    )
     expect(payload.data.handoff.content).toContain('Handoff Metadata')
     expect(payload.data.handoff.content).toContain('Reviewed By')
     expect(payload.data.handoff.content).toContain('Reviewed At')
@@ -967,7 +999,9 @@ describe('Agent Draft Handoff', () => {
 
     // No records created
     const boardAfter = await app.request('/api/v0/board/current')
-    expect((await boardAfter.json()).data.records.length).toBe(recordCountBefore)
+    expect((await boardAfter.json()).data.records.length).toBe(
+      recordCountBefore
+    )
 
     // No snapshots created
     const snapshotsRes = await app.request('/api/v0/snapshots')
@@ -1004,7 +1038,9 @@ describe('Agent Draft Handoff', () => {
 })
 
 describe('buildAgentDraftHandoffMarkdown (shared purity)', () => {
-  function makeMockDraft(overrides: Partial<AgentDraftDetail> = {}): AgentDraftDetail {
+  function makeMockDraft(
+    overrides: Partial<AgentDraftDetail> = {}
+  ): AgentDraftDetail {
     return {
       id: 'test-id-123',
       title: 'Test Draft',
@@ -1058,28 +1094,28 @@ describe('buildAgentDraftHandoffMarkdown (shared purity)', () => {
   it('throws for non-reviewed draft', () => {
     const draft = makeMockDraft({ status: 'draft' })
     expect(() => buildAgentDraftHandoffMarkdown(draft)).toThrow(
-      AgentDraftHandoffValidationError,
+      AgentDraftHandoffValidationError
     )
   })
 
   it('throws for discarded draft', () => {
     const draft = makeMockDraft({ status: 'discarded' })
     expect(() => buildAgentDraftHandoffMarkdown(draft)).toThrow(
-      AgentDraftHandoffValidationError,
+      AgentDraftHandoffValidationError
     )
   })
 
   it('throws when missing reviewedAt', () => {
     const draft = makeMockDraft({ reviewedAt: undefined })
     expect(() => buildAgentDraftHandoffMarkdown(draft)).toThrow(
-      AgentDraftHandoffValidationError,
+      AgentDraftHandoffValidationError
     )
   })
 
   it('throws when missing reviewedBy', () => {
     const draft = makeMockDraft({ reviewedBy: undefined })
     expect(() => buildAgentDraftHandoffMarkdown(draft)).toThrow(
-      AgentDraftHandoffValidationError,
+      AgentDraftHandoffValidationError
     )
   })
 
@@ -1132,7 +1168,7 @@ async function createRecord(app: Hono, input: Record<string, unknown>) {
 
 async function createAgentFilteredDraft(
   app: Hono,
-  filters: Record<string, unknown>,
+  filters: Record<string, unknown>
 ) {
   const response = await app.request('/api/v0/agent/drafts', {
     method: 'POST',

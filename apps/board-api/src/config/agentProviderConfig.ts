@@ -15,8 +15,7 @@ export interface AgentProviderRuntimeConfig {
   enabled: boolean
 }
 
-export interface InternalAgentProviderRuntimeConfig
-  extends AgentProviderRuntimeConfig {
+export interface InternalAgentProviderRuntimeConfig extends AgentProviderRuntimeConfig {
   apiKey?: string
 }
 
@@ -30,13 +29,15 @@ const DEFAULT_TIMEOUT_MS = 30_000
 const DEFAULT_RETRY_MAX_ATTEMPTS = 0
 
 export function loadAgentProviderRuntimeConfig(
-  env: NodeJS.ProcessEnv = process.env,
+  env: NodeJS.ProcessEnv = process.env
 ): AgentProviderRuntimeConfig {
-  return stripPrivateAgentProviderConfig(loadInternalAgentProviderRuntimeConfig(env))
+  return stripPrivateAgentProviderConfig(
+    loadInternalAgentProviderRuntimeConfig(env)
+  )
 }
 
 export function loadInternalAgentProviderRuntimeConfig(
-  env: NodeJS.ProcessEnv = process.env,
+  env: NodeJS.ProcessEnv = process.env
 ): InternalAgentProviderRuntimeConfig {
   const kind = parseProviderKind(env.AGENT_SUGGESTION_PROVIDER)
   const apiKey = trimOrUndefined(env.AGENT_SUGGESTION_API_KEY)
@@ -50,43 +51,43 @@ export function loadInternalAgentProviderRuntimeConfig(
     maxInputChars: parsePositiveInteger(
       env.AGENT_SUGGESTION_MAX_INPUT_CHARS,
       DEFAULT_MAX_INPUT_CHARS,
-      'AGENT_SUGGESTION_MAX_INPUT_CHARS',
+      'AGENT_SUGGESTION_MAX_INPUT_CHARS'
     ),
     maxOutputChars: parsePositiveInteger(
       env.AGENT_SUGGESTION_MAX_OUTPUT_CHARS,
       DEFAULT_MAX_OUTPUT_CHARS,
-      'AGENT_SUGGESTION_MAX_OUTPUT_CHARS',
+      'AGENT_SUGGESTION_MAX_OUTPUT_CHARS'
     ),
     maxEstimatedInputTokens: parsePositiveInteger(
       env.AGENT_SUGGESTION_MAX_ESTIMATED_INPUT_TOKENS,
       DEFAULT_MAX_ESTIMATED_INPUT_TOKENS,
-      'AGENT_SUGGESTION_MAX_ESTIMATED_INPUT_TOKENS',
+      'AGENT_SUGGESTION_MAX_ESTIMATED_INPUT_TOKENS'
     ),
     maxEstimatedOutputTokens: parsePositiveInteger(
       env.AGENT_SUGGESTION_MAX_ESTIMATED_OUTPUT_TOKENS,
       DEFAULT_MAX_ESTIMATED_OUTPUT_TOKENS,
-      'AGENT_SUGGESTION_MAX_ESTIMATED_OUTPUT_TOKENS',
+      'AGENT_SUGGESTION_MAX_ESTIMATED_OUTPUT_TOKENS'
     ),
     requestTimeoutMs: parsePositiveInteger(
       env.AGENT_SUGGESTION_TIMEOUT_MS,
       DEFAULT_TIMEOUT_MS,
-      'AGENT_SUGGESTION_TIMEOUT_MS',
+      'AGENT_SUGGESTION_TIMEOUT_MS'
     ),
     retryMaxAttempts: parseNonNegativeInteger(
       env.AGENT_SUGGESTION_RETRY_MAX_ATTEMPTS,
       DEFAULT_RETRY_MAX_ATTEMPTS,
-      'AGENT_SUGGESTION_RETRY_MAX_ATTEMPTS',
+      'AGENT_SUGGESTION_RETRY_MAX_ATTEMPTS'
     ),
     costBudgetCents: parseOptionalPositiveInteger(
       env.AGENT_SUGGESTION_COST_BUDGET_CENTS,
-      'AGENT_SUGGESTION_COST_BUDGET_CENTS',
+      'AGENT_SUGGESTION_COST_BUDGET_CENTS'
     ),
     enabled: kind === 'mock' || kind === 'openai-compatible',
   }
 }
 
 export function stripPrivateAgentProviderConfig(
-  config: InternalAgentProviderRuntimeConfig,
+  config: InternalAgentProviderRuntimeConfig
 ): AgentProviderRuntimeConfig {
   const { apiKey: _apiKey, ...publicConfig } = config
   return publicConfig
@@ -103,14 +104,14 @@ function parseProviderKind(value: string | undefined): AgentProviderKind {
     return normalized
   }
   throw new AgentProviderConfigError(
-    `Invalid AGENT_SUGGESTION_PROVIDER "${normalized}". Expected mock, disabled, or openai-compatible.`,
+    `Invalid AGENT_SUGGESTION_PROVIDER "${normalized}". Expected mock, disabled, or openai-compatible.`
   )
 }
 
 function parsePositiveInteger(
   value: string | undefined,
   fallback: number,
-  name: string,
+  name: string
 ): number {
   if (value === undefined || value.trim() === '') return fallback
   const parsed = Number(value)
@@ -123,13 +124,13 @@ function parsePositiveInteger(
 function parseNonNegativeInteger(
   value: string | undefined,
   fallback: number,
-  name: string,
+  name: string
 ): number {
   if (value === undefined || value.trim() === '') return fallback
   const parsed = Number(value)
   if (!Number.isInteger(parsed) || parsed < 0) {
     throw new AgentProviderConfigError(
-      `${name} must be a non-negative integer.`,
+      `${name} must be a non-negative integer.`
     )
   }
   return parsed
@@ -137,7 +138,7 @@ function parseNonNegativeInteger(
 
 function parseOptionalPositiveInteger(
   value: string | undefined,
-  name: string,
+  name: string
 ): number | undefined {
   if (value === undefined || value.trim() === '') return undefined
   return parsePositiveInteger(value, 1, name)

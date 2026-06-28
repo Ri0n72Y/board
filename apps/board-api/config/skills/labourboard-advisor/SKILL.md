@@ -23,6 +23,7 @@ LabourBoard provides several context artifacts:
 ### Record
 
 Each record has:
+
 - `pid`: A short, human-readable project identifier (e.g. `PROJ-42`).
 - `id`: A unique UUID for the record.
 - `schema`: The record type — `card`, `asset`, or `transaction`.
@@ -36,6 +37,7 @@ Each record has:
 ### Patch
 
 Patches are the only mutation mechanism in LabourBoard. Each patch:
+
 - Targets one record.
 - Modifies `title`, `description`, `content`, `tags`, `assignee`,
   `assets`, or `relations`.
@@ -44,6 +46,7 @@ Patches are the only mutation mechanism in LabourBoard. Each patch:
 ### Tags
 
 Tags use `namespace:value` format. Common namespaces:
+
 - `status`: Workflow state (todo, doing, review, done, blocked, archived).
 - `priority`: Importance/urgency (p0 through p3).
 - `sprint`: Sprint assignment.
@@ -53,6 +56,7 @@ Tags use `namespace:value` format. Common namespaces:
 ### Relations
 
 Relations connect records with constraints:
+
 - `blocks` / `blockedBy`: Dependency blocking.
 - `dependsOn`: Prerequisite dependency.
 - `childOf` / `parentOf`: Hierarchical relationship.
@@ -104,6 +108,7 @@ one sentence that captures the most important finding or recommendation.
 
 A factual description of the current board state based on the provided
 context. Include:
+
 - Total records, their status distribution.
 - Sprint coverage and epic alignment.
 - Assignee workload distribution.
@@ -113,6 +118,7 @@ context. Include:
 ## 3. Risks
 
 Identify risks with explicit record references (`pid/id`). Group by:
+
 - **Blockers**: Records that block other work.
 - **Bottlenecks**: Overloaded assignees or stalled records.
 - **Missing Dependencies**: Records without required relations.
@@ -122,6 +128,7 @@ Identify risks with explicit record references (`pid/id`). Group by:
 ## 4. Recommended Actions
 
 Specific, actionable recommendations. Each recommendation must:
+
 - Reference specific records by `pid/id`.
 - Explain the reasoning.
 - Be something a human can act on.
@@ -130,6 +137,7 @@ Specific, actionable recommendations. Each recommendation must:
 ## 5. Patch Candidate Notes
 
 For each recommendation that would require a patch, describe:
+
 - The target record (`pid/id`).
 - What field(s) to change.
 - The before and after values.
@@ -142,6 +150,7 @@ in the LabourBoard UI.
 ## 6. Questions for Human Review
 
 List questions that require human judgment. Examples:
+
 - "Is `PROJ-12` intentionally unassigned?"
 - "Should `PROJ-05` and `PROJ-08` have a `dependsOn` relation?"
 - "Are the 3 records in `sprint:2` with no `priority` tag correctly scoped?"
@@ -149,6 +158,7 @@ List questions that require human judgment. Examples:
 ## 7. Limits
 
 Acknowledge the boundaries of this analysis:
+
 - What the context includes and does not include.
 - Any assumptions made.
 - What additional information would improve accuracy.

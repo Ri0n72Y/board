@@ -82,46 +82,60 @@ describe('filterBoardCurrentRecords', () => {
 
   it('filters tags with all and any semantics', () => {
     expect(
-      ids(filterBoardCurrentRecords(currentRecords, {
-        tags: ['status:wip', 'priority:urgent-important'],
-        tagMatch: 'all',
-      }))
+      ids(
+        filterBoardCurrentRecords(currentRecords, {
+          tags: ['status:wip', 'priority:urgent-important'],
+          tagMatch: 'all',
+        })
+      )
     ).toEqual(['record-visible'])
 
     expect(
-      ids(filterBoardCurrentRecords(currentRecords, {
-        tags: ['status:wip', 'status:todo'],
-        tagMatch: 'any',
-      }))
+      ids(
+        filterBoardCurrentRecords(currentRecords, {
+          tags: ['status:wip', 'status:todo'],
+          tagMatch: 'any',
+        })
+      )
     ).toEqual(['record-visible', 'record-other'])
   })
 
   it('filters by assignee', () => {
     expect(
-      ids(filterBoardCurrentRecords(currentRecords, {
-        assignee: 'member-visible',
-      }))
+      ids(
+        filterBoardCurrentRecords(currentRecords, {
+          assignee: 'member-visible',
+        })
+      )
     ).toEqual(['record-visible'])
   })
 
   it('filters by assetId', () => {
     expect(
-      ids(filterBoardCurrentRecords(currentRecords, {
-        assetId: 'asset-visible',
-      }))
+      ids(
+        filterBoardCurrentRecords(currentRecords, {
+          assetId: 'asset-visible',
+        })
+      )
     ).toEqual(['record-visible'])
   })
 
   it('filters by relationTarget', () => {
     expect(
-      ids(filterBoardCurrentRecords(currentRecords, {
-        relationTarget: targetId,
-      }))
+      ids(
+        filterBoardCurrentRecords(currentRecords, {
+          relationTarget: targetId,
+        })
+      )
     ).toEqual(['record-visible'])
   })
 
   it('matches q against current title, description, and content', () => {
-    for (const q of ['visible title', 'visible description', 'visible content']) {
+    for (const q of [
+      'visible title',
+      'visible description',
+      'visible content',
+    ]) {
       expect(ids(filterBoardCurrentRecords(currentRecords, { q }))).toEqual([
         'record-visible',
       ])

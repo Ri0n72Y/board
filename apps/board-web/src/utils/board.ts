@@ -22,7 +22,7 @@ export function hasEffectiveFilters(filters: BoardCurrentFilters): boolean {
 
 /** Extract unique tags from the current projection's records. */
 export function extractKnownTags(
-  projection: BoardCurrentProjection | null,
+  projection: BoardCurrentProjection | null
 ): Tag[] {
   const values = new Set<Tag>()
   for (const record of projection?.records ?? []) {
@@ -36,7 +36,7 @@ export function extractKnownTags(
 /** Merge projection tags with config-defined tags, deduped and sorted. */
 export function mergeKnownTags(
   projection: BoardCurrentProjection | null,
-  config: BoardConfig | null,
+  config: BoardConfig | null
 ): Tag[] {
   const values = new Set<Tag>()
 
@@ -73,7 +73,7 @@ export function mergeKnownTags(
 /** Look up a profile by public key. Returns undefined if not found. */
 export function lookupProfile(
   profiles: Profile[] | null,
-  pk: string | undefined | null,
+  pk: string | undefined | null
 ): Profile | undefined {
   if (!profiles || !pk) return undefined
   return profiles.find((p) => p.pk === pk)
@@ -112,7 +112,7 @@ export function getConfigOtherTags(config: BoardConfig | null): Tag[] {
 /** Get display name for a tag from config definitions. */
 export function getTagDisplayFromConfig(
   tag: Tag,
-  config: BoardConfig | null,
+  config: BoardConfig | null
 ): string | undefined {
   if (!config) return undefined
   const allDefs: TagDefinition[] = [
@@ -131,7 +131,7 @@ export function getTagDisplayFromConfig(
 
 /** Extract assignee options from profiles for SearchSelect dropdowns. */
 export function getProfileOptions(
-  profiles: Profile[] | null,
+  profiles: Profile[] | null
 ): { value: string; label: string; description: string; meta: string }[] {
   if (!profiles) return []
   return buildProfileOptions(profiles)
@@ -142,7 +142,7 @@ export function formatAssigneeForDisplay(
   pk: PublicKey | undefined | null,
   profiles: Profile[] | null,
   unassignedLabel: string,
-  unknownLabel: string,
+  unknownLabel: string
 ): string {
   if (!pk || pk.trim() === '') return unassignedLabel
   const profile = lookupProfile(profiles, pk)
@@ -153,7 +153,7 @@ export function formatAssigneeForDisplay(
 /** Get initials for a profile or fallback from pk. */
 export function getProfileInitials(
   profile: Profile | undefined,
-  pk: PublicKey | undefined | null,
+  pk: PublicKey | undefined | null
 ): string {
   return profileInitials(profile?.name, pk ?? '')
 }

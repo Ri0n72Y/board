@@ -1,6 +1,6 @@
 export function keyStableTextItems(
   items: string[],
-  prefix: string,
+  prefix: string
 ): { key: string; text: string }[] {
   const seen = new Map<string, number>()
   return items.map((text) => {

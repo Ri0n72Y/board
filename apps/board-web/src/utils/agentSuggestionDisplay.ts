@@ -1,4 +1,7 @@
-import type { AgentSuggestionDetail, AgentSuggestionSummary } from '@labour-board/shared'
+import type {
+  AgentSuggestionDetail,
+  AgentSuggestionSummary,
+} from '@labour-board/shared'
 
 export const MAX_SUMMARY_LENGTH = 600
 export const MAX_HIGHLIGHTS = 5
@@ -8,9 +11,7 @@ export function trimSuggestionSummary(raw: string): string {
   return raw.slice(0, MAX_SUMMARY_LENGTH - 3) + '...'
 }
 
-export function limitSuggestionHighlights(
-  highlights: string[],
-): string[] {
+export function limitSuggestionHighlights(highlights: string[]): string[] {
   return highlights.slice(0, MAX_HIGHLIGHTS)
 }
 
@@ -30,7 +31,7 @@ export interface SuggestionCardViewModel {
 }
 
 export function toSuggestionCardViewModel(
-  summary: AgentSuggestionSummary,
+  summary: AgentSuggestionSummary
 ): SuggestionCardViewModel {
   const {
     id,
@@ -68,7 +69,7 @@ export interface SuggestionDetailViewModel extends SuggestionCardViewModel {
 }
 
 export function toSuggestionDetailViewModel(
-  detail: AgentSuggestionDetail,
+  detail: AgentSuggestionDetail
 ): SuggestionDetailViewModel {
   return {
     ...toSuggestionCardViewModel(detail),

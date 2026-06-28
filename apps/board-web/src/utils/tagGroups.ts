@@ -47,9 +47,7 @@ const NAMESPACE_PREFIXES: Record<string, TagGroupKey> = {
  * Group tags by their canonical namespace.
  * Unknown / custom / bare tags go to `other`.
  */
-export function groupTagsByNamespace(
-  tags: string[],
-): TagGroup[] {
+export function groupTagsByNamespace(tags: string[]): TagGroup[] {
   const groups = new Map<TagGroupKey, string[]>()
 
   for (const tag of tags) {

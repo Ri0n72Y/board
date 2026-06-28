@@ -1,7 +1,4 @@
-export {
-  loadBoardConfig,
-  loadBoardConfigState,
-} from './boardConfigLoader.js'
+export { loadBoardConfig, loadBoardConfigState } from './boardConfigLoader.js'
 export { normalizeBoardConfig } from './boardConfigNormalize.js'
 export {
   collectBoardConfigWarnings,

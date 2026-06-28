@@ -10,10 +10,7 @@ interface IssuesPanelProps {
   diagnostics: ProjectionDiagnostic[]
 }
 
-export function IssuesPanel({
-  blockedRecords,
-  diagnostics,
-}: IssuesPanelProps) {
+export function IssuesPanel({ blockedRecords, diagnostics }: IssuesPanelProps) {
   if (blockedRecords.length === 0 && diagnostics.length === 0) return null
 
   return (
@@ -72,7 +69,10 @@ function IssueList({
   return (
     <ul className="grid gap-1.5">
       {items.map((item) => (
-        <li className="flex flex-wrap gap-2 break-words text-red-800" key={item.key}>
+        <li
+          className="flex flex-wrap gap-2 break-words text-red-800"
+          key={item.key}
+        >
           <strong>{item.title}</strong>
           <span>{item.message}</span>
         </li>
