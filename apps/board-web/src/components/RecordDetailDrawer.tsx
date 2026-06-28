@@ -20,7 +20,14 @@ import { fetchRecordHead } from '../api/recordHead'
 import { RecordPatchConflictError, submitRecordPatch } from '../api/patches'
 import type { SubmitRecordPatchPayload } from '../api/patches'
 import { useBoardCurrentStore } from '../stores/boardCurrentStore'
-import { lookupProfile } from '../utils/board'
+import { useBoardMetadataStore } from '../stores/boardMetadataStore'
+import {
+  getConfigOtherTags,
+  getConfigPriorityTags,
+  getConfigStatusTags,
+  getProfileOptions,
+  lookupProfile,
+} from '../utils/board'
 import {
   asEditableBody,
   buildPatchDraft,
@@ -28,29 +35,33 @@ import {
   type EditPatchFormState,
 } from '../utils/editPatchDraft'
 import { formatProfileCompact } from '../utils/profileDisplay'
+import { formatTagLabel } from '../utils/tagDisplay'
 import { toastError, toastSuccess, toastWarning } from '../utils/toasts'
 import { AnimatedDrawer } from './ui/AnimatedDrawer'
 import { Button } from './ui/Button'
 import { ProfileAvatar } from './ProfileAvatar'
 import { TagChipRow } from './BoardFilters'
+import { SearchSelect } from './ui/SearchSelect'
 import { EditableSection } from './recordDetailEdit/EditableSection'
 import { UnsavedChangesDialog } from './recordDetailEdit/UnsavedChangesDialog'
 import { useSectionEditState } from './recordDetailEdit/useSectionEditState'
 
-type DetailEditSection = 'title' | 'summary' | 'details'
+type DetailEditSection = 'title' | 'summary' | 'details' | 'assignee' | 'tags'
 
 type PendingAction =
   | { type: 'close' }
   | { type: 'history' }
   | { type: 'edit'; section: DetailEditSection }
 
-interface SavedDisplayBody {
+interface DisplayRecordState {
   recordId: string
   body: {
     title: string
     description: string
     content: string
   }
+  assignee: string
+  tags: Tag[]
 }
 
 interface RecordDetailDrawerProps {
@@ -75,30 +86,43 @@ export function RecordDetailDrawer({
   onClose,
   onHistoryClick,
 }: RecordDetailDrawerProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
   const effectiveFilters = useBoardCurrentStore((state) => state.effectiveFilters)
   const loadCurrentBoard = useBoardCurrentStore((state) => state.loadCurrentBoard)
+  const config = useBoardMetadataStore((state) => state.config)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [baseHead, setBaseHead] = useState<BaseHead | null>(null)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
-  const [savedDisplayBody, setSavedDisplayBody] = useState<SavedDisplayBody | null>(null)
+  const [savedDisplayRecord, setSavedDisplayRecord] =
+    useState<DisplayRecordState | null>(null)
   const requestIdRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
 
   const current = record?.body ?? null
-  const body = useMemo(() => {
-    if (!current) return emptyBody()
-    if (savedDisplayBody?.recordId === current.id) return savedDisplayBody.body
-    return asEditableBody(current.body)
-  }, [current, savedDisplayBody])
+  const displayRecord = useMemo(() => {
+    if (!current) return emptyDisplayRecord()
+    if (savedDisplayRecord?.recordId === current.id) return savedDisplayRecord
+    return {
+      recordId: current.id,
+      body: asEditableBody(current.body),
+      assignee: current.assignee ?? '',
+      tags: [...current.tags],
+    }
+  }, [current, savedDisplayRecord])
+  const baselineRecord = useMemo(
+    () => (current ? buildBaselineRecord(current, displayRecord) : null),
+    [current, displayRecord],
+  )
   const initialDraft = useCallback(
-    () => (current ? initialFormState(current, body) : emptyFormState()),
-    [body, current],
+    () => (baselineRecord ? initialFormState(baselineRecord, displayRecord.body) : emptyFormState()),
+    [baselineRecord, displayRecord.body],
   )
   const isDraftDirty = useCallback(
-    (draft: EditPatchFormState) => Boolean(current && buildPatchDraft(draft, current).ok),
-    [current],
+    (draft: EditPatchFormState) =>
+      Boolean(baselineRecord && buildPatchDraft(draft, baselineRecord).ok),
+    [baselineRecord],
   )
   const editState = useSectionEditState<DetailEditSection, EditPatchFormState>({
     initialDraft,
@@ -149,17 +173,44 @@ export function RecordDetailDrawer({
     return () => abortRequest(requestIdRef, abortRef)
   }, [current, open, t])
 
-  if (!open || !record || !current) return null
+  if (!open || !record || !current || !baselineRecord) return null
 
   const activeRecord = record
   const activeCurrent = current
-  const profile = lookupProfile(profiles ?? null, activeCurrent.assignee ?? '')
+  const activeBaseline = baselineRecord
+  const displayBody = displayRecord.body
+  const displayAssignee = displayRecord.assignee
+  const displayTags = displayRecord.tags
+  const profile = lookupProfile(profiles ?? null, displayAssignee)
   const assigneeDisplay = formatProfileCompact(
-    activeCurrent.assignee,
+    displayAssignee,
     profile,
     t('record.unassigned'),
     t('record.unknownMember'),
   )
+  const profileOptions = getProfileOptions(profiles ?? null)
+  const configuredStatusTags = getConfigStatusTags(config)
+  const configuredPriorityTags = getConfigPriorityTags(config)
+  const configuredOtherTags = getConfigOtherTags(config)
+  const statusOptions = uniqueTags([
+    ...configuredStatusTags,
+    ...displayTags.filter((tag) => tag.startsWith('status:')),
+  ])
+  const priorityOptions = uniqueTags([
+    ...configuredPriorityTags,
+    ...displayTags.filter((tag) => tag.startsWith('priority:')),
+  ])
+  const otherTagOptions = uniqueTags([
+    ...configuredOtherTags,
+    ...displayTags.filter(
+      (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:'),
+    ),
+  ])
+  const otherTagSelectOptions = otherTagOptions.map((tag) => ({
+    value: tag,
+    label: formatTagLabel(tag, lang),
+    meta: tag,
+  }))
 
   function beginEdit(section: DetailEditSection) {
     if (
@@ -212,7 +263,7 @@ export function RecordDetailDrawer({
   }
 
   async function save() {
-    const validation = buildPatchDraft(editState.draft, activeCurrent)
+    const validation = buildPatchDraft(editState.draft, activeBaseline)
     if (!validation.ok) {
       const message = t(validation.error)
       setError(message)
@@ -258,13 +309,25 @@ export function RecordDetailDrawer({
       await submitRecordPatch(activeCurrent.id, payload, controller.signal)
       if (requestIdRef.current !== requestId || controller.signal.aborted) return
 
-      setSavedDisplayBody({
+      const updatedHead = await fetchRecordHead(activeCurrent.id, controller.signal)
+      if (requestIdRef.current !== requestId || controller.signal.aborted) return
+      if (updatedHead.exists) {
+        setBaseHead({
+          recordId: activeCurrent.id,
+          lastPatchId: updatedHead.lastPatchId,
+          currentVersion: updatedHead.currentVersion,
+        })
+      }
+
+      setSavedDisplayRecord({
         recordId: activeCurrent.id,
         body: {
           title: editState.draft.title.trim(),
           description: editState.draft.summary.trim(),
           content: editState.draft.details.trim(),
         },
+        assignee: editState.draft.assignee.trim(),
+        tags: buildDraftTags(editState.draft),
       })
       setIsSaving(false)
       abortRef.current = null
@@ -321,7 +384,7 @@ export function RecordDetailDrawer({
       <AnimatedDrawer
         open={open}
         onClose={requestClose}
-        title={body.title || activeCurrent.pid}
+        title={displayBody.title || activeCurrent.pid}
         subtitle={activeCurrent.pid}
         size="md"
         closeLabel={t('record.close')}
@@ -337,22 +400,44 @@ export function RecordDetailDrawer({
             </section>
           )}
 
-          {activeCurrent.assignee && (
-            <section className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4">
-              <ProfileAvatar
-                name={profile?.name ?? activeCurrent.assignee}
-                pk={activeCurrent.assignee}
-                avatarUrl={profile?.avatarUrl ?? null}
-                size={32}
+          <EditableSection
+            title={t('record.assignee')}
+            editLabel={t('record.edit')}
+            editing={editState.editingSection === 'assignee'}
+            dirty={editState.editingSection === 'assignee' && editState.dirty}
+            disabled={isSaving}
+            onEdit={() => beginEdit('assignee')}
+            editor={
+              <SearchSelect
+                mode="option"
+                label={t('record.assignee')}
+                value={editState.draft.assignee || null}
+                onChange={(next) =>
+                  editState.setDraft((draft) => ({ ...draft, assignee: next ?? '' }))
+                }
+                options={profileOptions}
+                placeholder={t('edit.assigneePlaceholder')}
+                disabled={isSaving}
               />
+            }
+          >
+            <div className="flex items-center gap-3">
+              {displayAssignee && (
+                <ProfileAvatar
+                  name={profile?.name ?? displayAssignee}
+                  pk={displayAssignee}
+                  avatarUrl={profile?.avatarUrl ?? null}
+                  size={32}
+                />
+              )}
               <div>
                 <p className="text-sm font-semibold text-slate-900">
                   {assigneeDisplay}
                 </p>
                 <p className="text-xs text-slate-500">{t('record.assignee')}</p>
               </div>
-            </section>
-          )}
+            </div>
+          </EditableSection>
 
           <dl className="grid gap-2 sm:grid-cols-2">
             <MetaItem label={t('record.schema')} value={activeCurrent.schema} />
@@ -378,7 +463,7 @@ export function RecordDetailDrawer({
             }
           >
             <p className="text-sm leading-relaxed text-slate-800">
-              {body.title || activeCurrent.pid}
+              {displayBody.title || activeCurrent.pid}
             </p>
           </EditableSection>
 
@@ -402,7 +487,7 @@ export function RecordDetailDrawer({
             }
           >
             <p className="text-sm leading-relaxed text-slate-800">
-              {body.description || '—'}
+              {displayBody.description || '—'}
             </p>
           </EditableSection>
 
@@ -426,18 +511,71 @@ export function RecordDetailDrawer({
             }
           >
             <pre className="max-h-60 overflow-y-auto whitespace-pre-wrap break-words rounded bg-slate-50 p-3 text-sm leading-relaxed text-slate-800">
-              {body.content || '—'}
+              {displayBody.content || '—'}
             </pre>
           </EditableSection>
 
-          {activeCurrent.tags.length > 0 && (
-            <section className="rounded-lg border border-slate-200 bg-white p-4">
-              <h3 className="mb-2 text-xs font-bold uppercase text-slate-500">
-                {t('filters.tag')}
-              </h3>
-              <TagChipRow tags={activeCurrent.tags} readonly />
-            </section>
-          )}
+          <EditableSection
+            title={t('filters.tag')}
+            editLabel={t('record.edit')}
+            editing={editState.editingSection === 'tags'}
+            dirty={editState.editingSection === 'tags' && editState.dirty}
+            disabled={isSaving}
+            onEdit={() => beginEdit('tags')}
+            editor={
+              <div className="grid gap-4">
+                <TagOptionGrid
+                  label={t('edit.statusTag')}
+                  tags={statusOptions}
+                  selected={editState.draft.statusTag}
+                  lang={lang}
+                  required
+                  disabled={isSaving}
+                  onSelect={(tag) =>
+                    editState.setDraft((draft) => ({ ...draft, statusTag: tag }))
+                  }
+                />
+                <TagOptionGrid
+                  label={t('edit.priorityTag')}
+                  tags={priorityOptions}
+                  selected={editState.draft.priorityTag}
+                  lang={lang}
+                  disabled={isSaving}
+                  onSelect={(tag) =>
+                    editState.setDraft((draft) => ({
+                      ...draft,
+                      priorityTag: draft.priorityTag === tag ? '' : tag,
+                    }))
+                  }
+                />
+                <SearchSelect
+                  mode="tag"
+                  label={t('edit.otherTags')}
+                  options={otherTagSelectOptions}
+                  values={editState.draft.otherTags}
+                  multiple
+                  onChangeMany={(nextTags) =>
+                    editState.setDraft((draft) => ({
+                      ...draft,
+                      otherTags: nextTags.filter((tag) =>
+                        otherTagOptions.includes(tag as Tag),
+                      ) as Tag[],
+                    }))
+                  }
+                  placeholder={t('searchSelect.searchPlaceholder')}
+                  selectedLabel={t('edit.otherTags')}
+                  emptyText={t('create.noConfigTags')}
+                  disabled={isSaving}
+                />
+              </div>
+            }
+          >
+            {displayTags.length > 0 ? (
+              <TagChipRow tags={displayTags} readonly />
+            ) : (
+              <p className="text-sm text-slate-500">—</p>
+            )}
+          </EditableSection>
 
           {(activeCurrent.assets?.length ?? 0) > 0 && (
             <section className="rounded-lg border border-slate-200 bg-white p-4">
@@ -492,6 +630,51 @@ export function RecordDetailDrawer({
   )
 }
 
+function TagOptionGrid({
+  label,
+  tags,
+  selected,
+  lang,
+  required = false,
+  disabled = false,
+  onSelect,
+}: {
+  label: string
+  tags: Tag[]
+  selected: string
+  lang: string
+  required?: boolean
+  disabled?: boolean
+  onSelect: (tag: Tag) => void
+}) {
+  return (
+    <div className="grid gap-2">
+      <label className="text-xs font-bold text-slate-500">{label}</label>
+      <div className="flex flex-wrap gap-1.5">
+        {tags.map((tag) => {
+          const isSelected = selected === tag
+          return (
+            <button
+              key={tag}
+              type="button"
+              className={
+                isSelected
+                  ? 'inline-flex min-h-7 max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
+                  : 'inline-flex min-h-7 max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
+              }
+              disabled={disabled || (required && isSelected)}
+              onClick={() => onSelect(tag)}
+            >
+              {formatTagLabel(tag, lang)}
+            </button>
+          )
+        })}
+        {tags.length === 0 && <p className="text-sm text-slate-500">—</p>}
+      </div>
+    </div>
+  )
+}
+
 function initialFormState(
   record: RecordItem<RecordBody>,
   body: { title: string; description: string; content: string },
@@ -533,6 +716,51 @@ function emptyFormState(): EditPatchFormState {
 
 function emptyBody() {
   return { title: '', description: '', content: '' }
+}
+
+function emptyDisplayRecord(): DisplayRecordState {
+  return {
+    recordId: '',
+    body: emptyBody(),
+    assignee: '',
+    tags: [],
+  }
+}
+
+function buildBaselineRecord(
+  record: RecordItem<RecordBody>,
+  displayRecord: DisplayRecordState,
+): RecordItem<RecordBody> {
+  const sourceBody =
+    record.body && typeof record.body === 'object' && !Array.isArray(record.body)
+      ? (record.body as Record<string, unknown>)
+      : {}
+  return {
+    ...record,
+    assignee: displayRecord.assignee || undefined,
+    tags: [...displayRecord.tags],
+    body: {
+      ...sourceBody,
+      title: displayRecord.body.title,
+      description: displayRecord.body.description,
+      content: displayRecord.body.content,
+    } as RecordBody,
+  } as RecordItem<RecordBody>
+}
+
+function buildDraftTags(form: EditPatchFormState): Tag[] {
+  return uniqueTags(
+    [
+      form.statusTag.trim() as Tag,
+      form.priorityTag.trim() as Tag,
+      ...form.otherTags,
+      ...form.unsupportedTags,
+    ].filter(Boolean) as Tag[],
+  )
+}
+
+function uniqueTags(tags: Tag[]): Tag[] {
+  return [...new Set(tags)]
 }
 
 function MetaItem({ label, value }: { label: string; value: string }) {
