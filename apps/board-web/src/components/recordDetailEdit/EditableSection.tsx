@@ -8,6 +8,7 @@ interface EditableSectionProps {
   disabled?: boolean
   children: ReactNode
   editor?: ReactNode
+  editLabel: string
   onEdit?: () => void
 }
 
@@ -18,30 +19,40 @@ export function EditableSection({
   disabled = false,
   children,
   editor,
+  editLabel,
   onEdit,
 }: EditableSectionProps) {
   return (
     <section
       className={cn(
-        'rounded-xl border border-slate-200 bg-white p-4 transition-shadow',
+        'rounded-lg border border-slate-200 bg-white p-4 transition',
+        onEdit && !editing && !disabled && 'cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/20',
+        editing && 'border-emerald-300 bg-emerald-50/30',
         dirty && 'shadow-[0_0_0_2px_rgba(16,185,129,0.35)]',
-        editing && 'border-emerald-300 bg-emerald-50/40',
       )}
+      onClick={() => {
+        if (!editing && !disabled) onEdit?.()
+      }}
     >
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h3 className="text-xs font-bold uppercase text-slate-500">{title}</h3>
         {onEdit && !editing && (
           <button
             type="button"
-            className="rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="rounded-md px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
             disabled={disabled}
-            onClick={onEdit}
+            onClick={(event) => {
+              event.stopPropagation()
+              onEdit()
+            }}
           >
-            Edit
+            {editLabel}
           </button>
         )}
       </div>
-      {editing && editor ? editor : children}
+      <div onClick={(event) => event.stopPropagation()}>
+        {editing && editor ? editor : children}
+      </div>
     </section>
   )
 }
