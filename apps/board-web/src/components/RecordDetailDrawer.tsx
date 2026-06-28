@@ -236,6 +236,12 @@ export function RecordDetailDrawer({
     editState.beginEdit(section)
   }
 
+  function clearCleanEditState() {
+    if (editState.editingSections.length === 0 || editState.dirty) return
+    editState.setDraft(initialDraft())
+    editState.setEditingSections([])
+  }
+
   function requestClose() {
     if (!editState.requestClose()) {
       setPendingAction({ type: 'close' })
@@ -250,6 +256,8 @@ export function RecordDetailDrawer({
       setPendingAction({ type: 'history' })
       return
     }
+    editState.setDraft(initialDraft())
+    editState.setEditingSections([])
     onHistoryClick(activeRecord)
   }
 
@@ -409,7 +417,10 @@ export function RecordDetailDrawer({
         closeLabel={t('record.close')}
         footer={footer}
       >
-        <div className="grid content-start gap-4">
+        <div
+          className="grid min-h-full content-start gap-4"
+          onClick={clearCleanEditState}
+        >
           {error && (
             <section
               className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"
