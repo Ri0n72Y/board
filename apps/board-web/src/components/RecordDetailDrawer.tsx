@@ -45,7 +45,6 @@ import { SearchSelect } from './ui/SearchSelect'
 import { EditableSection } from './recordDetailEdit/EditableSection'
 import { UnsavedChangesDialog } from './recordDetailEdit/UnsavedChangesDialog'
 import { useSectionEditState } from './recordDetailEdit/useSectionEditState'
-import { MetaItem } from './agentDrafts/MetaItem'
 
 type DetailEditSection = 'title' | 'summary' | 'details' | 'assignee' | 'tags'
 
@@ -456,14 +455,6 @@ export function RecordDetailDrawer({
               </p>
             </div>
           </EditableSection>
-
-          <dl className="grid gap-2 sm:grid-cols-2">
-            <MetaItem label={t('record.schema')} value={activeCurrent.schema} />
-            <MetaItem
-              label={t('record.created')}
-              value={formatDate(activeRecord.createdAt)}
-            />
-          </dl>
 
           <EditableSection
             title={t('edit.titleField')}
