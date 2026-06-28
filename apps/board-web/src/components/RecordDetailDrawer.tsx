@@ -51,7 +51,6 @@ type DetailEditSection = 'title' | 'summary' | 'details' | 'assignee' | 'tags'
 type PendingAction =
   | { type: 'close' }
   | { type: 'history' }
-  | { type: 'edit'; section: DetailEditSection }
 
 interface DisplayRecordState {
   recordId: string
@@ -88,6 +87,7 @@ export function RecordDetailDrawer({
 }: RecordDetailDrawerProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage ?? i18n.language ?? 'en'
+  const isZh = lang.startsWith('zh')
   const effectiveFilters = useBoardCurrentStore((state) => state.effectiveFilters)
   const loadCurrentBoard = useBoardCurrentStore((state) => state.loadCurrentBoard)
   const config = useBoardMetadataStore((state) => state.config)
@@ -211,17 +211,15 @@ export function RecordDetailDrawer({
     label: formatTagLabel(tag, lang),
     meta: tag,
   }))
+  const sectionDirty = {
+    title: editState.draft.title.trim() !== displayBody.title,
+    summary: normalizeNullable(editState.draft.summary) !== normalizeNullable(displayBody.description),
+    details: normalizeNullable(editState.draft.details) !== normalizeNullable(displayBody.content),
+    assignee: editState.draft.assignee.trim() !== displayAssignee,
+    tags: !sameStringList(buildDraftTags(editState.draft), displayTags),
+  }
 
   function beginEdit(section: DetailEditSection) {
-    if (
-      editState.editingSection &&
-      editState.editingSection !== section &&
-      editState.dirty
-    ) {
-      setPendingAction({ type: 'edit', section })
-      editState.requestSection(section)
-      return
-    }
     editState.beginEdit(section)
   }
 
@@ -255,11 +253,7 @@ export function RecordDetailDrawer({
       onClose()
       return
     }
-    if (action.type === 'history') {
-      onHistoryClick(activeRecord)
-      return
-    }
-    editState.beginEdit(action.section)
+    onHistoryClick(activeRecord)
   }
 
   async function save() {
@@ -357,25 +351,31 @@ export function RecordDetailDrawer({
   }
 
   const footer = (
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={requestHistory}
-        icon={<ClockIcon className="h-4 w-4" />}
-      >
-        {t('record.history')}
-      </Button>
-      {editState.editingSection && (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
-          onClick={() => void save()}
-          disabled={isSaving}
-          icon={<PencilSquareIcon className="h-4 w-4" />}
+          variant="ghost"
+          onClick={requestHistory}
+          icon={<ClockIcon className="h-4 w-4" />}
         >
-          {isSaving ? t('edit.saving') : t('edit.saveButton')}
+          {t('record.history')}
         </Button>
-      )}
+        {editState.editingSections.length > 0 && (
+          <Button
+            type="button"
+            onClick={() => void save()}
+            disabled={isSaving}
+            icon={<PencilSquareIcon className="h-4 w-4" />}
+          >
+            {isSaving ? t('edit.saving') : t('edit.saveButton')}
+          </Button>
+        )}
+      </div>
+      <p className="text-xs text-slate-500">
+        {t('record.created')}: {formatDate(activeRecord.createdAt)} ·{' '}
+        {isZh ? '最近版本' : 'Updated'}: v{baseHead?.currentVersion ?? '—'}
+      </p>
     </div>
   )
 
@@ -402,15 +402,14 @@ export function RecordDetailDrawer({
 
           <EditableSection
             title={t('record.assignee')}
-            editLabel={t('record.edit')}
-            editing={editState.editingSection === 'assignee'}
-            dirty={editState.editingSection === 'assignee' && editState.dirty}
+            inline
+            editing={editState.isEditing('assignee')}
+            dirty={editState.isEditing('assignee') && sectionDirty.assignee}
             disabled={isSaving}
             onEdit={() => beginEdit('assignee')}
             editor={
               <SearchSelect
                 mode="option"
-                label={t('record.assignee')}
                 value={editState.draft.assignee || null}
                 onChange={(next) =>
                   editState.setDraft((draft) => ({ ...draft, assignee: next ?? '' }))
@@ -421,7 +420,7 @@ export function RecordDetailDrawer({
               />
             }
           >
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center justify-end gap-3">
               {displayAssignee && (
                 <ProfileAvatar
                   name={profile?.name ?? displayAssignee}
@@ -430,25 +429,17 @@ export function RecordDetailDrawer({
                   size={32}
                 />
               )}
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {assigneeDisplay}
-                </p>
-                <p className="text-xs text-slate-500">{t('record.assignee')}</p>
-              </div>
+              <p className="truncate text-sm font-semibold text-slate-900">
+                {assigneeDisplay}
+              </p>
             </div>
           </EditableSection>
 
-          <dl className="grid gap-2 sm:grid-cols-2">
-            <MetaItem label={t('record.schema')} value={activeCurrent.schema} />
-            <MetaItem label={t('record.created')} value={formatDate(activeRecord.createdAt)} />
-          </dl>
-
           <EditableSection
             title={t('edit.titleField')}
-            editLabel={t('record.edit')}
-            editing={editState.editingSection === 'title'}
-            dirty={editState.editingSection === 'title' && editState.dirty}
+            inline
+            editing={editState.isEditing('title')}
+            dirty={editState.isEditing('title') && sectionDirty.title}
             disabled={isSaving}
             onEdit={() => beginEdit('title')}
             editor={
@@ -462,16 +453,15 @@ export function RecordDetailDrawer({
               />
             }
           >
-            <p className="text-sm leading-relaxed text-slate-800">
+            <p className="truncate text-sm leading-relaxed text-slate-800">
               {displayBody.title || activeCurrent.pid}
             </p>
           </EditableSection>
 
           <EditableSection
             title={t('edit.summary')}
-            editLabel={t('record.edit')}
-            editing={editState.editingSection === 'summary'}
-            dirty={editState.editingSection === 'summary' && editState.dirty}
+            editing={editState.isEditing('summary')}
+            dirty={editState.isEditing('summary') && sectionDirty.summary}
             disabled={isSaving}
             onEdit={() => beginEdit('summary')}
             editor={
@@ -493,9 +483,8 @@ export function RecordDetailDrawer({
 
           <EditableSection
             title={t('edit.details')}
-            editLabel={t('record.edit')}
-            editing={editState.editingSection === 'details'}
-            dirty={editState.editingSection === 'details' && editState.dirty}
+            editing={editState.isEditing('details')}
+            dirty={editState.isEditing('details') && sectionDirty.details}
             disabled={isSaving}
             onEdit={() => beginEdit('details')}
             editor={
@@ -517,9 +506,9 @@ export function RecordDetailDrawer({
 
           <EditableSection
             title={t('filters.tag')}
-            editLabel={t('record.edit')}
-            editing={editState.editingSection === 'tags'}
-            dirty={editState.editingSection === 'tags' && editState.dirty}
+            inline={!editState.isEditing('tags')}
+            editing={editState.isEditing('tags')}
+            dirty={editState.isEditing('tags') && sectionDirty.tags}
             disabled={isSaving}
             onEdit={() => beginEdit('tags')}
             editor={
@@ -578,10 +567,7 @@ export function RecordDetailDrawer({
           </EditableSection>
 
           {(activeCurrent.assets?.length ?? 0) > 0 && (
-            <section className="rounded-lg border border-slate-200 bg-white p-4">
-              <h3 className="mb-2 text-xs font-bold uppercase text-slate-500">
-                {t('record.assets')}
-              </h3>
+            <ReadOnlyInfoSection title={t('record.assets')}>
               <ul className="grid gap-1">
                 {activeCurrent.assets?.map((asset) => (
                   <li
@@ -593,14 +579,11 @@ export function RecordDetailDrawer({
                   </li>
                 ))}
               </ul>
-            </section>
+            </ReadOnlyInfoSection>
           )}
 
           {(activeCurrent.relations?.length ?? 0) > 0 && (
-            <section className="rounded-lg border border-slate-200 bg-white p-4">
-              <h3 className="mb-2 text-xs font-bold uppercase text-slate-500">
-                {t('record.relations')}
-              </h3>
+            <ReadOnlyInfoSection title={t('record.relations')}>
               <ul className="grid gap-1">
                 {activeCurrent.relations?.map((rel, index) => (
                   <li
@@ -612,17 +595,21 @@ export function RecordDetailDrawer({
                   </li>
                 ))}
               </ul>
-            </section>
+            </ReadOnlyInfoSection>
           )}
         </div>
       </AnimatedDrawer>
 
       <UnsavedChangesDialog
-        open={editState.pendingExit !== null}
-        title="Discard unsaved changes?"
-        message="This section has unsaved changes. Discard them and continue?"
-        confirmLabel="Discard changes"
-        cancelLabel="Keep editing"
+        open={editState.pendingExit}
+        title={isZh ? '放弃未保存的修改？' : 'Discard unsaved changes?'}
+        message={
+          isZh
+            ? '当前详情中有未保存的修改。要放弃这些修改并继续吗？'
+            : 'This detail drawer has unsaved changes. Discard them and continue?'
+        }
+        confirmLabel={isZh ? '放弃修改' : 'Discard changes'}
+        cancelLabel={isZh ? '继续编辑' : 'Keep editing'}
         onCancel={cancelDiscard}
         onConfirm={confirmDiscard}
       />
@@ -672,6 +659,21 @@ function TagOptionGrid({
         {tags.length === 0 && <p className="text-sm text-slate-500">—</p>}
       </div>
     </div>
+  )
+}
+
+function ReadOnlyInfoSection({
+  title,
+  children,
+}: {
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+      <h3 className="mb-2 text-xs font-bold uppercase text-blue-700">{title}</h3>
+      {children}
+    </section>
   )
 }
 
@@ -763,13 +765,14 @@ function uniqueTags(tags: Tag[]): Tag[] {
   return [...new Set(tags)]
 }
 
-function MetaItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="grid min-w-0 gap-0.5 rounded-md bg-slate-100 p-2.5">
-      <dt className="text-xs font-bold uppercase text-slate-500">{label}</dt>
-      <dd className="m-0 wrap-break-word text-slate-950">{value}</dd>
-    </div>
-  )
+function sameStringList(left: readonly string[], right: readonly string[]) {
+  if (left.length !== right.length) return false
+  return left.every((value, index) => value === right[index])
+}
+
+function normalizeNullable(value: string): string | null {
+  const trimmed = value.trim()
+  return trimmed ? trimmed : null
 }
 
 function formatDate(value: string): string {
