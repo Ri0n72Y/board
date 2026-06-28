@@ -53,7 +53,6 @@ export function serializeBoardFilterUrl(
 
   if (normalized.q) params.set('q', normalized.q)
   for (const tag of normalized.tags) params.append('tags', tag)
-  if (normalized.tagMatch === 'all') params.set('tagMatch', 'all')
   if (normalized.includeArchived) params.set('includeArchived', 'true')
   if (normalized.assignee) params.set('assignee', normalized.assignee)
   if (normalized.assetId) params.set('assetId', normalized.assetId)
@@ -70,7 +69,7 @@ export function normalizeBoardFilterUrl(
   return {
     q: normalizeString(filters.q),
     tags: dedupeTags(filters.tags ?? []),
-    tagMatch: filters.tagMatch === 'all' ? 'all' : 'any',
+    tagMatch: 'any',
     includeArchived: filters.includeArchived === true,
     assignee: normalizeString(filters.assignee),
     assetId: normalizeString(filters.assetId),
@@ -119,8 +118,8 @@ function toSearchParams(input: URLSearchParams | string): URLSearchParams {
   return new URLSearchParams(input.startsWith('?') ? input.slice(1) : input)
 }
 
-function parseTagMatch(value: string | null): BoardCurrentTagMatch {
-  return value === 'all' ? 'all' : 'any'
+function parseTagMatch(_value: string | null): BoardCurrentTagMatch {
+  return 'any'
 }
 
 function normalizeString(value: string | null | undefined): string {
