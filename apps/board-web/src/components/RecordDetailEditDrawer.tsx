@@ -93,8 +93,6 @@ export function RecordDetailEditDrawer({
     abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
-    setError(null)
-    setBaseHead(null)
 
     void fetchRecordHead(current.id, controller.signal)
       .then((head) => {
@@ -103,6 +101,7 @@ export function RecordDetailEditDrawer({
           setError(t('edit.headMissing'))
           return
         }
+        setError(null)
         setBaseHead({
           recordId: current.id,
           lastPatchId: head.lastPatchId,
