@@ -63,10 +63,7 @@ export function AdvancedFiltersDrawer({
   )
 
   const tagMatchOptions = useMemo(
-    () => [
-      { value: 'all' as const, label: t('filters.tagMatchAll') },
-      { value: 'any' as const, label: t('filters.tagMatchAny') },
-    ],
+    () => [{ value: 'any' as const, label: t('filters.tagMatchAny') }],
     [t]
   )
 
@@ -114,12 +111,13 @@ export function AdvancedFiltersDrawer({
         <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
           <Select
             label={t('filters.tagMatch')}
-            value={tagMatch}
-            onChange={(event) =>
-              onTagMatchChange(event.target.value as BoardCurrentTagMatch)
-            }
+            value="any"
+            onChange={() => onTagMatchChange('any')}
             options={tagMatchOptions}
           />
+          {tagMatch !== 'any' && (
+            <p className="text-xs text-slate-500">{t('filters.tagMatchAny')}</p>
+          )}
         </section>
 
         {/* Asset ID / Relation target */}
