@@ -5,73 +5,75 @@ interface SectionEditStateOptions<TDraft> {
   isDirty: (draft: TDraft) => boolean
 }
 
-interface PendingSectionExit<TSection extends string> {
-  nextSection: TSection | null
-}
-
 export function useSectionEditState<TSection extends string, TDraft>({
   initialDraft,
   isDirty,
 }: SectionEditStateOptions<TDraft>) {
   const [selectedSection, setSelectedSection] = useState<TSection | null>(null)
-  const [editingSection, setEditingSection] = useState<TSection | null>(null)
+  const [editingSections, setEditingSections] = useState<TSection[]>([])
   const [draft, setDraft] = useState<TDraft>(() => initialDraft())
-  const [pendingExit, setPendingExit] = useState<PendingSectionExit<TSection> | null>(null)
+  const [pendingExit, setPendingExit] = useState(false)
 
   const dirty = useMemo(() => isDirty(draft), [draft, isDirty])
+  const editingSection = editingSections.at(-1) ?? null
+
+  const isEditing = useCallback(
+    (section: TSection) => editingSections.includes(section),
+    [editingSections],
+  )
 
   const beginEdit = useCallback((section: TSection) => {
     setSelectedSection(section)
-    setDraft(initialDraft())
-    setEditingSection(section)
-  }, [initialDraft])
+    setEditingSections((current) =>
+      current.includes(section) ? current : [...current, section],
+    )
+  }, [])
 
   const requestSection = useCallback((section: TSection) => {
-    if (editingSection && editingSection !== section && dirty) {
-      setPendingExit({ nextSection: section })
-      return false
-    }
     setSelectedSection(section)
+    setEditingSections((current) =>
+      current.includes(section) ? current : [...current, section],
+    )
     return true
-  }, [dirty, editingSection])
+  }, [])
 
   const requestClose = useCallback(() => {
-    if (editingSection && dirty) {
-      setPendingExit({ nextSection: null })
+    if (editingSections.length > 0 && dirty) {
+      setPendingExit(true)
       return false
     }
     return true
-  }, [dirty, editingSection])
+  }, [dirty, editingSections.length])
 
   const cancelPendingExit = useCallback(() => {
-    setPendingExit(null)
+    setPendingExit(false)
   }, [])
 
   const discardPendingExit = useCallback(() => {
-    const nextSection = pendingExit?.nextSection ?? null
     setDraft(initialDraft())
-    setEditingSection(null)
-    setSelectedSection(nextSection)
-    setPendingExit(null)
-    return nextSection
-  }, [initialDraft, pendingExit])
+    setEditingSections([])
+    setSelectedSection(null)
+    setPendingExit(false)
+  }, [initialDraft])
 
   const finishSave = useCallback((section?: TSection | null) => {
     setDraft(initialDraft())
-    setEditingSection(null)
+    setEditingSections([])
     setSelectedSection(section ?? selectedSection)
-    setPendingExit(null)
+    setPendingExit(false)
   }, [initialDraft, selectedSection])
 
   return {
     selectedSection,
     editingSection,
+    editingSections,
     draft,
     dirty,
     pendingExit,
+    isEditing,
     setDraft,
     setSelectedSection,
-    setEditingSection,
+    setEditingSections,
     beginEdit,
     requestSection,
     requestClose,

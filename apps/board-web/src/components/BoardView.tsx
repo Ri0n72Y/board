@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import type {
   BoardConfig,
   Profile,
@@ -57,6 +57,7 @@ export function BoardView({
 }: BoardViewProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
+  const hiddenNoticeKeyRef = useRef<string | null>(null)
   const tagLabel = useCallback((tag: string) => formatTagLabel(tag, lang), [lang])
   const uncategorizedLabel = getUncategorizedColumnLabel(lang)
   const columns = useMemo(() => {
@@ -89,9 +90,13 @@ export function BoardView({
     () => getMoveStatusOptions(allColumns),
     [allColumns],
   )
+  const hiddenNoticeKey = visibleColumnIds?.join('|') ?? 'default'
 
-  // Show hidden columns notice as a non-blocking toast.
+  // Show hidden columns notice only on board entry and visible-column preference changes.
   useEffect(() => {
+    if (hiddenNoticeKeyRef.current === hiddenNoticeKey) return
+    hiddenNoticeKeyRef.current = hiddenNoticeKey
+
     const parts: string[] = []
     if (hiddenSummary.hiddenRecordCount > 0) {
       parts.push(t('board.hiddenColumnsNotice', {
@@ -110,7 +115,7 @@ export function BoardView({
     } else {
       dismissToast(BOARD_HIDDEN_COLUMNS_TOAST_ID)
     }
-  }, [hiddenSummary, t])
+  }, [hiddenNoticeKey, hiddenSummary, t])
 
   return (
     <section className="h-full min-h-0" aria-label="Current records board">

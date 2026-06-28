@@ -8,6 +8,8 @@ export interface SearchSelectOption {
   description?: string
   meta?: string
   disabled?: boolean
+  avatarUrl?: string | null
+  avatarInitials?: string
 }
 
 export interface SearchSelectFilterOptions {
