@@ -8,6 +8,7 @@ import {
   fetchSnapshots,
 } from '../api/snapshots'
 import { downloadTextFile } from '../utils/download'
+import { toastError, toastSuccess } from '../utils/toasts'
 
 export function useSnapshotController() {
   const [isSnapshotOpen, setIsSnapshotOpen] = useState(false)
@@ -169,6 +170,7 @@ export function useSnapshotController() {
         setSelectedSnapshot(data.snapshot)
         setSnapshotReason('')
         loadSnapshots()
+        toastSuccess('Snapshot created')
       })
       .catch((unknownError: unknown) => {
         if (
@@ -178,7 +180,9 @@ export function useSnapshotController() {
         ) {
           return
         }
-        setSnapshotCreateError(errorMessage(unknownError))
+        const message = errorMessage(unknownError)
+        setSnapshotCreateError(message)
+        toastError(`Snapshot failed: ${message}`)
       })
       .finally(() => {
         if (snapshotCreateRequestIdRef.current !== requestId) return
@@ -208,6 +212,7 @@ export function useSnapshotController() {
           return
         }
         downloadTextFile(data.filename, data.content)
+        toastSuccess(`Exported ${data.filename}`)
       })
       .catch((unknownError: unknown) => {
         if (
@@ -217,7 +222,9 @@ export function useSnapshotController() {
         ) {
           return
         }
-        setSnapshotExportError(errorMessage(unknownError))
+        const message = errorMessage(unknownError)
+        setSnapshotExportError(message)
+        toastError(`Snapshot export failed: ${message}`)
       })
       .finally(() => {
         if (snapshotExportRequestIdRef.current !== requestId) return
@@ -251,6 +258,7 @@ export function useSnapshotController() {
           return
         }
         downloadTextFile(data.filename, data.content)
+        toastSuccess(`Exported ${data.filename}`)
       })
       .catch((unknownError: unknown) => {
         if (
@@ -260,7 +268,9 @@ export function useSnapshotController() {
         ) {
           return
         }
-        setSnapshotExportError(errorMessage(unknownError))
+        const message = errorMessage(unknownError)
+        setSnapshotExportError(message)
+        toastError(`Snapshot context export failed: ${message}`)
       })
       .finally(() => {
         if (snapshotExportRequestIdRef.current !== requestId) return
