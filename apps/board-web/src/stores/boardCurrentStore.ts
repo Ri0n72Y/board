@@ -69,10 +69,12 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
             filters: {
               ...state.filters,
               tags: [...state.filters.tags, tag],
+              tagMatch: 'any',
             },
             effectiveFilters: {
               ...state.effectiveFilters,
               tags: [...state.effectiveFilters.tags, tag],
+              tagMatch: 'any',
             },
           }
     )
@@ -83,17 +85,19 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
       filters: {
         ...state.filters,
         tags: state.filters.tags.filter((value) => value !== tag),
+        tagMatch: 'any',
       },
       effectiveFilters: {
         ...state.effectiveFilters,
         tags: state.effectiveFilters.tags.filter((value) => value !== tag),
+        tagMatch: 'any',
       },
     })),
 
-  setTagMatch: (tagMatch) =>
+  setTagMatch: () =>
     set((state) => ({
-      filters: { ...state.filters, tagMatch },
-      effectiveFilters: { ...state.effectiveFilters, tagMatch },
+      filters: { ...state.filters, tagMatch: 'any' },
+      effectiveFilters: { ...state.effectiveFilters, tagMatch: 'any' },
     })),
 
   setIncludeArchived: (includeArchived) =>
@@ -173,6 +177,7 @@ function getInitialFilters(): BoardCurrentFilters {
 function cloneFilters(filters: BoardCurrentFilters): BoardCurrentFilters {
   return {
     ...filters,
+    tagMatch: 'any',
     tags: [...filters.tags],
   }
 }
