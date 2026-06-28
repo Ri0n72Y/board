@@ -49,24 +49,31 @@ export function useSectionEditState<TSection extends string, TDraft>({
     [editingSections.length, initialDraft]
   )
 
+  const clearEditState = useCallback(() => {
+    setDraft(initialDraft())
+    setEditingSections([])
+    setSelectedSection(null)
+    setPendingExit(false)
+  }, [initialDraft])
+
   const requestClose = useCallback(() => {
     if (editingSections.length > 0 && dirty) {
       setPendingExit(true)
       return false
     }
+    if (editingSections.length > 0) {
+      clearEditState()
+    }
     return true
-  }, [dirty, editingSections.length])
+  }, [clearEditState, dirty, editingSections.length])
 
   const cancelPendingExit = useCallback(() => {
     setPendingExit(false)
   }, [])
 
   const discardPendingExit = useCallback(() => {
-    setDraft(initialDraft())
-    setEditingSections([])
-    setSelectedSection(null)
-    setPendingExit(false)
-  }, [initialDraft])
+    clearEditState()
+  }, [clearEditState])
 
   const finishSave = useCallback(
     (section?: TSection | null) => {
