@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 
-interface SectionEditStateOptions<TSection extends string, TDraft> {
+interface SectionEditStateOptions<TDraft> {
   initialDraft: () => TDraft
   isDirty: (draft: TDraft) => boolean
 }
@@ -12,7 +12,7 @@ interface PendingSectionExit<TSection extends string> {
 export function useSectionEditState<TSection extends string, TDraft>({
   initialDraft,
   isDirty,
-}: SectionEditStateOptions<TSection, TDraft>) {
+}: SectionEditStateOptions<TDraft>) {
   const [selectedSection, setSelectedSection] = useState<TSection | null>(null)
   const [editingSection, setEditingSection] = useState<TSection | null>(null)
   const [draft, setDraft] = useState<TDraft>(() => initialDraft())
