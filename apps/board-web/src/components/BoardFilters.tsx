@@ -264,14 +264,16 @@ export function TagChipRow({
       {label && <span className="text-xs font-bold text-slate-500">{label}</span>}
       <div className="flex flex-wrap gap-1.5">
         {tags.map((tag) => {
-          const interactive = !readonly && onTagClick
+          const interactive = !readonly && typeof onTagClick === 'function'
           return (
             <button
               key={tag}
               type="button"
               className={chipClassName({ selected })}
               disabled={!interactive}
-              onClick={() => interactive?.(tag)}
+              onClick={() => {
+                if (interactive) onTagClick(tag)
+              }}
               title={
                 interactive ? t('filters.toggleTag') : formatTagLabel(tag, lang)
               }
@@ -285,7 +287,7 @@ export function TagChipRow({
   )
 }
 
-export function chipClassName({ selected }: { selected?: boolean }) {
+function chipClassName({ selected }: { selected?: boolean }) {
   return cn(
     'inline-flex min-h-[28px] max-w-full items-center rounded-full px-2.5 font-mono text-xs leading-tight break-all transition',
     selected

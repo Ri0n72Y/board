@@ -37,7 +37,7 @@ export function parseBoardFilterUrl(
   return {
     q: normalizeString(params.get('q')),
     tags,
-    tagMatch: parseTagMatch(params.get('tagMatch')),
+    tagMatch: parseTagMatch(),
     includeArchived: params.get('includeArchived') === 'true',
     assignee: normalizeString(params.get('assignee')),
     assetId: normalizeString(params.get('assetId')),
@@ -118,7 +118,7 @@ function toSearchParams(input: URLSearchParams | string): URLSearchParams {
   return new URLSearchParams(input.startsWith('?') ? input.slice(1) : input)
 }
 
-function parseTagMatch(_value: string | null): BoardCurrentTagMatch {
+function parseTagMatch(): BoardCurrentTagMatch {
   return 'any'
 }
 

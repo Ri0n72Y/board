@@ -96,7 +96,7 @@ describe('boardCurrentService', () => {
 
   // Current-state filters
 
-  it('filters tags against current replayed state with tagMatch=all by default', async () => {
+  it('filters tags against current replayed state with OR semantics by default', async () => {
     const { service, repo, head } = createServiceWithRepo()
 
     const envelope = await service.create({

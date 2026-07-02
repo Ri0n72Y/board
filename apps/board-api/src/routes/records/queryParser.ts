@@ -3,10 +3,9 @@ import type { RecordQuery, Tag } from '@labour-board/shared'
 export function parseQuery(searchParams: URLSearchParams): RecordQuery {
   const tag = searchParams.get('tag')
   const tags = searchParams.getAll('tags') as Tag[]
-  const tagMatch = searchParams.get('tagMatch')
   return {
     tags: tag ? [tag as Tag] : tags.length ? tags : undefined,
-    tagMatch: tagMatch === 'any' ? 'any' : 'all',
+    tagMatch: 'any',
     id: searchParams.get('id') ?? undefined,
     pid: searchParams.get('pid') ?? undefined,
     schema: searchParams.get('schema') ?? undefined,

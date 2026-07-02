@@ -5,11 +5,10 @@ export function parseBoardCurrentQuery(
 ): BoardCurrentQuery {
   const tag = searchParams.get('tag')
   const tags = searchParams.getAll('tags') as Tag[]
-  const tagMatch = searchParams.get('tagMatch')
 
   return {
     tags: tag ? [tag as Tag] : tags.length ? tags : undefined,
-    tagMatch: tagMatch === 'any' ? 'any' : 'all',
+    tagMatch: 'any',
     assignee: searchParams.get('assignee') ?? undefined,
     assetId: searchParams.get('assetId') ?? undefined,
     relationTarget: searchParams.get('relationTarget') ?? undefined,

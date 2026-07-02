@@ -10,11 +10,16 @@ import {
 import type {
   Profile,
   RecordBody,
+  RecordHistoryResponse,
   RecordItem,
   RecordResponse,
   Tag,
 } from '@labour-board/shared'
-import { ClockIcon, PencilSquareIcon } from '@heroicons/react/20/solid'
+import {
+  ArrowLeftIcon,
+  ClockIcon,
+  PencilSquareIcon,
+} from '@heroicons/react/20/solid'
 import axios from 'axios'
 import { useTranslation } from 'react-i18next'
 import { fetchRecordHead } from '../api/recordHead'
@@ -46,6 +51,8 @@ import { SearchSelect } from './ui/SearchSelect'
 import { EditableSection } from './recordDetailEdit/EditableSection'
 import { UnsavedChangesDialog } from './recordDetailEdit/UnsavedChangesDialog'
 import { useSectionEditState } from './recordDetailEdit/useSectionEditState'
+import { RecordHistoryContent } from './RecordHistoryDrawer'
+import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
 
 type DetailEditSection = 'title' | 'summary' | 'details' | 'assignee' | 'tags'
 
@@ -66,6 +73,10 @@ interface RecordDetailDrawerProps {
   open: boolean
   record: RecordResponse<RecordItem<RecordBody>> | null
   profiles?: Profile[] | null
+  history: RecordHistoryResponse | null
+  isHistoryLoading: boolean
+  historyError: string | null
+  assetOptions: RecordReferenceOption[]
   onClose: () => void
   onEditClick: (record: RecordResponse<RecordItem<RecordBody>>) => void
   onHistoryClick: (record: RecordResponse<RecordItem<RecordBody>>) => void
@@ -81,6 +92,10 @@ export function RecordDetailDrawer({
   open,
   record,
   profiles,
+  history,
+  isHistoryLoading,
+  historyError,
+  assetOptions,
   onClose,
   onHistoryClick,
 }: RecordDetailDrawerProps) {
@@ -98,10 +113,12 @@ export function RecordDetailDrawer({
   const [isSaving, setIsSaving] = useState(false)
   const [baseHead, setBaseHead] = useState<BaseHead | null>(null)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
+  const [activePanel, setActivePanel] = useState<'detail' | 'history'>('detail')
   const [savedDisplayRecord, setSavedDisplayRecord] =
     useState<DisplayRecordState | null>(null)
   const requestIdRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
+  const stateKeyRef = useRef<string | null>(null)
 
   const current = record?.body ?? null
   const displayRecord = useMemo(() => {
@@ -134,10 +151,24 @@ export function RecordDetailDrawer({
     initialDraft,
     isDirty: isDraftDirty,
   })
+  const clearEditState = editState.clearEditState
 
   useEffect(() => {
     return () => abortRequest(requestIdRef, abortRef)
   }, [])
+
+  useEffect(() => {
+    const nextKey = open && current ? current.id : null
+    if (stateKeyRef.current === nextKey) return
+    stateKeyRef.current = nextKey
+    abortRequest(requestIdRef, abortRef, setIsSaving)
+    setError(null)
+    setBaseHead(null)
+    setPendingAction(null)
+    setSavedDisplayRecord(null)
+    setActivePanel('detail')
+    clearEditState()
+  }, [clearEditState, current, open])
 
   useEffect(() => {
     if (!open || !current) return
@@ -248,6 +279,7 @@ export function RecordDetailDrawer({
       return
     }
     abortRequest(requestIdRef, abortRef, setIsSaving)
+    setActivePanel('detail')
     onClose()
   }
 
@@ -259,6 +291,7 @@ export function RecordDetailDrawer({
     editState.setDraft(initialDraft())
     editState.setEditingSections([])
     onHistoryClick(activeRecord)
+    setActivePanel('history')
   }
 
   function cancelDiscard() {
@@ -271,10 +304,12 @@ export function RecordDetailDrawer({
     setPendingAction(null)
     editState.discardPendingExit()
     if (!action || action.type === 'close') {
+      setActivePanel('detail')
       onClose()
       return
     }
     onHistoryClick(activeRecord)
+    setActivePanel('history')
   }
 
   async function save() {
@@ -380,15 +415,26 @@ export function RecordDetailDrawer({
   const footer = (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={requestHistory}
-          icon={<ClockIcon className="h-4 w-4" />}
-        >
-          {t('record.history')}
-        </Button>
-        {editState.editingSections.length > 0 && (
+        {activePanel === 'detail' ? (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={requestHistory}
+            icon={<ClockIcon className="h-4 w-4" />}
+          >
+            {t('record.history')}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setActivePanel('detail')}
+            icon={<ArrowLeftIcon className="h-4 w-4" />}
+          >
+            {isZh ? '详情' : 'Details'}
+          </Button>
+        )}
+        {activePanel === 'detail' && editState.editingSections.length > 0 && (
           <Button
             type="button"
             onClick={() => void save()}
@@ -412,15 +458,16 @@ export function RecordDetailDrawer({
         open={open}
         onClose={requestClose}
         title={displayBody.title || activeCurrent.pid}
-        subtitle={activeCurrent.pid}
+        subtitle={
+          activePanel === 'history'
+            ? `${activeCurrent.pid} · ${t('history.subtitle')}`
+            : activeCurrent.pid
+        }
         size="md"
         closeLabel={t('record.close')}
         footer={footer}
       >
-        <div
-          className="grid min-h-full content-start gap-4"
-          onClick={clearCleanEditState}
-        >
+        <div className="grid min-h-full content-start gap-4">
           {error && (
             <section
               className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"
@@ -430,6 +477,20 @@ export function RecordDetailDrawer({
             </section>
           )}
 
+          {activePanel === 'history' ? (
+            <RecordHistoryContent
+              history={history}
+              isLoading={isHistoryLoading}
+              error={historyError}
+              language={lang}
+              assetOptions={assetOptions}
+              profiles={profiles ?? null}
+            />
+          ) : (
+            <div
+              className="grid min-h-full content-start gap-4"
+              onClick={clearCleanEditState}
+            >
           <EditableSection
             title={t('record.assignee')}
             inline
@@ -640,7 +701,9 @@ export function RecordDetailDrawer({
                   </li>
                 ))}
               </ul>
-            </ReadOnlyInfoSection>
+              </ReadOnlyInfoSection>
+            )}
+            </div>
           )}
         </div>
       </AnimatedDrawer>

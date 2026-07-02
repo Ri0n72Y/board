@@ -52,13 +52,13 @@ eq(
 
 eq(
   boardFilterUrlQuery({ ...DEFAULT_BOARD_CURRENT_FILTERS, tagMatch: 'any' }),
-  'tagMatch=any',
-  'tagMatch=any serializes'
+  '',
+  'tagMatch=any is omitted'
 )
 eq(
   boardFilterUrlQuery({ ...DEFAULT_BOARD_CURRENT_FILTERS, tagMatch: 'all' }),
   '',
-  'tagMatch=all is omitted'
+  'tagMatch=all normalizes to any and is omitted'
 )
 
 eq(
@@ -112,8 +112,16 @@ eq(
 
 eq(
   parseBoardFilterUrl('tagMatch=bad').tagMatch,
-  'all',
-  'invalid tagMatch falls back to all'
+  'any',
+  'invalid tagMatch falls back to any'
+)
+eq(
+  parseBoardFilterUrl('tags=status%3Atodo&tags=priority%3Ahigh&tagMatch=all'),
+  {
+    ...DEFAULT_BOARD_CURRENT_FILTERS,
+    tags: ['status:todo', 'priority:high'],
+  },
+  'legacy tagMatch=all URL normalizes to any filters'
 )
 eq(
   parseBoardFilterUrl('includeArchived=false').includeArchived,
@@ -133,7 +141,7 @@ const fullFilters: BoardCurrentFilters = {
 
 eq(
   boardFilterUrlQuery(fullFilters),
-  'q=query&tags=status%3Atodo&tags=priority%3Ahigh&tagMatch=any&includeArchived=true&assignee=pk1&assetId=asset-1&relationTarget=record-2',
+  'q=query&tags=status%3Atodo&tags=priority%3Ahigh&includeArchived=true&assignee=pk1&assetId=asset-1&relationTarget=record-2',
   'query params serialize in stable order'
 )
 
@@ -141,7 +149,7 @@ eq(
   boardFilterSearchToQuery(
     'relationTarget=record-2&tag=status%3Atodo&q=query&includeArchived=true&tagMatch=any&assetId=asset-1&assignee=pk1&tags=priority%3Ahigh'
   ),
-  'q=query&tags=status%3Atodo&tags=priority%3Ahigh&tagMatch=any&includeArchived=true&assignee=pk1&assetId=asset-1&relationTarget=record-2',
+  'q=query&tags=status%3Atodo&tags=priority%3Ahigh&includeArchived=true&assignee=pk1&assetId=asset-1&relationTarget=record-2',
   'serialize(parse(query)) canonicalizes query order and compatibility params'
 )
 

@@ -344,14 +344,16 @@ export function BoardCurrentPage() {
   // ── Card detail ──
   const openDetail = useCallback(
     (record: RecordResponse<RecordItem<RecordBody>>) => {
+      historyController.closeHistory()
       setDetailRecord(record)
     },
-    []
+    [historyController]
   )
 
   const closeDetail = useCallback(() => {
+    historyController.closeHistory()
     setDetailRecord(null)
-  }, [])
+  }, [historyController])
 
   const handleDetailEdit = useCallback(
     (record: RecordResponse<RecordItem<RecordBody>>) => {
@@ -363,7 +365,6 @@ export function BoardCurrentPage() {
 
   const handleDetailHistory = useCallback(
     (record: RecordResponse<RecordItem<RecordBody>>) => {
-      setDetailRecord(null)
       historyController.openHistory(record)
     },
     [historyController]
@@ -527,7 +528,7 @@ export function BoardCurrentPage() {
           onClearFilters={() => {
             setQ('')
             draftFilters.tags.forEach((t) => removeTag(t))
-            setTagMatch('all')
+            setTagMatch('any')
             setAssignee('')
             updateAssetId('')
             updateRelationTarget('')
@@ -666,16 +667,21 @@ export function BoardCurrentPage() {
       {/* ── Drawers ── */}
 
       <RecordDetailDrawer
+        key={detailRecord?.body.id ?? 'record-detail'}
         open={detailRecord !== null}
         record={detailRecord}
         profiles={profiles}
+        assetOptions={assetOptions}
+        history={historyController.history}
+        isHistoryLoading={historyController.isHistoryLoading}
+        historyError={historyController.historyError}
         onClose={closeDetail}
         onEditClick={handleDetailEdit}
         onHistoryClick={handleDetailHistory}
       />
 
       <RecordHistoryDrawer
-        open={historyController.historySelection !== null}
+        open={historyController.historySelection !== null && detailRecord === null}
         recordId={historyController.historySelection?.recordId ?? null}
         title={historyController.historySelection?.title}
         pid={historyController.historySelection?.pid}

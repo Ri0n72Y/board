@@ -101,6 +101,7 @@ export function useSectionEditState<TSection extends string, TDraft>({
     requestClose,
     cancelPendingExit,
     discardPendingExit,
+    clearEditState,
     finishSave,
   }
 }
