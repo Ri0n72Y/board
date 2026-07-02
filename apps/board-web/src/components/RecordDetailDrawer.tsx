@@ -386,7 +386,7 @@ export function RecordDetailDrawer({
       })
       setIsSaving(false)
       abortRef.current = null
-      toastSuccess('Record saved')
+      toastSuccess(t('edit.saveSuccess'))
       editState.finishSave(editState.editingSection)
       await loadCurrentBoard(effectiveFilters)
     } catch (caught: unknown) {

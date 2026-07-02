@@ -232,6 +232,7 @@ const zhCN = {
     'edit.errorNoChanges': '没有需要保存的修改。',
     'edit.initialPatchDescriptionNotice':
       '此补丁将附带一段来自 AI 建议的人工草稿说明。',
+    'edit.saveSuccess': '记录已保存',
     'edit.optional': '（可选）',
     'edit.unsavedDiscardTitle': '放弃未保存的修改？',
     'edit.unsavedDiscardMessage':

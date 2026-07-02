@@ -241,6 +241,7 @@ const enUS = {
       'This patch will include a human-draft description from an AI suggestion.',
     'edit.saving': 'Saving...',
     'edit.saveButton': 'Save patch',
+    'edit.saveSuccess': 'Record saved',
     'edit.conflictError':
       'Record changed on the server. Refresh and try again.',
     'edit.headMissing':
