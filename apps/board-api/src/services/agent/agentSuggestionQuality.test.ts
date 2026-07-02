@@ -102,6 +102,21 @@ describe('agentSuggestionQuality', () => {
     ).toThrow(AgentProviderOutputValidationError)
   })
 
+  it('execution claim denylist is case-insensitive', () => {
+    for (const claim of [
+      'I APPLIED THE PATCH.',
+      'i applied the patch.',
+      'I Executed the suggested update.',
+    ]) {
+      expect(() =>
+        validateSuggestionOutput(
+          validOutput({ markdown: validMarkdown(`\n${claim}`) }),
+          config
+        )
+      ).toThrow(AgentProviderOutputValidationError)
+    }
+  })
+
   it('over maxOutputChars fails', () => {
     expect(() =>
       validateSuggestionOutput(

@@ -355,14 +355,6 @@ export function BoardCurrentPage() {
     setDetailRecord(null)
   }, [historyController])
 
-  const handleDetailEdit = useCallback(
-    (record: RecordResponse<RecordItem<RecordBody>>) => {
-      setDetailRecord(null)
-      openEdit(record)
-    },
-    [openEdit]
-  )
-
   const handleDetailHistory = useCallback(
     (record: RecordResponse<RecordItem<RecordBody>>) => {
       historyController.openHistory(record)
@@ -676,7 +668,6 @@ export function BoardCurrentPage() {
         isHistoryLoading={historyController.isHistoryLoading}
         historyError={historyController.historyError}
         onClose={closeDetail}
-        onEditClick={handleDetailEdit}
         onHistoryClick={handleDetailHistory}
       />
 

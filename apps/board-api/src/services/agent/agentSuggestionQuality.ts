@@ -116,8 +116,9 @@ export function validateSuggestionOutput(
     }
   }
 
+  const lowerMarkdown = output.markdown.toLowerCase()
   const deniedClaim = EXECUTION_CLAIM_DENYLIST.find((claim) =>
-    output.markdown.includes(claim)
+    lowerMarkdown.includes(claim.toLowerCase())
   )
   if (deniedClaim) {
     throw new AgentProviderOutputValidationError(

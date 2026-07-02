@@ -78,7 +78,6 @@ interface RecordDetailDrawerProps {
   historyError: string | null
   assetOptions: RecordReferenceOption[]
   onClose: () => void
-  onEditClick: (record: RecordResponse<RecordItem<RecordBody>>) => void
   onHistoryClick: (record: RecordResponse<RecordItem<RecordBody>>) => void
 }
 
