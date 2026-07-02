@@ -142,6 +142,15 @@ describe('filterBoardCurrentRecords', () => {
         })
       )
     ).toEqual(['record-visible', 'record-other', 'record-both'])
+
+    expect(
+      ids(
+        filterBoardCurrentRecords(currentRecords, {
+          tags: ['topic:a', 'topic:b'],
+          tagMatch: 'all',
+        })
+      )
+    ).toEqual(['record-visible', 'record-other', 'record-both'])
   })
 
   it('filters by assignee', () => {

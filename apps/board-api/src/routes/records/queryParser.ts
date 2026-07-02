@@ -1,10 +1,8 @@
 import type { RecordQuery, Tag } from '@labour-board/shared'
 
 export function parseQuery(searchParams: URLSearchParams): RecordQuery {
-  const tag = searchParams.get('tag')
-  const tags = searchParams.getAll('tags') as Tag[]
   return {
-    tags: tag ? [tag as Tag] : tags.length ? tags : undefined,
+    tags: parseTags(searchParams),
     tagMatch: 'any',
     id: searchParams.get('id') ?? undefined,
     pid: searchParams.get('pid') ?? undefined,
@@ -18,6 +16,23 @@ export function parseQuery(searchParams: URLSearchParams): RecordQuery {
       searchParams.get('includeArchived') === 'true' ||
       searchParams.get('includeDeleted') === 'true',
   }
+}
+
+function parseTags(searchParams: URLSearchParams): Tag[] | undefined {
+  const seen = new Set<string>()
+  const tags: Tag[] = []
+
+  for (const value of [
+    ...searchParams.getAll('tag'),
+    ...searchParams.getAll('tags'),
+  ]) {
+    const tag = value.trim()
+    if (!tag || seen.has(tag)) continue
+    seen.add(tag)
+    tags.push(tag as Tag)
+  }
+
+  return tags.length ? tags : undefined
 }
 
 function parseLimit(value: string | null): number | undefined {

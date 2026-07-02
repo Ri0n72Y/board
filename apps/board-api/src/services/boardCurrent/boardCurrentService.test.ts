@@ -172,6 +172,51 @@ describe('boardCurrentService', () => {
     expect(board.summary.visibleCurrentRecords).toBe(2)
   })
 
+  it('treats legacy tagMatch=all as OR against current replayed tags', async () => {
+    const { service, repo, head } = createServiceWithRepo()
+
+    await service.create({
+      schema: 'CardBody',
+      tags: ['status:todo', 'priority:urgent-important'],
+      body: { title: 'Visible' },
+    })
+    await service.create({
+      schema: 'CardBody',
+      tags: ['status:todo', 'priority:urgent-not-important'],
+      body: { title: 'Other' },
+    })
+    await service.create({
+      schema: 'CardBody',
+      tags: [
+        'status:todo',
+        'priority:urgent-important',
+        'priority:urgent-not-important',
+      ],
+      body: { title: 'Both' },
+    })
+    await service.create({
+      schema: 'CardBody',
+      tags: ['status:todo', 'priority:not-urgent-important'],
+      body: { title: 'Neither' },
+    })
+
+    const board = await getBoardCurrentProjection({
+      repository: repo,
+      snapshotHeadRepository: head,
+      query: {
+        tags: ['priority:urgent-important', 'priority:urgent-not-important'],
+        tagMatch: 'all',
+      },
+    })
+
+    expect(board.records.map((record) => record.body.body.title)).toEqual([
+      'Visible',
+      'Other',
+      'Both',
+    ])
+    expect(board.summary.visibleCurrentRecords).toBe(3)
+  })
+
   it('filters assignee, assetId, and relationTarget against current replayed state', async () => {
     const { service, repo, head } = createServiceWithRepo()
 

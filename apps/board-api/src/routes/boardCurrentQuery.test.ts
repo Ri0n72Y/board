@@ -29,6 +29,15 @@ describe('parseBoardCurrentQuery', () => {
     expect(query.includeArchived).toBe(false)
   })
 
+  it('merges tag and tags compatibility parameters', () => {
+    const query = parse(
+      'tag=status:wip&tag=%20&tags=topic:a&tags=status:wip&tags='
+    )
+
+    expect(query.tags).toEqual(['status:wip', 'topic:a'])
+    expect(query.tagMatch).toBe('any')
+  })
+
   it('parses tagMatch=any', () => {
     const query = parse('tagMatch=any')
 

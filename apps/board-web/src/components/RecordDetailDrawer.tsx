@@ -431,7 +431,7 @@ export function RecordDetailDrawer({
             onClick={() => setActivePanel('detail')}
             icon={<ArrowLeftIcon className="h-4 w-4" />}
           >
-            {isZh ? '详情' : 'Details'}
+            {t('record.details')}
           </Button>
         )}
         {activePanel === 'detail' && editState.editingSections.length > 0 && (
@@ -447,7 +447,7 @@ export function RecordDetailDrawer({
       </div>
       <p className="text-xs text-slate-500">
         {t('record.created')}: {formatDate(activeRecord.createdAt)} ·{' '}
-        {isZh ? '最近版本' : 'Updated'}: v{baseHead?.currentVersion ?? '—'}
+        {t('record.updated')}: v{baseHead?.currentVersion ?? '—'}
       </p>
     </div>
   )
