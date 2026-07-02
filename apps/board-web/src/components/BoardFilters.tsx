@@ -261,7 +261,9 @@ export function TagChipRow({
 
   return (
     <div className="grid gap-1.5">
-      {label && <span className="text-xs font-bold text-slate-500">{label}</span>}
+      {label && (
+        <span className="text-xs font-bold text-slate-500">{label}</span>
+      )}
       <div className="flex flex-wrap gap-1.5">
         {tags.map((tag) => {
           const interactive = !readonly && typeof onTagClick === 'function'

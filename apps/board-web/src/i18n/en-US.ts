@@ -248,6 +248,11 @@ const enUS = {
     'edit.staleHead':
       'The current record has been changed by another operation. Refresh and edit again.',
     'edit.optional': ' (optional)',
+    'edit.unsavedDiscardTitle': 'Discard unsaved changes?',
+    'edit.unsavedDiscardMessage':
+      'This detail drawer has unsaved changes. Discard them and continue?',
+    'edit.unsavedDiscardConfirm': 'Discard changes',
+    'edit.unsavedDiscardCancel': 'Keep editing',
 
     // ─── Snapshot Drawer ───
     'snapshot.subtitle': 'Checkpoints',

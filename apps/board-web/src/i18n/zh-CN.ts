@@ -233,6 +233,11 @@ const zhCN = {
     'edit.initialPatchDescriptionNotice':
       '此补丁将附带一段来自 AI 建议的人工草稿说明。',
     'edit.optional': '（可选）',
+    'edit.unsavedDiscardTitle': '放弃未保存的修改？',
+    'edit.unsavedDiscardMessage':
+      '当前详情中有未保存的修改。要放弃这些修改并继续吗？',
+    'edit.unsavedDiscardConfirm': '放弃修改',
+    'edit.unsavedDiscardCancel': '继续编辑',
 
     // ─── Snapshot Drawer ───
     'snapshot.subtitle': '检查点',

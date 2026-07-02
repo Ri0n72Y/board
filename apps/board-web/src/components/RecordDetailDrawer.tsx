@@ -101,7 +101,6 @@ export function RecordDetailDrawer({
 }: RecordDetailDrawerProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage ?? i18n.language ?? 'en'
-  const isZh = lang.startsWith('zh')
   const effectiveFilters = useBoardCurrentStore(
     (state) => state.effectiveFilters
   )
@@ -491,218 +490,218 @@ export function RecordDetailDrawer({
               className="grid min-h-full content-start gap-4"
               onClick={clearCleanEditState}
             >
-          <EditableSection
-            title={t('record.assignee')}
-            inline
-            editing={editState.isEditing('assignee')}
-            dirty={editState.isEditing('assignee') && sectionDirty.assignee}
-            disabled={isSaving}
-            onEdit={() => beginEdit('assignee')}
-            editor={
-              <SearchSelect
-                mode="option"
-                value={editState.draft.assignee || null}
-                onChange={(next) =>
-                  editState.setDraft((draft) => ({
-                    ...draft,
-                    assignee: next ?? '',
-                  }))
-                }
-                options={profileOptions}
-                placeholder={t('edit.assigneePlaceholder')}
+              <EditableSection
+                title={t('record.assignee')}
+                inline
+                editing={editState.isEditing('assignee')}
+                dirty={editState.isEditing('assignee') && sectionDirty.assignee}
                 disabled={isSaving}
-              />
-            }
-          >
-            <div className="flex min-w-0 items-center justify-end gap-3">
-              {displayAssignee && (
-                <ProfileAvatar
-                  name={profile?.name ?? displayAssignee}
-                  pk={displayAssignee}
-                  avatarUrl={profile?.avatarUrl ?? null}
-                  size={32}
-                />
+                onEdit={() => beginEdit('assignee')}
+                editor={
+                  <SearchSelect
+                    mode="option"
+                    value={editState.draft.assignee || null}
+                    onChange={(next) =>
+                      editState.setDraft((draft) => ({
+                        ...draft,
+                        assignee: next ?? '',
+                      }))
+                    }
+                    options={profileOptions}
+                    placeholder={t('edit.assigneePlaceholder')}
+                    disabled={isSaving}
+                  />
+                }
+              >
+                <div className="flex min-w-0 items-center justify-end gap-3">
+                  {displayAssignee && (
+                    <ProfileAvatar
+                      name={profile?.name ?? displayAssignee}
+                      pk={displayAssignee}
+                      avatarUrl={profile?.avatarUrl ?? null}
+                      size={32}
+                    />
+                  )}
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {assigneeDisplay}
+                  </p>
+                </div>
+              </EditableSection>
+
+              <EditableSection
+                title={t('edit.titleField')}
+                inline
+                editing={editState.isEditing('title')}
+                dirty={editState.isEditing('title') && sectionDirty.title}
+                disabled={isSaving}
+                onEdit={() => beginEdit('title')}
+                editor={
+                  <input
+                    className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
+                    value={editState.draft.title}
+                    onChange={(event) =>
+                      editState.setDraft((draft) => ({
+                        ...draft,
+                        title: event.target.value,
+                      }))
+                    }
+                    disabled={isSaving}
+                  />
+                }
+              >
+                <p className="truncate text-sm leading-relaxed text-slate-800">
+                  {displayBody.title || activeCurrent.pid}
+                </p>
+              </EditableSection>
+
+              <EditableSection
+                title={t('edit.summary')}
+                editing={editState.isEditing('summary')}
+                dirty={editState.isEditing('summary') && sectionDirty.summary}
+                disabled={isSaving}
+                onEdit={() => beginEdit('summary')}
+                editor={
+                  <textarea
+                    className="w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
+                    rows={3}
+                    value={editState.draft.summary}
+                    onChange={(event) =>
+                      editState.setDraft((draft) => ({
+                        ...draft,
+                        summary: event.target.value,
+                      }))
+                    }
+                    disabled={isSaving}
+                  />
+                }
+              >
+                <p className="text-sm leading-relaxed text-slate-800">
+                  {displayBody.description || '—'}
+                </p>
+              </EditableSection>
+
+              <EditableSection
+                title={t('edit.details')}
+                editing={editState.isEditing('details')}
+                dirty={editState.isEditing('details') && sectionDirty.details}
+                disabled={isSaving}
+                onEdit={() => beginEdit('details')}
+                editor={
+                  <textarea
+                    className="w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
+                    rows={7}
+                    value={editState.draft.details}
+                    onChange={(event) =>
+                      editState.setDraft((draft) => ({
+                        ...draft,
+                        details: event.target.value,
+                      }))
+                    }
+                    disabled={isSaving}
+                  />
+                }
+              >
+                <pre className="max-h-60 overflow-y-auto whitespace-pre-wrap wrap-break-word rounded bg-slate-50 p-3 text-sm leading-relaxed text-slate-800">
+                  {displayBody.content || '—'}
+                </pre>
+              </EditableSection>
+
+              <EditableSection
+                title={t('filters.tag')}
+                inline={!editState.isEditing('tags')}
+                editing={editState.isEditing('tags')}
+                dirty={editState.isEditing('tags') && sectionDirty.tags}
+                disabled={isSaving}
+                onEdit={() => beginEdit('tags')}
+                editor={
+                  <div className="grid gap-4">
+                    <TagOptionGrid
+                      label={t('edit.statusTag')}
+                      tags={statusOptions}
+                      selected={editState.draft.statusTag}
+                      lang={lang}
+                      required
+                      disabled={isSaving}
+                      onSelect={(tag) =>
+                        editState.setDraft((draft) => ({
+                          ...draft,
+                          statusTag: tag,
+                        }))
+                      }
+                    />
+                    <TagOptionGrid
+                      label={t('edit.priorityTag')}
+                      tags={priorityOptions}
+                      selected={editState.draft.priorityTag}
+                      lang={lang}
+                      disabled={isSaving}
+                      onSelect={(tag) =>
+                        editState.setDraft((draft) => ({
+                          ...draft,
+                          priorityTag: draft.priorityTag === tag ? '' : tag,
+                        }))
+                      }
+                    />
+                    <SearchSelect
+                      mode="tag"
+                      label={t('edit.otherTags')}
+                      options={otherTagSelectOptions}
+                      values={editState.draft.otherTags}
+                      multiple
+                      onChangeMany={(nextTags) =>
+                        editState.setDraft((draft) => ({
+                          ...draft,
+                          otherTags: nextTags.filter((tag) =>
+                            otherTagOptions.includes(tag as Tag)
+                          ) as Tag[],
+                        }))
+                      }
+                      placeholder={t('searchSelect.searchPlaceholder')}
+                      selectedLabel={t('edit.otherTags')}
+                      emptyText={t('create.noConfigTags')}
+                      disabled={isSaving}
+                    />
+                  </div>
+                }
+              >
+                {displayTags.length > 0 ? (
+                  <TagChipRow tags={displayTags} readonly />
+                ) : (
+                  <p className="text-sm text-slate-500">—</p>
+                )}
+              </EditableSection>
+
+              {(activeCurrent.assets?.length ?? 0) > 0 && (
+                <ReadOnlyInfoSection title={t('record.assets')}>
+                  <ul className="grid gap-1">
+                    {activeCurrent.assets?.map((asset) => (
+                      <li
+                        key={asset}
+                        className="truncate font-mono text-xs text-slate-700"
+                        title={asset}
+                      >
+                        {asset}
+                      </li>
+                    ))}
+                  </ul>
+                </ReadOnlyInfoSection>
               )}
-              <p className="truncate text-sm font-semibold text-slate-900">
-                {assigneeDisplay}
-              </p>
-            </div>
-          </EditableSection>
 
-          <EditableSection
-            title={t('edit.titleField')}
-            inline
-            editing={editState.isEditing('title')}
-            dirty={editState.isEditing('title') && sectionDirty.title}
-            disabled={isSaving}
-            onEdit={() => beginEdit('title')}
-            editor={
-              <input
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
-                value={editState.draft.title}
-                onChange={(event) =>
-                  editState.setDraft((draft) => ({
-                    ...draft,
-                    title: event.target.value,
-                  }))
-                }
-                disabled={isSaving}
-              />
-            }
-          >
-            <p className="truncate text-sm leading-relaxed text-slate-800">
-              {displayBody.title || activeCurrent.pid}
-            </p>
-          </EditableSection>
-
-          <EditableSection
-            title={t('edit.summary')}
-            editing={editState.isEditing('summary')}
-            dirty={editState.isEditing('summary') && sectionDirty.summary}
-            disabled={isSaving}
-            onEdit={() => beginEdit('summary')}
-            editor={
-              <textarea
-                className="w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
-                rows={3}
-                value={editState.draft.summary}
-                onChange={(event) =>
-                  editState.setDraft((draft) => ({
-                    ...draft,
-                    summary: event.target.value,
-                  }))
-                }
-                disabled={isSaving}
-              />
-            }
-          >
-            <p className="text-sm leading-relaxed text-slate-800">
-              {displayBody.description || '—'}
-            </p>
-          </EditableSection>
-
-          <EditableSection
-            title={t('edit.details')}
-            editing={editState.isEditing('details')}
-            dirty={editState.isEditing('details') && sectionDirty.details}
-            disabled={isSaving}
-            onEdit={() => beginEdit('details')}
-            editor={
-              <textarea
-                className="w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
-                rows={7}
-                value={editState.draft.details}
-                onChange={(event) =>
-                  editState.setDraft((draft) => ({
-                    ...draft,
-                    details: event.target.value,
-                  }))
-                }
-                disabled={isSaving}
-              />
-            }
-          >
-            <pre className="max-h-60 overflow-y-auto whitespace-pre-wrap wrap-break-word rounded bg-slate-50 p-3 text-sm leading-relaxed text-slate-800">
-              {displayBody.content || '—'}
-            </pre>
-          </EditableSection>
-
-          <EditableSection
-            title={t('filters.tag')}
-            inline={!editState.isEditing('tags')}
-            editing={editState.isEditing('tags')}
-            dirty={editState.isEditing('tags') && sectionDirty.tags}
-            disabled={isSaving}
-            onEdit={() => beginEdit('tags')}
-            editor={
-              <div className="grid gap-4">
-                <TagOptionGrid
-                  label={t('edit.statusTag')}
-                  tags={statusOptions}
-                  selected={editState.draft.statusTag}
-                  lang={lang}
-                  required
-                  disabled={isSaving}
-                  onSelect={(tag) =>
-                    editState.setDraft((draft) => ({
-                      ...draft,
-                      statusTag: tag,
-                    }))
-                  }
-                />
-                <TagOptionGrid
-                  label={t('edit.priorityTag')}
-                  tags={priorityOptions}
-                  selected={editState.draft.priorityTag}
-                  lang={lang}
-                  disabled={isSaving}
-                  onSelect={(tag) =>
-                    editState.setDraft((draft) => ({
-                      ...draft,
-                      priorityTag: draft.priorityTag === tag ? '' : tag,
-                    }))
-                  }
-                />
-                <SearchSelect
-                  mode="tag"
-                  label={t('edit.otherTags')}
-                  options={otherTagSelectOptions}
-                  values={editState.draft.otherTags}
-                  multiple
-                  onChangeMany={(nextTags) =>
-                    editState.setDraft((draft) => ({
-                      ...draft,
-                      otherTags: nextTags.filter((tag) =>
-                        otherTagOptions.includes(tag as Tag)
-                      ) as Tag[],
-                    }))
-                  }
-                  placeholder={t('searchSelect.searchPlaceholder')}
-                  selectedLabel={t('edit.otherTags')}
-                  emptyText={t('create.noConfigTags')}
-                  disabled={isSaving}
-                />
-              </div>
-            }
-          >
-            {displayTags.length > 0 ? (
-              <TagChipRow tags={displayTags} readonly />
-            ) : (
-              <p className="text-sm text-slate-500">—</p>
-            )}
-          </EditableSection>
-
-          {(activeCurrent.assets?.length ?? 0) > 0 && (
-            <ReadOnlyInfoSection title={t('record.assets')}>
-              <ul className="grid gap-1">
-                {activeCurrent.assets?.map((asset) => (
-                  <li
-                    key={asset}
-                    className="truncate font-mono text-xs text-slate-700"
-                    title={asset}
-                  >
-                    {asset}
-                  </li>
-                ))}
-              </ul>
-            </ReadOnlyInfoSection>
-          )}
-
-          {(activeCurrent.relations?.length ?? 0) > 0 && (
-            <ReadOnlyInfoSection title={t('record.relations')}>
-              <ul className="grid gap-1">
-                {activeCurrent.relations?.map((rel, index) => (
-                  <li
-                    key={`${rel.constraint}:${rel.target}:${index}`}
-                    className="truncate text-xs text-slate-700"
-                    title={rel.target}
-                  >
-                    {rel.constraint}: {rel.target}
-                  </li>
-                ))}
-              </ul>
-              </ReadOnlyInfoSection>
-            )}
+              {(activeCurrent.relations?.length ?? 0) > 0 && (
+                <ReadOnlyInfoSection title={t('record.relations')}>
+                  <ul className="grid gap-1">
+                    {activeCurrent.relations?.map((rel, index) => (
+                      <li
+                        key={`${rel.constraint}:${rel.target}:${index}`}
+                        className="truncate text-xs text-slate-700"
+                        title={rel.target}
+                      >
+                        {rel.constraint}: {rel.target}
+                      </li>
+                    ))}
+                  </ul>
+                </ReadOnlyInfoSection>
+              )}
             </div>
           )}
         </div>
@@ -710,14 +709,10 @@ export function RecordDetailDrawer({
 
       <UnsavedChangesDialog
         open={editState.pendingExit}
-        title={isZh ? '放弃未保存的修改？' : 'Discard unsaved changes?'}
-        message={
-          isZh
-            ? '当前详情中有未保存的修改。要放弃这些修改并继续吗？'
-            : 'This detail drawer has unsaved changes. Discard them and continue?'
-        }
-        confirmLabel={isZh ? '放弃修改' : 'Discard changes'}
-        cancelLabel={isZh ? '继续编辑' : 'Keep editing'}
+        title={t('edit.unsavedDiscardTitle')}
+        message={t('edit.unsavedDiscardMessage')}
+        confirmLabel={t('edit.unsavedDiscardConfirm')}
+        cancelLabel={t('edit.unsavedDiscardCancel')}
         onCancel={cancelDiscard}
         onConfirm={confirmDiscard}
       />

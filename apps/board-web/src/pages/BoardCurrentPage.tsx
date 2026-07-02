@@ -681,7 +681,9 @@ export function BoardCurrentPage() {
       />
 
       <RecordHistoryDrawer
-        open={historyController.historySelection !== null && detailRecord === null}
+        open={
+          historyController.historySelection !== null && detailRecord === null
+        }
         recordId={historyController.historySelection?.recordId ?? null}
         title={historyController.historySelection?.title}
         pid={historyController.historySelection?.pid}
