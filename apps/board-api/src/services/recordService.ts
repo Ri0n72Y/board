@@ -9,8 +9,14 @@ import type {
   RecordItem,
 } from '@labour-board/shared'
 import type { BoardConfigPidWriter } from '../config/boardConfig.js'
-import type { StoredRecordDoc, RecordRepository } from '../repositories/recordRepository.js'
-import type { SnapshotHead, SnapshotHeadRepository } from '../repositories/snapshotHeadRepository.js'
+import type {
+  StoredRecordDoc,
+  RecordRepository,
+} from '../repositories/recordRepository.js'
+import type {
+  SnapshotHead,
+  SnapshotHeadRepository,
+} from '../repositories/snapshotHeadRepository.js'
 import { PidAllocator } from './pid/pidAllocator.js'
 import { filterRecords } from './record/recordQuery.js'
 import { assertCreateInput } from './record/recordValidation.js'
@@ -78,7 +84,9 @@ export class RecordService {
   // ─── Record CRUD ───
 
   async list(query: RecordQuery): Promise<BoardRecordResponse[]> {
-    const records = await this.listProjectedRecords(query.includeArchived === true)
+    const records = await this.listProjectedRecords(
+      query.includeArchived === true
+    )
     const filtered = filterRecords(records, query, this.boardConfig)
     return filtered.map(toRecordResponse)
   }
@@ -192,9 +200,7 @@ export class RecordService {
     return projected
   }
 
-  private async projectRecordById(
-    id: string
-  ): Promise<StoredRecordDoc | null> {
+  private async projectRecordById(id: string): Promise<StoredRecordDoc | null> {
     const record = await this.repository.findById(id)
     if (!record) return null
     const current = await this.projectRecord(record)

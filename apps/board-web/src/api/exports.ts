@@ -26,11 +26,11 @@ export interface ExportRequestOptions {
 
 export async function exportCurrentBoard(
   options: ExportRequestOptions = {},
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<BoardExportResult> {
   const response = await axios.get<ApiResponse<BoardExportResult>>(
     `${apiBaseUrl}/board/current/export`,
-    { params: toParams(options), signal },
+    { params: toParams(options), signal }
   )
 
   if (!response.data.ok) {
@@ -43,11 +43,11 @@ export async function exportCurrentBoard(
 export async function exportSnapshot(
   snapshotId: string,
   options: ExportRequestOptions = {},
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<BoardExportResult> {
   const response = await axios.get<ApiResponse<BoardExportResult>>(
     `${apiBaseUrl}/snapshots/${encodeURIComponent(snapshotId)}/export`,
-    { params: toParams(options), signal },
+    { params: toParams(options), signal }
   )
 
   if (!response.data.ok) {
@@ -79,7 +79,7 @@ function toParams(options: ExportRequestOptions): URLSearchParams {
 function addBoolean(
   params: URLSearchParams,
   key: string,
-  value: boolean | undefined,
+  value: boolean | undefined
 ) {
   if (value !== undefined) params.set(key, value ? 'true' : 'false')
 }

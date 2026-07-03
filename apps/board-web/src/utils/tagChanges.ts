@@ -12,7 +12,7 @@ const SINGLE_VALUE_NAMESPACES = new Set([
 
 export function buildTagChanges(
   originalTags: readonly Tag[],
-  editedTags: readonly Tag[],
+  editedTags: readonly Tag[]
 ): TagChanges | undefined {
   const originalByNamespace = groupTagsByNamespace(originalTags)
   const editedByNamespace = groupTagsByNamespace(editedTags)

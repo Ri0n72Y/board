@@ -20,16 +20,56 @@ export function collectBoardConfigWarnings(
     configPath
   )
   warnIfDefaultedArray(warnings, value, ['tags', 'namespaces'], configPath)
-  warnIfDefaultedArray(warnings, value, ['tags', 'status', 'required'], configPath)
-  warnIfDefaultedArray(warnings, value, ['tags', 'status', 'custom'], configPath)
-  warnIfDefaultedArray(warnings, value, ['tags', 'priority', 'defaults'], configPath)
-  warnIfDefaultedArray(warnings, value, ['tags', 'priority', 'custom'], configPath)
-  warnIfDefaultedArray(warnings, value, ['tags', 'asset', 'defaults'], configPath)
+  warnIfDefaultedArray(
+    warnings,
+    value,
+    ['tags', 'status', 'required'],
+    configPath
+  )
+  warnIfDefaultedArray(
+    warnings,
+    value,
+    ['tags', 'status', 'custom'],
+    configPath
+  )
+  warnIfDefaultedArray(
+    warnings,
+    value,
+    ['tags', 'priority', 'defaults'],
+    configPath
+  )
+  warnIfDefaultedArray(
+    warnings,
+    value,
+    ['tags', 'priority', 'custom'],
+    configPath
+  )
+  warnIfDefaultedArray(
+    warnings,
+    value,
+    ['tags', 'asset', 'defaults'],
+    configPath
+  )
   warnIfDefaultedArray(warnings, value, ['tags', 'asset', 'custom'], configPath)
-  warnIfDefaultedArray(warnings, value, ['tags', 'transaction', 'defaults'], configPath)
-  warnIfDefaultedArray(warnings, value, ['tags', 'transaction', 'custom'], configPath)
+  warnIfDefaultedArray(
+    warnings,
+    value,
+    ['tags', 'transaction', 'defaults'],
+    configPath
+  )
+  warnIfDefaultedArray(
+    warnings,
+    value,
+    ['tags', 'transaction', 'custom'],
+    configPath
+  )
   warnIfDefaultedArray(warnings, value, ['tags', 'custom'], configPath)
-  warnIfDefaultedArray(warnings, value, ['relations', 'constraints'], configPath)
+  warnIfDefaultedArray(
+    warnings,
+    value,
+    ['relations', 'constraints'],
+    configPath
+  )
   warnIfDefaultedArray(warnings, value, ['snapshot', 'excludeTags'], configPath)
 
   for (const tag of getTagDefinitions(value)) {

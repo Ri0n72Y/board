@@ -178,7 +178,9 @@ snapshot:
     })
 
     expect(state.config.pid.prefixes).toEqual(DEFAULT_BOARD_CONFIG.pid.prefixes)
-    expect(state.config.pid.nextNumber).toBe(DEFAULT_BOARD_CONFIG.pid.nextNumber)
+    expect(state.config.pid.nextNumber).toBe(
+      DEFAULT_BOARD_CONFIG.pid.nextNumber
+    )
     expect(state.needsPidReconciliation).toBe(true)
     expect(state.config.tags.status.required).toEqual([{ id: 'status todo' }])
     expect(state.warnings).toContain(

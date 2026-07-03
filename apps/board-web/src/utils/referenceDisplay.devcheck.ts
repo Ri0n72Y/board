@@ -10,10 +10,7 @@ import {
   formatReferenceList,
   summarizeReferenceList,
 } from './referenceDisplay'
-import {
-  summarizePatch,
-  type HistorySummaryCopy,
-} from './historySummary'
+import { summarizePatch, type HistorySummaryCopy } from './historySummary'
 
 let failures = 0
 
@@ -27,7 +24,10 @@ function assert(expr: boolean, msg: string) {
 }
 
 function eq<T>(actual: T, expected: T, label: string) {
-  assert(Object.is(actual, expected), `${label} expected "${expected}" got "${actual}"`)
+  assert(
+    Object.is(actual, expected),
+    `${label} expected "${expected}" got "${actual}"`
+  )
 }
 
 const options: RecordReferenceOption[] = [
@@ -66,12 +66,12 @@ const copy: HistorySummaryCopy = {
 eq(
   formatReferenceLabel('asset-a', options),
   'ASSET-1 - Battle scene',
-  'resolved reference displays PID + title',
+  'resolved reference displays PID + title'
 )
 eq(
   formatReferenceLabel('missing-reference-1234567890', options),
   'missing-...7890',
-  'unknown reference displays short id',
+  'unknown reference displays short id'
 )
 
 const resolved = formatReferenceItem('asset-a', options)
@@ -80,8 +80,16 @@ eq(resolved.meta, 'asset-a', 'raw id is retained as meta')
 eq(resolved.resolved, true, 'resolved marker is true for resolved option')
 
 const unknown = formatReferenceItem('missing-reference-1234567890', options)
-eq(unknown.value, 'missing-reference-1234567890', 'unknown raw id is retained as value')
-eq(unknown.meta, 'missing-reference-1234567890', 'unknown raw id is retained as meta')
+eq(
+  unknown.value,
+  'missing-reference-1234567890',
+  'unknown raw id is retained as value'
+)
+eq(
+  unknown.meta,
+  'missing-reference-1234567890',
+  'unknown raw id is retained as meta'
+)
 eq(unknown.resolved, false, 'resolved marker is false for unknown option')
 
 eq(
@@ -89,26 +97,30 @@ eq(
     .map((item) => item.value)
     .join(','),
   'asset-b,asset-a',
-  'formatReferenceList keeps input order',
+  'formatReferenceList keeps input order'
 )
 
-const summary = summarizeReferenceList(['asset-a', 'asset-b', 'asset-a'], options, 2)
+const summary = summarizeReferenceList(
+  ['asset-a', 'asset-b', 'asset-a'],
+  options,
+  2
+)
 eq(summary.visible.length, 2, 'summarizeReferenceList maxVisible is respected')
 eq(summary.hiddenCount, 1, 'hiddenCount is correct')
 eq(
   summary.visible.map((item) => item.value).join(','),
   'asset-a,asset-b',
-  'visible references preserve order',
+  'visible references preserve order'
 )
 eq(
   summarizeReferenceList([], options, 2).visible.length,
   0,
-  'empty values returns empty visible',
+  'empty values returns empty visible'
 )
 eq(
   formatReferenceList(['asset-a', 'asset-a'], options).length,
   2,
-  'duplicate display entries are preserved',
+  'duplicate display entries are preserved'
 )
 
 const assetLines = summarizePatch(
@@ -120,12 +132,12 @@ const assetLines = summarizePatch(
     parentId: null,
     assets: ['asset-a'],
   },
-  { language: 'en-US', copy, assetOptions: options },
+  { language: 'en-US', copy, assetOptions: options }
 )
 eq(
   assetLines[0]?.value,
   'ASSET-1 - Battle scene',
-  'asset history summary displays asset label',
+  'asset history summary displays asset label'
 )
 
 const unknownAssetLines = summarizePatch(
@@ -137,13 +149,15 @@ const unknownAssetLines = summarizePatch(
     parentId: null,
     assets: ['unknown-asset-reference-1234567890'],
   },
-  { language: 'en-US', copy, assetOptions: options },
+  { language: 'en-US', copy, assetOptions: options }
 )
 eq(
   unknownAssetLines[0]?.value,
   'unknown-...7890',
-  'asset history summary unknown fallback short id',
+  'asset history summary unknown fallback short id'
 )
 
-console.log(`\n${failures === 0 ? 'referenceDisplay devcheck passed' : `${failures} failures`}`)
+console.log(
+  `\n${failures === 0 ? 'referenceDisplay devcheck passed' : `${failures} failures`}`
+)
 if (failures > 0) throw new Error(`${failures} assertions failed`)

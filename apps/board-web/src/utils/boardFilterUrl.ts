@@ -17,7 +17,7 @@ export interface BoardCurrentFilters {
 export const DEFAULT_BOARD_CURRENT_FILTERS: BoardCurrentFilters = {
   q: '',
   tags: [],
-  tagMatch: 'all',
+  tagMatch: 'any',
   includeArchived: false,
   assignee: '',
   assetId: '',
@@ -25,7 +25,7 @@ export const DEFAULT_BOARD_CURRENT_FILTERS: BoardCurrentFilters = {
 }
 
 export function parseBoardFilterUrl(
-  input: URLSearchParams | string,
+  input: URLSearchParams | string
 ): BoardCurrentFilters {
   const params = toSearchParams(input)
   const rawTags: string[] = []
@@ -37,7 +37,7 @@ export function parseBoardFilterUrl(
   return {
     q: normalizeString(params.get('q')),
     tags,
-    tagMatch: parseTagMatch(params.get('tagMatch')),
+    tagMatch: parseTagMatch(),
     includeArchived: params.get('includeArchived') === 'true',
     assignee: normalizeString(params.get('assignee')),
     assetId: normalizeString(params.get('assetId')),
@@ -46,14 +46,13 @@ export function parseBoardFilterUrl(
 }
 
 export function serializeBoardFilterUrl(
-  filters: BoardCurrentFilters | BoardCurrentQuery,
+  filters: BoardCurrentFilters | BoardCurrentQuery
 ): URLSearchParams {
   const normalized = normalizeBoardFilterUrl(filters)
   const params = new URLSearchParams()
 
   if (normalized.q) params.set('q', normalized.q)
   for (const tag of normalized.tags) params.append('tags', tag)
-  if (normalized.tagMatch === 'any') params.set('tagMatch', 'any')
   if (normalized.includeArchived) params.set('includeArchived', 'true')
   if (normalized.assignee) params.set('assignee', normalized.assignee)
   if (normalized.assetId) params.set('assetId', normalized.assetId)
@@ -65,12 +64,12 @@ export function serializeBoardFilterUrl(
 }
 
 export function normalizeBoardFilterUrl(
-  filters: BoardCurrentFilters | BoardCurrentQuery,
+  filters: BoardCurrentFilters | BoardCurrentQuery
 ): BoardCurrentFilters {
   return {
     q: normalizeString(filters.q),
     tags: dedupeTags(filters.tags ?? []),
-    tagMatch: filters.tagMatch === 'any' ? 'any' : 'all',
+    tagMatch: 'any',
     includeArchived: filters.includeArchived === true,
     assignee: normalizeString(filters.assignee),
     assetId: normalizeString(filters.assetId),
@@ -84,7 +83,7 @@ export function boardFilterUrlQuery(filters: BoardCurrentFilters): string {
 
 export function appendBoardFilterUrlParams(
   params: URLSearchParams,
-  filters: BoardCurrentQuery | undefined,
+  filters: BoardCurrentQuery | undefined
 ): void {
   if (!filters) return
   for (const [key, value] of serializeBoardFilterUrl(filters)) {
@@ -102,14 +101,14 @@ export function rawBoardFilterSearchQuery(search: string): string {
 
 export function shouldReplaceBoardFilterUrl(
   search: string,
-  nextQuery: string,
+  nextQuery: string
 ): boolean {
   return rawBoardFilterSearchQuery(search) !== nextQuery
 }
 
 export function areBoardFiltersEqual(
   left: BoardCurrentFilters,
-  right: BoardCurrentFilters,
+  right: BoardCurrentFilters
 ): boolean {
   return boardFilterUrlQuery(left) === boardFilterUrlQuery(right)
 }
@@ -119,8 +118,8 @@ function toSearchParams(input: URLSearchParams | string): URLSearchParams {
   return new URLSearchParams(input.startsWith('?') ? input.slice(1) : input)
 }
 
-function parseTagMatch(value: string | null): BoardCurrentTagMatch {
-  return value === 'any' ? 'any' : 'all'
+function parseTagMatch(): BoardCurrentTagMatch {
+  return 'any'
 }
 
 function normalizeString(value: string | null | undefined): string {

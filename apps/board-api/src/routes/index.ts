@@ -34,14 +34,20 @@ export interface ApiRouteServices {
 }
 
 export function mountApiRoutes(app: Hono, services: ApiRouteServices): void {
-  app.route('/api/v0/board', createBoardCurrentExportRoute(
-    services.recordRepository,
-    services.snapshotHeadRepository
-  ))
-  app.route('/api/v0/board', createBoardCurrentRoute(
-    services.recordRepository,
-    services.snapshotHeadRepository
-  ))
+  app.route(
+    '/api/v0/board',
+    createBoardCurrentExportRoute(
+      services.recordRepository,
+      services.snapshotHeadRepository
+    )
+  )
+  app.route(
+    '/api/v0/board',
+    createBoardCurrentRoute(
+      services.recordRepository,
+      services.snapshotHeadRepository
+    )
+  )
   app.route('/api/v0/config', createConfigRoute(services.configService))
   app.route('/api/v0/profiles', createProfilesRoute(services.profileService))
   app.route('/api/v0/patches', createPatchesRoute(services.recordService))
@@ -49,14 +55,11 @@ export function mountApiRoutes(app: Hono, services: ApiRouteServices): void {
   app.route('/api/v0/records', createRecordsRoute(services.recordService))
   app.route(
     '/api/v0/agent',
-    createAgentRoute(services.agentDraftService, services.agentResponseService),
+    createAgentRoute(services.agentDraftService, services.agentResponseService)
   )
+  app.route('/api/v0/agent', createAgentSkillsRoute(services.agentSkillService))
   app.route(
     '/api/v0/agent',
-    createAgentSkillsRoute(services.agentSkillService),
-  )
-  app.route(
-    '/api/v0/agent',
-    createAgentSuggestionsRoute(services.agentSuggestionService),
+    createAgentSuggestionsRoute(services.agentSuggestionService)
   )
 }

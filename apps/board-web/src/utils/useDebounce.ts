@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 export function useDebouncedValue<T>(
   value: T,
   delay: number,
-  resetKey?: unknown,
+  resetKey?: unknown
 ): T {
   const [debounced, setDebounced] = useState(value)
   const resetKeyRef = useRef(resetKey)

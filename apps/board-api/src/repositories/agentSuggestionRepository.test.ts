@@ -5,7 +5,9 @@ import type {
 } from '@labour-board/shared'
 import { MemoryAgentSuggestionRepository } from './agentSuggestionRepository.js'
 
-function makeDetail(overrides?: Partial<AgentSuggestionDetail>): AgentSuggestionDetail {
+function makeDetail(
+  overrides?: Partial<AgentSuggestionDetail>
+): AgentSuggestionDetail {
   return {
     id: crypto.randomUUID(),
     draftId: 'draft-1',
@@ -68,8 +70,14 @@ describe('MemoryAgentSuggestionRepository', () => {
 
   it('listByDraftId excludes markdown', async () => {
     const repo = new MemoryAgentSuggestionRepository()
-    const d1 = makeDetail({ draftId: 'draft-x', createdAt: '2026-02-01T00:00:00Z' })
-    const d2 = makeDetail({ draftId: 'draft-x', createdAt: '2026-02-02T00:00:00Z' })
+    const d1 = makeDetail({
+      draftId: 'draft-x',
+      createdAt: '2026-02-01T00:00:00Z',
+    })
+    const d2 = makeDetail({
+      draftId: 'draft-x',
+      createdAt: '2026-02-02T00:00:00Z',
+    })
     await repo.create(d1)
     await repo.create(d2)
 
@@ -86,8 +94,14 @@ describe('MemoryAgentSuggestionRepository', () => {
 
   it('list sorted by createdAt desc', async () => {
     const repo = new MemoryAgentSuggestionRepository()
-    const d1 = makeDetail({ draftId: 'draft-y', createdAt: '2026-01-01T00:00:00Z' })
-    const d2 = makeDetail({ draftId: 'draft-y', createdAt: '2026-03-01T00:00:00Z' })
+    const d1 = makeDetail({
+      draftId: 'draft-y',
+      createdAt: '2026-01-01T00:00:00Z',
+    })
+    const d2 = makeDetail({
+      draftId: 'draft-y',
+      createdAt: '2026-03-01T00:00:00Z',
+    })
     await repo.create(d1)
     await repo.create(d2)
 

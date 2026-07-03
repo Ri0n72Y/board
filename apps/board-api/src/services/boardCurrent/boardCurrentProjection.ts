@@ -6,7 +6,10 @@ import type {
 } from '@labour-board/shared'
 import type { StoredRecordDoc } from '../../repositories/recordRepository.js'
 import type { StoredPatchDoc } from '../../repositories/snapshotHeadRepository.js'
-import { reconstructPatchChain, replayRecordHistory } from '../record/recordHistory.js'
+import {
+  reconstructPatchChain,
+  replayRecordHistory,
+} from '../record/recordHistory.js'
 
 // ─── Domain types ───
 

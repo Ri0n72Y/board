@@ -54,7 +54,9 @@ export function AgentSuggestionSection({
         : 'Use English for titles, summaries, labels, and generated suggestion content.'
     // Wrap in void to prevent unhandled promise rejection;
     // the hook already handles errors via generateError state.
-    void Promise.resolve(onGenerate(draft.id, languageInstruction)).catch(() => undefined)
+    void Promise.resolve(onGenerate(draft.id, languageInstruction)).catch(
+      () => undefined
+    )
   }
 
   return (
@@ -70,9 +72,7 @@ export function AgentSuggestionSection({
           disabled={!isReviewed || isGenerating}
           onClick={handleGenerate}
           title={
-            !isReviewed
-              ? t('agent.suggestions.requiresReviewed')
-              : undefined
+            !isReviewed ? t('agent.suggestions.requiresReviewed') : undefined
           }
         >
           {isGenerating
@@ -117,20 +117,18 @@ export function AgentSuggestionSection({
       )}
 
       {/* Suggestion cards list */}
-      {!isListLoading &&
-        !listError &&
-        suggestions.length > 0 && (
-          <div className="grid gap-2">
-            {suggestions.map((s) => (
-              <AgentSuggestionCard
-                key={s.id}
-                suggestion={s}
-                isSelected={selectedSuggestion?.id === s.id}
-                onSelect={onSelectSuggestion}
-              />
-            ))}
-          </div>
-        )}
+      {!isListLoading && !listError && suggestions.length > 0 && (
+        <div className="grid gap-2">
+          {suggestions.map((s) => (
+            <AgentSuggestionCard
+              key={s.id}
+              suggestion={s}
+              isSelected={selectedSuggestion?.id === s.id}
+              onSelect={onSelectSuggestion}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Suggestion detail */}
       {isDetailLoading && (

@@ -1,4 +1,8 @@
-import type { AgentContextProfile, BoardContextPackOptions, BoardContextPackResult } from './export.js'
+import type {
+  AgentContextProfile,
+  BoardContextPackOptions,
+  BoardContextPackResult,
+} from './export.js'
 import type { BoardCurrentQuery } from './boardCurrent.js'
 
 export type AgentDraftStatus = 'draft' | 'reviewed' | 'discarded'
@@ -147,7 +151,12 @@ export interface GetAgentResponseResponse {
 
 // ─── Agent Skill types (2.3) ───
 
-export type AgentSkillSource = 'built-in' | 'project' | 'workspace' | 'server' | 'local'
+export type AgentSkillSource =
+  | 'built-in'
+  | 'project'
+  | 'workspace'
+  | 'server'
+  | 'local'
 
 export interface AgentSkillSummary {
   id: string

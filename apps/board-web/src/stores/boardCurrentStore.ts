@@ -34,7 +34,10 @@ interface BoardCurrentState {
   setRelationTarget: (relationTarget: string) => void
   setFilters: (filters: BoardCurrentFilters) => void
   setEffectiveFilters: (filters: BoardCurrentFilters) => void
-  loadCurrentBoard: (filters: BoardCurrentFilters, signal?: AbortSignal) => Promise<void>
+  loadCurrentBoard: (
+    filters: BoardCurrentFilters,
+    signal?: AbortSignal
+  ) => Promise<void>
 }
 
 const initialFilters = getInitialFilters()
@@ -66,10 +69,12 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
             filters: {
               ...state.filters,
               tags: [...state.filters.tags, tag],
+              tagMatch: 'any',
             },
             effectiveFilters: {
               ...state.effectiveFilters,
               tags: [...state.effectiveFilters.tags, tag],
+              tagMatch: 'any',
             },
           }
     )
@@ -80,17 +85,19 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
       filters: {
         ...state.filters,
         tags: state.filters.tags.filter((value) => value !== tag),
+        tagMatch: 'any',
       },
       effectiveFilters: {
         ...state.effectiveFilters,
         tags: state.effectiveFilters.tags.filter((value) => value !== tag),
+        tagMatch: 'any',
       },
     })),
 
-  setTagMatch: (tagMatch) =>
+  setTagMatch: () =>
     set((state) => ({
-      filters: { ...state.filters, tagMatch },
-      effectiveFilters: { ...state.effectiveFilters, tagMatch },
+      filters: { ...state.filters, tagMatch: 'any' },
+      effectiveFilters: { ...state.effectiveFilters, tagMatch: 'any' },
     })),
 
   setIncludeArchived: (includeArchived) =>
@@ -162,13 +169,15 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
 }))
 
 function getInitialFilters(): BoardCurrentFilters {
-  if (typeof window === 'undefined') return cloneFilters(DEFAULT_BOARD_CURRENT_FILTERS)
+  if (typeof window === 'undefined')
+    return cloneFilters(DEFAULT_BOARD_CURRENT_FILTERS)
   return parseBoardFilterUrl(window.location.search)
 }
 
 function cloneFilters(filters: BoardCurrentFilters): BoardCurrentFilters {
   return {
     ...filters,
+    tagMatch: 'any',
     tags: [...filters.tags],
   }
 }

@@ -46,7 +46,9 @@ interface ExportContextDrawerProps {
   isExporting: boolean
   error: string | null
   onExport: (options: ExportContextPackOptions) => boolean
-  onSaveDraft?: (options: ExportContextPackOptions & { title: string }) => Promise<void>
+  onSaveDraft?: (
+    options: ExportContextPackOptions & { title: string }
+  ) => Promise<void>
   isSavingDraft?: boolean
   draftSaveError?: string | null
   onClose: () => void
@@ -92,11 +94,11 @@ export function ExportContextDrawer({
         value: definition.id,
         label: t(profileI18nKey(definition.id, 'label'), definition.label),
       })),
-    [t],
+    [t]
   )
   const profileDefinition = useMemo(
     () => getAgentContextProfileDefinition(profile),
-    [profile],
+    [profile]
   )
 
   const recordOptions = useMemo(
@@ -112,7 +114,7 @@ export function ExportContextDrawer({
           .filter(Boolean)
           .join(' / '),
       })),
-    [records],
+    [records]
   )
   const sprintOptions = useMemo(
     () =>
@@ -124,7 +126,7 @@ export function ExportContextDrawer({
           label: formatTagLabel(tag, lang),
           meta: tag,
         })),
-    [knownTags, lang],
+    [knownTags, lang]
   )
 
   const needsRecord = profileDefinition.requiresRecord
@@ -150,7 +152,10 @@ export function ExportContextDrawer({
     previewAbortRef.current?.abort()
     previewAbortRef.current = null
     // If there was a preview and inputs changed, mark stale
-    if (lastPreviewKeyRef.current !== null && lastPreviewKeyRef.current !== previewInputKey) {
+    if (
+      lastPreviewKeyRef.current !== null &&
+      lastPreviewKeyRef.current !== previewInputKey
+    ) {
       setPreviewContent(null)
       setPreviewError(null)
       setIsPreviewLoading(false)
@@ -193,16 +198,27 @@ export function ExportContextDrawer({
         includeAssets,
         includeContent,
       },
-      controller.signal,
+      controller.signal
     )
       .then((data) => {
-        if (previewRequestIdRef.current !== requestId || controller.signal.aborted) return
+        if (
+          previewRequestIdRef.current !== requestId ||
+          controller.signal.aborted
+        )
+          return
         setPreviewContent(data.content)
         lastPreviewKeyRef.current = previewInputKey
       })
       .catch((caught: unknown) => {
-        if (previewRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(caught)) return
-        setPreviewError(caught instanceof Error ? caught.message : String(caught))
+        if (
+          previewRequestIdRef.current !== requestId ||
+          controller.signal.aborted ||
+          axios.isCancel(caught)
+        )
+          return
+        setPreviewError(
+          caught instanceof Error ? caught.message : String(caught)
+        )
       })
       .finally(() => {
         if (previewRequestIdRef.current !== requestId) return
@@ -281,10 +297,16 @@ export function ExportContextDrawer({
             options={profileOptions}
           />
           <p className="text-sm text-slate-600">
-            {t(profileI18nKey(profile, 'description'), profileDefinition.description)}
+            {t(
+              profileI18nKey(profile, 'description'),
+              profileDefinition.description
+            )}
           </p>
           <p className="text-xs text-slate-500">
-            {t(profileI18nKey(profile, 'purpose'), profileDefinition.agentReadingPurpose)}
+            {t(
+              profileI18nKey(profile, 'purpose'),
+              profileDefinition.agentReadingPurpose
+            )}
           </p>
           <label className="grid gap-1.5 text-xs font-bold text-slate-500">
             {t('export.contextGoal')}
@@ -444,7 +466,9 @@ export function ExportContextDrawer({
                 ) : undefined
               }
             >
-              {isSavingDraft ? t('export.draftSaving') : t('export.draftSaveButton')}
+              {isSavingDraft
+                ? t('export.draftSaving')
+                : t('export.draftSaveButton')}
             </Button>
           </section>
         )}

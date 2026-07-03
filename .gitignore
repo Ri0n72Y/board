@@ -36,6 +36,8 @@ changes_*.md
 
 .temp
 .pnpm-store
+.codex
+.codex-tmp
 board.yaml
 /test-data
 .evolver

@@ -24,7 +24,10 @@ import { resolve } from 'node:path'
 import { parseDocument } from 'yaml'
 import { MongoClient } from 'mongodb'
 
-const TEST_DATA_DIR = resolve(import.meta.dirname ?? '.', '../../../../test-data')
+const TEST_DATA_DIR = resolve(
+  import.meta.dirname ?? '.',
+  '../../../../test-data'
+)
 const BOARD_YAML = resolve(TEST_DATA_DIR, 'mocked_board.yaml')
 const RECORDS_JSON = resolve(TEST_DATA_DIR, 'mocked_records.json')
 
@@ -49,7 +52,7 @@ function printUsage() {
       '  pnpm --filter @labour-board/api import:test-data -- --reset',
       '  # Or override via command line:',
       '  MONGODB_URI=mongodb://localhost:27017 pnpm --filter @labour-board/api import:test-data -- --reset',
-    ].join('\n'),
+    ].join('\n')
   )
 }
 
@@ -77,14 +80,18 @@ async function main() {
     console.error('  MONGODB_URI=mongodb://localhost:27017')
     console.error('  MONGODB_DB=labourboard_dev')
     console.error('Or pass it on the command line:')
-    console.error('  MONGODB_URI=mongodb://localhost:27017 pnpm --filter @labour-board/api import:test-data -- --reset')
+    console.error(
+      '  MONGODB_URI=mongodb://localhost:27017 pnpm --filter @labour-board/api import:test-data -- --reset'
+    )
     process.exit(1)
   }
 
   const dbName = process.env.MONGODB_DB ?? 'labour_board'
 
   console.log('─── Test Data Import ───')
-  console.log(`Mongo URI:  ${mongoUri.replace(/\/\/[^@]+@/, '//<credentials>@')}`)
+  console.log(
+    `Mongo URI:  ${mongoUri.replace(/\/\/[^@]+@/, '//<credentials>@')}`
+  )
   console.log(`Database:   ${dbName}`)
   console.log(`Collection: records`)
   console.log(`Reset:      ${reset}`)
@@ -105,7 +112,9 @@ async function main() {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       console.error(`ERROR: Board config not found at ${BOARD_YAML}`)
     } else {
-      console.error(`ERROR: Failed to read board config: ${(err as Error).message}`)
+      console.error(
+        `ERROR: Failed to read board config: ${(err as Error).message}`
+      )
     }
     process.exit(1)
   }
@@ -117,7 +126,9 @@ async function main() {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       console.error(`ERROR: Records file not found at ${RECORDS_JSON}`)
     } else {
-      console.error(`ERROR: Failed to parse records JSON: ${(err as Error).message}`)
+      console.error(
+        `ERROR: Failed to parse records JSON: ${(err as Error).message}`
+      )
     }
     process.exit(1)
   }
@@ -154,7 +165,9 @@ async function main() {
     await client.connect()
     console.log('✓ Connected to MongoDB')
   } catch (err) {
-    console.error(`ERROR: Failed to connect to MongoDB: ${(err as Error).message}`)
+    console.error(
+      `ERROR: Failed to connect to MongoDB: ${(err as Error).message}`
+    )
     process.exit(1)
   }
 
@@ -217,7 +230,9 @@ async function main() {
   console.log('')
   console.log('Next steps:')
   console.log(`  1. Start API: pnpm --filter @labour-board/api dev`)
-  console.log(`  2. Start Web: pnpm --filter @labour-board/web dev -- --host 127.0.0.1 --port 5173 --strictPort`)
+  console.log(
+    `  2. Start Web: pnpm --filter @labour-board/web dev -- --host 127.0.0.1 --port 5173 --strictPort`
+  )
   console.log(`  3. Verify: curl http://localhost:8787/api/v0/board/current`)
   console.log('')
 

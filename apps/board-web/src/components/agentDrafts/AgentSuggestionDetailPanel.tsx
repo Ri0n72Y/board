@@ -34,7 +34,7 @@ export function AgentSuggestionDetailPanel({
   const diagnostics = suggestion.diagnostics
     ? keyStableTextItems(
         suggestion.diagnostics,
-        `suggestion:${suggestion.id}:diagnostic`,
+        `suggestion:${suggestion.id}:diagnostic`
       )
     : []
 
@@ -58,9 +58,7 @@ export function AgentSuggestionDetailPanel({
     <div className="grid gap-4">
       {/* Meta bar */}
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
-        <span className="font-semibold text-slate-900">
-          {suggestion.title}
-        </span>
+        <span className="font-semibold text-slate-900">{suggestion.title}</span>
         <span className="text-slate-400">|</span>
         <span>
           {suggestion.provider}/{suggestion.model}
@@ -75,11 +73,7 @@ export function AgentSuggestionDetailPanel({
 
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          variant="default"
-          onClick={handleCopyMarkdown}
-        >
+        <Button type="button" variant="default" onClick={handleCopyMarkdown}>
           {copyFeedback ?? t('agent.suggestions.copyFullMarkdown')}
         </Button>
         <Button

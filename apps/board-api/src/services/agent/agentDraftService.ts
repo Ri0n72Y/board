@@ -33,7 +33,7 @@ export class AgentDraftService {
     agentDraftRepository: AgentDraftRepository,
     recordRepository: RecordRepository,
     snapshotHeadRepository: SnapshotHeadRepository,
-    snapshotRepository: SnapshotRepository,
+    snapshotRepository: SnapshotRepository
   ) {
     this.agentDraftRepository = agentDraftRepository
     this.recordRepository = recordRepository
@@ -43,7 +43,7 @@ export class AgentDraftService {
 
   async createDraft(
     input: CreateAgentDraftInput,
-    actor?: PublicKey,
+    actor?: PublicKey
   ): Promise<AgentDraftDetail> {
     // Validate profile
     const profileDefinition = getAgentContextProfileDefinition(input.profile)
@@ -60,10 +60,14 @@ export class AgentDraftService {
     }
 
     // Default include flags from profile definition
-    const includeContent = input.includeContent ?? profileDefinition.defaultIncludeContent
-    const includeAssets = input.includeAssets ?? profileDefinition.defaultIncludeAssets
-    const includeRelations = input.includeRelations ?? profileDefinition.defaultIncludeRelations
-    const includeDiagnostics = input.includeDiagnostics ?? profileDefinition.defaultIncludeDiagnostics
+    const includeContent =
+      input.includeContent ?? profileDefinition.defaultIncludeContent
+    const includeAssets =
+      input.includeAssets ?? profileDefinition.defaultIncludeAssets
+    const includeRelations =
+      input.includeRelations ?? profileDefinition.defaultIncludeRelations
+    const includeDiagnostics =
+      input.includeDiagnostics ?? profileDefinition.defaultIncludeDiagnostics
 
     const generatedAt = new Date().toISOString()
     const createdBy = resolveActor(actor)
@@ -75,7 +79,9 @@ export class AgentDraftService {
       source: input.source as BoardExportSource,
       profile: input.profile,
       format: 'markdown',
-      ...(input.contextGoal?.trim() ? { contextGoal: input.contextGoal.trim() } : {}),
+      ...(input.contextGoal?.trim()
+        ? { contextGoal: input.contextGoal.trim() }
+        : {}),
       ...(input.recordId ? { recordId: input.recordId } : {}),
       ...(input.sprintTag ? { sprintTag: input.sprintTag } : {}),
       ...(input.filters ? { filters: input.filters } : {}),
@@ -100,13 +106,13 @@ export class AgentDraftService {
       // Snapshot source
       if (!input.snapshotId) {
         throw new AgentDraftValidationError(
-          'snapshotId is required for snapshot source',
+          'snapshotId is required for snapshot source'
         )
       }
       const snapshot = await this.snapshotRepository.findById(input.snapshotId)
       if (!snapshot) {
         throw new AgentDraftNotFoundError(
-          `Snapshot ${input.snapshotId} not found`,
+          `Snapshot ${input.snapshotId} not found`
         )
       }
 
@@ -132,7 +138,9 @@ export class AgentDraftService {
       source: input.source,
       createdAt: generatedAt,
       createdBy,
-      ...(input.contextGoal?.trim() ? { contextGoal: input.contextGoal.trim() } : {}),
+      ...(input.contextGoal?.trim()
+        ? { contextGoal: input.contextGoal.trim() }
+        : {}),
       recordCount,
       ...(snapshotId ? { snapshotId } : {}),
       contextMarkdown: contextPack.content,
@@ -144,10 +152,18 @@ export class AgentDraftService {
         ...(contextPackOptions.contextGoal
           ? { contextGoal: contextPackOptions.contextGoal }
           : {}),
-        ...(contextPackOptions.recordId ? { recordId: contextPackOptions.recordId } : {}),
-        ...(contextPackOptions.sprintTag ? { sprintTag: contextPackOptions.sprintTag } : {}),
-        ...(contextPackOptions.filters ? { filters: contextPackOptions.filters } : {}),
-        ...(contextPackOptions.snapshotId ? { snapshotId: contextPackOptions.snapshotId } : {}),
+        ...(contextPackOptions.recordId
+          ? { recordId: contextPackOptions.recordId }
+          : {}),
+        ...(contextPackOptions.sprintTag
+          ? { sprintTag: contextPackOptions.sprintTag }
+          : {}),
+        ...(contextPackOptions.filters
+          ? { filters: contextPackOptions.filters }
+          : {}),
+        ...(contextPackOptions.snapshotId
+          ? { snapshotId: contextPackOptions.snapshotId }
+          : {}),
         includeContent,
         includeAssets,
         includeRelations,
@@ -161,12 +177,16 @@ export class AgentDraftService {
   async updateReview(
     id: string,
     input: UpdateAgentDraftReviewInput,
-    actor?: PublicKey,
+    actor?: PublicKey
   ): Promise<AgentDraftDetail> {
-    const VALID_STATUSES: AgentDraftStatus[] = ['draft', 'reviewed', 'discarded']
+    const VALID_STATUSES: AgentDraftStatus[] = [
+      'draft',
+      'reviewed',
+      'discarded',
+    ]
     if (!VALID_STATUSES.includes(input.status)) {
       throw new AgentDraftValidationError(
-        `Invalid status: ${input.status}. Must be one of: ${VALID_STATUSES.join(', ')}`,
+        `Invalid status: ${input.status}. Must be one of: ${VALID_STATUSES.join(', ')}`
       )
     }
 
@@ -226,13 +246,13 @@ export class AgentDraftService {
 
     if (draft.status !== 'reviewed') {
       throw new AgentDraftHandoffNotReadyError(
-        `Draft status "${draft.status}" is not "reviewed". Only reviewed drafts can generate formal handoff.`,
+        `Draft status "${draft.status}" is not "reviewed". Only reviewed drafts can generate formal handoff.`
       )
     }
 
     if (!draft.reviewedAt || !draft.reviewedBy) {
       throw new AgentDraftHandoffNotReadyError(
-        'Draft is missing reviewedAt or reviewedBy metadata.',
+        'Draft is missing reviewedAt or reviewedBy metadata.'
       )
     }
 

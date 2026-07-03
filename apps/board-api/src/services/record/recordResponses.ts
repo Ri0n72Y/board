@@ -7,7 +7,10 @@ import type {
   RecordItem,
   RecordResponse,
 } from '@labour-board/shared'
-import type { AppendPatchResult, StoredPatchDoc } from '../../repositories/snapshotHeadRepository.js'
+import type {
+  AppendPatchResult,
+  StoredPatchDoc,
+} from '../../repositories/snapshotHeadRepository.js'
 import type { StoredRecordDoc } from '../../repositories/recordRepository.js'
 
 // ─── API response DTO types ───

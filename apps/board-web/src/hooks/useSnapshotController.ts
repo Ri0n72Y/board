@@ -2,12 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import type { SnapshotDetail, SnapshotSummary } from '@labour-board/shared'
 import { exportSnapshot } from '../api/exports'
-import {
-  createSnapshot,
-  fetchSnapshot,
-  fetchSnapshots,
-} from '../api/snapshots'
+import { createSnapshot, fetchSnapshot, fetchSnapshots } from '../api/snapshots'
 import { downloadTextFile } from '../utils/download'
+import { toastError, toastSuccess } from '../utils/toasts'
 
 export function useSnapshotController() {
   const [isSnapshotOpen, setIsSnapshotOpen] = useState(false)
@@ -19,15 +16,17 @@ export function useSnapshotController() {
   const [isSnapshotDetailLoading, setIsSnapshotDetailLoading] = useState(false)
   const [isSnapshotCreating, setIsSnapshotCreating] = useState(false)
   const [isSnapshotExporting, setIsSnapshotExporting] = useState(false)
-  const [snapshotListError, setSnapshotListError] = useState<string | null>(null)
+  const [snapshotListError, setSnapshotListError] = useState<string | null>(
+    null
+  )
   const [snapshotDetailError, setSnapshotDetailError] = useState<string | null>(
-    null,
+    null
   )
   const [snapshotCreateError, setSnapshotCreateError] = useState<string | null>(
-    null,
+    null
   )
   const [snapshotExportError, setSnapshotExportError] = useState<string | null>(
-    null,
+    null
   )
 
   const snapshotListRequestIdRef = useRef(0)
@@ -169,6 +168,7 @@ export function useSnapshotController() {
         setSelectedSnapshot(data.snapshot)
         setSnapshotReason('')
         loadSnapshots()
+        toastSuccess('Snapshot created')
       })
       .catch((unknownError: unknown) => {
         if (
@@ -178,7 +178,9 @@ export function useSnapshotController() {
         ) {
           return
         }
-        setSnapshotCreateError(errorMessage(unknownError))
+        const message = errorMessage(unknownError)
+        setSnapshotCreateError(message)
+        toastError(`Snapshot failed: ${message}`)
       })
       .finally(() => {
         if (snapshotCreateRequestIdRef.current !== requestId) return
@@ -199,7 +201,11 @@ export function useSnapshotController() {
     setIsSnapshotExporting(true)
     setSnapshotExportError(null)
 
-    void exportSnapshot(selectedSnapshot.id, { level: 'full' }, controller.signal)
+    void exportSnapshot(
+      selectedSnapshot.id,
+      { level: 'full' },
+      controller.signal
+    )
       .then((data) => {
         if (
           snapshotExportRequestIdRef.current !== requestId ||
@@ -208,6 +214,7 @@ export function useSnapshotController() {
           return
         }
         downloadTextFile(data.filename, data.content)
+        toastSuccess(`Exported ${data.filename}`)
       })
       .catch((unknownError: unknown) => {
         if (
@@ -217,7 +224,9 @@ export function useSnapshotController() {
         ) {
           return
         }
-        setSnapshotExportError(errorMessage(unknownError))
+        const message = errorMessage(unknownError)
+        setSnapshotExportError(message)
+        toastError(`Snapshot export failed: ${message}`)
       })
       .finally(() => {
         if (snapshotExportRequestIdRef.current !== requestId) return
@@ -241,7 +250,7 @@ export function useSnapshotController() {
     void exportSnapshot(
       selectedSnapshot.id,
       { profile: 'agent-snapshot' },
-      controller.signal,
+      controller.signal
     )
       .then((data) => {
         if (
@@ -251,6 +260,7 @@ export function useSnapshotController() {
           return
         }
         downloadTextFile(data.filename, data.content)
+        toastSuccess(`Exported ${data.filename}`)
       })
       .catch((unknownError: unknown) => {
         if (
@@ -260,7 +270,9 @@ export function useSnapshotController() {
         ) {
           return
         }
-        setSnapshotExportError(errorMessage(unknownError))
+        const message = errorMessage(unknownError)
+        setSnapshotExportError(message)
+        toastError(`Snapshot context export failed: ${message}`)
       })
       .finally(() => {
         if (snapshotExportRequestIdRef.current !== requestId) return

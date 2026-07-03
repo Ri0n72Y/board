@@ -9,7 +9,9 @@ interface AgentDraftContextPreviewProps {
 
 const COLLAPSED_LENGTH = 4000
 
-export function AgentDraftContextPreview({ draft }: AgentDraftContextPreviewProps) {
+export function AgentDraftContextPreview({
+  draft,
+}: AgentDraftContextPreviewProps) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
 
@@ -21,9 +23,10 @@ export function AgentDraftContextPreview({ draft }: AgentDraftContextPreviewProp
 
   const fullContent = draft.contextMarkdown
   const isLong = fullContent.length > COLLAPSED_LENGTH
-  const displayContent = expanded || !isLong
-    ? fullContent
-    : fullContent.slice(0, COLLAPSED_LENGTH) + '\n\n...'
+  const displayContent =
+    expanded || !isLong
+      ? fullContent
+      : fullContent.slice(0, COLLAPSED_LENGTH) + '\n\n...'
 
   return (
     <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
@@ -38,7 +41,9 @@ export function AgentDraftContextPreview({ draft }: AgentDraftContextPreviewProp
             className="min-h-8 px-2.5 text-xs"
             onClick={() => setExpanded((v) => !v)}
           >
-            {expanded ? t('agent.response.collapse') : t('agent.response.showFull')}
+            {expanded
+              ? t('agent.response.collapse')
+              : t('agent.response.showFull')}
           </Button>
         )}
       </div>

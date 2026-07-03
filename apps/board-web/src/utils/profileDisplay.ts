@@ -9,7 +9,7 @@ import type { Profile } from '@labour-board/shared'
  */
 export function profileInitials(
   name: string | undefined | null,
-  pk: string | undefined | null,
+  pk: string | undefined | null
 ): string {
   if (name && name.trim().length > 0) {
     const words = name.trim().split(/\s+/).filter(Boolean)
@@ -39,7 +39,7 @@ export function profileInitials(
 export function shortPublicKey(
   pk: string | undefined | null,
   maxLen = 6,
-  tailLen = 4,
+  tailLen = 4
 ): string {
   if (!pk) return ''
   const trimmed = pk.trim()
@@ -72,7 +72,7 @@ export function formatProfileCompact(
   pk: string | undefined | null,
   profile: Profile | undefined | null,
   unassignedLabel: string,
-  unknownLabel: string,
+  unknownLabel: string
 ): string {
   if (!pk || pk.trim() === '') return unassignedLabel
   const shortPk = pk.slice(0, 8)
@@ -86,14 +86,21 @@ export function formatProfileCompact(
  * Build profile SearchSelect options from profile list.
  * Label uses compact format: "<name>#<shortPk>".
  */
-export function buildProfileOptions(
-  profiles: Profile[] | null,
-): { value: string; label: string; description: string; meta: string }[] {
+export function buildProfileOptions(profiles: Profile[] | null): {
+  value: string
+  label: string
+  description: string
+  meta: string
+  avatarUrl?: string | null
+  avatarInitials?: string
+}[] {
   if (!profiles) return []
   return profiles.map((p) => ({
     value: p.pk,
     label: `${p.name}#${p.pk.slice(0, 8)}`,
     description: p.pk,
     meta: p.pk,
+    avatarUrl: p.avatarUrl ?? null,
+    avatarInitials: profileInitials(p.name, p.pk),
   }))
 }

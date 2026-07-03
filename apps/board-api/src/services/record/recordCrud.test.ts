@@ -81,7 +81,11 @@ describe('RecordService CRUD', () => {
       },
     } satisfies BoardConfig
     const repo = new MemoryRecordRepository()
-    const service = new RecordService(repo, new MemorySnapshotHeadRepository(repo), config)
+    const service = new RecordService(
+      repo,
+      new MemorySnapshotHeadRepository(repo),
+      config
+    )
 
     const envelope = await service.create({
       schema: 'CustomBody',

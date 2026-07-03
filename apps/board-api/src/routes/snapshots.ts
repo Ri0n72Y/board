@@ -25,17 +25,12 @@ export function createSnapshotsRoute(snapshotService: SnapshotService): Hono {
     const input = await parseCreateSnapshotInput(c.req.raw)
     const actor = c.req.header('x-actor-id') ?? undefined
     const snapshot = await snapshotService.createManualSnapshot(input, actor)
-    return c.json<ApiResponse<CreateSnapshotResponse>>(
-      ok({ snapshot }),
-      201
-    )
+    return c.json<ApiResponse<CreateSnapshotResponse>>(ok({ snapshot }), 201)
   })
 
   snapshots.get('/', async (c) => {
     const list = await snapshotService.listSnapshots()
-    return c.json<ApiResponse<ListSnapshotsResponse>>(
-      ok({ snapshots: list })
-    )
+    return c.json<ApiResponse<ListSnapshotsResponse>>(ok({ snapshots: list }))
   })
 
   snapshots.get('/:id', async (c) => {

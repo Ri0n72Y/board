@@ -6,7 +6,7 @@ import { createApiServices } from '../services/index.js'
 import { mountApiRoutes } from '../routes/index.js'
 
 async function createTestApp(
-  envOverrides: NodeJS.ProcessEnv = {},
+  envOverrides: NodeJS.ProcessEnv = {}
 ): Promise<Hono> {
   const originalEnv = new Map<string, string | undefined>()
   for (const key of Object.keys(envOverrides)) {
@@ -75,7 +75,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({}),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(201)
     const payload = await res.json()
@@ -100,7 +100,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({}),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(201)
     const payload = await res.json()
@@ -108,13 +108,13 @@ describe('Agent Suggestions route', () => {
     const responseJson = JSON.stringify(payload)
     expect(payload.data.suggestion.model).toBe('mock-configured-model')
     expect(payload.data.suggestion.audit.providerModel).toBe(
-      'mock-configured-model',
+      'mock-configured-model'
     )
     expect(responseJson).not.toContain(secret)
     expect(responseJson).not.toContain('apiKey')
 
     const detailRes = await app.request(
-      `/api/v0/agent/suggestions/${suggestionId}`,
+      `/api/v0/agent/suggestions/${suggestionId}`
     )
     expect(detailRes.status).toBe(200)
     const detailPayload = await detailRes.json()
@@ -130,7 +130,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({}),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(404)
   })
@@ -155,7 +155,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({}),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(409)
   })
@@ -172,7 +172,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({ title: 123 }),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(400)
   })
@@ -187,7 +187,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({ instruction: 456 }),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(400)
   })
@@ -202,7 +202,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({ provider: 789 }),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(400)
   })
@@ -217,7 +217,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({ provider: 'openai-compatible' }),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(400)
   })
@@ -235,7 +235,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({}),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(503)
     const payload = await res.json()
@@ -256,7 +256,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({}),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     const payload = await res.json()
     expect(res.status).toBe(503)
@@ -275,7 +275,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({}),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(413)
     const payload = await res.json()
@@ -294,7 +294,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({}),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(502)
     const payload = await res.json()
@@ -311,7 +311,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({ skillIds: 'not-an-array' }),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(400)
   })
@@ -326,7 +326,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({ skillIds: ['labourboard-advisor', 123] }),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(400)
   })
@@ -341,7 +341,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({ skillIds: ['', 'labourboard-advisor'] }),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(400)
   })
@@ -356,7 +356,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({ skillIds: ['unknown-skill-xyz'] }),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(400)
   })
@@ -368,18 +368,13 @@ describe('Agent Suggestions route', () => {
     const draftId = await createReviewedDraft(app)
 
     // Generate one suggestion
-    await app.request(
-      `/api/v0/agent/drafts/${draftId}/suggestions`,
-      {
-        method: 'POST',
-        body: JSON.stringify({}),
-        headers: { 'content-type': 'application/json' },
-      },
-    )
+    await app.request(`/api/v0/agent/drafts/${draftId}/suggestions`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+      headers: { 'content-type': 'application/json' },
+    })
 
-    const res = await app.request(
-      `/api/v0/agent/drafts/${draftId}/suggestions`,
-    )
+    const res = await app.request(`/api/v0/agent/drafts/${draftId}/suggestions`)
     expect(res.status).toBe(200)
     const payload = await res.json()
     expect(payload.ok).toBe(true)
@@ -401,14 +396,12 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({}),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     const genPayload = await genRes.json()
     const suggestionId: string = genPayload.data.suggestion.id
 
-    const res = await app.request(
-      `/api/v0/agent/suggestions/${suggestionId}`,
-    )
+    const res = await app.request(`/api/v0/agent/suggestions/${suggestionId}`)
     expect(res.status).toBe(200)
     const payload = await res.json()
     expect(payload.data.suggestion.markdown).toBeTruthy()
@@ -428,7 +421,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({}),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     const genPayload = await genRes.json()
     const suggestionId: string = genPayload.data.suggestion.id
@@ -439,7 +432,7 @@ describe('Agent Suggestions route', () => {
         method: 'PATCH',
         body: JSON.stringify({ status: 'reviewed' }),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(200)
     const payload = await res.json()
@@ -456,7 +449,7 @@ describe('Agent Suggestions route', () => {
         method: 'POST',
         body: JSON.stringify({}),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     const genPayload = await genRes.json()
     const suggestionId: string = genPayload.data.suggestion.id
@@ -467,7 +460,7 @@ describe('Agent Suggestions route', () => {
         method: 'PATCH',
         body: JSON.stringify({ status: 'invalid-status' }),
         headers: { 'content-type': 'application/json' },
-      },
+      }
     )
     expect(res.status).toBe(400)
   })
@@ -506,10 +499,9 @@ describe('Agent Suggestions route', () => {
 
   it('POST /api/v0/agent/suggestions/:id/apply does not exist', async () => {
     const app = await createTestApp()
-    const res = await app.request(
-      '/api/v0/agent/suggestions/any-id/apply',
-      { method: 'POST' },
-    )
+    const res = await app.request('/api/v0/agent/suggestions/any-id/apply', {
+      method: 'POST',
+    })
     expect(res.status).toBe(404)
   })
 })

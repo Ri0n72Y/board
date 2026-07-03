@@ -25,14 +25,14 @@ type CurrentRecord = RecordResponse<RecordItem<RecordBody>>
 type UnknownReferenceKind = 'asset' | 'record'
 
 export function buildRecordReferenceOptions(
-  records: CurrentRecord[],
+  records: CurrentRecord[]
 ): RecordReferenceOption[] {
   return records.map(formatRecordReference).sort(compareResolvedOptions)
 }
 
 export function buildAssetReferenceOptions(
   records: CurrentRecord[],
-  copy: RecordReferenceCopy = DEFAULT_RECORD_REFERENCE_COPY,
+  copy: RecordReferenceCopy = DEFAULT_RECORD_REFERENCE_COPY
 ): RecordReferenceOption[] {
   const recordById = buildRecordMap(records)
   const resolved = new Map<string, RecordReferenceOption>()
@@ -64,7 +64,7 @@ export function buildAssetReferenceOptions(
 
 export function buildRelationTargetOptions(
   records: CurrentRecord[],
-  copy: RecordReferenceCopy = DEFAULT_RECORD_REFERENCE_COPY,
+  copy: RecordReferenceCopy = DEFAULT_RECORD_REFERENCE_COPY
 ): RecordReferenceOption[] {
   const recordById = buildRecordMap(records)
   const resolved = new Map<string, RecordReferenceOption>()
@@ -80,8 +80,14 @@ export function buildRelationTargetOptions(
       if (target) {
         resolved.set(relation.target, formatRecordReference(target))
         unknown.delete(relation.target)
-      } else if (!resolved.has(relation.target) && !unknown.has(relation.target)) {
-        unknown.set(relation.target, formatUnknownReference(relation.target, 'record', copy))
+      } else if (
+        !resolved.has(relation.target) &&
+        !unknown.has(relation.target)
+      ) {
+        unknown.set(
+          relation.target,
+          formatUnknownReference(relation.target, 'record', copy)
+        )
       }
     }
   }
@@ -93,7 +99,7 @@ export function buildRelationTargetOptions(
 }
 
 export function formatRecordReference(
-  record: CurrentRecord,
+  record: CurrentRecord
 ): RecordReferenceOption {
   const id = record.body.id
   const pid = record.body.pid?.trim()
@@ -105,7 +111,9 @@ export function formatRecordReference(
   return {
     value: id,
     label,
-    description: assignee ? `${record.body.schema} / ${assignee}` : record.body.schema,
+    description: assignee
+      ? `${record.body.schema} / ${assignee}`
+      : record.body.schema,
     meta: id,
     referenceState: 'resolved',
   }
@@ -114,7 +122,7 @@ export function formatRecordReference(
 export function formatUnknownReference(
   id: string,
   kind: UnknownReferenceKind = 'record',
-  copy: RecordReferenceCopy = DEFAULT_RECORD_REFERENCE_COPY,
+  copy: RecordReferenceCopy = DEFAULT_RECORD_REFERENCE_COPY
 ): RecordReferenceOption {
   const referenceState = kind === 'asset' ? 'unknown-asset' : 'unknown-record'
   return {
@@ -130,7 +138,7 @@ export function ensureReferenceOptions(
   options: RecordReferenceOption[],
   selectedValues: readonly string[],
   kind: UnknownReferenceKind = 'record',
-  copy: RecordReferenceCopy = DEFAULT_RECORD_REFERENCE_COPY,
+  copy: RecordReferenceCopy = DEFAULT_RECORD_REFERENCE_COPY
 ): RecordReferenceOption[] {
   const byValue = new Map(options.map((option) => [option.value, option]))
   const missing = selectedValues
@@ -142,7 +150,7 @@ export function ensureReferenceOptions(
 
 export function mergeReferenceOptions(
   previous: readonly RecordReferenceOption[],
-  current: readonly RecordReferenceOption[],
+  current: readonly RecordReferenceOption[]
 ): RecordReferenceOption[] {
   const merged = new Map(previous.map((option) => [option.value, option]))
   for (const option of current) {
@@ -157,11 +165,14 @@ export function mergeReferenceOptions(
 
 export function getReferenceDisplayLabel(
   options: readonly RecordReferenceOption[],
-  value: string,
+  value: string
 ): string {
   const trimmed = value.trim()
   if (!trimmed) return ''
-  return options.find((option) => option.value === trimmed)?.label ?? shortReferenceId(trimmed)
+  return (
+    options.find((option) => option.value === trimmed)?.label ??
+    shortReferenceId(trimmed)
+  )
 }
 
 export function shortReferenceId(id: string): string {
@@ -181,12 +192,15 @@ function titleFromBody(body: RecordBody): string | undefined {
 }
 
 function isUnknownOption(option: RecordReferenceOption): boolean {
-  return option.referenceState === 'unknown-asset' || option.referenceState === 'unknown-record'
+  return (
+    option.referenceState === 'unknown-asset' ||
+    option.referenceState === 'unknown-record'
+  )
 }
 
 function compareResolvedOptions(
   left: RecordReferenceOption,
-  right: RecordReferenceOption,
+  right: RecordReferenceOption
 ): number {
   return left.label.localeCompare(right.label, undefined, {
     numeric: true,
@@ -196,7 +210,7 @@ function compareResolvedOptions(
 
 function compareRawValueOptions(
   left: RecordReferenceOption,
-  right: RecordReferenceOption,
+  right: RecordReferenceOption
 ): number {
   return left.value.localeCompare(right.value, undefined, {
     numeric: true,

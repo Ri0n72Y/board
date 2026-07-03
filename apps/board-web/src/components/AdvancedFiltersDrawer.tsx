@@ -59,15 +59,12 @@ export function AdvancedFiltersDrawer({
         label: formatTagLabel(tag, lang),
         meta: tag,
       })),
-    [knownTags, lang],
+    [knownTags, lang]
   )
 
   const tagMatchOptions = useMemo(
-    () => [
-      { value: 'all' as const, label: t('filters.tagMatchAll') },
-      { value: 'any' as const, label: t('filters.tagMatchAny') },
-    ],
-    [t],
+    () => [{ value: 'any' as const, label: t('filters.tagMatchAny') }],
+    [t]
   )
 
   return (
@@ -114,10 +111,13 @@ export function AdvancedFiltersDrawer({
         <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
           <Select
             label={t('filters.tagMatch')}
-            value={tagMatch}
-            onChange={(event) => onTagMatchChange(event.target.value as BoardCurrentTagMatch)}
+            value="any"
+            onChange={() => onTagMatchChange('any')}
             options={tagMatchOptions}
           />
+          {tagMatch !== 'any' && (
+            <p className="text-xs text-slate-500">{t('filters.tagMatchAny')}</p>
+          )}
         </section>
 
         {/* Asset ID / Relation target */}
@@ -165,8 +165,14 @@ export function AdvancedFiltersDrawer({
                         ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 font-mono text-xs leading-tight text-emerald-800 break-all'
                         : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 font-mono text-xs leading-tight text-slate-700 break-all hover:bg-slate-200'
                     }
-                    onClick={() => (isActive ? onRemoveTag(tag as Tag) : onAddTag(tag))}
-                    title={isActive ? t('filters.removeTagFilter') : t('filters.addTagFilter')}
+                    onClick={() =>
+                      isActive ? onRemoveTag(tag as Tag) : onAddTag(tag)
+                    }
+                    title={
+                      isActive
+                        ? t('filters.removeTagFilter')
+                        : t('filters.addTagFilter')
+                    }
                   >
                     {formatTagLabel(tag, lang)}
                   </button>

@@ -23,8 +23,16 @@ export type TagLabelNamespace =
   | 'asset'
 
 const KNOWN_NAMESPACES: readonly string[] = [
-  'status', 'priority', 'transaction', 'epic', 'sprint',
-  'owner', 'scope', 'type', 'milestone', 'asset',
+  'status',
+  'priority',
+  'transaction',
+  'epic',
+  'sprint',
+  'owner',
+  'scope',
+  'type',
+  'milestone',
+  'asset',
 ]
 
 export type TagLabelDictionary = Partial<
@@ -48,7 +56,7 @@ const DICTIONARIES: Record<TagDisplayLanguage, TagLabelDictionary> = {
 }
 
 export function normalizeTagLanguage(
-  language: string | undefined,
+  language: string | undefined
 ): TagDisplayLanguage {
   if (language === 'zh-CN') return 'zh-CN'
   return 'en-US'
@@ -76,7 +84,7 @@ export function parseTag(raw: string): ParsedTag {
 function lookup(
   namespace: TagLabelNamespace,
   value: string,
-  lang: TagDisplayLanguage,
+  lang: TagDisplayLanguage
 ): string | undefined {
   return DICTIONARIES[lang]?.[namespace]?.[value] ?? undefined
 }
@@ -91,7 +99,7 @@ function lookup(
 export function formatTagLabel(
   raw: string,
   language: string | undefined,
-  options?: { namespace?: TagLabelNamespace },
+  options?: { namespace?: TagLabelNamespace }
 ): string {
   const lang = normalizeTagLanguage(language)
   const hintNs = options?.namespace

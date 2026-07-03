@@ -15,11 +15,15 @@ export interface HiddenColumnSummary {
   hiddenUncategorizedRecordCount: number
 }
 
-export function getDefaultVisibleColumnIds(columnIds: readonly string[]): string[] {
+export function getDefaultVisibleColumnIds(
+  columnIds: readonly string[]
+): string[] {
   const available = new Set(columnIds)
   const desired = [
     DEFAULT_TODO_STATUS,
-    available.has(DEFAULT_DOING_STATUS) ? DEFAULT_DOING_STATUS : DEFAULT_WIP_STATUS,
+    available.has(DEFAULT_DOING_STATUS)
+      ? DEFAULT_DOING_STATUS
+      : DEFAULT_WIP_STATUS,
     DEFAULT_DONE_STATUS,
   ]
 
@@ -28,12 +32,13 @@ export function getDefaultVisibleColumnIds(columnIds: readonly string[]): string
 
 export function resolveVisibleColumnIds(
   columnIds: readonly string[],
-  storedColumnIds: readonly string[] | null | undefined,
+  storedColumnIds: readonly string[] | null | undefined
 ): string[] {
   const available = new Set(columnIds)
   const selected = (storedColumnIds ?? []).filter((id) => available.has(id))
 
-  if (selected.length > 0) return sortColumnIdsByConfigOrder(columnIds, selected)
+  if (selected.length > 0)
+    return sortColumnIdsByConfigOrder(columnIds, selected)
 
   const defaults = getDefaultVisibleColumnIds(columnIds)
   if (defaults.length > 0) return defaults
@@ -43,14 +48,14 @@ export function resolveVisibleColumnIds(
 
 export function normalizeColumnSelectionForSave(
   columnIds: readonly string[],
-  nextColumnIds: readonly string[],
+  nextColumnIds: readonly string[]
 ): string[] {
   return resolveVisibleColumnIds(columnIds, nextColumnIds)
 }
 
 export function summarizeHiddenColumns(
   columns: readonly BoardStatusColumn[],
-  visibleColumnIds: readonly string[],
+  visibleColumnIds: readonly string[]
 ): HiddenColumnSummary {
   const visible = new Set(visibleColumnIds)
   let hiddenColumnCount = 0
@@ -76,7 +81,7 @@ export function summarizeHiddenColumns(
 }
 
 export function readVisibleColumnPreference(
-  storage: Pick<Storage, 'getItem'> | undefined = getLocalStorage(),
+  storage: Pick<Storage, 'getItem'> | undefined = getLocalStorage()
 ): string[] | null {
   if (!storage) return null
 
@@ -87,7 +92,7 @@ export function readVisibleColumnPreference(
     if (!Array.isArray(parsed)) return null
 
     const values = parsed.filter(
-      (value): value is string => typeof value === 'string' && value.length > 0,
+      (value): value is string => typeof value === 'string' && value.length > 0
     )
     return values.length > 0 ? [...new Set(values)] : null
   } catch {
@@ -98,13 +103,19 @@ export function readVisibleColumnPreference(
 export function writeVisibleColumnPreference(
   columnIds: readonly string[],
   selectedColumnIds: readonly string[],
-  storage: Pick<Storage, 'setItem'> | undefined = getLocalStorage(),
+  storage: Pick<Storage, 'setItem'> | undefined = getLocalStorage()
 ): string[] {
-  const normalized = normalizeColumnSelectionForSave(columnIds, selectedColumnIds)
+  const normalized = normalizeColumnSelectionForSave(
+    columnIds,
+    selectedColumnIds
+  )
   if (!storage) return normalized
 
   try {
-    storage.setItem(BOARD_VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify(normalized))
+    storage.setItem(
+      BOARD_VISIBLE_COLUMNS_STORAGE_KEY,
+      JSON.stringify(normalized)
+    )
   } catch {
     // localStorage unavailable
   }
@@ -112,13 +123,15 @@ export function writeVisibleColumnPreference(
   return normalized
 }
 
-export function getUncategorizedColumnLabel(language: string | undefined): string {
+export function getUncategorizedColumnLabel(
+  language: string | undefined
+): string {
   return language === 'zh-CN' ? '未分类' : 'Uncategorized'
 }
 
 function sortColumnIdsByConfigOrder(
   columnIds: readonly string[],
-  selectedColumnIds: readonly string[],
+  selectedColumnIds: readonly string[]
 ): string[] {
   const selected = new Set(selectedColumnIds)
   return columnIds.filter((id) => selected.has(id))

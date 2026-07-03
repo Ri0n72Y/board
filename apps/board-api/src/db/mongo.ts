@@ -2,7 +2,13 @@ import { MongoClient, type Collection, type Db, type Document } from 'mongodb'
 
 let client: MongoClient | undefined
 
-export type BoardCollectionName = 'records' | 'snapshots' | 'profiles' | 'agent_drafts' | 'agent_responses' | 'agent_suggestions'
+export type BoardCollectionName =
+  | 'records'
+  | 'snapshots'
+  | 'profiles'
+  | 'agent_drafts'
+  | 'agent_responses'
+  | 'agent_suggestions'
 
 export async function getMongoClient(uri: string): Promise<MongoClient> {
   if (!client) {
@@ -61,7 +67,11 @@ export async function getAgentDraftsCollection<T extends Document>(
   uri: string,
   databaseName = process.env.MONGODB_DB ?? 'labour_board'
 ): Promise<Collection<T>> {
-  const collection = await getBoardCollection<T>(uri, databaseName, 'agent_drafts')
+  const collection = await getBoardCollection<T>(
+    uri,
+    databaseName,
+    'agent_drafts'
+  )
   await collection.createIndex({ kind: 1 })
   await collection.createIndex({ id: 1 }, { unique: true })
   return collection
@@ -71,7 +81,11 @@ export async function getAgentResponsesCollection<T extends Document>(
   uri: string,
   databaseName = process.env.MONGODB_DB ?? 'labour_board'
 ): Promise<Collection<T>> {
-  const collection = await getBoardCollection<T>(uri, databaseName, 'agent_responses')
+  const collection = await getBoardCollection<T>(
+    uri,
+    databaseName,
+    'agent_responses'
+  )
   await collection.createIndex({ kind: 1 })
   await collection.createIndex({ id: 1 }, { unique: true })
   await collection.createIndex({ draftId: 1 })
@@ -82,7 +96,11 @@ export async function getAgentSuggestionsCollection<T extends Document>(
   uri: string,
   databaseName = process.env.MONGODB_DB ?? 'labour_board'
 ): Promise<Collection<T>> {
-  const collection = await getBoardCollection<T>(uri, databaseName, 'agent_suggestions')
+  const collection = await getBoardCollection<T>(
+    uri,
+    databaseName,
+    'agent_suggestions'
+  )
   await collection.createIndex({ kind: 1 })
   await collection.createIndex({ id: 1 }, { unique: true })
   await collection.createIndex({ draftId: 1 })

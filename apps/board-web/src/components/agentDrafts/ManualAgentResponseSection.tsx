@@ -1,6 +1,14 @@
 import { useState, useEffect } from 'react'
-import type { AgentDraftDetail, AgentResponseDetail, AgentResponseSummary } from '@labour-board/shared'
-import { ArrowDownTrayIcon, ArrowPathIcon, ClipboardDocumentIcon } from '@heroicons/react/20/solid'
+import type {
+  AgentDraftDetail,
+  AgentResponseDetail,
+  AgentResponseSummary,
+} from '@labour-board/shared'
+import {
+  ArrowDownTrayIcon,
+  ArrowPathIcon,
+  ClipboardDocumentIcon,
+} from '@heroicons/react/20/solid'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'
@@ -20,7 +28,12 @@ interface ManualAgentResponseSectionProps {
   responseDetailError: string | null
   responseCreateError: string | null
   onLoadResponseDetail: (responseId: string) => void
-  onSaveResponse: (draftId: string, responseMarkdown: string, externalAgentName?: string, responseNote?: string) => Promise<AgentResponseDetail>
+  onSaveResponse: (
+    draftId: string,
+    responseMarkdown: string,
+    externalAgentName?: string,
+    responseNote?: string
+  ) => Promise<AgentResponseDetail>
 }
 
 export function ManualAgentResponseSection({
@@ -40,8 +53,12 @@ export function ManualAgentResponseSection({
   const [responseAgentName, setResponseAgentName] = useState('')
   const [responseNote, setResponseNote] = useState('')
   const [responseMarkdown, setResponseMarkdown] = useState('')
-  const [responseFormError, setResponseFormError] = useState<string | null>(null)
-  const [responseCopyFeedback, setResponseCopyFeedback] = useState<string | null>(null)
+  const [responseFormError, setResponseFormError] = useState<string | null>(
+    null
+  )
+  const [responseCopyFeedback, setResponseCopyFeedback] = useState<
+    string | null
+  >(null)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset on namespaced parent key change
@@ -63,7 +80,12 @@ export function ManualAgentResponseSection({
       return
     }
     setResponseFormError(null)
-    onSaveResponse(draft.id, trimmed, responseAgentName.trim() || undefined, responseNote.trim() || undefined)
+    onSaveResponse(
+      draft.id,
+      trimmed,
+      responseAgentName.trim() || undefined,
+      responseNote.trim() || undefined
+    )
       .then(() => {
         setResponseMarkdown('')
         setResponseAgentName('')
@@ -77,21 +99,26 @@ export function ManualAgentResponseSection({
 
   const copyResponseMarkdown = (markdown: string) => {
     navigator.clipboard.writeText(markdown).then(
-      () => { setResponseCopyFeedback(t('agent.response.copied')); setTimeout(() => setResponseCopyFeedback(null), 2000) },
-      () => setResponseCopyFeedback(t('agent.response.copyFailed')),
+      () => {
+        setResponseCopyFeedback(t('agent.response.copied'))
+        setTimeout(() => setResponseCopyFeedback(null), 2000)
+      },
+      () => setResponseCopyFeedback(t('agent.response.copyFailed'))
     )
   }
 
   const downloadResponseMarkdown = (response: AgentResponseDetail) => {
     downloadTextFile(
       `agent-response-${response.id.slice(0, 8)}.md`,
-      response.responseMarkdown,
+      response.responseMarkdown
     )
   }
 
   return (
     <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
-      <h3 className="text-sm font-semibold uppercase text-slate-500">{t('agent.response.sectionTitle')}</h3>
+      <h3 className="text-sm font-semibold uppercase text-slate-500">
+        {t('agent.response.sectionTitle')}
+      </h3>
 
       {/* Status-based form */}
       {draft.status === 'reviewed' ? (
@@ -138,10 +165,16 @@ export function ManualAgentResponseSection({
           </label>
 
           {responseFormError && !responseCreateError && (
-            <ErrorBlock title={t('agent.response.validationError')} message={responseFormError} />
+            <ErrorBlock
+              title={t('agent.response.validationError')}
+              message={responseFormError}
+            />
           )}
           {responseCreateError && (
-            <ErrorBlock title={t('agent.response.saveFailed')} message={responseCreateError} />
+            <ErrorBlock
+              title={t('agent.response.saveFailed')}
+              message={responseCreateError}
+            />
           )}
 
           <div className="flex items-center gap-2">
@@ -149,15 +182,23 @@ export function ManualAgentResponseSection({
               type="button"
               disabled={isResponseCreating}
               onClick={handleSaveResponse}
-              icon={isResponseCreating ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : undefined}
+              icon={
+                isResponseCreating ? (
+                  <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                ) : undefined
+              }
             >
-              {isResponseCreating ? t('agent.response.saving') : t('agent.response.saveButton')}
+              {isResponseCreating
+                ? t('agent.response.saving')
+                : t('agent.response.saveButton')}
             </Button>
           </div>
         </div>
       ) : draft.status === 'draft' ? (
         <div className="grid gap-1 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          <p className="font-semibold">{t('agent.response.pasteUnavailable')}</p>
+          <p className="font-semibold">
+            {t('agent.response.pasteUnavailable')}
+          </p>
           <p className="text-xs">{t('agent.response.pasteUnavailableDesc')}</p>
         </div>
       ) : draft.status === 'discarded' ? (
@@ -174,10 +215,15 @@ export function ManualAgentResponseSection({
             {t('agent.response.listTitle', { count: responses.length })}
           </h4>
           {isResponseListLoading && (
-            <p className="text-xs text-slate-500">{t('agent.response.loadingResponses')}</p>
+            <p className="text-xs text-slate-500">
+              {t('agent.response.loadingResponses')}
+            </p>
           )}
           {responseListError && (
-            <ErrorBlock title={t('agent.response.listFailed')} message={responseListError} />
+            <ErrorBlock
+              title={t('agent.response.listFailed')}
+              message={responseListError}
+            />
           )}
           <ol className="grid gap-1.5">
             {responses.map((r) => (
@@ -195,13 +241,19 @@ export function ManualAgentResponseSection({
                     <span className="text-xs font-semibold text-slate-950">
                       {r.externalAgentName ?? t('agent.response.manualPaste')}
                     </span>
-                    <Badge>{r.responseLength.toLocaleString()} {t('agent.response.chars')}</Badge>
+                    <Badge>
+                      {r.responseLength.toLocaleString()}{' '}
+                      {t('agent.response.chars')}
+                    </Badge>
                   </span>
                   <span className="text-xs text-slate-400">
-                    {formatDate(r.pastedAt)} {t('agent.timeline.tone.by', { name: r.pastedBy })}
+                    {formatDate(r.pastedAt)}{' '}
+                    {t('agent.timeline.tone.by', { name: r.pastedBy })}
                   </span>
                   {r.responseNote && (
-                    <span className="wrap-break-word text-xs text-slate-600">{r.responseNote}</span>
+                    <span className="wrap-break-word text-xs text-slate-600">
+                      {r.responseNote}
+                    </span>
                   )}
                 </button>
               </li>
@@ -212,10 +264,15 @@ export function ManualAgentResponseSection({
 
       {/* Response detail */}
       {isResponseDetailLoading && (
-        <p className="text-xs text-slate-500">{t('agent.response.loadingDetail')}</p>
+        <p className="text-xs text-slate-500">
+          {t('agent.response.loadingDetail')}
+        </p>
       )}
       {responseDetailError && (
-        <ErrorBlock title={t('agent.response.detailFailed')} message={responseDetailError} />
+        <ErrorBlock
+          title={t('agent.response.detailFailed')}
+          message={responseDetailError}
+        />
       )}
       {selectedResponse && !isResponseDetailLoading && (
         <div className="grid gap-3 rounded-md border border-blue-200 bg-blue-50 p-4">
@@ -236,19 +293,40 @@ export function ManualAgentResponseSection({
           </div>
 
           <dl className="grid gap-2 sm:grid-cols-2">
-            <MetaItem label={t('agent.response.meta.agent')} value={selectedResponse.externalAgentName ?? t('agent.response.manualPaste')} />
-            <MetaItem label={t('agent.response.meta.pastedAt')} value={formatDate(selectedResponse.pastedAt)} />
-            <MetaItem label={t('agent.response.meta.pastedBy')} value={selectedResponse.pastedBy} mono />
-            <MetaItem label={t('agent.response.meta.length')} value={`${selectedResponse.responseLength.toLocaleString()} ${t('agent.response.chars')}`} />
+            <MetaItem
+              label={t('agent.response.meta.agent')}
+              value={
+                selectedResponse.externalAgentName ??
+                t('agent.response.manualPaste')
+              }
+            />
+            <MetaItem
+              label={t('agent.response.meta.pastedAt')}
+              value={formatDate(selectedResponse.pastedAt)}
+            />
+            <MetaItem
+              label={t('agent.response.meta.pastedBy')}
+              value={selectedResponse.pastedBy}
+              mono
+            />
+            <MetaItem
+              label={t('agent.response.meta.length')}
+              value={`${selectedResponse.responseLength.toLocaleString()} ${t('agent.response.chars')}`}
+            />
             {selectedResponse.responseNote && (
-              <MetaItem label={t('agent.response.meta.note')} value={selectedResponse.responseNote} />
+              <MetaItem
+                label={t('agent.response.meta.note')}
+                value={selectedResponse.responseNote}
+              />
             )}
           </dl>
 
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
-              onClick={() => copyResponseMarkdown(selectedResponse.responseMarkdown)}
+              onClick={() =>
+                copyResponseMarkdown(selectedResponse.responseMarkdown)
+              }
               icon={<ClipboardDocumentIcon className="h-4 w-4" />}
             >
               {responseCopyFeedback ?? t('agent.response.copyButton')}

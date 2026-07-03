@@ -1,7 +1,4 @@
-import {
-  ListBulletIcon,
-  RectangleGroupIcon,
-} from '@heroicons/react/20/solid'
+import { ListBulletIcon, RectangleGroupIcon } from '@heroicons/react/20/solid'
 import { useTranslation } from 'react-i18next'
 import { cn } from '../lib/cn'
 
@@ -41,7 +38,7 @@ export function ViewModeToggle({ value, onChange }: ViewModeToggleProps) {
               'inline-flex items-center justify-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition',
               selected
                 ? 'bg-emerald-100 text-emerald-800'
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700',
+                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
             )}
             aria-pressed={selected}
             title={option.label}

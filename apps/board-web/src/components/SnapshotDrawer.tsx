@@ -92,7 +92,12 @@ export function SnapshotDrawer({
                 disabled={isCreating}
               />
             </label>
-            {createError && <ErrorBlock title={t('snapshot.createError')} message={createError} />}
+            {createError && (
+              <ErrorBlock
+                title={t('snapshot.createError')}
+                message={createError}
+              />
+            )}
             <Button
               type="button"
               onClick={onCreateSnapshot}
@@ -120,12 +125,23 @@ export function SnapshotDrawer({
                 className="min-h-8 px-2.5 text-xs"
                 onClick={onRefreshList}
                 disabled={isListLoading}
-                icon={<ArrowPathIcon className={isListLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />}
+                icon={
+                  <ArrowPathIcon
+                    className={
+                      isListLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'
+                    }
+                  />
+                }
               >
                 {t('snapshot.refresh')}
               </Button>
             </div>
-            {listError && <ErrorBlock title={t('snapshot.listFailed')} message={listError} />}
+            {listError && (
+              <ErrorBlock
+                title={t('snapshot.listFailed')}
+                message={listError}
+              />
+            )}
             {isListLoading && (
               <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
                 {t('snapshot.loadingList')}
@@ -156,7 +172,11 @@ export function SnapshotDrawer({
                         {snapshot.reason ?? t('snapshot.noReason')}
                       </span>
                       <span className="flex flex-wrap items-center gap-1.5">
-                        <Badge>{t('snapshot.recordsCount', { count: snapshot.recordCount })}</Badge>
+                        <Badge>
+                          {t('snapshot.recordsCount', {
+                            count: snapshot.recordCount,
+                          })}
+                        </Badge>
                         <Badge>{snapshot.projectionStatus}</Badge>
                       </span>
                     </button>
@@ -173,7 +193,12 @@ export function SnapshotDrawer({
               {t('snapshot.loadingDetail')}
             </div>
           )}
-          {detailError && <ErrorBlock title={t('snapshot.detailFailed')} message={detailError} />}
+          {detailError && (
+            <ErrorBlock
+              title={t('snapshot.detailFailed')}
+              message={detailError}
+            />
+          )}
           {!isDetailLoading && !detailError && selectedSnapshot && (
             <SnapshotDetailView
               snapshot={selectedSnapshot}
@@ -244,7 +269,9 @@ function SnapshotDetailView({
                 )
               }
             >
-              {isExporting ? t('snapshot.exporting') : t('snapshot.exportButton')}
+              {isExporting
+                ? t('snapshot.exporting')
+                : t('snapshot.exportButton')}
             </Button>
             <Button
               type="button"
@@ -258,21 +285,51 @@ function SnapshotDetailView({
                 )
               }
             >
-              {isExporting ? t('snapshot.exporting') : t('snapshot.exportAgentContext')}
+              {isExporting
+                ? t('snapshot.exporting')
+                : t('snapshot.exportAgentContext')}
             </Button>
-            <Button type="button" disabled title={t('snapshot.restoreNotImplemented')}>
+            <Button
+              type="button"
+              disabled
+              title={t('snapshot.restoreNotImplemented')}
+            >
               {t('snapshot.restoreNotImplemented')}
             </Button>
           </div>
         </div>
-        {exportError && <ErrorBlock title={t('snapshot.exportFailed')} message={exportError} />}
+        {exportError && (
+          <ErrorBlock
+            title={t('snapshot.exportFailed')}
+            message={exportError}
+          />
+        )}
         <dl className="grid gap-2 sm:grid-cols-2">
-          <MetaItem label={t('snapshot.detailCreated')} value={formatDate(snapshot.createdAt)} />
-          <MetaItem label={t('snapshot.detailCreatedBy')} value={snapshot.createdBy} mono />
-          <MetaItem label={t('snapshot.detailReason')} value={snapshot.reason ?? t('history.none')} />
-          <MetaItem label={t('snapshot.detailSource')} value={snapshot.source} />
-          <MetaItem label={t('snapshot.detailRecords')} value={snapshot.recordCount.toString()} />
-          <MetaItem label={t('snapshot.detailPatches')} value={(snapshot.patchCount ?? 0).toString()} />
+          <MetaItem
+            label={t('snapshot.detailCreated')}
+            value={formatDate(snapshot.createdAt)}
+          />
+          <MetaItem
+            label={t('snapshot.detailCreatedBy')}
+            value={snapshot.createdBy}
+            mono
+          />
+          <MetaItem
+            label={t('snapshot.detailReason')}
+            value={snapshot.reason ?? t('history.none')}
+          />
+          <MetaItem
+            label={t('snapshot.detailSource')}
+            value={snapshot.source}
+          />
+          <MetaItem
+            label={t('snapshot.detailRecords')}
+            value={snapshot.recordCount.toString()}
+          />
+          <MetaItem
+            label={t('snapshot.detailPatches')}
+            value={(snapshot.patchCount ?? 0).toString()}
+          />
           <MetaItem
             label={t('snapshot.detailProjection')}
             value={snapshot.projectionStatus}
@@ -295,7 +352,10 @@ function SnapshotDetailView({
             placeholder={t('snapshot.draftPlaceholder')}
           />
           {draftSaveError && (
-            <ErrorBlock title={t('snapshot.draftSaveError')} message={draftSaveError} />
+            <ErrorBlock
+              title={t('snapshot.draftSaveError')}
+              message={draftSaveError}
+            />
           )}
           <Button
             type="button"
@@ -317,7 +377,9 @@ function SnapshotDetailView({
               ) : undefined
             }
           >
-            {isSavingDraft ? t('snapshot.draftSaving') : t('snapshot.draftSaveButton')}
+            {isSavingDraft
+              ? t('snapshot.draftSaving')
+              : t('snapshot.draftSaveButton')}
           </Button>
         </section>
       )}
@@ -413,11 +475,7 @@ function SnapshotRecords({
   )
 }
 
-function Diagnostics({
-  projection,
-}: {
-  projection: BoardCurrentProjection
-}) {
+function Diagnostics({ projection }: { projection: BoardCurrentProjection }) {
   const { t } = useTranslation()
   const diagnostics = projection.diagnostics ?? []
   const blocked = projection.blockedRecords ?? []
@@ -426,7 +484,9 @@ function Diagnostics({
     <section className="grid gap-3 rounded-lg border border-amber-300 bg-amber-50 p-5 text-amber-950">
       <div className="flex flex-wrap items-center gap-2">
         <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />
-        <h3 className="text-sm font-semibold uppercase">{t('snapshot.diagnostics')}</h3>
+        <h3 className="text-sm font-semibold uppercase">
+          {t('snapshot.diagnostics')}
+        </h3>
         <Badge>{(diagnostics.length + blocked.length).toString()}</Badge>
       </div>
       {diagnostics.length === 0 && blocked.length === 0 ? (

@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { parseBoardExportOptions, BoardExportQueryError } from './boardExportQuery.js'
+import {
+  parseBoardExportOptions,
+  BoardExportQueryError,
+} from './boardExportQuery.js'
 
 describe('parseBoardExportOptions', () => {
   it('rejects invalid profiles and conflicting profile/level combinations', () => {
     expect(() =>
-      parseBoardExportOptions(new URLSearchParams('profile=bad'), 'current-board')
+      parseBoardExportOptions(
+        new URLSearchParams('profile=bad'),
+        'current-board'
+      )
     ).toThrow(BoardExportQueryError)
 
     expect(() =>

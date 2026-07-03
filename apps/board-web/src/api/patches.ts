@@ -42,13 +42,13 @@ export interface SubmitRecordPatchResponse {
 export async function submitRecordPatch(
   recordId: string,
   payload: SubmitRecordPatchPayload,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<SubmitRecordPatchResponse> {
   try {
     const response = await axios.post<ApiResponse<SubmitRecordPatchResponse>>(
       `${apiBaseUrl}/records/${encodeURIComponent(recordId)}/patches`,
       payload,
-      { signal },
+      { signal }
     )
 
     if (!response.data.ok) {

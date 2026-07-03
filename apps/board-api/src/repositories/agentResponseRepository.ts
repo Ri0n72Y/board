@@ -1,5 +1,8 @@
 import type { Collection, Document, Filter, OptionalId } from 'mongodb'
-import type { AgentResponseDetail, AgentResponseSummary } from '@labour-board/shared'
+import type {
+  AgentResponseDetail,
+  AgentResponseSummary,
+} from '@labour-board/shared'
 
 export interface AgentResponseRepository {
   create(response: AgentResponseDetail): Promise<AgentResponseDetail>
@@ -121,7 +124,8 @@ function fromResponseDoc(doc: Document): AgentResponseDetail {
     draftId: doc.draftId,
     draftTitle: doc.draftTitle,
     source: doc.source,
-    ...(typeof doc.externalAgentName === 'string' && doc.externalAgentName.trim()
+    ...(typeof doc.externalAgentName === 'string' &&
+    doc.externalAgentName.trim()
       ? { externalAgentName: doc.externalAgentName }
       : {}),
     pastedAt: doc.pastedAt,

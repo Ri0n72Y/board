@@ -161,7 +161,11 @@ describe('recordCrudRoute', () => {
       body: JSON.stringify({
         parentId: null,
         currentVersion: 0,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
       }),
       headers: { 'content-type': 'application/json' },
     })

@@ -66,12 +66,12 @@ const columnIds = columns.map((column) => column.id)
 eq(
   getDefaultVisibleColumnIds(columnIds),
   ['status:todo', 'status:doing', 'status:done'],
-  'default columns use todo / doing / done',
+  'default columns use todo / doing / done'
 )
 notIncludes(
   getDefaultVisibleColumnIds(columnIds),
   'status:wip',
-  'doing and wip present defaults to doing only',
+  'doing and wip present defaults to doing only'
 )
 eq(
   resolveVisibleColumnIds(columnIds, [
@@ -80,12 +80,12 @@ eq(
     'status:review',
   ]),
   ['status:todo', 'status:review', 'status:done'],
-  'selected columns are sorted by config order',
+  'selected columns are sorted by config order'
 )
 eq(
   resolveVisibleColumnIds(columnIds, []),
   ['status:todo', 'status:doing', 'status:done'],
-  'empty selection falls back to defaults',
+  'empty selection falls back to defaults'
 )
 for (const hiddenByDefault of [
   'status:backlog',
@@ -97,18 +97,18 @@ for (const hiddenByDefault of [
   notIncludes(
     getDefaultVisibleColumnIds(columnIds),
     hiddenByDefault,
-    `${hiddenByDefault} is hidden by default`,
+    `${hiddenByDefault} is hidden by default`
   )
 }
 
 eq(
   getDefaultVisibleColumnIds(
     getStatusColumns(DEFAULT_BOARD_CONFIG, [], (tag) => tag).map(
-      (column) => column.id,
-    ),
+      (column) => column.id
+    )
   ),
   ['status:todo', 'status:wip', 'status:done'],
-  'wip is used when doing is not present',
+  'wip is used when doing is not present'
 )
 
 const groupedColumns = groupRecordsByStatus(
@@ -118,7 +118,7 @@ const groupedColumns = groupRecordsByStatus(
     record('review-2', ['status:review']),
     record('missing-status', []),
   ],
-  columns,
+  columns
 )
 eq(
   summarizeHiddenColumns(groupedColumns, [
@@ -131,43 +131,39 @@ eq(
     hiddenRecordCount: 3,
     hiddenUncategorizedRecordCount: 1,
   },
-  'hidden column summary counts status and uncategorized records',
+  'hidden column summary counts status and uncategorized records'
 )
 
 const uncategorizedColumn = columns.find(
-  (column) => column.id === UNCATEGORIZED_STATUS_ID,
+  (column) => column.id === UNCATEGORIZED_STATUS_ID
 )
 ok(uncategorizedColumn, 'uncategorized column exists')
 eq(
   uncategorizedColumn?.label,
   'Uncategorized',
-  'uncategorized label does not expose raw id',
+  'uncategorized label does not expose raw id'
 )
-eq(
-  getUncategorizedColumnLabel('zh-CN'),
-  '未分类',
-  'zh-CN uncategorized label',
-)
+eq(getUncategorizedColumnLabel('zh-CN'), '未分类', 'zh-CN uncategorized label')
 
 const storage = new MemoryStorage()
 writeVisibleColumnPreference(columnIds, ['status:review'], storage)
 eq(
   readVisibleColumnPreference(storage),
   ['status:review'],
-  'localStorage write/read roundtrip',
+  'localStorage write/read roundtrip'
 )
 writeVisibleColumnPreference(columnIds, [], storage)
 eq(
   JSON.parse(storage.getItem(BOARD_VISIBLE_COLUMNS_STORAGE_KEY) ?? '[]'),
   ['status:todo', 'status:doing', 'status:done'],
-  'localStorage empty write falls back to default columns',
+  'localStorage empty write falls back to default columns'
 )
 
 console.log('boardViewColumns devcheck passed')
 
 function record(
   id: string,
-  tags: Tag[],
+  tags: Tag[]
 ): RecordResponse<RecordItem<RecordBody>> {
   return {
     createdAt: '2026-06-13T00:00:00.000Z',
@@ -186,7 +182,7 @@ function record(
 function eq<T>(actual: T, expected: T, label: string) {
   if (JSON.stringify(actual) !== JSON.stringify(expected)) {
     throw new Error(
-      `${label}\nexpected: ${JSON.stringify(expected)}\nactual: ${JSON.stringify(actual)}`,
+      `${label}\nexpected: ${JSON.stringify(expected)}\nactual: ${JSON.stringify(actual)}`
     )
   }
 }

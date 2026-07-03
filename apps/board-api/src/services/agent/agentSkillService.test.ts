@@ -110,18 +110,16 @@ describe('AgentSkillService', () => {
 
   it('skillIds includes labourboard-advisor does not duplicate', async () => {
     const svc = createService()
-    const snaps = await svc.resolveSkillSnapshots([
-      'labourboard-advisor',
-    ])
+    const snaps = await svc.resolveSkillSnapshots(['labourboard-advisor'])
     expect(snaps.length).toBe(1)
     expect(snaps[0].id).toBe('labourboard-advisor')
   })
 
   it('unknown skillId throws SkillNotFoundError', async () => {
     const svc = createService()
-    await expect(
-      svc.resolveSkillSnapshots(['missing-skill']),
-    ).rejects.toThrow(SkillNotFoundError)
+    await expect(svc.resolveSkillSnapshots(['missing-skill'])).rejects.toThrow(
+      SkillNotFoundError
+    )
   })
 
   it('duplicate skillIds dedupe', async () => {
@@ -141,9 +139,9 @@ describe('AgentSkillService', () => {
 
   it('empty string skillId throws SkillNotFoundError', async () => {
     const svc = createService()
-    await expect(
-      svc.resolveSkillSnapshots(['']),
-    ).rejects.toThrow(SkillNotFoundError)
+    await expect(svc.resolveSkillSnapshots([''])).rejects.toThrow(
+      SkillNotFoundError
+    )
   })
 
   // ─── No absolute path leakage ───

@@ -9,7 +9,11 @@ interface AgentDraftReviewActionsProps {
   draft: AgentDraftDetail
   isReviewing: boolean
   reviewError: string | null
-  onUpdateReview: (draftId: string, status: AgentDraftStatus, reviewNote?: string) => void
+  onUpdateReview: (
+    draftId: string,
+    status: AgentDraftStatus,
+    reviewNote?: string
+  ) => void
 }
 
 export function AgentDraftReviewActions({
@@ -28,7 +32,9 @@ export function AgentDraftReviewActions({
 
   return (
     <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
-      <h3 className="text-sm font-semibold uppercase text-slate-500">{t('agent.review.title')}</h3>
+      <h3 className="text-sm font-semibold uppercase text-slate-500">
+        {t('agent.review.title')}
+      </h3>
       <label className="grid gap-1.5 text-xs font-bold text-slate-500">
         {t('agent.review.note')}
         <textarea
@@ -38,21 +44,50 @@ export function AgentDraftReviewActions({
           placeholder={t('agent.review.notePlaceholder')}
         />
       </label>
-      {reviewError && <ErrorBlock title={t('agent.review.updateFailed')} message={reviewError} />}
+      {reviewError && (
+        <ErrorBlock
+          title={t('agent.review.updateFailed')}
+          message={reviewError}
+        />
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
           disabled={isReviewing}
-          onClick={() => onUpdateReview(draft.id, 'reviewed', reviewNote.trim() || undefined)}
-          icon={isReviewing ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : undefined}
+          onClick={() =>
+            onUpdateReview(draft.id, 'reviewed', reviewNote.trim() || undefined)
+          }
+          icon={
+            isReviewing ? (
+              <ArrowPathIcon className="h-4 w-4 animate-spin" />
+            ) : undefined
+          }
         >
-          {isReviewing ? t('agent.review.saving') : t('agent.review.markReviewed')}
+          {isReviewing
+            ? t('agent.review.saving')
+            : t('agent.review.markReviewed')}
         </Button>
-        <Button type="button" disabled={isReviewing} onClick={() => onUpdateReview(draft.id, 'discarded', reviewNote.trim() || undefined)}>
+        <Button
+          type="button"
+          disabled={isReviewing}
+          onClick={() =>
+            onUpdateReview(
+              draft.id,
+              'discarded',
+              reviewNote.trim() || undefined
+            )
+          }
+        >
           {t('agent.review.markDiscarded')}
         </Button>
         {draft.status !== 'draft' && (
-          <Button type="button" disabled={isReviewing} onClick={() => onUpdateReview(draft.id, 'draft', reviewNote.trim() || undefined)}>
+          <Button
+            type="button"
+            disabled={isReviewing}
+            onClick={() =>
+              onUpdateReview(draft.id, 'draft', reviewNote.trim() || undefined)
+            }
+          >
             {t('agent.review.resetToDraft')}
           </Button>
         )}

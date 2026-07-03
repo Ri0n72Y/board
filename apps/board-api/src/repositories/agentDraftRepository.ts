@@ -1,11 +1,18 @@
 import type { Collection, Document, Filter, OptionalId } from 'mongodb'
-import type { AgentDraftDetail, AgentDraftReview, AgentDraftSummary } from '@labour-board/shared'
+import type {
+  AgentDraftDetail,
+  AgentDraftReview,
+  AgentDraftSummary,
+} from '@labour-board/shared'
 
 export interface AgentDraftRepository {
   create(draft: AgentDraftDetail): Promise<AgentDraftDetail>
   list(): Promise<AgentDraftSummary[]>
   findById(id: string): Promise<AgentDraftDetail | null>
-  updateReview(id: string, review: AgentDraftReview): Promise<AgentDraftDetail | null>
+  updateReview(
+    id: string,
+    review: AgentDraftReview
+  ): Promise<AgentDraftDetail | null>
 }
 
 function cloneDetail(draft: AgentDraftDetail): AgentDraftDetail {
@@ -68,7 +75,10 @@ export class MemoryAgentDraftRepository implements AgentDraftRepository {
     return draft ? cloneDetail(draft) : null
   }
 
-  async updateReview(id: string, review: AgentDraftReview): Promise<AgentDraftDetail | null> {
+  async updateReview(
+    id: string,
+    review: AgentDraftReview
+  ): Promise<AgentDraftDetail | null> {
     const index = this.drafts.findIndex((item) => item.id === id)
     if (index === -1) return null
 
@@ -76,9 +86,15 @@ export class MemoryAgentDraftRepository implements AgentDraftRepository {
     const updated: AgentDraftDetail = {
       ...current,
       status: review.status,
-      ...(review.reviewedAt !== undefined ? { reviewedAt: review.reviewedAt || undefined } : {}),
-      ...(review.reviewedBy !== undefined ? { reviewedBy: review.reviewedBy || undefined } : {}),
-      ...(review.reviewNote !== undefined ? { reviewNote: review.reviewNote || undefined } : {}),
+      ...(review.reviewedAt !== undefined
+        ? { reviewedAt: review.reviewedAt || undefined }
+        : {}),
+      ...(review.reviewedBy !== undefined
+        ? { reviewedBy: review.reviewedBy || undefined }
+        : {}),
+      ...(review.reviewNote !== undefined
+        ? { reviewNote: review.reviewNote || undefined }
+        : {}),
     }
     this.drafts[index] = updated
     return cloneDetail(updated)
@@ -103,7 +119,11 @@ export class MongoAgentDraftRepository implements AgentDraftRepository {
     const docs = await this.collection
       .find(draftFilter())
       .sort({ createdAt: -1 })
-      .project<Document>({ contextMarkdown: 0, contextMeta: 0, exportOptions: 0 })
+      .project<Document>({
+        contextMarkdown: 0,
+        contextMeta: 0,
+        exportOptions: 0,
+      })
       .toArray()
     return docs.map(fromDraftDoc).map(toSummary)
   }
@@ -113,7 +133,10 @@ export class MongoAgentDraftRepository implements AgentDraftRepository {
     return doc ? fromDraftDoc(doc) : null
   }
 
-  async updateReview(id: string, review: AgentDraftReview): Promise<AgentDraftDetail | null> {
+  async updateReview(
+    id: string,
+    review: AgentDraftReview
+  ): Promise<AgentDraftDetail | null> {
     const setFields: Record<string, unknown> = { status: review.status }
     const unsetFields: Record<string, unknown> = {}
 
@@ -137,7 +160,7 @@ export class MongoAgentDraftRepository implements AgentDraftRepository {
     const result = await this.collection.findOneAndUpdate(
       draftFilter({ id }),
       update,
-      { returnDocument: 'after' },
+      { returnDocument: 'after' }
     )
     return result ? fromDraftDoc(result) : null
   }

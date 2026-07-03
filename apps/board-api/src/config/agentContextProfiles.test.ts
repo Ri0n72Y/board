@@ -19,11 +19,13 @@ const ALL_PROFILES: AgentContextProfile[] = [
 
 describe('agent context profile registry', () => {
   it('covers every profile exactly once', () => {
-    expect(AGENT_CONTEXT_PROFILE_DEFINITIONS.map((definition) => definition.id)).toEqual(
-      ALL_PROFILES
-    )
     expect(
-      new Set(AGENT_CONTEXT_PROFILE_DEFINITIONS.map((definition) => definition.id)).size
+      AGENT_CONTEXT_PROFILE_DEFINITIONS.map((definition) => definition.id)
+    ).toEqual(ALL_PROFILES)
+    expect(
+      new Set(
+        AGENT_CONTEXT_PROFILE_DEFINITIONS.map((definition) => definition.id)
+      ).size
     ).toBe(ALL_PROFILES.length)
   })
 
@@ -31,16 +33,28 @@ describe('agent context profile registry', () => {
     for (const profile of ALL_PROFILES) {
       const definition = getAgentContextProfileDefinition(profile)
       expect(getBoardExportLevelForProfile(profile)).toBe(definition.level)
-      expect(definition.level).toMatch(/^(full|summary|meta|card|related|sprint|filtered)$/)
+      expect(definition.level).toMatch(
+        /^(full|summary|meta|card|related|sprint|filtered)$/
+      )
     }
   })
 
   it('declares the expected profile constraints', () => {
-    expect(getAgentContextProfileDefinition('agent-card').requiresRecord).toBe(true)
-    expect(getAgentContextProfileDefinition('agent-sprint').requiresSprint).toBe(true)
-    expect(getAgentContextProfileDefinition('agent-filtered').usesCurrentFilters).toBe(true)
-    expect(getAgentContextProfileDefinition('agent-snapshot').source).toBe('snapshot')
-    expect(getAgentContextProfileDefinition('human-summary').defaultIncludeContent).toBe(false)
+    expect(getAgentContextProfileDefinition('agent-card').requiresRecord).toBe(
+      true
+    )
+    expect(
+      getAgentContextProfileDefinition('agent-sprint').requiresSprint
+    ).toBe(true)
+    expect(
+      getAgentContextProfileDefinition('agent-filtered').usesCurrentFilters
+    ).toBe(true)
+    expect(getAgentContextProfileDefinition('agent-snapshot').source).toBe(
+      'snapshot'
+    )
+    expect(
+      getAgentContextProfileDefinition('human-summary').defaultIncludeContent
+    ).toBe(false)
   })
 
   it('filters snapshot-only profiles out of current-board listings', () => {

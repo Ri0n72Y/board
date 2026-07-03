@@ -1,15 +1,18 @@
 import axios from 'axios'
-import type { ApiResponse, RecordCurrentHeadResponse } from '@labour-board/shared'
+import type {
+  ApiResponse,
+  RecordCurrentHeadResponse,
+} from '@labour-board/shared'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
 
 export async function fetchRecordHead(
   recordId: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<RecordCurrentHeadResponse> {
   const response = await axios.get<ApiResponse<RecordCurrentHeadResponse>>(
     `${apiBaseUrl}/records/${encodeURIComponent(recordId)}/head`,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {

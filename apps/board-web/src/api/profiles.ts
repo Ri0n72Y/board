@@ -21,10 +21,12 @@ export async function fetchProfiles(signal?: AbortSignal): Promise<Profile[]> {
 
 export async function createProfile(
   input: CreateProfileInput,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<Profile> {
   const url = `${apiBaseUrl}/profiles`
-  const response = await axios.post<ApiResponse<Profile>>(url, input, { signal })
+  const response = await axios.post<ApiResponse<Profile>>(url, input, {
+    signal,
+  })
 
   if (!response.data.ok) {
     throw new Error(response.data.error.message)
@@ -36,10 +38,12 @@ export async function createProfile(
 export async function updateProfile(
   pk: string,
   input: UpdateProfileInput,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<Profile> {
   const url = `${apiBaseUrl}/profiles/${encodeURIComponent(pk)}`
-  const response = await axios.patch<ApiResponse<Profile>>(url, input, { signal })
+  const response = await axios.patch<ApiResponse<Profile>>(url, input, {
+    signal,
+  })
 
   if (!response.data.ok) {
     throw new Error(response.data.error.message)

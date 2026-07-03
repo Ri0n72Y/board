@@ -6,9 +6,7 @@ import type {
   RecordItem,
   RecordBody,
 } from '@labour-board/shared'
-import type {
-  RecordRepository,
-} from '../../repositories/recordRepository.js'
+import type { RecordRepository } from '../../repositories/recordRepository.js'
 import type { StoredPatchDoc } from '../../repositories/snapshotHeadRepository.js'
 import { reconstructPatchChain, replayRecordHistory } from './recordHistory.js'
 import { toRecordResponse, toPatchResponse } from './recordResponses.js'
@@ -57,10 +55,7 @@ export async function getRecordHistory(
 
   if (status === 'empty' || status === 'complete') {
     const { createdBy: _cb, createdAt: _ca, ...baseItem } = record
-    const { finalState, states } = replayRecordHistory(
-      baseItem,
-      orderedPatches
-    )
+    const { finalState, states } = replayRecordHistory(baseItem, orderedPatches)
     const patchEnvelopes = orderedPatches.map(toPatchResponse)
     const steps: RecordHistoryReplayStep[] = states.map((state, i) => ({
       patch: patchEnvelopes[i],

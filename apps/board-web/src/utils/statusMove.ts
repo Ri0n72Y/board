@@ -7,7 +7,7 @@ export interface MoveStatusOption {
 }
 
 export function getMoveStatusOptions(
-  columns: Pick<BoardStatusColumn, 'label' | 'tag'>[],
+  columns: Pick<BoardStatusColumn, 'label' | 'tag'>[]
 ): MoveStatusOption[] {
   const options = new Map<Tag, MoveStatusOption>()
 
@@ -22,7 +22,7 @@ export function getMoveStatusOptions(
 
 export function buildMovedStatusTags(
   currentTags: Tag[],
-  targetStatusTag: Tag,
+  targetStatusTag: Tag
 ): Tag[] {
   const nextTags = currentTags.filter((tag) => !tag.startsWith('status:'))
   nextTags.unshift(targetStatusTag)
@@ -31,10 +31,15 @@ export function buildMovedStatusTags(
 
 export function buildMovedStatusTagChanges(
   currentTags: Tag[],
-  targetStatusTag: Tag,
-): { ok: true; tagChanges: TagChanges; from: Tag } | { ok: false; error: string } {
+  targetStatusTag: Tag
+):
+  | { ok: true; tagChanges: TagChanges; from: Tag }
+  | { ok: false; error: string } {
   if (!targetStatusTag.startsWith('status:')) {
-    return { ok: false, error: `Target status is not a status tag: ${targetStatusTag}` }
+    return {
+      ok: false,
+      error: `Target status is not a status tag: ${targetStatusTag}`,
+    }
   }
 
   const from = currentTags.find((tag) => tag.startsWith('status:'))
@@ -59,9 +64,11 @@ export function buildMovedStatusTagChanges(
 
 export function isStatusMoveNoop(
   currentTags: Tag[],
-  targetStatusTag: Tag,
+  targetStatusTag: Tag
 ): boolean {
-  return currentTags.find((tag) => tag.startsWith('status:')) === targetStatusTag
+  return (
+    currentTags.find((tag) => tag.startsWith('status:')) === targetStatusTag
+  )
 }
 
 function dedupeTags(tags: Tag[]): Tag[] {

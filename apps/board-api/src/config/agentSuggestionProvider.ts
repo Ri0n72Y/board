@@ -30,7 +30,7 @@ export interface AgentSuggestionProvider {
   readonly realProvider: boolean
 
   generate(
-    input: AgentSuggestionProviderInput,
+    input: AgentSuggestionProviderInput
   ): Promise<AgentSuggestionProviderOutput>
 }
 
@@ -46,7 +46,7 @@ export class MockAgentSuggestionProvider implements AgentSuggestionProvider {
   }
 
   async generate(
-    input: AgentSuggestionProviderInput,
+    input: AgentSuggestionProviderInput
   ): Promise<AgentSuggestionProviderOutput> {
     const skillName = input.skillSnapshots[0]?.name ?? 'LabourBoard Advisor'
     const recordCount = input.draftRecordCount
@@ -104,7 +104,15 @@ function buildMockMarkdown(params: {
   contextHash: string
   instruction?: string
 }): string {
-  const { skillName, draftTitle, recordCount, draftProfile, draftSource, contextHash, instruction } = params
+  const {
+    skillName,
+    draftTitle,
+    recordCount,
+    draftProfile,
+    draftSource,
+    contextHash,
+    instruction,
+  } = params
 
   return `# LabourBoard AI Suggestion
 
@@ -206,19 +214,13 @@ of the project context beyond what the draft captures.
 `
 }
 
-export class DisabledAgentSuggestionProvider
-  implements AgentSuggestionProvider
-{
+export class DisabledAgentSuggestionProvider implements AgentSuggestionProvider {
   readonly realProvider = false
   readonly kind: AgentProviderKind
   readonly model: string
   private readonly reason: string
 
-  constructor(
-    kind: AgentProviderKind,
-    model: string,
-    reason: string,
-  ) {
+  constructor(kind: AgentProviderKind, model: string, reason: string) {
     this.kind = kind
     this.model = model
     this.reason = reason

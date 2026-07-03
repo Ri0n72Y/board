@@ -25,10 +25,7 @@ function withoutMongoId(document: MongoProfileDocument): Profile {
   }
 }
 
-function profileFromInput(
-  input: CreateProfileInput,
-  now: string,
-): Profile {
+function profileFromInput(input: CreateProfileInput, now: string): Profile {
   return {
     pk: input.pk,
     name: input.name,
@@ -42,9 +39,7 @@ export class MemoryProfileRepository implements ProfileRepository {
   private profiles: Profile[] = []
 
   async list(): Promise<Profile[]> {
-    return structuredClone(
-      [...this.profiles].sort(profileSort),
-    )
+    return structuredClone([...this.profiles].sort(profileSort))
   }
 
   async findByPk(pk: PublicKey): Promise<Profile | null> {
@@ -61,7 +56,7 @@ export class MemoryProfileRepository implements ProfileRepository {
 
   async update(
     pk: PublicKey,
-    input: UpdateProfileInput,
+    input: UpdateProfileInput
   ): Promise<Profile | null> {
     const index = this.profiles.findIndex((p) => p.pk === pk)
     if (index === -1) return null
@@ -72,7 +67,9 @@ export class MemoryProfileRepository implements ProfileRepository {
       ...current,
       name: input.name !== undefined ? input.name : current.name,
       avatarUrl:
-        input.avatarUrl !== undefined ? (input.avatarUrl || null) : current.avatarUrl,
+        input.avatarUrl !== undefined
+          ? input.avatarUrl || null
+          : current.avatarUrl,
       updatedAt: now,
     }
     this.profiles[index] = updated
@@ -109,7 +106,7 @@ export class MongoProfileRepository implements ProfileRepository {
 
   async update(
     pk: PublicKey,
-    input: UpdateProfileInput,
+    input: UpdateProfileInput
   ): Promise<Profile | null> {
     const current = await this.findByPk(pk)
     if (!current) return null
@@ -119,7 +116,9 @@ export class MongoProfileRepository implements ProfileRepository {
       ...current,
       name: input.name !== undefined ? input.name : current.name,
       avatarUrl:
-        input.avatarUrl !== undefined ? (input.avatarUrl || null) : current.avatarUrl,
+        input.avatarUrl !== undefined
+          ? input.avatarUrl || null
+          : current.avatarUrl,
       updatedAt: now,
     }
     const result = await this.collection.findOneAndReplace({ pk }, updated, {

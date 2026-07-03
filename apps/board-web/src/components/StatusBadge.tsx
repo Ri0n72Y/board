@@ -6,7 +6,10 @@ interface StatusBadgeProps {
   status?: BoardProjectionStatus
 }
 
-const statusColor: Record<BoardProjectionStatus, 'green' | 'amber' | 'red' | 'slate'> = {
+const statusColor: Record<
+  BoardProjectionStatus,
+  'green' | 'amber' | 'red' | 'slate'
+> = {
   clean: 'green',
   partial: 'amber',
   blocked: 'red',

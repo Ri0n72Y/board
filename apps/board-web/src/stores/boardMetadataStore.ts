@@ -71,8 +71,7 @@ export const useBoardMetadataStore = create<BoardMetadataState>((set) => ({
         : null
 
     set({
-      config:
-        configResult.status === 'fulfilled' ? configResult.value : null,
+      config: configResult.status === 'fulfilled' ? configResult.value : null,
       profiles:
         profilesResult.status === 'fulfilled' ? profilesResult.value : null,
       isLoading: false,
@@ -92,12 +91,14 @@ export const useBoardMetadataStore = create<BoardMetadataState>((set) => ({
 
   updateProfile: async (
     pk: string,
-    input: UpdateProfileInput,
+    input: UpdateProfileInput
   ): Promise<Profile> => {
     const updated = await updateProfileApi(pk, input)
     set((state) => ({
       profiles: state.profiles
-        ? state.profiles.map((p) => (p.pk === pk ? updated : p)).sort(profileSort)
+        ? state.profiles
+            .map((p) => (p.pk === pk ? updated : p))
+            .sort(profileSort)
         : null,
     }))
     return updated

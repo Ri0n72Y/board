@@ -76,7 +76,11 @@ describe('recordHeadRoute', () => {
         body: JSON.stringify({
           parentId: headBefore.data.lastPatchId,
           currentVersion: headBefore.data.currentVersion,
-          tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+          tagChanges: {
+            change: [
+              { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+            ],
+          },
         }),
         headers: { 'content-type': 'application/json' },
       }

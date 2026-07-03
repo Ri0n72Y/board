@@ -58,7 +58,7 @@ export function AppSettingsDrawer({
                     'inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-medium transition',
                     isActive
                       ? 'border-emerald-500 bg-emerald-100 text-emerald-800 cursor-default'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-500 hover:bg-emerald-50',
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-500 hover:bg-emerald-50'
                   )}
                   disabled={isActive}
                   onClick={() => changeLanguage(lang as Language)}
@@ -78,9 +78,7 @@ export function AppSettingsDrawer({
           <h3 className="text-sm font-semibold uppercase text-slate-500">
             {t('settings.members')}
           </h3>
-          <p className="text-xs text-slate-500">
-            {t('settings.membersHint')}
-          </p>
+          <p className="text-xs text-slate-500">{t('settings.membersHint')}</p>
           <button
             type="button"
             className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-500 hover:bg-emerald-50"

@@ -161,12 +161,12 @@ This section records MVP 2.2 member management as completed on top of Phase 1.
 
 ### Profile Routes
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| GET | `/api/v0/profiles` | List all profiles (sorted by name, then pk) |
-| GET | `/api/v0/profiles/:pk` | Read one profile |
-| POST | `/api/v0/profiles` | Create a profile |
-| PATCH | `/api/v0/profiles/:pk` | Update name / avatarUrl |
+| Method | Path                   | Purpose                                     |
+| ------ | ---------------------- | ------------------------------------------- |
+| GET    | `/api/v0/profiles`     | List all profiles (sorted by name, then pk) |
+| GET    | `/api/v0/profiles/:pk` | Read one profile                            |
+| POST   | `/api/v0/profiles`     | Create a profile                            |
+| PATCH  | `/api/v0/profiles/:pk` | Update name / avatarUrl                     |
 
 `DELETE /api/v0/profiles/:pk` does not exist.
 

@@ -1,4 +1,9 @@
-import type { RecordHistoryDiagnostic, RecordId, RecordItem, RecordBody } from '@labour-board/shared'
+import type {
+  RecordHistoryDiagnostic,
+  RecordId,
+  RecordItem,
+  RecordBody,
+} from '@labour-board/shared'
 import { applyRecordPatch } from '@labour-board/shared'
 import type { StoredPatchDoc } from '../../repositories/snapshotHeadRepository.js'
 
@@ -178,7 +183,15 @@ function determineStatus(
   if (diagnostics.length === 0) return 'complete'
 
   const hasBroken = diagnostics.some((d) =>
-    ['NO_ROOT', 'PARENT_MISSING', 'CROSS_TARGET_PARENT', 'CROSS_TARGET_PATCH', 'CYCLE', 'DUPLICATE_PATCH', 'UNREACHABLE_PATCH'].includes(d.code)
+    [
+      'NO_ROOT',
+      'PARENT_MISSING',
+      'CROSS_TARGET_PARENT',
+      'CROSS_TARGET_PATCH',
+      'CYCLE',
+      'DUPLICATE_PATCH',
+      'UNREACHABLE_PATCH',
+    ].includes(d.code)
   )
   if (hasBroken) return 'broken'
 

@@ -28,7 +28,8 @@ const enUS = {
     'settings.membersHint': 'Manage team member profiles and avatars.',
     'settings.manageMembers': 'Manage Members',
     'settings.visibleColumns': 'Visible columns',
-    'settings.visibleColumnsHint': 'Choose which board status columns are shown.',
+    'settings.visibleColumnsHint':
+      'Choose which board status columns are shown.',
     'settings.visibleColumnsEmptyFallback':
       'Clearing every column restores the default columns.',
 
@@ -133,7 +134,9 @@ const enUS = {
     'record.none': 'None',
     'record.assets': 'Assets',
     'record.close': 'Close',
+    'record.details': 'Details',
     'record.relations': 'Relations',
+    'record.updated': 'Updated',
     'record.moreAssets_one': '+{{count}} more asset',
     'record.moreAssets_other': '+{{count}} more assets',
     'record.moreRelations_one': '+{{count}} more relation',
@@ -151,7 +154,8 @@ const enUS = {
     'relations.none': 'No relations',
     'relations.more_one': '+{{count}} more relation',
     'relations.more_other': '+{{count}} more relations',
-    'relations.selfWarning': 'This record already contains a self relation. It is preserved, but new self relations are not selectable.',
+    'relations.selfWarning':
+      'This record already contains a self relation. It is preserved, but new self relations are not selectable.',
     'relations.duplicateWarning': 'Duplicate relations will be saved once.',
     'relations.noTargetOptions': 'No relation targets',
     'relations.constraint.dependsOn': 'Depends on',
@@ -219,7 +223,8 @@ const enUS = {
     'edit.priorityTag': 'Priority',
     'edit.otherTags': 'Other tags',
     'edit.unsupportedTags': 'Unsupported tags (read-only)',
-    'edit.unsupportedHint': 'These tags are not in the current config. They will be preserved but cannot be added.',
+    'edit.unsupportedHint':
+      'These tags are not in the current config. They will be preserved but cannot be added.',
     'edit.assignee': 'Assignee',
     'edit.assigneePlaceholder': 'Select member',
     'edit.assets': 'Assets',
@@ -236,6 +241,7 @@ const enUS = {
       'This patch will include a human-draft description from an AI suggestion.',
     'edit.saving': 'Saving...',
     'edit.saveButton': 'Save patch',
+    'edit.saveSuccess': 'Record saved',
     'edit.conflictError':
       'Record changed on the server. Refresh and try again.',
     'edit.headMissing':
@@ -243,6 +249,11 @@ const enUS = {
     'edit.staleHead':
       'The current record has been changed by another operation. Refresh and edit again.',
     'edit.optional': ' (optional)',
+    'edit.unsavedDiscardTitle': 'Discard unsaved changes?',
+    'edit.unsavedDiscardMessage':
+      'This detail drawer has unsaved changes. Discard them and continue?',
+    'edit.unsavedDiscardConfirm': 'Discard changes',
+    'edit.unsavedDiscardCancel': 'Keep editing',
 
     // ─── Snapshot Drawer ───
     'snapshot.subtitle': 'Checkpoints',

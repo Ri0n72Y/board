@@ -11,12 +11,12 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
 
 export async function createSnapshot(
   payload: CreateSnapshotInput,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<CreateSnapshotResponse> {
   const response = await axios.post<ApiResponse<CreateSnapshotResponse>>(
     `${apiBaseUrl}/snapshots`,
     payload,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {
@@ -27,11 +27,11 @@ export async function createSnapshot(
 }
 
 export async function fetchSnapshots(
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<ListSnapshotsResponse> {
   const response = await axios.get<ApiResponse<ListSnapshotsResponse>>(
     `${apiBaseUrl}/snapshots`,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {
@@ -43,11 +43,11 @@ export async function fetchSnapshots(
 
 export async function fetchSnapshot(
   snapshotId: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<GetSnapshotResponse> {
   const response = await axios.get<ApiResponse<GetSnapshotResponse>>(
     `${apiBaseUrl}/snapshots/${encodeURIComponent(snapshotId)}`,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {

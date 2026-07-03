@@ -68,7 +68,8 @@ const zhCN = {
     'filters.noKnownTags': '无已知标签。',
     'filters.projectionSummary': '投影摘要',
     'board.horizontalScrollHint': '在此区域横向滚动以查看其他列。',
-    'board.hiddenColumnsNotice_other': '已隐藏 {{columns}} 个状态列，包含 {{records}} 条记录。',
+    'board.hiddenColumnsNotice_other':
+      '已隐藏 {{columns}} 个状态列，包含 {{records}} 条记录。',
     'board.hiddenUncategorizedNotice': '有 {{count}} 条记录位于隐藏的未分类列',
     // ─── Tag groups ───
     'filters.group.status': '状态',
@@ -126,7 +127,9 @@ const zhCN = {
     'record.none': '无',
     'record.assets': '资产',
     'record.close': '关闭',
+    'record.details': '详情',
     'record.relations': '关联',
+    'record.updated': '最近版本',
     'record.moreAssets': '+{{count}} 更多资产',
     'record.moreRelations': '+{{count}} 更多关联',
     'recordReference.unknownAsset': '未知资产',
@@ -141,7 +144,8 @@ const zhCN = {
     'relations.descriptionPlaceholder': '可选说明',
     'relations.none': '无关联',
     'relations.more': '+{{count}} 更多关联',
-    'relations.selfWarning': '这条记录已有指向自身的关联。会保留它，但不能新增自关联。',
+    'relations.selfWarning':
+      '这条记录已有指向自身的关联。会保留它，但不能新增自关联。',
     'relations.duplicateWarning': '重复关联保存时只保留一条。',
     'relations.noTargetOptions': '无可选关联目标',
     'relations.constraint.dependsOn': '依赖',
@@ -228,7 +232,13 @@ const zhCN = {
     'edit.errorNoChanges': '没有需要保存的修改。',
     'edit.initialPatchDescriptionNotice':
       '此补丁将附带一段来自 AI 建议的人工草稿说明。',
+    'edit.saveSuccess': '记录已保存',
     'edit.optional': '（可选）',
+    'edit.unsavedDiscardTitle': '放弃未保存的修改？',
+    'edit.unsavedDiscardMessage':
+      '当前详情中有未保存的修改。要放弃这些修改并继续吗？',
+    'edit.unsavedDiscardConfirm': '放弃修改',
+    'edit.unsavedDiscardCancel': '继续编辑',
 
     // ─── Snapshot Drawer ───
     'snapshot.subtitle': '检查点',
@@ -521,8 +531,7 @@ const zhCN = {
       '草稿必须先通过审核才能生成 AI 建议。',
     'agent.suggestions.loadingList': '加载建议中...',
     'agent.suggestions.loadingDetail': '加载建议详情中...',
-    'agent.suggestions.empty':
-      '暂无 AI 建议。从已审核的草稿生成一个。',
+    'agent.suggestions.empty': '暂无 AI 建议。从已审核的草稿生成一个。',
     'agent.suggestions.generateFailed': '建议生成失败',
     'agent.suggestions.listFailed': '加载建议失败',
     'agent.suggestions.detailFailed': '加载建议详情失败',

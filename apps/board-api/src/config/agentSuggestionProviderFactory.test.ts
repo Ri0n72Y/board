@@ -9,7 +9,7 @@ import { createAgentSuggestionProvider } from './agentSuggestionProviderFactory.
 import type { InternalAgentProviderRuntimeConfig } from './agentProviderConfig.js'
 
 function makeConfig(
-  overrides?: Partial<InternalAgentProviderRuntimeConfig>,
+  overrides?: Partial<InternalAgentProviderRuntimeConfig>
 ): InternalAgentProviderRuntimeConfig {
   return {
     kind: 'mock',
@@ -35,7 +35,7 @@ describe('agentSuggestionProviderFactory', () => {
 
   it('disabled config returns DisabledAgentSuggestionProvider', () => {
     const provider = createAgentSuggestionProvider(
-      makeConfig({ kind: 'disabled', model: 'none', enabled: false }),
+      makeConfig({ kind: 'disabled', model: 'none', enabled: false })
     )
     expect(provider).toBeInstanceOf(DisabledAgentSuggestionProvider)
     expect(provider.kind).toBe('disabled')
@@ -49,7 +49,7 @@ describe('agentSuggestionProviderFactory', () => {
         apiKey: 'secret-provider-key',
         apiKeyPresent: true,
         enabled: false,
-      }),
+      })
     )
     expect(provider).toBeInstanceOf(DisabledAgentSuggestionProvider)
     expect(provider.kind).toBe('openai-compatible')
@@ -58,7 +58,7 @@ describe('agentSuggestionProviderFactory', () => {
 
   it('mock provider uses configured model', async () => {
     const provider = createAgentSuggestionProvider(
-      makeConfig({ model: 'mock-custom-model' }),
+      makeConfig({ model: 'mock-custom-model' })
     )
     expect(provider).toBeInstanceOf(MockAgentSuggestionProvider)
     expect(provider.model).toBe('mock-custom-model')
@@ -66,10 +66,10 @@ describe('agentSuggestionProviderFactory', () => {
 
   it('disabled/stub generate throws AgentProviderUnavailableError', async () => {
     const provider = createAgentSuggestionProvider(
-      makeConfig({ kind: 'disabled', model: 'none', enabled: false }),
+      makeConfig({ kind: 'disabled', model: 'none', enabled: false })
     )
     await expect(provider.generate({} as never)).rejects.toThrow(
-      AgentProviderUnavailableError,
+      AgentProviderUnavailableError
     )
   })
 
@@ -82,7 +82,7 @@ describe('agentSuggestionProviderFactory', () => {
         apiKey: secret,
         apiKeyPresent: true,
         enabled: false,
-      }),
+      })
     )
 
     await expect(provider.generate({} as never)).rejects.not.toThrow(secret)
@@ -92,7 +92,7 @@ describe('agentSuggestionProviderFactory', () => {
   it('factory does not import real provider SDKs or network clients', async () => {
     const source = await readFile(
       new URL('./agentSuggestionProviderFactory.ts', import.meta.url),
-      'utf-8',
+      'utf-8'
     )
     // Factory may reference its own OpenAI-compatible provider class
     // but must never import external SDK packages.

@@ -31,12 +31,12 @@ export interface CreateAgentDraftRequest {
 
 export async function createAgentDraft(
   input: CreateAgentDraftRequest,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<CreateAgentDraftResponse> {
   const response = await axios.post<ApiResponse<CreateAgentDraftResponse>>(
     `${apiBaseUrl}/agent/drafts`,
     input,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {
@@ -47,11 +47,11 @@ export async function createAgentDraft(
 }
 
 export async function fetchAgentDrafts(
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<ListAgentDraftsResponse> {
   const response = await axios.get<ApiResponse<ListAgentDraftsResponse>>(
     `${apiBaseUrl}/agent/drafts`,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {
@@ -63,11 +63,11 @@ export async function fetchAgentDrafts(
 
 export async function fetchAgentDraft(
   id: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<GetAgentDraftResponse> {
   const response = await axios.get<ApiResponse<GetAgentDraftResponse>>(
     `${apiBaseUrl}/agent/drafts/${encodeURIComponent(id)}`,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {
@@ -80,13 +80,13 @@ export async function fetchAgentDraft(
 export async function updateAgentDraftReview(
   id: string,
   input: UpdateAgentDraftReviewInput,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<UpdateAgentDraftReviewResponse> {
-  const response = await axios.patch<ApiResponse<UpdateAgentDraftReviewResponse>>(
-    `${apiBaseUrl}/agent/drafts/${encodeURIComponent(id)}/review`,
-    input,
-    { signal },
-  )
+  const response = await axios.patch<
+    ApiResponse<UpdateAgentDraftReviewResponse>
+  >(`${apiBaseUrl}/agent/drafts/${encodeURIComponent(id)}/review`, input, {
+    signal,
+  })
 
   if (!response.data.ok) {
     throw new Error(response.data.error.message)
@@ -97,11 +97,11 @@ export async function updateAgentDraftReview(
 
 export async function fetchAgentDraftHandoff(
   id: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<GetAgentDraftHandoffResponse> {
   const response = await axios.get<ApiResponse<GetAgentDraftHandoffResponse>>(
     `${apiBaseUrl}/agent/drafts/${encodeURIComponent(id)}/handoff`,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {

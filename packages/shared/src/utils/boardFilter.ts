@@ -25,7 +25,7 @@ export function normalizeBoardFilterQuery(
 ): NormalizedBoardFilterQuery {
   return {
     tags: query.tags?.filter((tag) => tag.trim().length > 0) ?? [],
-    tagMatch: query.tagMatch === 'any' ? 'any' : 'all',
+    tagMatch: 'any',
     assignee: normalizeString(query.assignee),
     assetId: normalizeString(query.assetId),
     relationTarget: normalizeString(query.relationTarget),
@@ -45,10 +45,13 @@ export function recordMatchesBoardFilter(
     return false
   }
   if (normalized.assignee && body.assignee !== normalized.assignee) return false
-  if (normalized.assetId && !body.assets?.includes(normalized.assetId)) return false
+  if (normalized.assetId && !body.assets?.includes(normalized.assetId))
+    return false
   if (
     normalized.relationTarget &&
-    !body.relations?.some((relation) => relation.target === normalized.relationTarget)
+    !body.relations?.some(
+      (relation) => relation.target === normalized.relationTarget
+    )
   ) {
     return false
   }
@@ -73,9 +76,7 @@ function matchesTags(
   record: BoardRecord,
   query: NormalizedBoardFilterQuery
 ): boolean {
-  return query.tagMatch === 'any'
-    ? query.tags.some((tag) => record.body.tags.includes(tag))
-    : query.tags.every((tag) => record.body.tags.includes(tag))
+  return query.tags.some((tag) => record.body.tags.includes(tag))
 }
 
 function matchesBoardFilterText(record: BoardRecord, query: string): boolean {

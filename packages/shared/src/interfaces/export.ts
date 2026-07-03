@@ -40,7 +40,10 @@ export interface BoardExportOptions {
   generatedAt?: string
 }
 
-export interface BoardContextPackOptions extends Omit<BoardExportOptions, 'level'> {
+export interface BoardContextPackOptions extends Omit<
+  BoardExportOptions,
+  'level'
+> {
   profile: AgentContextProfile
   level?: BoardExportLevel
   contextGoal?: string

@@ -37,7 +37,7 @@ export function buildSuggestionPrompt(input: PromptInput): {
     skillMarkdown,
     input.contextMarkdown,
     instructionBlock,
-    titleHint,
+    titleHint
   )
 
   return { systemPrompt, userPrompt }
@@ -120,7 +120,7 @@ function buildUserPrompt(
   skillMarkdown: string,
   contextMarkdown: string,
   instructionBlock: string,
-  titleHint: string,
+  titleHint: string
 ): string {
   return `## Draft Title
 

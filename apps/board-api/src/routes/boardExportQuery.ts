@@ -48,7 +48,7 @@ export function parseBoardExportOptions(
   }
   const rawLevel = profile
     ? getBoardExportLevelForProfile(profile)
-    : searchParams.get('level') ?? 'full'
+    : (searchParams.get('level') ?? 'full')
   if (!LEVELS.includes(rawLevel as BoardExportLevel)) {
     throw new BoardExportQueryError(`Unsupported export level: ${rawLevel}`)
   }
@@ -110,7 +110,8 @@ export function parseBoardExportOptions(
     includeContent: parseBoolean(
       searchParams,
       'includeContent',
-      profileDefinition?.defaultIncludeContent ?? (level === 'full' || level === 'card')
+      profileDefinition?.defaultIncludeContent ??
+        (level === 'full' || level === 'card')
     ),
     filters,
     ...(snapshot

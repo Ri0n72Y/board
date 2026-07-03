@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
-import type { BoardConfig, Profile, RelationRef, Tag } from '@labour-board/shared'
+import type {
+  BoardConfig,
+  Profile,
+  RelationRef,
+  Tag,
+} from '@labour-board/shared'
 import {
   ExclamationTriangleIcon,
   PlusIcon,
@@ -65,7 +70,7 @@ export function CreateRecordDrawer({
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
   const [form, setForm] = useState<FormState>(() =>
-    initialFormState(config, statusTags, priorityTags),
+    initialFormState(config, statusTags, priorityTags)
   )
   const [error, setError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
@@ -82,18 +87,23 @@ export function CreateRecordDrawer({
       AssetBody: 'create.schemaAsset',
       TransactionBody: 'create.schemaTransaction',
     }
-    const schemas = config?.records.schemas?.length ? config.records.schemas : [CARD_SCHEMA]
+    const schemas = config?.records.schemas?.length
+      ? config.records.schemas
+      : [CARD_SCHEMA]
     return schemas.map((s) => ({ value: s as string, label: label(s) }))
   }, [config, t])
-  const profileOptions = useMemo(() => getProfileOptions(profiles as Profile[] | null), [profiles])
+  const profileOptions = useMemo(
+    () => getProfileOptions(profiles as Profile[] | null),
+    [profiles]
+  )
 
   // Non-status/non-priority known tags for "other tags" section
   const otherTagOptions = useMemo(
     () =>
       knownTags.filter(
-        (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:'),
+        (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:')
       ),
-    [knownTags],
+    [knownTags]
   )
   const otherTagSelectOptions = useMemo(
     () =>
@@ -102,7 +112,7 @@ export function CreateRecordDrawer({
         label: formatTagLabel(tag, lang),
         meta: tag,
       })),
-    [otherTagOptions, lang],
+    [otherTagOptions, lang]
   )
 
   useEffect(() => {
@@ -119,7 +129,11 @@ export function CreateRecordDrawer({
   }, [onClose])
 
   async function submit() {
-    const validation = buildPayload(form, effectiveStatusTag, effectivePriorityTag)
+    const validation = buildPayload(
+      form,
+      effectiveStatusTag,
+      effectivePriorityTag
+    )
     if (!validation.ok) {
       setError(t(validation.error))
       return
@@ -136,14 +150,22 @@ export function CreateRecordDrawer({
 
     try {
       await createRecord(validation.payload, controller.signal)
-      if (createRequestIdRef.current !== requestId || controller.signal.aborted) return
+      if (createRequestIdRef.current !== requestId || controller.signal.aborted)
+        return
       setIsCreating(false)
       createAbortRef.current = null
       onClose()
       await onCreated()
     } catch (caught) {
-      if (createRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(caught)) return
-      setError(caught instanceof Error ? caught.message : t('create.errorGeneral'))
+      if (
+        createRequestIdRef.current !== requestId ||
+        controller.signal.aborted ||
+        axios.isCancel(caught)
+      )
+        return
+      setError(
+        caught instanceof Error ? caught.message : t('create.errorGeneral')
+      )
       setIsCreating(false)
     } finally {
       if (createRequestIdRef.current === requestId) {
@@ -173,7 +195,10 @@ export function CreateRecordDrawer({
             <p className="mb-1 text-xs font-bold uppercase text-slate-500">
               {t('create.subtitle')}
             </p>
-            <h2 className="text-xl font-semibold leading-tight" id="create-record-title">
+            <h2
+              className="text-xl font-semibold leading-tight"
+              id="create-record-title"
+            >
               {t('create.title')}
             </h2>
           </div>
@@ -211,7 +236,10 @@ export function CreateRecordDrawer({
                 label={t('create.schema')}
                 value={form.schema}
                 onChange={(event) =>
-                  setForm((current) => ({ ...current, schema: event.target.value }))
+                  setForm((current) => ({
+                    ...current,
+                    schema: event.target.value,
+                  }))
                 }
                 options={schemaOptions}
                 disabled={isCreating}
@@ -220,7 +248,10 @@ export function CreateRecordDrawer({
                 label={t('create.titleField')}
                 value={form.title}
                 onChange={(event) =>
-                  setForm((current) => ({ ...current, title: event.target.value }))
+                  setForm((current) => ({
+                    ...current,
+                    title: event.target.value,
+                  }))
                 }
                 placeholder={t('create.titlePlaceholder')}
                 disabled={isCreating}
@@ -273,7 +304,9 @@ export function CreateRecordDrawer({
                     </button>
                   ))
                 ) : (
-                  <p className="text-xs text-slate-400">{t('create.noConfigTags')}</p>
+                  <p className="text-xs text-slate-400">
+                    {t('create.noConfigTags')}
+                  </p>
                 )}
               </div>
             </div>
@@ -306,7 +339,9 @@ export function CreateRecordDrawer({
                     </button>
                   ))
                 ) : (
-                  <p className="text-xs text-slate-400">{t('create.noConfigTags')}</p>
+                  <p className="text-xs text-slate-400">
+                    {t('create.noConfigTags')}
+                  </p>
                 )}
               </div>
             </div>
@@ -323,7 +358,7 @@ export function CreateRecordDrawer({
                   setForm((current) => ({
                     ...current,
                     otherTags: nextTags.filter((tag) =>
-                      otherTagOptions.includes(tag as Tag),
+                      otherTagOptions.includes(tag as Tag)
                     ) as Tag[],
                   }))
                 }
@@ -376,7 +411,12 @@ export function CreateRecordDrawer({
         </div>
 
         <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 bg-white px-5 py-4">
-          <Button type="button" variant="ghost" onClick={close} disabled={isCreating}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={close}
+            disabled={isCreating}
+          >
             {t('create.cancel')}
           </Button>
           <Button
@@ -396,7 +436,7 @@ export function CreateRecordDrawer({
 function initialFormState(
   _config: BoardConfig | null,
   statusTags: Tag[],
-  priorityTags: Tag[],
+  priorityTags: Tag[]
 ): FormState {
   return {
     schema: CARD_SCHEMA,
@@ -415,7 +455,7 @@ function initialFormState(
 function buildPayload(
   form: FormState,
   effectiveStatusTag: string,
-  effectivePriorityTag: string,
+  effectivePriorityTag: string
 ): { ok: true; payload: CreateRecordPayload } | { ok: false; error: string } {
   const schema = form.schema.trim()
   const title = form.title.trim()
@@ -425,9 +465,11 @@ function buildPayload(
   const description = form.summary.trim()
   const content = form.details.trim()
   const tags = uniqueValues(
-    [statusTag, priorityTag, ...form.otherTags].filter(Boolean) as Tag[],
+    [statusTag, priorityTag, ...form.otherTags].filter(Boolean) as Tag[]
   )
-  const assets = uniqueValues(form.assets.map((asset) => asset.trim()).filter(Boolean))
+  const assets = uniqueValues(
+    form.assets.map((asset) => asset.trim()).filter(Boolean)
+  )
   const relations = normalizeRelationDrafts(form.relations)
 
   if (!schema) return { ok: false, error: 'create.errorSchemaRequired' }
@@ -458,7 +500,7 @@ function uniqueValues<T extends string>(values: T[]): T[] {
 function abortCreate(
   requestIdRef: React.MutableRefObject<number>,
   abortRef: React.MutableRefObject<AbortController | null>,
-  setIsCreating?: (value: boolean) => void,
+  setIsCreating?: (value: boolean) => void
 ) {
   requestIdRef.current += 1
   abortRef.current?.abort()

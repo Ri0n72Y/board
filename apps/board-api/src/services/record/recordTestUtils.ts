@@ -25,7 +25,11 @@ export function createServiceWithRepo(): {
 } {
   const repo = new MemoryRecordRepository()
   const head = new MemorySnapshotHeadRepository(repo)
-  const service = new RecordService(repo, head, structuredClone(DEFAULT_BOARD_CONFIG))
+  const service = new RecordService(
+    repo,
+    head,
+    structuredClone(DEFAULT_BOARD_CONFIG)
+  )
   return { service, repo, head }
 }
 

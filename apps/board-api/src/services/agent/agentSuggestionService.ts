@@ -37,7 +37,7 @@ export class AgentSuggestionService {
     draftRepository: AgentDraftRepository,
     skillService: AgentSkillService,
     provider: AgentSuggestionProvider,
-    providerConfig: AgentProviderRuntimeConfig = loadAgentProviderRuntimeConfig(),
+    providerConfig: AgentProviderRuntimeConfig = loadAgentProviderRuntimeConfig()
   ) {
     this.suggestionRepository = suggestionRepository
     this.draftRepository = draftRepository
@@ -49,7 +49,7 @@ export class AgentSuggestionService {
   async createSuggestion(
     draftId: string,
     input: CreateAgentSuggestionInput,
-    actor?: PublicKey,
+    actor?: PublicKey
   ): Promise<AgentSuggestionDetail> {
     // 1. Draft must exist
     const draft = await this.draftRepository.findById(draftId)
@@ -60,13 +60,13 @@ export class AgentSuggestionService {
     // 2. Draft must be reviewed
     if (draft.status !== 'reviewed') {
       throw new AgentSuggestionNotAllowedError(
-        `Draft status "${draft.status}" is not "reviewed". Only reviewed drafts can generate AI suggestions.`,
+        `Draft status "${draft.status}" is not "reviewed". Only reviewed drafts can generate AI suggestions.`
       )
     }
 
     if (!draft.reviewedAt || !draft.reviewedBy) {
       throw new AgentSuggestionNotAllowedError(
-        'Draft is missing reviewedAt or reviewedBy metadata.',
+        'Draft is missing reviewedAt or reviewedBy metadata.'
       )
     }
 
@@ -75,7 +75,7 @@ export class AgentSuggestionService {
 
     // 4. Load skill snapshots (validates all skillIds exist)
     const skillSnapshots = await this.skillService.resolveSkillSnapshots(
-      input.skillIds,
+      input.skillIds
     )
 
     // 5. Check provider input budget before any provider call.
@@ -83,7 +83,7 @@ export class AgentSuggestionService {
     const budgetInput = buildSuggestionBudgetInput(
       draft.contextMarkdown,
       skillSnapshots,
-      instruction,
+      instruction
     )
     checkSuggestionBudget(budgetInput, this.providerConfig)
 
@@ -108,7 +108,7 @@ export class AgentSuggestionService {
     // 8. Validate provider output before saving.
     const validatedOutput = validateSuggestionOutput(
       providerOutput,
-      this.providerConfig,
+      this.providerConfig
     )
 
     // 9. Build suggestion detail
@@ -151,8 +151,7 @@ export class AgentSuggestionService {
         maxInputChars: this.providerConfig.maxInputChars,
         maxOutputChars: this.providerConfig.maxOutputChars,
         maxEstimatedInputTokens: this.providerConfig.maxEstimatedInputTokens,
-        maxEstimatedOutputTokens:
-          this.providerConfig.maxEstimatedOutputTokens,
+        maxEstimatedOutputTokens: this.providerConfig.maxEstimatedOutputTokens,
         budgetCheckStatus: 'passed',
         outputValidationStatus: 'passed',
         realProvider: this.provider.realProvider,
@@ -172,7 +171,7 @@ export class AgentSuggestionService {
   }
 
   async getSuggestion(
-    suggestionId: string,
+    suggestionId: string
   ): Promise<AgentSuggestionDetail | null> {
     return this.suggestionRepository.findById(suggestionId)
   }
@@ -180,7 +179,7 @@ export class AgentSuggestionService {
   async updateReview(
     suggestionId: string,
     input: UpdateAgentSuggestionReviewInput,
-    _actor?: PublicKey,
+    _actor?: PublicKey
   ): Promise<AgentSuggestionDetail | null> {
     const VALID_STATUSES: AgentSuggestionStatus[] = [
       'generated',
@@ -189,14 +188,14 @@ export class AgentSuggestionService {
     ]
     if (!VALID_STATUSES.includes(input.status)) {
       throw new AgentSuggestionValidationError(
-        `Invalid status: ${input.status}. Must be one of: ${VALID_STATUSES.join(', ')}`,
+        `Invalid status: ${input.status}. Must be one of: ${VALID_STATUSES.join(', ')}`
       )
     }
 
     const existing = await this.suggestionRepository.findById(suggestionId)
     if (!existing) {
       throw new AgentSuggestionNotFoundError(
-        `Agent suggestion ${suggestionId} not found`,
+        `Agent suggestion ${suggestionId} not found`
       )
     }
 
@@ -204,30 +203,24 @@ export class AgentSuggestionService {
   }
 
   private validateInput(input: CreateAgentSuggestionInput): void {
-    if (
-      input.title !== undefined &&
-      input.title !== null
-    ) {
+    if (input.title !== undefined && input.title !== null) {
       if (typeof input.title !== 'string') {
         throw new AgentSuggestionValidationError('title must be a string')
       }
       if (input.title.length > MAX_TITLE_LENGTH) {
         throw new AgentSuggestionValidationError(
-          `title must not exceed ${MAX_TITLE_LENGTH} characters`,
+          `title must not exceed ${MAX_TITLE_LENGTH} characters`
         )
       }
     }
 
-    if (
-      input.instruction !== undefined &&
-      input.instruction !== null
-    ) {
+    if (input.instruction !== undefined && input.instruction !== null) {
       if (typeof input.instruction !== 'string') {
         throw new AgentSuggestionValidationError('instruction must be a string')
       }
       if (input.instruction.length > MAX_INSTRUCTION_LENGTH) {
         throw new AgentSuggestionValidationError(
-          `instruction must not exceed ${MAX_INSTRUCTION_LENGTH} characters`,
+          `instruction must not exceed ${MAX_INSTRUCTION_LENGTH} characters`
         )
       }
     }
@@ -239,20 +232,25 @@ export class AgentSuggestionService {
       for (const id of input.skillIds) {
         if (typeof id !== 'string') {
           throw new AgentSuggestionValidationError(
-            'each skillId must be a string',
+            'each skillId must be a string'
           )
         }
       }
     }
 
     if (input.provider !== undefined && input.provider !== null) {
-      if (typeof input.provider !== 'string' || input.provider.trim().length === 0) {
-        throw new AgentSuggestionValidationError('provider must be a non-empty string')
+      if (
+        typeof input.provider !== 'string' ||
+        input.provider.trim().length === 0
+      ) {
+        throw new AgentSuggestionValidationError(
+          'provider must be a non-empty string'
+        )
       }
       const requestedProvider = input.provider.trim()
       if (requestedProvider !== this.providerConfig.kind) {
         throw new AgentSuggestionValidationError(
-          `Requested provider "${requestedProvider}" does not match configured provider "${this.providerConfig.kind}". Provider fallback is not allowed.`,
+          `Requested provider "${requestedProvider}" does not match configured provider "${this.providerConfig.kind}". Provider fallback is not allowed.`
         )
       }
     }

@@ -11,11 +11,15 @@ export function assertCreateInput(
   config: BoardConfig
 ): void {
   if (!config.records.schemas.includes(input.schema)) {
-    throw new RecordValidationError(`Unsupported record schema: ${input.schema}`)
+    throw new RecordValidationError(
+      `Unsupported record schema: ${input.schema}`
+    )
   }
 
   if (input.pidPrefix && !config.pid.prefixes.includes(input.pidPrefix)) {
-    throw new RecordValidationError(`Unsupported pid prefix: ${input.pidPrefix}`)
+    throw new RecordValidationError(
+      `Unsupported pid prefix: ${input.pidPrefix}`
+    )
   }
 
   const configuredTags = getConfiguredTags(config)

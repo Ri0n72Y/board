@@ -13,24 +13,26 @@ export class AgentDraftHandoffValidationError extends Error {
 
 export function buildAgentDraftHandoffMarkdown(
   draft: AgentDraftDetail,
-  options?: AgentDraftHandoffOptions,
+  options?: AgentDraftHandoffOptions
 ): AgentDraftHandoffResult {
   // Guard: must be reviewed
   if (draft.status !== 'reviewed') {
     throw new AgentDraftHandoffValidationError(
-      `Draft status "${draft.status}" is not "reviewed". Only reviewed drafts can generate formal handoff.`,
+      `Draft status "${draft.status}" is not "reviewed". Only reviewed drafts can generate formal handoff.`
     )
   }
 
   // Guard: must have review metadata
   if (!draft.reviewedAt || !draft.reviewedBy) {
     throw new AgentDraftHandoffValidationError(
-      'Draft is missing reviewedAt or reviewedBy metadata. A proper human review is required before handoff.',
+      'Draft is missing reviewedAt or reviewedBy metadata. A proper human review is required before handoff.'
     )
   }
 
   const generatedAt = options?.generatedAt ?? new Date().toISOString()
-  const snapshotLine = draft.snapshotId ? `- Snapshot ID: ${draft.snapshotId}\n` : ''
+  const snapshotLine = draft.snapshotId
+    ? `- Snapshot ID: ${draft.snapshotId}\n`
+    : ''
   const reviewNoteLine = draft.reviewNote
     ? draft.reviewNote
     : '(no review note)'
@@ -99,7 +101,10 @@ export function buildAgentDraftHandoffMarkdown(
   }
 }
 
-function buildHandoffFilename(draft: AgentDraftDetail, generatedAt: string): string {
+function buildHandoffFilename(
+  draft: AgentDraftDetail,
+  generatedAt: string
+): string {
   const titleSlug = draft.title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')

@@ -8,11 +8,11 @@ import type {
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
 
 export async function fetchAgentSkills(
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<ListAgentSkillsResponse> {
   const response = await axios.get<ApiResponse<ListAgentSkillsResponse>>(
     `${apiBaseUrl}/agent/skills`,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {
@@ -24,11 +24,11 @@ export async function fetchAgentSkills(
 
 export async function fetchAgentSkillDetail(
   skillId: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<GetAgentSkillResponse> {
   const response = await axios.get<ApiResponse<GetAgentSkillResponse>>(
     `${apiBaseUrl}/agent/skills/${encodeURIComponent(skillId)}`,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {

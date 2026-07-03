@@ -76,7 +76,11 @@ describe('MemoryRecordRepository', () => {
       schema: BASE_RECORD.schema,
       targetId: BASE_RECORD.id,
       parentId: null,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
       body: { description: 'In progress' },
       createdBy: ACTOR,
       createdAt: NOW,
@@ -102,7 +106,11 @@ describe('MemoryRecordRepository', () => {
       schema: BASE_RECORD.schema,
       targetId: BASE_RECORD.id,
       parentId: null,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
       body: { description: 'In progress' },
       createdBy: ACTOR,
       createdAt: NOW,
@@ -140,8 +148,18 @@ describe('MemoryRecordRepository', () => {
   it('findPatchesByTargetId returns clones; external mutations do not affect internal state', async () => {
     const repository = new MemoryRecordRepository()
     const patch: StoredPatchDoc = {
-      id: 'p1', pid: 'X-1', schema: 'CardBody', targetId: 'r1',
-      parentId: null, tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] }, createdBy: ACTOR, createdAt: NOW,
+      id: 'p1',
+      pid: 'X-1',
+      schema: 'CardBody',
+      targetId: 'r1',
+      parentId: null,
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
+      createdBy: ACTOR,
+      createdAt: NOW,
     }
     await repository.appendPatch(patch)
 
@@ -229,7 +247,11 @@ describe('MongoRecordRepository', () => {
       schema: BASE_RECORD.schema,
       targetId: BASE_RECORD.id,
       parentId: null,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
       body: { description: 'In progress' },
       createdBy: ACTOR,
       createdAt: NOW,
@@ -271,7 +293,11 @@ describe('MongoRecordRepository', () => {
       schema: BASE_RECORD.schema,
       targetId: BASE_RECORD.id,
       parentId: null,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
       assignee: 'member-1',
       body: { description: 'In progress' },
       assets: ['asset-ref-1', 'asset-ref-2'],
@@ -296,7 +322,11 @@ describe('MongoRecordRepository', () => {
         schema: BASE_RECORD.schema,
         targetId: BASE_RECORD.id,
         parentId: null,
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
         assignee: 'member-1',
         body: { description: 'In progress' },
         assets: ['asset-ref-1', 'asset-ref-2'],
@@ -315,7 +345,11 @@ describe('MongoRecordRepository', () => {
       pid: BASE_RECORD.pid,
       schema: BASE_RECORD.schema,
       targetId: BASE_RECORD.id,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
       createdBy: ACTOR,
       createdAt: NOW,
     }

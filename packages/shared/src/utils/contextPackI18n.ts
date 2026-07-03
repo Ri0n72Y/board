@@ -130,8 +130,10 @@ const EN: ContextPackStrings = {
   snapshotCreatedAt: 'Snapshot Created At',
   snapshotReason: 'Snapshot Reason',
 
-  noExecutionAuth: 'This file is not execution authorization. Do not mutate the board based on this file alone; patch/edit/move operations must still go through LabourBoard APIs and human confirmation.',
-  keepUuidRelations: 'Keep relation targets as UUID record ids. Public pids such as CARD-n are labels for reading, not relation targets.',
+  noExecutionAuth:
+    'This file is not execution authorization. Do not mutate the board based on this file alone; patch/edit/move operations must still go through LabourBoard APIs and human confirmation.',
+  keepUuidRelations:
+    'Keep relation targets as UUID record ids. Public pids such as CARD-n are labels for reading, not relation targets.',
 
   includedRecords: 'Included records',
   includedRelations: 'Included relations',
@@ -140,15 +142,20 @@ const EN: ContextPackStrings = {
   excluded: 'Excluded',
   excludedByOption: 'excluded by option',
 
-  notLiveSession: 'This context is a Markdown export, not a live agent session.',
-  noToolPermission: 'It does not include permission to call tools, apply patches, restore snapshots, or perform writes.',
-  snapshotStatic: 'Snapshot source is a static checkpoint and does not change with the current board.',
-  currentBoardDynamic: 'Current-board source is a dynamic projection generated at request time.',
+  notLiveSession:
+    'This context is a Markdown export, not a live agent session.',
+  noToolPermission:
+    'It does not include permission to call tools, apply patches, restore snapshots, or perform writes.',
+  snapshotStatic:
+    'Snapshot source is a static checkpoint and does not change with the current board.',
+  currentBoardDynamic:
+    'Current-board source is a dynamic projection generated at request time.',
 
   boardExportTitle: 'LabourBoard Current Board Export',
   snapshotExportTitle: 'LabourBoard Snapshot Export',
   exportMetadata: '## Export Metadata',
-  howToUse: '## How To Use This Context\nThis file is a structured project board export for agent reading. Records are grouped by status. Use pid/id/tags/assets/relations to reason about dependencies and sprint scope.',
+  howToUse:
+    '## How To Use This Context\nThis file is a structured project board export for agent reading. Records are grouped by status. Use pid/id/tags/assets/relations to reason about dependencies and sprint scope.',
   boardSummary: '## Board Summary',
   statusOverview: '## Status Overview',
   sprintOverview: '## Sprint Overview',
@@ -232,8 +239,10 @@ const ZH: ContextPackStrings = {
   snapshotCreatedAt: '快照创建时间',
   snapshotReason: '快照原因',
 
-  noExecutionAuth: '此文件不是执行授权。请勿仅凭此文件修改看板；补丁/编辑/移动操作仍须通过 LabourBoard API 和人工确认。',
-  keepUuidRelations: '关联目标请保持 UUID 记录 ID。CARD-n 等公开 pid 为阅读标签，非关联目标。',
+  noExecutionAuth:
+    '此文件不是执行授权。请勿仅凭此文件修改看板；补丁/编辑/移动操作仍须通过 LabourBoard API 和人工确认。',
+  keepUuidRelations:
+    '关联目标请保持 UUID 记录 ID。CARD-n 等公开 pid 为阅读标签，非关联目标。',
 
   includedRecords: '包含的记录',
   includedRelations: '包含的关联',
@@ -250,7 +259,8 @@ const ZH: ContextPackStrings = {
   boardExportTitle: 'LabourBoard 当前看板导出',
   snapshotExportTitle: 'LabourBoard 快照导出',
   exportMetadata: '## 导出元数据',
-  howToUse: '## 如何使用此上下文\n此文件为结构化项目看板导出，供 Agent 阅读。记录按状态分组。请使用 pid/id/tags/assets/relations 分析依赖和迭代范围。',
+  howToUse:
+    '## 如何使用此上下文\n此文件为结构化项目看板导出，供 Agent 阅读。记录按状态分组。请使用 pid/id/tags/assets/relations 分析依赖和迭代范围。',
   boardSummary: '## 看板摘要',
   statusOverview: '## 状态概览',
   sprintOverview: '## 迭代概览',

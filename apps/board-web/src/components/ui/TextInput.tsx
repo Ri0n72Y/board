@@ -18,7 +18,13 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
         {label && (
           <Label className="text-xs font-bold text-slate-500">{label}</Label>
         )}
-        <div className={cn('relative flex', after && 'rounded-md border border-slate-200 focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-100')}>
+        <div
+          className={cn(
+            'relative flex',
+            after &&
+              'rounded-md border border-slate-200 focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-100'
+          )}
+        >
           {icon && (
             <span className="pointer-events-none absolute left-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-slate-400">
               {icon}
@@ -28,7 +34,8 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
             ref={ref}
             className={cn(
               inputClass,
-              after && 'flex-1 rounded-l-md rounded-r-none border-0 outline-none focus:ring-0',
+              after &&
+                'flex-1 rounded-l-md rounded-r-none border-0 outline-none focus:ring-0',
               icon && 'pl-9',
               className
             )}

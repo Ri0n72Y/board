@@ -50,7 +50,11 @@ describe('boardCurrentProjection', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       currentVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
       body: { description: 'Updated desc' },
     })
 
@@ -72,7 +76,11 @@ describe('boardCurrentProjection', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       currentVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
     })
 
     const patches = await repo.findPatchesByTargetId(recordId)
@@ -116,7 +124,11 @@ describe('boardCurrentProjection', () => {
     await service.createRecordPatch(recordId, {
       parentId: null,
       currentVersion: 0,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
     })
     await appendArchivePatch(service, recordId)
 
@@ -147,7 +159,9 @@ describe('boardCurrentProjection', () => {
       expect(result.chainStatus).toBe('conflicted')
     }
     expect(result).not.toHaveProperty('current')
-    expect(result.diagnostics.some((d) => d.code === 'MULTIPLE_ROOTS')).toBe(true)
+    expect(result.diagnostics.some((d) => d.code === 'MULTIPLE_ROOTS')).toBe(
+      true
+    )
   })
 
   it('conflicted chain (branched): status=blocked, chainStatus=conflicted', async () => {
@@ -165,14 +179,18 @@ describe('boardCurrentProjection', () => {
       expect(result.chainStatus).toBe('conflicted')
     }
     expect(result).not.toHaveProperty('current')
-    expect(result.diagnostics.some((d) => d.code === 'BRANCHED_CHAIN')).toBe(true)
+    expect(result.diagnostics.some((d) => d.code === 'BRANCHED_CHAIN')).toBe(
+      true
+    )
   })
 
   it('broken chain (missing parent): status=blocked, chainStatus=broken', async () => {
     const { repo, recordId, stored } = await createBaseRecord()
 
     await repo.appendPatch(makePatchDoc('patch-1', recordId, null))
-    await repo.appendPatch(makePatchDoc('patch-2', recordId, 'non-existent-parent'))
+    await repo.appendPatch(
+      makePatchDoc('patch-2', recordId, 'non-existent-parent')
+    )
 
     const patches = await repo.findPatchesByTargetId(recordId)
     const result = projectRecordCurrent(stored, patches)
@@ -182,7 +200,9 @@ describe('boardCurrentProjection', () => {
       expect(result.chainStatus).toBe('broken')
     }
     expect(result).not.toHaveProperty('current')
-    expect(result.diagnostics.some((d) => d.code === 'PARENT_MISSING')).toBe(true)
+    expect(result.diagnostics.some((d) => d.code === 'PARENT_MISSING')).toBe(
+      true
+    )
   })
 
   // 鈹€鈹€ Immutability 鈹€鈹€
@@ -205,7 +225,13 @@ describe('boardCurrentProjection', () => {
     const { repo, recordId, stored } = await createBaseRecord()
 
     await repo.appendPatch(
-      makePatchDoc('p1', recordId, null, { tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] } })
+      makePatchDoc('p1', recordId, null, {
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
+      })
     )
 
     const patchesBefore = structuredClone(
@@ -228,13 +254,21 @@ describe('boardCurrentProjection', () => {
 
     await repo.appendPatch(
       makePatchDoc('p2', recordId, 'p1', {
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:done' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:done' },
+          ],
+        },
         createdAt: older,
       })
     )
     await repo.appendPatch(
       makePatchDoc('p1', recordId, null, {
-        tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+        tagChanges: {
+          change: [
+            { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+          ],
+        },
         createdAt: newer,
       })
     )

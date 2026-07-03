@@ -5,7 +5,10 @@ import type {
   RecordResponse,
   RelationRef,
 } from '@labour-board/shared'
-import { shortReferenceId, type RecordReferenceOption } from './recordReferenceOptions'
+import {
+  shortReferenceId,
+  type RecordReferenceOption,
+} from './recordReferenceOptions'
 import { formatReferenceLabel } from './referenceDisplay'
 
 export type Relation = RelationRef
@@ -17,7 +20,7 @@ export type RelationConstraintOption = {
 
 export type RelationTranslator = (
   key: string,
-  options?: { defaultValue?: string },
+  options?: { defaultValue?: string }
 ) => string
 
 export const DEFAULT_RELATION_CONSTRAINTS = [
@@ -40,7 +43,7 @@ type CurrentRecord = RecordResponse<RecordItem<RecordBody>>
 export function buildRelationConstraintOptions(
   records: readonly CurrentRecord[],
   t: RelationTranslator,
-  config?: BoardConfig | null,
+  config?: BoardConfig | null
 ): RelationConstraintOption[] {
   const values = new Set<string>()
   for (const value of DEFAULT_RELATION_CONSTRAINTS) values.add(value)
@@ -60,13 +63,13 @@ export function buildRelationConstraintOptions(
       left.label.localeCompare(right.label, undefined, {
         numeric: true,
         sensitivity: 'base',
-      }),
+      })
     )
 }
 
 export function formatRelationConstraint(
   constraint: string,
-  t: RelationTranslator,
+  t: RelationTranslator
 ): string {
   const value = constraint.trim()
   if (!value) return ''
@@ -77,7 +80,7 @@ export function formatRelationConstraint(
 
 export function formatRelationTarget(
   targetId: string,
-  relationTargetOptions: readonly RecordReferenceOption[],
+  relationTargetOptions: readonly RecordReferenceOption[]
 ): string {
   const target = targetId.trim()
   if (!target) return ''
@@ -87,7 +90,7 @@ export function formatRelationTarget(
 export function formatRelationLine(
   relation: Relation,
   relationTargetOptions: readonly RecordReferenceOption[],
-  t: RelationTranslator,
+  t: RelationTranslator
 ): string {
   const constraint = formatRelationConstraint(relation.constraint, t)
   const target = formatRelationTarget(relation.target, relationTargetOptions)
@@ -111,18 +114,19 @@ export function dedupeRelations(relations: readonly Relation[]): Relation[] {
 
 export function sameRelations(
   left: readonly Relation[] | undefined,
-  right: readonly Relation[] | undefined,
+  right: readonly Relation[] | undefined
 ): boolean {
   const normalizedLeft = normalizeRelationDrafts(left ?? [])
   const normalizedRight = normalizeRelationDrafts(right ?? [])
   if (normalizedLeft.length !== normalizedRight.length) return false
   return normalizedLeft.every(
-    (relation, index) => relationKey(relation) === relationKey(normalizedRight[index]),
+    (relation, index) =>
+      relationKey(relation) === relationKey(normalizedRight[index])
   )
 }
 
 export function normalizeRelationDrafts(
-  drafts: readonly Relation[] | undefined,
+  drafts: readonly Relation[] | undefined
 ): Relation[] {
   const normalized: Relation[] = []
   for (const draft of drafts ?? []) {
@@ -140,12 +144,15 @@ export function normalizeRelationDrafts(
 }
 
 export function hasDuplicateRelations(relations: readonly Relation[]): boolean {
-  return normalizeRelationDrafts(relations).length < countCompleteRelations(relations)
+  return (
+    normalizeRelationDrafts(relations).length <
+    countCompleteRelations(relations)
+  )
 }
 
 export function hasSelfRelation(
   relations: readonly Relation[],
-  currentRecordId: string | undefined,
+  currentRecordId: string | undefined
 ): boolean {
   const current = currentRecordId?.trim()
   if (!current) return false
@@ -153,14 +160,17 @@ export function hasSelfRelation(
 }
 
 export function relationTargetOptionsFromReferences(
-  references: Record<string, { pid?: string; title?: string }> | undefined,
+  references: Record<string, { pid?: string; title?: string }> | undefined
 ): RecordReferenceOption[] {
   return Object.entries(references ?? {}).map(([value, reference]) => {
     const pid = reference.pid?.trim()
     const title = reference.title?.trim()
     return {
       value,
-      label: pid && title ? `${pid} - ${title}` : pid || title || shortReferenceId(value),
+      label:
+        pid && title
+          ? `${pid} - ${title}`
+          : pid || title || shortReferenceId(value),
       meta: value,
       referenceState: 'resolved' as const,
     }
@@ -169,7 +179,7 @@ export function relationTargetOptionsFromReferences(
 
 function countCompleteRelations(relations: readonly Relation[]): number {
   return relations.filter(
-    (relation) => relation.constraint.trim() && relation.target.trim(),
+    (relation) => relation.constraint.trim() && relation.target.trim()
   ).length
 }
 

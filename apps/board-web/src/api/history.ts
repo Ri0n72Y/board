@@ -5,7 +5,7 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
 
 export async function fetchRecordHistory(
   recordId: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<RecordHistoryResponse> {
   const url = `${apiBaseUrl}/records/${encodeURIComponent(recordId)}/history`
   const response = await axios.get<ApiResponse<RecordHistoryResponse>>(url, {

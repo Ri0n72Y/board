@@ -1,8 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
-import type { AgentDraftDetail, AgentDraftStatus, AgentDraftSummary, BoardCurrentQuery } from '@labour-board/shared'
+import type {
+  AgentDraftDetail,
+  AgentDraftStatus,
+  AgentDraftSummary,
+  BoardCurrentQuery,
+} from '@labour-board/shared'
 import type { ExportContextPackOptions } from './useBoardExportController'
-import { createAgentDraft, fetchAgentDraft, fetchAgentDrafts, fetchAgentDraftHandoff, updateAgentDraftReview } from '../api/agentDrafts'
+import {
+  createAgentDraft,
+  fetchAgentDraft,
+  fetchAgentDrafts,
+  fetchAgentDraftHandoff,
+  updateAgentDraftReview,
+} from '../api/agentDrafts'
 import { downloadTextFile } from '../utils/download'
 import { useAgentResponseController } from './useAgentResponseController'
 import { useAgentSuggestionController } from './useAgentSuggestionController'
@@ -16,7 +27,9 @@ function isIgnoredHandoffAbort(err: unknown): boolean {
 export function useAgentDraftController() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [drafts, setDrafts] = useState<AgentDraftSummary[]>([])
-  const [selectedDraft, setSelectedDraft] = useState<AgentDraftDetail | null>(null)
+  const [selectedDraft, setSelectedDraft] = useState<AgentDraftDetail | null>(
+    null
+  )
   const [isListLoading, setIsListLoading] = useState(false)
   const [isDetailLoading, setIsDetailLoading] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
@@ -114,11 +127,17 @@ export function useAgentDraftController() {
 
     void fetchAgentDrafts(controller.signal)
       .then((data) => {
-        if (listRequestIdRef.current !== requestId || controller.signal.aborted) return
+        if (listRequestIdRef.current !== requestId || controller.signal.aborted)
+          return
         setDrafts(data.drafts)
       })
       .catch((err: unknown) => {
-        if (listRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) return
+        if (
+          listRequestIdRef.current !== requestId ||
+          controller.signal.aborted ||
+          axios.isCancel(err)
+        )
+          return
         setListError(err instanceof Error ? err.message : String(err))
       })
       .finally(() => {
@@ -152,55 +171,69 @@ export function useAgentDraftController() {
     clearSuggestions()
   }, [abortAll, clearResponses, clearSuggestions])
 
-  const loadDraftDetail = useCallback((draftId: string) => {
-    const requestId = detailRequestIdRef.current + 1
-    detailRequestIdRef.current = requestId
-    detailAbortRef.current?.abort()
+  const loadDraftDetail = useCallback(
+    (draftId: string) => {
+      const requestId = detailRequestIdRef.current + 1
+      detailRequestIdRef.current = requestId
+      detailAbortRef.current?.abort()
 
-    // Abort in-flight handoff request and clear handoff state for new draft
-    handoffRequestIdRef.current += 1
-    handoffAbortRef.current?.abort()
-    handoffAbortRef.current = null
-    setHandoffError(null)
-    setHandoffFeedback(null)
-    setIsHandoffLoading(false)
+      // Abort in-flight handoff request and clear handoff state for new draft
+      handoffRequestIdRef.current += 1
+      handoffAbortRef.current?.abort()
+      handoffAbortRef.current = null
+      setHandoffError(null)
+      setHandoffFeedback(null)
+      setIsHandoffLoading(false)
 
-    // Clear response and suggestion state for new draft
-    clearResponses()
-    clearSuggestions()
+      // Clear response and suggestion state for new draft
+      clearResponses()
+      clearSuggestions()
 
-    const controller = new AbortController()
-    detailAbortRef.current = controller
-    setIsDetailLoading(true)
-    setDetailError(null)
-    setSelectedDraft(null)
+      const controller = new AbortController()
+      detailAbortRef.current = controller
+      setIsDetailLoading(true)
+      setDetailError(null)
+      setSelectedDraft(null)
 
-    void fetchAgentDraft(draftId, controller.signal)
-      .then((data) => {
-        if (detailRequestIdRef.current !== requestId || controller.signal.aborted) return
-        setSelectedDraft(data.draft)
-        // Load responses and suggestions for this draft
-        loadResponseList(draftId)
-        loadSuggestionList(draftId)
-      })
-      .catch((err: unknown) => {
-        if (detailRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) return
-        setDetailError(err instanceof Error ? err.message : String(err))
-      })
-      .finally(() => {
-        if (detailRequestIdRef.current !== requestId) return
-        setIsDetailLoading(false)
-        detailAbortRef.current = null
-      })
-  }, [clearResponses, clearSuggestions, loadResponseList, loadSuggestionList])
+      void fetchAgentDraft(draftId, controller.signal)
+        .then((data) => {
+          if (
+            detailRequestIdRef.current !== requestId ||
+            controller.signal.aborted
+          )
+            return
+          setSelectedDraft(data.draft)
+          // Load responses and suggestions for this draft
+          loadResponseList(draftId)
+          loadSuggestionList(draftId)
+        })
+        .catch((err: unknown) => {
+          if (
+            detailRequestIdRef.current !== requestId ||
+            controller.signal.aborted ||
+            axios.isCancel(err)
+          )
+            return
+          setDetailError(err instanceof Error ? err.message : String(err))
+        })
+        .finally(() => {
+          if (detailRequestIdRef.current !== requestId) return
+          setIsDetailLoading(false)
+          detailAbortRef.current = null
+        })
+    },
+    [clearResponses, clearSuggestions, loadResponseList, loadSuggestionList]
+  )
 
   const saveDraft = useCallback(
-    (options: ExportContextPackOptions & {
-      title: string
-      source: 'current-board' | 'snapshot'
-      snapshotId?: string
-      filters?: BoardCurrentQuery
-    }): Promise<AgentDraftDetail> => {
+    (
+      options: ExportContextPackOptions & {
+        title: string
+        source: 'current-board' | 'snapshot'
+        snapshotId?: string
+        filters?: BoardCurrentQuery
+      }
+    ): Promise<AgentDraftDetail> => {
       const requestId = createRequestIdRef.current + 1
       createRequestIdRef.current = requestId
       createAbortRef.current?.abort()
@@ -225,10 +258,13 @@ export function useAgentDraftController() {
           includeRelations: options.includeRelations,
           includeDiagnostics: options.includeDiagnostics,
         },
-        controller.signal,
+        controller.signal
       )
         .then((data) => {
-          if (createRequestIdRef.current !== requestId || controller.signal.aborted) {
+          if (
+            createRequestIdRef.current !== requestId ||
+            controller.signal.aborted
+          ) {
             throw new Error('aborted')
           }
           setIsDrawerOpen(true)
@@ -240,7 +276,11 @@ export function useAgentDraftController() {
           return data.draft
         })
         .catch((err: unknown) => {
-          if (createRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) {
+          if (
+            createRequestIdRef.current !== requestId ||
+            controller.signal.aborted ||
+            axios.isCancel(err)
+          ) {
             throw err
           }
           const message = err instanceof Error ? err.message : String(err)
@@ -253,7 +293,7 @@ export function useAgentDraftController() {
           createAbortRef.current = null
         })
     },
-    [],
+    []
   )
 
   const updateDraftReview = useCallback(
@@ -270,17 +310,26 @@ export function useAgentDraftController() {
       void updateAgentDraftReview(
         draftId,
         { status, ...(reviewNote !== undefined ? { reviewNote } : {}) },
-        controller.signal,
+        controller.signal
       )
         .then((data) => {
-          if (reviewRequestIdRef.current !== requestId || controller.signal.aborted) return
+          if (
+            reviewRequestIdRef.current !== requestId ||
+            controller.signal.aborted
+          )
+            return
           setSelectedDraft(data.draft)
           setDrafts((prev) =>
-            prev.map((d) => (d.id === data.draft.id ? data.draft : d)),
+            prev.map((d) => (d.id === data.draft.id ? data.draft : d))
           )
         })
         .catch((err: unknown) => {
-          if (reviewRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) return
+          if (
+            reviewRequestIdRef.current !== requestId ||
+            controller.signal.aborted ||
+            axios.isCancel(err)
+          )
+            return
           setReviewError(err instanceof Error ? err.message : String(err))
         })
         .finally(() => {
@@ -289,7 +338,7 @@ export function useAgentDraftController() {
           reviewAbortRef.current = null
         })
     },
-    [],
+    []
   )
 
   const fetchHandoff = useCallback(
@@ -306,13 +355,23 @@ export function useAgentDraftController() {
 
       return fetchAgentDraftHandoff(draftId, controller.signal)
         .then((data) => {
-          if (handoffRequestIdRef.current !== requestId || controller.signal.aborted) {
+          if (
+            handoffRequestIdRef.current !== requestId ||
+            controller.signal.aborted
+          ) {
             throw new Error('aborted')
           }
-          return { content: data.handoff.content, filename: data.handoff.filename }
+          return {
+            content: data.handoff.content,
+            filename: data.handoff.filename,
+          }
         })
         .catch((err: unknown) => {
-          if (handoffRequestIdRef.current !== requestId || controller.signal.aborted || axios.isCancel(err)) {
+          if (
+            handoffRequestIdRef.current !== requestId ||
+            controller.signal.aborted ||
+            axios.isCancel(err)
+          ) {
             throw err
           }
           const message = err instanceof Error ? err.message : String(err)
@@ -325,7 +384,7 @@ export function useAgentDraftController() {
           handoffAbortRef.current = null
         })
     },
-    [],
+    []
   )
 
   const copyHandoff = useCallback(
@@ -340,10 +399,12 @@ export function useAgentDraftController() {
         .catch((err: unknown) => {
           if (isIgnoredHandoffAbort(err)) return
           setHandoffFeedback(null)
-          setHandoffError(err instanceof Error ? err.message : 'Copy handoff failed')
+          setHandoffError(
+            err instanceof Error ? err.message : 'Copy handoff failed'
+          )
         })
     },
-    [fetchHandoff],
+    [fetchHandoff]
   )
 
   const downloadHandoff = useCallback(
@@ -355,10 +416,12 @@ export function useAgentDraftController() {
         })
         .catch((err: unknown) => {
           if (isIgnoredHandoffAbort(err)) return
-          setHandoffError(err instanceof Error ? err.message : 'Download handoff failed')
+          setHandoffError(
+            err instanceof Error ? err.message : 'Download handoff failed'
+          )
         })
     },
-    [fetchHandoff],
+    [fetchHandoff]
   )
 
   return {

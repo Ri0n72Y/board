@@ -8,7 +8,7 @@ import {
 import { OpenAICompatibleSuggestionProvider } from './openAICompatibleSuggestionProvider.js'
 
 export function createAgentSuggestionProvider(
-  config: InternalAgentProviderRuntimeConfig,
+  config: InternalAgentProviderRuntimeConfig
 ): AgentSuggestionProvider {
   if (config.kind === 'mock') {
     return new MockAgentSuggestionProvider(config.model)
@@ -20,21 +20,25 @@ export function createAgentSuggestionProvider(
       return new DisabledAgentSuggestionProvider(
         'openai-compatible',
         config.model,
-        'openai-compatible provider requires AGENT_SUGGESTION_BASE_URL to be set.',
+        'openai-compatible provider requires AGENT_SUGGESTION_BASE_URL to be set.'
       )
     }
-    if (!config.apiKeyPresent || !config.apiKey || config.apiKey.trim() === '') {
+    if (
+      !config.apiKeyPresent ||
+      !config.apiKey ||
+      config.apiKey.trim() === ''
+    ) {
       return new DisabledAgentSuggestionProvider(
         'openai-compatible',
         config.model,
-        'openai-compatible provider requires AGENT_SUGGESTION_API_KEY to be set.',
+        'openai-compatible provider requires AGENT_SUGGESTION_API_KEY to be set.'
       )
     }
     if (!config.model || config.model.trim() === '') {
       return new DisabledAgentSuggestionProvider(
         'openai-compatible',
         config.model || 'unknown',
-        'openai-compatible provider requires AGENT_SUGGESTION_MODEL to be set.',
+        'openai-compatible provider requires AGENT_SUGGESTION_MODEL to be set.'
       )
     }
 
@@ -45,7 +49,7 @@ export function createAgentSuggestionProvider(
         return new DisabledAgentSuggestionProvider(
           'openai-compatible',
           config.model,
-          err.message,
+          err.message
         )
       }
       throw err
@@ -55,6 +59,6 @@ export function createAgentSuggestionProvider(
   return new DisabledAgentSuggestionProvider(
     config.kind,
     config.model,
-    'Agent suggestion provider is disabled. Enable a supported backend provider before generating suggestions.',
+    'Agent suggestion provider is disabled. Enable a supported backend provider before generating suggestions.'
   )
 }

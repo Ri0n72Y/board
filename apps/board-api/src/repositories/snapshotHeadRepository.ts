@@ -110,7 +110,9 @@ function snapshotHeadFilter(): Filter<Document> {
 
 function assertValidHead(head: SnapshotHead): void {
   if (head.kind !== 'snapshotHead') {
-    throw new SnapshotHeadIntegrityError('Snapshot head kind must be snapshotHead')
+    throw new SnapshotHeadIntegrityError(
+      'Snapshot head kind must be snapshotHead'
+    )
   }
 }
 
@@ -334,9 +336,7 @@ export class MongoSnapshotHeadRepository implements SnapshotHeadRepository {
   private async appendPatchAndAdvanceHeadImpl(
     params: AppendPatchParams,
     session: ClientSession | undefined
-  ): Promise<
-    Extract<AppendPatchResult, { ok: true }>
-  > {
+  ): Promise<Extract<AppendPatchResult, { ok: true }>> {
     const writeOptions = session ? { session } : {}
 
     let head = await this.findStoredHead(session)
@@ -373,11 +373,7 @@ export class MongoSnapshotHeadRepository implements SnapshotHeadRepository {
       { ...params.patch } as OptionalId<Document>,
       writeOptions
     )
-    const nextHead = nextSnapshotHead(
-      head,
-      params.targetId,
-      params.patch.id
-    )
+    const nextHead = nextSnapshotHead(head, params.targetId, params.patch.id)
     const replaced = await this.snapshotsCollection.findOneAndReplace(
       { kind: 'snapshotHead', version: head.version },
       toSnapshotDoc(nextHead),
@@ -401,7 +397,9 @@ export class MongoSnapshotHeadRepository implements SnapshotHeadRepository {
   private standalonePatchFacts(): PatchFactRepository {
     return {
       appendPatch: async (patch) => {
-        await this.recordsCollection.insertOne({ ...patch } as OptionalId<Document>)
+        await this.recordsCollection.insertOne({
+          ...patch,
+        } as OptionalId<Document>)
         return patch
       },
       findPatchById: async (id) => {
@@ -497,7 +495,9 @@ async function validateAppend(
   return { ok: true }
 }
 
-function rebuildSnapshotHeadFromPatches(patches: StoredPatchDoc[]): SnapshotHead {
+function rebuildSnapshotHeadFromPatches(
+  patches: StoredPatchDoc[]
+): SnapshotHead {
   if (patches.length === 0) {
     return emptyHead()
   }

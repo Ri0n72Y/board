@@ -114,11 +114,17 @@ export function EditRecordDrawer({
       unknownRecord: t('recordReference.unknownRecord'),
       rawId: t('recordReference.rawId'),
     }),
-    [t],
+    [t]
   )
   const selectableAssetOptions = useMemo(
-    () => ensureReferenceOptions(assetOptions, form.assets, 'asset', recordReferenceCopy),
-    [assetOptions, form.assets, recordReferenceCopy],
+    () =>
+      ensureReferenceOptions(
+        assetOptions,
+        form.assets,
+        'asset',
+        recordReferenceCopy
+      ),
+    [assetOptions, form.assets, recordReferenceCopy]
   )
   const selectableRelationTargetOptions = useMemo(
     () =>
@@ -126,9 +132,9 @@ export function EditRecordDrawer({
         relationTargetOptions,
         form.relations.map((relation) => relation.target),
         'record',
-        recordReferenceCopy,
+        recordReferenceCopy
       ),
-    [form.relations, recordReferenceCopy, relationTargetOptions],
+    [form.relations, recordReferenceCopy, relationTargetOptions]
   )
 
   useEffect(() => {
@@ -167,7 +173,9 @@ export function EditRecordDrawer({
         ) {
           return
         }
-        setError(caught instanceof Error ? caught.message : t('edit.errorGeneral'))
+        setError(
+          caught instanceof Error ? caught.message : t('edit.errorGeneral')
+        )
       })
       .finally(() => {
         if (requestIdRef.current === requestId) {
@@ -269,12 +277,7 @@ export function EditRecordDrawer({
 
   const footer = (
     <div className="flex flex-wrap items-center justify-end gap-2">
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={close}
-        disabled={isSaving}
-      >
+      <Button type="button" variant="ghost" onClick={close} disabled={isSaving}>
         {t('edit.cancel')}
       </Button>
       <Button
@@ -437,7 +440,7 @@ export function EditRecordDrawer({
               setForm((current) => ({
                 ...current,
                 otherTags: nextTags.filter((tag) =>
-                  otherTagOptions.includes(tag as Tag),
+                  otherTagOptions.includes(tag as Tag)
                 ) as Tag[],
               }))
             }
@@ -475,9 +478,7 @@ export function EditRecordDrawer({
           options={selectableAssetOptions}
           values={form.assets}
           multiple
-          onChangeMany={(assets) =>
-            setForm((state) => ({ ...state, assets }))
-          }
+          onChangeMany={(assets) => setForm((state) => ({ ...state, assets }))}
           placeholder={t('searchSelect.searchPlaceholder')}
           selectedLabel={t('edit.assets')}
           emptyText={t('filters.noAssetOptions')}

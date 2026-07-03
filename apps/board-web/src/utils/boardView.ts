@@ -39,7 +39,7 @@ function defaultTagLabel(tag: string): string {
 }
 
 export function getRecordStatusTag(
-  record: RecordResponse<RecordItem<RecordBody>>,
+  record: RecordResponse<RecordItem<RecordBody>>
 ): Tag | null {
   return record.body.tags.find((tag) => tag.startsWith('status:')) ?? null
 }
@@ -54,7 +54,7 @@ export function getStatusColumns(
   config: BoardConfig | null,
   records: RecordResponse<RecordItem<RecordBody>>[],
   formatTag?: TagLabelFormatter,
-  options?: { uncategorizedLabel?: string },
+  options?: { uncategorizedLabel?: string }
 ): BoardStatusColumn[] {
   const labeler = formatTag ?? defaultTagLabel
   const seeds = new Map<string, StatusColumnSeed>()
@@ -89,7 +89,7 @@ export function getStatusColumns(
 
 export function groupRecordsByStatus(
   records: RecordResponse<RecordItem<RecordBody>>[],
-  statusColumns: BoardStatusColumn[],
+  statusColumns: BoardStatusColumn[]
 ): BoardStatusColumn[] {
   const grouped =
     statusColumns.length > 0
@@ -118,7 +118,7 @@ export function groupRecordsByStatus(
 function addConfigStatusDefinitions(
   seeds: Map<string, StatusColumnSeed>,
   definitions: TagDefinition[],
-  formatTag: TagLabelFormatter,
+  formatTag: TagLabelFormatter
 ) {
   for (const definition of definitions) {
     if (seeds.has(definition.id)) continue

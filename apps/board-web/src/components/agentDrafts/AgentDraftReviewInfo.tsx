@@ -20,11 +20,23 @@ export function AgentDraftReviewInfo({ draft }: AgentDraftReviewInfoProps) {
 
   return (
     <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
-      <h3 className="text-sm font-semibold uppercase text-slate-500">{t('agent.reviewInfo.title')}</h3>
+      <h3 className="text-sm font-semibold uppercase text-slate-500">
+        {t('agent.reviewInfo.title')}
+      </h3>
       <dl className="grid gap-2 sm:grid-cols-2">
-        <MetaItem label={t('agent.reviewInfo.reviewedAt')} value={formatDate(draft.reviewedAt)} />
-        <MetaItem label={t('agent.reviewInfo.reviewedBy')} value={draft.reviewedBy ?? t('agent.reviewInfo.unknown')} mono />
-        <MetaItem label={t('agent.reviewInfo.reviewNote')} value={draft.reviewNote || t('agent.meta.none')} />
+        <MetaItem
+          label={t('agent.reviewInfo.reviewedAt')}
+          value={formatDate(draft.reviewedAt)}
+        />
+        <MetaItem
+          label={t('agent.reviewInfo.reviewedBy')}
+          value={draft.reviewedBy ?? t('agent.reviewInfo.unknown')}
+          mono
+        />
+        <MetaItem
+          label={t('agent.reviewInfo.reviewNote')}
+          value={draft.reviewNote || t('agent.meta.none')}
+        />
       </dl>
     </section>
   )

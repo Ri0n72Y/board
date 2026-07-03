@@ -1,5 +1,8 @@
 import { Hono } from 'hono'
-import type { ApiResponse, RecordCurrentHeadResponse } from '@labour-board/shared'
+import type {
+  ApiResponse,
+  RecordCurrentHeadResponse,
+} from '@labour-board/shared'
 import { error, ok } from '../../http/responses.js'
 import {
   CurrentHeadConflictError,

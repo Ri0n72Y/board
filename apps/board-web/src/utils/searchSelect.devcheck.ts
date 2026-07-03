@@ -23,7 +23,10 @@ function assert(expr: boolean, msg: string) {
 }
 
 function eq<T>(actual: T, expected: T, label: string) {
-  assert(Object.is(actual, expected), `${label} expected "${expected}" got "${actual}"`)
+  assert(
+    Object.is(actual, expected),
+    `${label} expected "${expected}" got "${actual}"`
+  )
 }
 
 function values(options: SearchSelectOption[]) {
@@ -66,24 +69,28 @@ const customCandidates: SearchSelectOption[] = [
 ]
 
 eq(
-  filterSearchSelectOptions({ mode: 'option', query: 'combat', options })[0]?.value,
+  filterSearchSelectOptions({ mode: 'option', query: 'combat', options })[0]
+    ?.value,
   'rec-1',
-  'option search matches label',
+  'option search matches label'
 )
 eq(
-  filterSearchSelectOptions({ mode: 'option', query: 'rec-2', options })[0]?.value,
+  filterSearchSelectOptions({ mode: 'option', query: 'rec-2', options })[0]
+    ?.value,
   'rec-2',
-  'option search matches value',
+  'option search matches value'
 )
 eq(
-  filterSearchSelectOptions({ mode: 'option', query: 'rooms', options })[0]?.value,
+  filterSearchSelectOptions({ mode: 'option', query: 'rooms', options })[0]
+    ?.value,
   'rec-2',
-  'option search matches description',
+  'option search matches description'
 )
 eq(
-  filterSearchSelectOptions({ mode: 'option', query: 'CardBody', options })[0]?.value,
+  filterSearchSelectOptions({ mode: 'option', query: 'CardBody', options })[0]
+    ?.value,
   'rec-1',
-  'option search matches meta',
+  'option search matches meta'
 )
 
 const tagOptions: SearchSelectOption[] = [
@@ -99,7 +106,7 @@ eq(
     language: 'en-US',
   })[0]?.value,
   'epic:1',
-  'tag search matches raw tag',
+  'tag search matches raw tag'
 )
 eq(
   filterSearchSelectOptions({
@@ -109,13 +116,21 @@ eq(
     language: 'en-US',
   })[0]?.value,
   'sprint:1',
-  'tag search matches localized label',
+  'tag search matches localized label'
 )
 
 const added = addSearchSelectValue(['rec-1'], 'rec-2')
 eq(added.join(','), 'rec-1,rec-2', 'multi select add appends in selected order')
-eq(addSearchSelectValue(added, 'rec-2').join(','), 'rec-1,rec-2', 'multi select add dedupes')
-eq(removeSearchSelectValue(added, 'rec-1').join(','), 'rec-2', 'multi select remove')
+eq(
+  addSearchSelectValue(added, 'rec-2').join(','),
+  'rec-1,rec-2',
+  'multi select add dedupes'
+)
+eq(
+  removeSearchSelectValue(added, 'rec-1').join(','),
+  'rec-2',
+  'multi select remove'
+)
 
 const customAllowed = filterSearchSelectOptions({
   mode: 'option',
@@ -123,8 +138,16 @@ const customAllowed = filterSearchSelectOptions({
   options,
   allowCustomValue: true,
 })
-eq(customAllowed[0]?.value, 'new-public-key', 'allowCustomValue=true generates custom option')
-eq(Boolean(customAllowed[0]?.custom), true, 'generated custom option is marked custom')
+eq(
+  customAllowed[0]?.value,
+  'new-public-key',
+  'allowCustomValue=true generates custom option'
+)
+eq(
+  Boolean(customAllowed[0]?.custom),
+  true,
+  'generated custom option is marked custom'
+)
 
 const labelMatchWithCustom = filterSearchSelectOptions({
   mode: 'option',
@@ -135,12 +158,12 @@ const labelMatchWithCustom = filterSearchSelectOptions({
 eq(
   labelMatchWithCustom[0]?.value,
   'member-programmer',
-  'query matches label with allowCustomValue keeps matched option first',
+  'query matches label with allowCustomValue keeps matched option first'
 )
 eq(
   Boolean(labelMatchWithCustom[0]?.custom),
   false,
-  'query matches label with allowCustomValue does not prioritize custom option',
+  'query matches label with allowCustomValue does not prioritize custom option'
 )
 
 const metaMatchWithCustom = filterSearchSelectOptions({
@@ -152,7 +175,7 @@ const metaMatchWithCustom = filterSearchSelectOptions({
 eq(
   metaMatchWithCustom[0]?.value,
   'member-designer',
-  'query matches meta with allowCustomValue keeps matched option first',
+  'query matches meta with allowCustomValue keeps matched option first'
 )
 
 const descriptionMatchWithCustom = filterSearchSelectOptions({
@@ -164,7 +187,7 @@ const descriptionMatchWithCustom = filterSearchSelectOptions({
 eq(
   descriptionMatchWithCustom[0]?.value,
   'member-programmer',
-  'query matches description with allowCustomValue keeps matched option first',
+  'query matches description with allowCustomValue keeps matched option first'
 )
 
 const noMatchWithCustom = filterSearchSelectOptions({
@@ -173,8 +196,16 @@ const noMatchWithCustom = filterSearchSelectOptions({
   options: customCandidates,
   allowCustomValue: true,
 })
-eq(noMatchWithCustom[0]?.value, 'custom-member-key', 'no matches puts custom option first')
-eq(Boolean(noMatchWithCustom[0]?.custom), true, 'no matches custom option is marked custom')
+eq(
+  noMatchWithCustom[0]?.value,
+  'custom-member-key',
+  'no matches puts custom option first'
+)
+eq(
+  Boolean(noMatchWithCustom[0]?.custom),
+  true,
+  'no matches custom option is marked custom'
+)
 
 const exactValueWithCustom = filterSearchSelectOptions({
   mode: 'option',
@@ -185,7 +216,7 @@ const exactValueWithCustom = filterSearchSelectOptions({
 eq(
   exactValueWithCustom.some((option) => option.custom === true),
   false,
-  'exact value does not generate custom option',
+  'exact value does not generate custom option'
 )
 
 const exactLabelWithCustom = filterSearchSelectOptions({
@@ -197,7 +228,7 @@ const exactLabelWithCustom = filterSearchSelectOptions({
 eq(
   exactLabelWithCustom.some((option) => option.custom === true),
   false,
-  'exact label does not generate custom option',
+  'exact label does not generate custom option'
 )
 
 const customBlocked = filterSearchSelectOptions({
@@ -206,18 +237,26 @@ const customBlocked = filterSearchSelectOptions({
   options,
   allowCustomValue: false,
 })
-eq(customBlocked.length, 0, 'allowCustomValue=false does not generate custom option')
+eq(
+  customBlocked.length,
+  0,
+  'allowCustomValue=false does not generate custom option'
+)
 
 eq(
-  values(filterSearchSelectOptions({ mode: 'option', query: '', options })).join(','),
+  values(
+    filterSearchSelectOptions({ mode: 'option', query: '', options })
+  ).join(','),
   'rec-1,rec-2,rec-disabled',
-  'empty query returns all options in input order',
+  'empty query returns all options in input order'
 )
 eq(
   canSelectSearchSelectChoice(options[2]),
   false,
-  'disabled options are not selectable',
+  'disabled options are not selectable'
 )
 
-console.log(`\n${failures === 0 ? 'searchSelect devcheck passed' : `${failures} failures`}`)
+console.log(
+  `\n${failures === 0 ? 'searchSelect devcheck passed' : `${failures} failures`}`
+)
 if (failures > 0) throw new Error(`${failures} assertions failed`)

@@ -22,7 +22,9 @@ function patch(
     schema: 'CardBody',
     targetId,
     parentId,
-    tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+    tagChanges: {
+      change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }],
+    },
     createdBy: ACTOR,
     createdAt: NOW,
   }
@@ -59,7 +61,10 @@ describe('MemorySnapshotHeadRepository', () => {
     )
 
     expect(() =>
-      snapshots.rebuildSnapshotHeadFromPatches([patch('patch-1'), patch('patch-2')])
+      snapshots.rebuildSnapshotHeadFromPatches([
+        patch('patch-1'),
+        patch('patch-2'),
+      ])
     ).toThrow(SnapshotHeadIntegrityError)
   })
 
@@ -143,7 +148,10 @@ describe('MemorySnapshotHeadRepository', () => {
       expectedParentId: 'patch-1',
     })
 
-    expect(result).toMatchObject({ ok: false, reason: 'currentVersionMismatch' })
+    expect(result).toMatchObject({
+      ok: false,
+      reason: 'currentVersionMismatch',
+    })
     await expect(records.findPatchById('patch-2')).resolves.toBeNull()
   })
 
@@ -181,7 +189,11 @@ describe('MongoSnapshotHeadRepository transaction abort', () => {
       schema: 'CardBody',
       targetId,
       parentId,
-      tagChanges: { change: [{ namespace: 'status', from: 'status:todo', to: 'status:wip' }] },
+      tagChanges: {
+        change: [
+          { namespace: 'status', from: 'status:todo', to: 'status:wip' },
+        ],
+      },
       createdBy: ACTOR,
       createdAt: NOW,
     }
@@ -194,11 +206,13 @@ describe('MongoSnapshotHeadRepository transaction abort', () => {
     return { kind: 'snapshotHead', version, records }
   }
 
-  function createFakeMongoTransaction(opts: {
-    storedHead?: Record<string, unknown> | null
-    findOneAndReplaceResult?: Record<string, unknown> | null
-    existingPatches?: Record<string, unknown>[]
-  } = {}) {
+  function createFakeMongoTransaction(
+    opts: {
+      storedHead?: Record<string, unknown> | null
+      findOneAndReplaceResult?: Record<string, unknown> | null
+      existingPatches?: Record<string, unknown>[]
+    } = {}
+  ) {
     let sessionAborted = false
     let sessionCommitted = false
     const recordsInsertCalls: Record<string, unknown>[] = []
@@ -225,9 +239,7 @@ describe('MongoSnapshotHeadRepository transaction abort', () => {
       findOne: async (filter: any) => {
         const idFilter = filter?.$and?.[1]?.id
         if (idFilter && opts.existingPatches) {
-          return (
-            opts.existingPatches.find((p) => p.id === idFilter) ?? null
-          )
+          return opts.existingPatches.find((p) => p.id === idFilter) ?? null
         }
         return null
       },
@@ -529,7 +541,7 @@ describe('MemorySnapshotHeadRepository concurrent append lock', () => {
     const head = await snapshots.loadSnapshotHead()
     expect(head.version).toBe(1)
     expect(head.records['record-1'].lastPatchId).toBe(
-      (ok[0] as Extract<typeof ok[0], { ok: true }>).patch.id
+      (ok[0] as Extract<(typeof ok)[0], { ok: true }>).patch.id
     )
   })
 

@@ -11,7 +11,7 @@ import type { AgentSuggestionDetail } from '@labour-board/shared'
  */
 export function buildPatchDraftDescription(
   suggestionId: string,
-  suggestionTitle: string,
+  suggestionTitle: string
 ): string {
   const idShort = suggestionId.slice(0, 8)
   const title = suggestionTitle.trim() || 'Untitled AI suggestion'
@@ -44,7 +44,9 @@ export function extractPidCandidates(markdown: string): string[] {
 /**
  * Check whether a suggestion has data that can seed a patch draft.
  */
-export function canCreatePatchDraft(suggestion: AgentSuggestionDetail | null): boolean {
+export function canCreatePatchDraft(
+  suggestion: AgentSuggestionDetail | null
+): boolean {
   if (!suggestion) return false
   if (!suggestion.title && !suggestion.markdown) return false
   return true

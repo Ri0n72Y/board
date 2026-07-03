@@ -14,12 +14,12 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
 export async function createAgentSuggestion(
   draftId: string,
   input: CreateAgentSuggestionInput,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<CreateAgentSuggestionResponse> {
   const response = await axios.post<ApiResponse<CreateAgentSuggestionResponse>>(
     `${apiBaseUrl}/agent/drafts/${encodeURIComponent(draftId)}/suggestions`,
     input,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {
@@ -31,11 +31,11 @@ export async function createAgentSuggestion(
 
 export async function fetchAgentSuggestions(
   draftId: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<ListAgentSuggestionsResponse> {
   const response = await axios.get<ApiResponse<ListAgentSuggestionsResponse>>(
     `${apiBaseUrl}/agent/drafts/${encodeURIComponent(draftId)}/suggestions`,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {
@@ -47,11 +47,11 @@ export async function fetchAgentSuggestions(
 
 export async function fetchAgentSuggestionDetail(
   suggestionId: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<GetAgentSuggestionResponse> {
   const response = await axios.get<ApiResponse<GetAgentSuggestionResponse>>(
     `${apiBaseUrl}/agent/suggestions/${encodeURIComponent(suggestionId)}`,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {
@@ -64,14 +64,14 @@ export async function fetchAgentSuggestionDetail(
 export async function updateAgentSuggestionReview(
   suggestionId: string,
   input: UpdateAgentSuggestionReviewInput,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<UpdateAgentSuggestionReviewResponse> {
   const response = await axios.patch<
     ApiResponse<UpdateAgentSuggestionReviewResponse>
   >(
     `${apiBaseUrl}/agent/suggestions/${encodeURIComponent(suggestionId)}/review`,
     input,
-    { signal },
+    { signal }
   )
 
   if (!response.data.ok) {
