@@ -93,20 +93,13 @@ export function AgentSuggestionDetailPanel({
           </div>
           <div className="px-4 py-3">
             {!showPatchDraft ? (
-              <div className="grid gap-2">
-                <p className="text-xs text-slate-600">
-                  {t('agent.patchDraft.safetyNotice')}
-                </p>
-                <div>
-                  <Button
-                    type="button"
-                    variant="default"
-                    onClick={() => setShowPatchDraft(true)}
-                  >
-                    {t('agent.patchDraft.createButton')}
-                  </Button>
-                </div>
-              </div>
+              <Button
+                type="button"
+                variant="default"
+                onClick={() => setShowPatchDraft(true)}
+              >
+                {t('agent.patchDraft.createButton')}
+              </Button>
             ) : (
               <AgentPatchDraftPanel
                 key={suggestion.id}
