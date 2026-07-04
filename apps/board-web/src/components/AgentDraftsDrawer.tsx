@@ -87,6 +87,26 @@ export function AgentDraftsDrawer({
 
   if (!open) return null
 
+  const review = onUpdateReview
+    ? { isReviewing, reviewError, onUpdateReview }
+    : undefined
+  const suggestion =
+    onGenerateSuggestion && onSelectSuggestion
+      ? {
+          suggestions,
+          selectedSuggestion,
+          isListLoading: isSuggestionListLoading,
+          isDetailLoading: isSuggestionDetailLoading,
+          isGenerating: isSuggestionGenerating,
+          listError: suggestionListError,
+          detailError: suggestionDetailError,
+          generateError: suggestionGenerateError,
+          onGenerate: onGenerateSuggestion,
+          onSelectSuggestion,
+        }
+      : undefined
+  const patchDraft = { records, onOpenEditor }
+
   return (
     <AnimatedDrawer
       open={open}
@@ -109,24 +129,14 @@ export function AgentDraftsDrawer({
         />
 
         <AgentDraftDetailWorkspace
-          selectedDraft={selectedDraft}
-          isDetailLoading={isDetailLoading}
-          detailError={detailError}
-          isReviewing={isReviewing}
-          reviewError={reviewError}
-          onUpdateReview={onUpdateReview}
-          suggestions={suggestions}
-          selectedSuggestion={selectedSuggestion}
-          isSuggestionListLoading={isSuggestionListLoading}
-          isSuggestionDetailLoading={isSuggestionDetailLoading}
-          isSuggestionGenerating={isSuggestionGenerating}
-          suggestionListError={suggestionListError}
-          suggestionDetailError={suggestionDetailError}
-          suggestionGenerateError={suggestionGenerateError}
-          onGenerateSuggestion={onGenerateSuggestion}
-          onSelectSuggestion={onSelectSuggestion}
-          records={records}
-          onOpenEditor={onOpenEditor}
+          detail={{
+            selectedDraft,
+            isLoading: isDetailLoading,
+            error: detailError,
+          }}
+          review={review}
+          suggestion={suggestion}
+          patchDraft={patchDraft}
         />
       </div>
     </AnimatedDrawer>
