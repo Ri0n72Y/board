@@ -11,18 +11,9 @@ import {
   createAgentDraft,
   fetchAgentDraft,
   fetchAgentDrafts,
-  fetchAgentDraftHandoff,
   updateAgentDraftReview,
 } from '../api/agentDrafts'
-import { downloadTextFile } from '../utils/download'
-import { useAgentResponseController } from './useAgentResponseController'
 import { useAgentSuggestionController } from './useAgentSuggestionController'
-
-function isIgnoredHandoffAbort(err: unknown): boolean {
-  if (axios.isCancel(err)) return true
-  if (err instanceof Error && err.message === 'aborted') return true
-  return false
-}
 
 export function useAgentDraftController() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -41,39 +32,14 @@ export function useAgentDraftController() {
   const [isReviewing, setIsReviewing] = useState(false)
   const [reviewError, setReviewError] = useState<string | null>(null)
 
-  // Handoff state
-  const [isHandoffLoading, setIsHandoffLoading] = useState(false)
-  const [handoffError, setHandoffError] = useState<string | null>(null)
-  const [handoffFeedback, setHandoffFeedback] = useState<string | null>(null)
-
   const listRequestIdRef = useRef(0)
   const detailRequestIdRef = useRef(0)
   const createRequestIdRef = useRef(0)
   const reviewRequestIdRef = useRef(0)
-  const handoffRequestIdRef = useRef(0)
   const listAbortRef = useRef<AbortController | null>(null)
   const detailAbortRef = useRef<AbortController | null>(null)
   const createAbortRef = useRef<AbortController | null>(null)
   const reviewAbortRef = useRef<AbortController | null>(null)
-  const handoffAbortRef = useRef<AbortController | null>(null)
-
-  // Agent Response controller — destructure stable callbacks, never capture the whole object
-  const {
-    responses,
-    selectedResponse,
-    isListLoading: isResponseListLoading,
-    isDetailLoading: isResponseDetailLoading,
-    isCreating: isResponseCreating,
-    listError: responseListError,
-    detailError: responseDetailError,
-    createError: responseCreateError,
-    abortAll: abortAllResponses,
-    clearResponses,
-    loadResponseList,
-    loadResponseDetail,
-    saveResponse,
-    setSelectedResponse,
-  } = useAgentResponseController()
 
   // Agent Suggestion controller
   const {
@@ -98,20 +64,16 @@ export function useAgentDraftController() {
     detailRequestIdRef.current += 1
     createRequestIdRef.current += 1
     reviewRequestIdRef.current += 1
-    handoffRequestIdRef.current += 1
     listAbortRef.current?.abort()
     detailAbortRef.current?.abort()
     createAbortRef.current?.abort()
     reviewAbortRef.current?.abort()
-    handoffAbortRef.current?.abort()
     listAbortRef.current = null
     detailAbortRef.current = null
     createAbortRef.current = null
     reviewAbortRef.current = null
-    handoffAbortRef.current = null
-    abortAllResponses()
     abortAllSuggestions()
-  }, [abortAllResponses, abortAllSuggestions])
+  }, [abortAllSuggestions])
 
   useEffect(() => abortAll, [abortAll])
 
@@ -160,16 +122,12 @@ export function useAgentDraftController() {
     setDetailError(null)
     setCreateError(null)
     setReviewError(null)
-    setHandoffError(null)
-    setHandoffFeedback(null)
     setIsListLoading(false)
     setIsDetailLoading(false)
     setIsCreating(false)
     setIsReviewing(false)
-    setIsHandoffLoading(false)
-    clearResponses()
     clearSuggestions()
-  }, [abortAll, clearResponses, clearSuggestions])
+  }, [abortAll, clearSuggestions])
 
   const loadDraftDetail = useCallback(
     (draftId: string) => {
@@ -177,16 +135,7 @@ export function useAgentDraftController() {
       detailRequestIdRef.current = requestId
       detailAbortRef.current?.abort()
 
-      // Abort in-flight handoff request and clear handoff state for new draft
-      handoffRequestIdRef.current += 1
-      handoffAbortRef.current?.abort()
-      handoffAbortRef.current = null
-      setHandoffError(null)
-      setHandoffFeedback(null)
-      setIsHandoffLoading(false)
-
-      // Clear response and suggestion state for new draft
-      clearResponses()
+      // Clear suggestion state for new draft
       clearSuggestions()
 
       const controller = new AbortController()
@@ -203,8 +152,6 @@ export function useAgentDraftController() {
           )
             return
           setSelectedDraft(data.draft)
-          // Load responses and suggestions for this draft
-          loadResponseList(draftId)
           loadSuggestionList(draftId)
         })
         .catch((err: unknown) => {
@@ -222,7 +169,7 @@ export function useAgentDraftController() {
           detailAbortRef.current = null
         })
     },
-    [clearResponses, clearSuggestions, loadResponseList, loadSuggestionList]
+    [clearSuggestions, loadSuggestionList]
   )
 
   const saveDraft = useCallback(
@@ -341,89 +288,6 @@ export function useAgentDraftController() {
     []
   )
 
-  const fetchHandoff = useCallback(
-    (draftId: string): Promise<{ content: string; filename: string }> => {
-      const requestId = handoffRequestIdRef.current + 1
-      handoffRequestIdRef.current = requestId
-      handoffAbortRef.current?.abort()
-
-      const controller = new AbortController()
-      handoffAbortRef.current = controller
-      setIsHandoffLoading(true)
-      setHandoffError(null)
-      setHandoffFeedback(null)
-
-      return fetchAgentDraftHandoff(draftId, controller.signal)
-        .then((data) => {
-          if (
-            handoffRequestIdRef.current !== requestId ||
-            controller.signal.aborted
-          ) {
-            throw new Error('aborted')
-          }
-          return {
-            content: data.handoff.content,
-            filename: data.handoff.filename,
-          }
-        })
-        .catch((err: unknown) => {
-          if (
-            handoffRequestIdRef.current !== requestId ||
-            controller.signal.aborted ||
-            axios.isCancel(err)
-          ) {
-            throw err
-          }
-          const message = err instanceof Error ? err.message : String(err)
-          setHandoffError(message)
-          throw err
-        })
-        .finally(() => {
-          if (handoffRequestIdRef.current !== requestId) return
-          setIsHandoffLoading(false)
-          handoffAbortRef.current = null
-        })
-    },
-    []
-  )
-
-  const copyHandoff = useCallback(
-    (draftId: string) => {
-      fetchHandoff(draftId)
-        .then(({ content }) => navigator.clipboard.writeText(content))
-        .then(() => {
-          setHandoffError(null)
-          setHandoffFeedback('Handoff copied!')
-          setTimeout(() => setHandoffFeedback(null), 2000)
-        })
-        .catch((err: unknown) => {
-          if (isIgnoredHandoffAbort(err)) return
-          setHandoffFeedback(null)
-          setHandoffError(
-            err instanceof Error ? err.message : 'Copy handoff failed'
-          )
-        })
-    },
-    [fetchHandoff]
-  )
-
-  const downloadHandoff = useCallback(
-    (draftId: string) => {
-      fetchHandoff(draftId)
-        .then(({ content, filename }) => {
-          downloadTextFile(filename, content)
-          setHandoffError(null)
-        })
-        .catch((err: unknown) => {
-          if (isIgnoredHandoffAbort(err)) return
-          setHandoffError(
-            err instanceof Error ? err.message : 'Download handoff failed'
-          )
-        })
-    },
-    [fetchHandoff]
-  )
-
   return {
     isDrawerOpen,
     drafts,
@@ -436,29 +300,12 @@ export function useAgentDraftController() {
     createError,
     isReviewing,
     reviewError,
-    isHandoffLoading,
-    handoffError,
-    handoffFeedback,
     openDrawer,
     closeDrawer,
     loadDraftList,
     loadDraftDetail,
     saveDraft,
     updateDraftReview,
-    copyHandoff,
-    downloadHandoff,
-    // Agent Response — returned directly from destructured stable values
-    responses,
-    selectedResponse,
-    isResponseListLoading,
-    isResponseDetailLoading,
-    isResponseCreating,
-    responseListError,
-    responseDetailError,
-    responseCreateError,
-    loadResponseDetail,
-    saveResponse,
-    setSelectedResponse,
     // Agent Suggestion — returned directly from destructured stable values
     suggestions,
     selectedSuggestion,
