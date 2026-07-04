@@ -19,16 +19,11 @@ export function AgentSuggestionToolbar({
   const isReviewed = draft.status === 'reviewed'
 
   const handleGenerate = () => {
-    // Pass current UI language as instruction so generated content follows UI language.
-    const languageInstruction =
-      i18n.resolvedLanguage === 'zh-CN'
-        ? '请使用中文输出；标签、标题、摘要、建议内容应与当前中文界面一致。'
-        : 'Use English for titles, summaries, labels, and generated suggestion content.'
     // Wrap in void to prevent unhandled promise rejection;
     // the hook already handles errors via generateError state.
-    void Promise.resolve(onGenerate(draft.id, languageInstruction)).catch(
-      () => undefined
-    )
+    void Promise.resolve(
+      onGenerate(draft.id, buildSuggestionLanguageInstruction(i18n.resolvedLanguage))
+    ).catch(() => undefined)
   }
 
   return (
@@ -59,4 +54,10 @@ export function AgentSuggestionToolbar({
       )}
     </>
   )
+}
+
+function buildSuggestionLanguageInstruction(resolvedLanguage?: string): string {
+  return resolvedLanguage === 'zh-CN'
+    ? '请使用中文输出；标签、标题、摘要、建议内容应与当前中文界面一致。'
+    : 'Use English for titles, summaries, labels, and generated suggestion content.'
 }
