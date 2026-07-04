@@ -189,6 +189,7 @@ export function useAgentDraftController() {
       createAbortRef.current = controller
       setIsCreating(true)
       setCreateError(null)
+      clearSuggestions()
 
       return createAgentDraft(
         {
@@ -240,7 +241,7 @@ export function useAgentDraftController() {
           createAbortRef.current = null
         })
     },
-    []
+    [clearSuggestions]
   )
 
   const updateDraftReview = useCallback(
