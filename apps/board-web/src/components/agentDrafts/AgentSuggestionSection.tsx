@@ -6,6 +6,7 @@ import type {
   RecordItem,
   RecordResponse,
 } from '@labour-board/shared'
+import { useTranslation } from 'react-i18next'
 import { AgentSuggestionToolbar } from './AgentSuggestionToolbar'
 import { AgentSuggestionList } from './AgentSuggestionList'
 import { AgentSuggestionDetailSlot } from './AgentSuggestionDetailSlot'
@@ -42,6 +43,8 @@ export function AgentSuggestionSection({
   records,
   onOpenEditor,
 }: AgentSuggestionSectionProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="grid gap-3">
       <AgentSuggestionToolbar
@@ -52,7 +55,10 @@ export function AgentSuggestionSection({
       />
 
       {generateError && (
-        <ErrorBlock titleKey="agent.suggestions.generateFailed" message={generateError} />
+        <ErrorBlock
+          title={t('agent.suggestions.generateFailed')}
+          message={generateError}
+        />
       )}
 
       <AgentSuggestionList
