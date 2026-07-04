@@ -57,10 +57,7 @@ export function AgentPatchDraftPanel({
   const recordOptions = useMemo(
     () =>
       records.map((r) => {
-        const title = getRecordDisplayTitle(
-          r.body.body,
-          t('agent.patchDraft.noTitle')
-        )
+        const title = getRecordDisplayTitle(r.body.body, t('record.none'))
         const tagDisplay =
           r.body.tags.length > 0
             ? ` [${r.body.tags.map((tag) => formatTagLabel(tag, lang)).join(', ')}]`
