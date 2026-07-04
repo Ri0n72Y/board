@@ -189,7 +189,6 @@ export function useAgentDraftController() {
       createAbortRef.current = controller
       setIsCreating(true)
       setCreateError(null)
-      clearSuggestions()
 
       return createAgentDraft(
         {
@@ -215,6 +214,7 @@ export function useAgentDraftController() {
           ) {
             throw new Error('aborted')
           }
+          clearSuggestions()
           setIsDrawerOpen(true)
           setDrafts((prev) => {
             const deduped = prev.filter((d) => d.id !== data.draft.id)
