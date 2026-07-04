@@ -16,67 +16,65 @@ import { AgentDraftContextPreview } from './AgentDraftContextPreview'
 import { AgentSuggestionSection } from './AgentSuggestionSection'
 import { ErrorBlock } from './ErrorBlock'
 
-interface AgentDraftDetailWorkspaceProps {
+interface AgentDraftDetailState {
   selectedDraft: AgentDraftDetail | null
-  isDetailLoading: boolean
-  detailError: string | null
+  isLoading: boolean
+  error: string | null
+}
+
+interface AgentDraftReviewState {
   isReviewing: boolean
   reviewError: string | null
-  onUpdateReview?: (
+  onUpdateReview: (
     draftId: string,
     status: AgentDraftStatus,
     reviewNote?: string
   ) => void
+}
+
+interface AgentDraftSuggestionState {
   suggestions: AgentSuggestionSummary[]
   selectedSuggestion: AgentSuggestionDetail | null
-  isSuggestionListLoading: boolean
-  isSuggestionDetailLoading: boolean
-  isSuggestionGenerating: boolean
-  suggestionListError: string | null
-  suggestionDetailError: string | null
-  suggestionGenerateError: string | null
-  onGenerateSuggestion?: (
-    draftId: string,
-    instruction?: string
-  ) => void | Promise<unknown>
-  onSelectSuggestion?: (suggestionId: string) => void
+  isListLoading: boolean
+  isDetailLoading: boolean
+  isGenerating: boolean
+  listError: string | null
+  detailError: string | null
+  generateError: string | null
+  onGenerate: (draftId: string, instruction?: string) => void | Promise<unknown>
+  onSelectSuggestion: (suggestionId: string) => void
+}
+
+interface AgentDraftPatchDraftState {
   records?: RecordResponse<RecordItem<RecordBody>>[]
   onOpenEditor?: (recordId: string, patchDescription: string) => void
 }
 
+interface AgentDraftDetailWorkspaceProps {
+  detail: AgentDraftDetailState
+  review?: AgentDraftReviewState
+  suggestion?: AgentDraftSuggestionState
+  patchDraft?: AgentDraftPatchDraftState
+}
+
 export function AgentDraftDetailWorkspace({
-  selectedDraft,
-  isDetailLoading,
-  detailError,
-  isReviewing,
-  reviewError,
-  onUpdateReview,
-  suggestions,
-  selectedSuggestion,
-  isSuggestionListLoading,
-  isSuggestionDetailLoading,
-  isSuggestionGenerating,
-  suggestionListError,
-  suggestionDetailError,
-  suggestionGenerateError,
-  onGenerateSuggestion,
-  onSelectSuggestion,
-  records,
-  onOpenEditor,
+  detail,
+  review,
+  suggestion,
+  patchDraft,
 }: AgentDraftDetailWorkspaceProps) {
   const { t } = useTranslation()
+  const { selectedDraft, isLoading, error } = detail
 
   return (
     <section className="min-w-0">
-      {isDetailLoading && (
+      {isLoading && (
         <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">
           {t('agent.loadingDetail')}
         </div>
       )}
-      {detailError && (
-        <ErrorBlock title={t('agent.detailFailed')} message={detailError} />
-      )}
-      {!isDetailLoading && !detailError && selectedDraft && (
+      {error && <ErrorBlock title={t('agent.detailFailed')} message={error} />}
+      {!isLoading && !error && selectedDraft && (
         <div className="grid gap-4">
           <AgentDraftSafetyBanner />
 
@@ -87,39 +85,39 @@ export function AgentDraftDetailWorkspace({
 
           <AgentDraftReviewInfo draft={selectedDraft} />
 
-          {onUpdateReview && (
+          {review && (
             <AgentDraftReviewActions
               key={`draft-review:${selectedDraft.id}`}
               draft={selectedDraft}
-              isReviewing={isReviewing}
-              reviewError={reviewError}
-              onUpdateReview={onUpdateReview}
+              isReviewing={review.isReviewing}
+              reviewError={review.reviewError}
+              onUpdateReview={review.onUpdateReview}
             />
           )}
 
           <AgentDraftContextPreview draft={selectedDraft} />
 
-          {onGenerateSuggestion && onSelectSuggestion && (
+          {suggestion && (
             <AgentSuggestionSection
               key={`draft-suggestions:${selectedDraft.id}`}
               draft={selectedDraft}
-              suggestions={suggestions}
-              selectedSuggestion={selectedSuggestion}
-              isListLoading={isSuggestionListLoading}
-              isDetailLoading={isSuggestionDetailLoading}
-              isGenerating={isSuggestionGenerating}
-              listError={suggestionListError}
-              detailError={suggestionDetailError}
-              generateError={suggestionGenerateError}
-              onGenerate={onGenerateSuggestion}
-              onSelectSuggestion={onSelectSuggestion}
-              records={records}
-              onOpenEditor={onOpenEditor}
+              suggestions={suggestion.suggestions}
+              selectedSuggestion={suggestion.selectedSuggestion}
+              isListLoading={suggestion.isListLoading}
+              isDetailLoading={suggestion.isDetailLoading}
+              isGenerating={suggestion.isGenerating}
+              listError={suggestion.listError}
+              detailError={suggestion.detailError}
+              generateError={suggestion.generateError}
+              onGenerate={suggestion.onGenerate}
+              onSelectSuggestion={suggestion.onSelectSuggestion}
+              records={patchDraft?.records}
+              onOpenEditor={patchDraft?.onOpenEditor}
             />
           )}
         </div>
       )}
-      {!isDetailLoading && !detailError && !selectedDraft && (
+      {!isLoading && !error && !selectedDraft && (
         <div className="rounded-lg border border-slate-200 bg-white p-5 text-slate-500">
           {t('agent.selectHint')}
         </div>
