@@ -9,7 +9,6 @@ import {
   ExclamationTriangleIcon,
   PlusIcon,
   EllipsisHorizontalIcon,
-  XMarkIcon,
 } from '@heroicons/react/20/solid'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../components/ui/Button'
@@ -127,9 +126,6 @@ export function BoardCurrentPage() {
   const [storedVisibleColumnIds, setStoredVisibleColumnIds] = useState<
     string[] | null
   >(() => readVisibleColumnPreference())
-
-  // Toast state for non-critical hints/notices
-  const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -629,7 +625,6 @@ export function BoardCurrentPage() {
                   visibleColumnIds={visibleBoardColumnIds}
                   onCardClick={openDetail}
                   onMoveStatus={statusMoveController.moveRecordStatus}
-                  onToastHint={setToastMessage}
                 />
               ) : (
                 <section className="grid gap-3.5" aria-label="Current records">
@@ -842,23 +837,6 @@ export function BoardCurrentPage() {
         onRelationTargetChange={updateRelationTarget}
         onClose={() => setIsAdvancedFiltersOpen(false)}
       />
-
-      {/* Toast for board hints */}
-      {toastMessage && (
-        <div className="fixed bottom-4 right-4 z-40 max-w-sm rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-lg">
-          <div className="flex items-start gap-3">
-            <span className="flex-1">{toastMessage}</span>
-            <button
-              type="button"
-              className="shrink-0 text-slate-400 hover:text-slate-600"
-              onClick={() => setToastMessage(null)}
-              aria-label={t('toast.close')}
-            >
-              <XMarkIcon className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
