@@ -111,6 +111,7 @@ export function BoardView({
     return tags
   }, [columns])
   const hiddenNoticeKey = visibleColumnIds?.join('|') ?? 'default'
+  const isMovePending = movingRecordId != null
 
   // Show hidden columns notice only on board entry and visible-column preference changes.
   useEffect(() => {
@@ -144,7 +145,7 @@ export function BoardView({
   return (
     <DragDropProvider
       onDragEnd={(event) => {
-        if (event.canceled || movingRecordId || !onMoveStatus) return
+        if (event.canceled || isMovePending || !onMoveStatus) return
 
         const recordId = parseRecordDragId(event.operation.source?.id)
         const targetStatusTag = parseStatusDropId(event.operation.target?.id)
@@ -174,7 +175,7 @@ export function BoardView({
                   moveStatusOptions={moveStatusOptions}
                   movingRecordId={movingRecordId}
                   moveErrors={moveErrors}
-                  dragDisabled={movingRecordId !== null || !onMoveStatus}
+                  dragDisabled={isMovePending || !onMoveStatus}
                   onCardClick={onCardClick}
                   onMoveStatus={onMoveStatus}
                 />
