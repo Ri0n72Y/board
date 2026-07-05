@@ -3,6 +3,14 @@ import { toast, type ToastOptions } from 'react-toastify'
 export type AppToastId = string
 export type AppToastLevel = 'success' | 'info' | 'warning' | 'error'
 
+export const APP_TOAST_IDS = {
+  boardHiddenColumns: 'board-hidden-columns',
+  currentBoardExport: 'current-board-export',
+  contextPackExport: 'context-pack-export',
+  snapshotCreate: 'snapshot-create',
+  snapshotExport: 'snapshot-export',
+} as const satisfies Record<string, AppToastId>
+
 export const APP_TOAST_DEFAULT_OPTIONS: ToastOptions = {
   position: 'bottom-right',
   autoClose: 3000,
