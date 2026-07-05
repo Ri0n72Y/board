@@ -4,7 +4,7 @@ import type { SnapshotDetail, SnapshotSummary } from '@labour-board/shared'
 import { exportSnapshot } from '../api/exports'
 import { createSnapshot, fetchSnapshot, fetchSnapshots } from '../api/snapshots'
 import { downloadTextFile } from '../utils/download'
-import { toastError, toastSuccess } from '../utils/toasts'
+import { APP_TOAST_IDS, toastError, toastSuccess } from '../utils/toasts'
 
 export function useSnapshotController() {
   const [isSnapshotOpen, setIsSnapshotOpen] = useState(false)
@@ -168,7 +168,7 @@ export function useSnapshotController() {
         setSelectedSnapshot(data.snapshot)
         setSnapshotReason('')
         loadSnapshots()
-        toastSuccess('Snapshot created')
+        toastSuccess('Snapshot created', APP_TOAST_IDS.snapshotCreate)
       })
       .catch((unknownError: unknown) => {
         if (
@@ -180,7 +180,7 @@ export function useSnapshotController() {
         }
         const message = errorMessage(unknownError)
         setSnapshotCreateError(message)
-        toastError(`Snapshot failed: ${message}`)
+        toastError(`Snapshot failed: ${message}`, APP_TOAST_IDS.snapshotCreate)
       })
       .finally(() => {
         if (snapshotCreateRequestIdRef.current !== requestId) return
@@ -214,7 +214,7 @@ export function useSnapshotController() {
           return
         }
         downloadTextFile(data.filename, data.content)
-        toastSuccess(`Exported ${data.filename}`)
+        toastSuccess(`Exported ${data.filename}`, APP_TOAST_IDS.snapshotExport)
       })
       .catch((unknownError: unknown) => {
         if (
@@ -226,7 +226,10 @@ export function useSnapshotController() {
         }
         const message = errorMessage(unknownError)
         setSnapshotExportError(message)
-        toastError(`Snapshot export failed: ${message}`)
+        toastError(
+          `Snapshot export failed: ${message}`,
+          APP_TOAST_IDS.snapshotExport
+        )
       })
       .finally(() => {
         if (snapshotExportRequestIdRef.current !== requestId) return
@@ -260,7 +263,7 @@ export function useSnapshotController() {
           return
         }
         downloadTextFile(data.filename, data.content)
-        toastSuccess(`Exported ${data.filename}`)
+        toastSuccess(`Exported ${data.filename}`, APP_TOAST_IDS.snapshotExport)
       })
       .catch((unknownError: unknown) => {
         if (
@@ -272,7 +275,10 @@ export function useSnapshotController() {
         }
         const message = errorMessage(unknownError)
         setSnapshotExportError(message)
-        toastError(`Snapshot context export failed: ${message}`)
+        toastError(
+          `Snapshot context export failed: ${message}`,
+          APP_TOAST_IDS.snapshotExport
+        )
       })
       .finally(() => {
         if (snapshotExportRequestIdRef.current !== requestId) return
