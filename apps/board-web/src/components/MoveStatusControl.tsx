@@ -17,7 +17,18 @@ export function MoveStatusControl({
   error,
   onMove,
 }: MoveStatusControlProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const isZh = (i18n.resolvedLanguage ?? i18n.language).startsWith('zh')
+  const label = t('move.label', { defaultValue: isZh ? '移动到' : 'Move to' })
+  const movingLabel = t('move.moving', {
+    defaultValue: isZh ? '移动中...' : 'Moving...',
+  })
+  const placeholderLabel = t('move.placeholder', {
+    defaultValue: isZh ? '移动到...' : 'Move to...',
+  })
+  const noMovesLabel = t('move.noMoves', {
+    defaultValue: isZh ? '没有可移动状态' : 'No available moves',
+  })
   const availableOptions = options.filter(
     (option) => option.tag !== currentStatus
   )
@@ -26,12 +37,12 @@ export function MoveStatusControl({
   return (
     <div className="grid gap-1.5">
       <label className="grid gap-1 text-xs font-bold uppercase text-slate-500">
-        {t('move.label')}
+        {label}
         <select
           className="min-h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 text-sm font-medium normal-case text-slate-800 outline-none transition focus:border-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           value=""
           disabled={disabled}
-          aria-label={t('move.label')}
+          aria-label={label}
           onChange={(event) => {
             const targetStatusTag = event.currentTarget.value as Tag
             event.currentTarget.value = ''
@@ -41,10 +52,10 @@ export function MoveStatusControl({
         >
           <option value="">
             {isMoving
-              ? t('move.moving')
+              ? movingLabel
               : availableOptions.length > 0
-                ? t('move.placeholder')
-                : t('move.noMoves')}
+                ? placeholderLabel
+                : noMovesLabel}
           </option>
           {availableOptions.map((option) => (
             <option key={option.tag} value={option.tag}>
