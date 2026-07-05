@@ -1,7 +1,10 @@
-import { toast } from 'react-toastify'
+import { toast, type ToastOptions } from 'react-toastify'
 
-const DEFAULT_TOAST_OPTIONS = {
-  position: 'bottom-right' as const,
+export type AppToastId = string
+export type AppToastLevel = 'success' | 'info' | 'warning' | 'error'
+
+export const APP_TOAST_DEFAULT_OPTIONS: ToastOptions = {
+  position: 'bottom-right',
   autoClose: 3000,
   hideProgressBar: true,
   closeOnClick: true,
@@ -9,25 +12,43 @@ const DEFAULT_TOAST_OPTIONS = {
   pauseOnHover: true,
 }
 
-export function toastSuccess(message: string) {
-  return toast.success(message, DEFAULT_TOAST_OPTIONS)
+interface AppToastOptions {
+  toastId?: AppToastId
+  autoClose?: ToastOptions['autoClose']
 }
 
-export function toastInfo(message: string, toastId?: string) {
-  return toast.info(message, {
-    ...DEFAULT_TOAST_OPTIONS,
-    toastId,
-  })
+function buildOptions(options?: AppToastOptions): ToastOptions {
+  return {
+    ...APP_TOAST_DEFAULT_OPTIONS,
+    ...(options?.toastId ? { toastId: options.toastId } : {}),
+    ...(options?.autoClose !== undefined ? { autoClose: options.autoClose } : {}),
+  }
 }
 
-export function toastWarning(message: string) {
-  return toast.warning(message, DEFAULT_TOAST_OPTIONS)
+export function appToast(
+  level: AppToastLevel,
+  message: string,
+  options?: AppToastOptions
+) {
+  return toast[level](message, buildOptions(options))
 }
 
-export function toastError(message: string) {
-  return toast.error(message, DEFAULT_TOAST_OPTIONS)
+export function toastSuccess(message: string, toastId?: AppToastId) {
+  return appToast('success', message, { toastId })
 }
 
-export function dismissToast(toastId?: string) {
+export function toastInfo(message: string, toastId?: AppToastId) {
+  return appToast('info', message, { toastId })
+}
+
+export function toastWarning(message: string, toastId?: AppToastId) {
+  return appToast('warning', message, { toastId })
+}
+
+export function toastError(message: string, toastId?: AppToastId) {
+  return appToast('error', message, { toastId, autoClose: 5000 })
+}
+
+export function dismissToast(toastId?: AppToastId) {
   toast.dismiss(toastId)
 }
