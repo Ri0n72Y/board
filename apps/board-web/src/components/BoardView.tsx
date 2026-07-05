@@ -37,7 +37,6 @@ interface BoardViewProps {
     record: RecordResponse<RecordItem<RecordBody>>,
     targetStatusTag: Tag
   ) => void
-  onToastHint?: (msg: string | null) => void
 }
 
 export function BoardView({
