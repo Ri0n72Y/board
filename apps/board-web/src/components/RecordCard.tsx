@@ -1,3 +1,4 @@
+import type { Ref } from 'react'
 import type {
   Profile,
   RecordBody,
@@ -21,6 +22,7 @@ import {
 } from '../utils/referenceDisplay'
 import { formatProfileCompact } from '../utils/profileDisplay'
 import type { MoveStatusOption } from '../utils/statusMove'
+import { cn } from '../lib/cn'
 
 /** Tags that, when clicked inside a card, should NOT trigger card detail open. */
 const INTERACTIVE_SELECTOR =
@@ -45,6 +47,10 @@ interface RecordCardProps {
   moveStatusOptions?: MoveStatusOption[]
   moveStatusError?: string | null
   isMovingStatus?: boolean
+  isDragEnabled?: boolean
+  isDragging?: boolean
+  dragRef?: Ref<HTMLElement>
+  dragHandleRef?: Ref<HTMLButtonElement>
   onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
   onMoveStatus?: (
     record: RecordResponse<RecordItem<RecordBody>>,
@@ -61,6 +67,10 @@ export function RecordCard({
   moveStatusOptions = [],
   moveStatusError,
   isMovingStatus = false,
+  isDragEnabled = false,
+  isDragging = false,
+  dragRef,
+  dragHandleRef,
   onCardClick,
   onMoveStatus,
 }: RecordCardProps) {
@@ -95,19 +105,39 @@ export function RecordCard({
   if (compact) {
     return (
       <article
-        className="flex h-fit w-full cursor-pointer flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 transition hover:border-slate-400 hover:shadow-sm"
+        ref={dragRef}
+        className={cn(
+          'flex h-fit w-full cursor-pointer flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 transition hover:border-slate-400 hover:shadow-sm',
+          isDragging && 'border-emerald-400 opacity-70 ring-2 ring-emerald-200'
+        )}
         onClick={handleClick}
         role="button"
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >
-        <div className="min-w-0 shrink-0">
-          <p className="mb-0.5 font-mono text-xs text-slate-500">
-            {current.pid}
-          </p>
-          <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-slate-950">
-            {title}
-          </h3>
+        <div className="flex min-w-0 shrink-0 items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="mb-0.5 font-mono text-xs text-slate-500">
+              {current.pid}
+            </p>
+            <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-slate-950">
+              {title}
+            </h3>
+          </div>
+          {isDragEnabled && (
+            <button
+              ref={dragHandleRef}
+              type="button"
+              data-card-interactive="true"
+              className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-500 transition hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 active:cursor-grabbing"
+              aria-label={t('move.dragHandle')}
+              title={t('move.dragHandle')}
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              ⋮⋮
+            </button>
+          )}
         </div>
 
         <div className="min-w-0 shrink-0">
@@ -326,39 +356,39 @@ function RelationsList({
   maxVisible,
   compact = false,
 }: {
-  relations: RecordItem<RecordBody>['relations']
+  relations: RecordBody['relations']
   relationTargetOptions: RecordReferenceOption[]
   maxVisible: number
   compact?: boolean
 }) {
   const { t } = useTranslation()
-  const visibleRelations = (relations ?? []).slice(0, maxVisible)
-  const hiddenCount = Math.max(
-    (relations?.length ?? 0) - visibleRelations.length,
-    0
+  const translator: RelationTranslator = (key, params) =>
+    t(key, params ?? {}) as string
+  const items = (relations ?? []).map((relation) =>
+    formatRelationLine(relation, relationTargetOptions, translator)
   )
-  const translate: RelationTranslator = (key, options) =>
-    t(key, { defaultValue: options?.defaultValue ?? key })
-  if (compact && (!relations || relations.length === 0)) return null
+  if (compact && items.length === 0) return null
+  const visible = items.slice(0, maxVisible)
+  const hiddenCount = Math.max(0, items.length - visible.length)
 
   return (
     <section className={compact ? 'grid gap-1.5' : 'grid gap-2'}>
       <h3 className="text-sm font-semibold text-slate-500">
         {t('record.relations')}
       </h3>
-      {relations && relations.length > 0 ? (
+      {visible.length > 0 ? (
         <ul className="grid gap-1.5">
-          {visibleRelations.map((relation, index) => (
+          {visible.map((item, index) => (
             <li
+              key={`${item}:${index}`}
               className={
                 compact
                   ? 'min-w-0 truncate text-xs text-slate-700'
                   : 'min-w-0 wrap-break-word text-xs text-slate-700'
               }
-              key={`${relation.constraint}:${relation.target}:${index}`}
-              title={relation.target}
+              title={item}
             >
-              {formatRelationLine(relation, relationTargetOptions, translate)}
+              {item}
             </li>
           ))}
           {hiddenCount > 0 && (
@@ -368,35 +398,21 @@ function RelationsList({
           )}
         </ul>
       ) : (
-        !compact && <p className="text-slate-500">{t('relations.none')}</p>
+        <p className="text-slate-500">{t('relations.none')}</p>
       )}
     </section>
   )
 }
 
-function asDisplayBody(body: RecordBody): {
-  title?: string
-  description?: string
-  content?: string
-} {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return {}
+function asDisplayBody(body: RecordBody['body']): Record<string, string> {
+  if (!body || typeof body !== 'object') return {}
+  const result: Record<string, string> = {}
+  for (const [key, value] of Object.entries(body)) {
+    if (typeof value === 'string') result[key] = value
   }
-
-  return {
-    title: stringValue(body, 'title'),
-    description: stringValue(body, 'description'),
-    content: stringValue(body, 'content'),
-  }
+  return result
 }
 
-function stringValue(source: object, key: string): string | undefined {
-  const value = (source as Record<string, unknown>)[key]
-  return typeof value === 'string' && value.trim() ? value : undefined
-}
-
-function formatDate(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
+function formatDate(value: string) {
+  return new Date(value).toLocaleString()
 }
