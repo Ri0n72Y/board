@@ -1,11 +1,13 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Cog6ToothIcon } from '@heroicons/react/20/solid'
 import type { BoardStatusColumn } from '../utils/boardView'
-import { useState } from 'react'
 import { AnimatedDrawer } from './ui/AnimatedDrawer'
 import { cn } from '../lib/cn'
 import { changeLanguage, type Language, LANGUAGES } from '../i18n'
 import { ProfileManagerDrawer } from './ProfileManagerDrawer'
+import { TagConfigReadOnlyPanel } from './TagConfigReadOnlyPanel'
+import { useBoardMetadataStore } from '../stores/boardMetadataStore'
 
 interface AppSettingsDrawerProps {
   open: boolean
@@ -25,6 +27,9 @@ export function AppSettingsDrawer({
   const { t, i18n } = useTranslation()
   const selected = new Set(visibleColumnIds)
   const [isProfileManagerOpen, setIsProfileManagerOpen] = useState(false)
+  const config = useBoardMetadataStore((state) => state.config)
+  const metadataLoading = useBoardMetadataStore((state) => state.isLoading)
+  const metadataError = useBoardMetadataStore((state) => state.error)
 
   function toggleColumn(columnId: string) {
     const next = selected.has(columnId)
@@ -87,6 +92,12 @@ export function AppSettingsDrawer({
             {t('settings.manageMembers')}
           </button>
         </section>
+
+        <TagConfigReadOnlyPanel
+          config={config}
+          isLoading={metadataLoading}
+          error={metadataError.config}
+        />
 
         <section
           className="mt-4 grid gap-3 rounded-lg border border-slate-200 bg-white p-5"
