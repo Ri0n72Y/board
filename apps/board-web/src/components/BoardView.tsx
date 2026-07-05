@@ -37,6 +37,8 @@ interface BoardViewProps {
     record: RecordResponse<RecordItem<RecordBody>>,
     targetStatusTag: Tag
   ) => void
+  /** @deprecated Board hints now use the centralized toast helper directly. */
+  onToastHint?: (msg: string | null) => void
 }
 
 export function BoardView({
