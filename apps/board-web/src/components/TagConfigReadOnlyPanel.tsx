@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type {
   BoardConfig,
@@ -156,7 +157,7 @@ function ReadOnlyCard({
 }: {
   title: string
   description: string
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
     <div className="grid gap-2 rounded-md border border-slate-100 bg-slate-50 p-3">
