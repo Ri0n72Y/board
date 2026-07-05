@@ -74,7 +74,11 @@ export function RecordCard({
   onCardClick,
   onMoveStatus,
 }: RecordCardProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const isZh = (i18n.resolvedLanguage ?? i18n.language).startsWith('zh')
+  const dragHandleLabel = t('move.dragHandle', {
+    defaultValue: isZh ? '拖拽移动状态' : 'Drag to move status',
+  })
   const current = record.body
   const body = asDisplayBody(current.body)
   const title = body.title ?? current.pid
@@ -130,8 +134,8 @@ export function RecordCard({
               type="button"
               data-card-interactive="true"
               className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-500 transition hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 active:cursor-grabbing"
-              aria-label={t('move.dragHandle')}
-              title={t('move.dragHandle')}
+              aria-label={dragHandleLabel}
+              title={dragHandleLabel}
               onClick={(event) => event.stopPropagation()}
               onKeyDown={(event) => event.stopPropagation()}
             >
