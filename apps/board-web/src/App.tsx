@@ -1,11 +1,11 @@
-import { ToastContainer } from 'react-toastify'
 import { BoardCurrentPage } from './pages/BoardCurrentPage'
+import { ToastViewport } from './components/ui/ToastViewport'
 
 function App() {
   return (
     <>
       <BoardCurrentPage />
-      <ToastContainer position="bottom-right" autoClose={3000} />
+      <ToastViewport />
     </>
   )
 }

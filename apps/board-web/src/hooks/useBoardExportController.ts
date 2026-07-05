@@ -9,7 +9,12 @@ import { exportCurrentBoard } from '../api/exports'
 import type { BoardCurrentFilters } from '../utils/boardFilterUrl'
 import { hasEffectiveFilters } from '../utils/board'
 import { downloadTextFile } from '../utils/download'
-import { toastError, toastSuccess, toastWarning } from '../utils/toasts'
+import {
+  APP_TOAST_IDS,
+  toastError,
+  toastSuccess,
+  toastWarning,
+} from '../utils/toasts'
 
 interface UseBoardExportControllerParams {
   appliedFilters: BoardCurrentFilters
@@ -80,7 +85,7 @@ export function useBoardExportController({
           return
         }
         downloadTextFile(data.filename, data.content)
-        toastSuccess(`Exported ${data.filename}`)
+        toastSuccess(`Exported ${data.filename}`, APP_TOAST_IDS.currentBoardExport)
       })
       .catch((unknownError: unknown) => {
         if (
@@ -92,7 +97,7 @@ export function useBoardExportController({
         }
         const message = errorMessage(unknownError)
         setCurrentExportError(message)
-        toastError(`Export failed: ${message}`)
+        toastError(`Export failed: ${message}`, APP_TOAST_IDS.currentBoardExport)
       })
       .finally(() => {
         if (currentExportRequestIdRef.current !== requestId) return
@@ -112,7 +117,7 @@ export function useBoardExportController({
       )
       if (validationError) {
         setContextExportError(validationError)
-        toastWarning(validationError)
+        toastWarning(validationError, APP_TOAST_IDS.contextPackExport)
         return false
       }
 
@@ -156,7 +161,7 @@ export function useBoardExportController({
             return
           }
           downloadTextFile(data.filename, data.content)
-          toastSuccess(`Exported ${data.filename}`)
+          toastSuccess(`Exported ${data.filename}`, APP_TOAST_IDS.contextPackExport)
         })
         .catch((unknownError: unknown) => {
           if (
@@ -168,7 +173,10 @@ export function useBoardExportController({
           }
           const message = errorMessage(unknownError)
           setContextExportError(message)
-          toastError(`Context export failed: ${message}`)
+          toastError(
+            `Context export failed: ${message}`,
+            APP_TOAST_IDS.contextPackExport
+          )
         })
         .finally(() => {
           if (contextExportRequestIdRef.current !== requestId) return
