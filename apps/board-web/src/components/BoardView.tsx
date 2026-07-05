@@ -63,9 +63,21 @@ export function BoardView({
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
   const hiddenNoticeKeyRef = useRef<string | null>(null)
+  const statusDropTargetsRef = useRef(new Map<Tag, HTMLElement>())
+  const lastPointerPositionRef = useRef<{ x: number; y: number } | null>(null)
   const tagLabel = useCallback(
     (tag: string) => formatTagLabel(tag, lang),
     [lang]
+  )
+  const registerStatusDropTarget = useCallback(
+    (tag: Tag, element: HTMLElement | null) => {
+      if (element) {
+        statusDropTargetsRef.current.set(tag, element)
+      } else {
+        statusDropTargetsRef.current.delete(tag)
+      }
+    },
+    []
   )
   const uncategorizedLabel = getUncategorizedColumnLabel(lang)
   const columns = useMemo(() => {
@@ -113,6 +125,22 @@ export function BoardView({
   const hiddenNoticeKey = visibleColumnIds?.join('|') ?? 'default'
   const isMovePending = movingRecordId != null
 
+  useEffect(() => {
+    const updatePointerPosition = (event: PointerEvent) => {
+      lastPointerPositionRef.current = {
+        x: event.clientX,
+        y: event.clientY,
+      }
+    }
+
+    window.addEventListener('pointermove', updatePointerPosition, true)
+    window.addEventListener('pointerup', updatePointerPosition, true)
+    return () => {
+      window.removeEventListener('pointermove', updatePointerPosition, true)
+      window.removeEventListener('pointerup', updatePointerPosition, true)
+    }
+  }, [])
+
   // Show hidden columns notice only on board entry and visible-column preference changes.
   useEffect(() => {
     if (hiddenNoticeKeyRef.current === hiddenNoticeKey) return
@@ -144,6 +172,9 @@ export function BoardView({
 
   return (
     <DragDropProvider
+      onDragStart={() => {
+        lastPointerPositionRef.current = null
+      }}
       onDragEnd={(event) => {
         if (event.canceled || isMovePending || !onMoveStatus) return
 
@@ -151,6 +182,16 @@ export function BoardView({
         const targetStatusTag = parseStatusDropId(event.operation.target?.id)
         if (!recordId || !targetStatusTag) return
         if (!visibleStatusTags.has(targetStatusTag)) return
+        if (
+          !isPointInsideStatusDropTarget(
+            targetStatusTag,
+            lastPointerPositionRef.current ??
+              event.operation.position.current,
+            statusDropTargetsRef.current
+          )
+        ) {
+          return
+        }
 
         const record = recordsById.get(recordId)
         if (!record) return
@@ -176,6 +217,7 @@ export function BoardView({
                   movingRecordId={movingRecordId}
                   moveErrors={moveErrors}
                   dragDisabled={isMovePending || !onMoveStatus}
+                  registerStatusDropTarget={registerStatusDropTarget}
                   onCardClick={onCardClick}
                   onMoveStatus={onMoveStatus}
                 />
@@ -197,6 +239,7 @@ function BoardStatusDropColumn({
   movingRecordId,
   moveErrors,
   dragDisabled,
+  registerStatusDropTarget,
   onCardClick,
   onMoveStatus,
 }: {
@@ -208,6 +251,7 @@ function BoardStatusDropColumn({
   movingRecordId?: string | null
   moveErrors?: Record<string, string>
   dragDisabled: boolean
+  registerStatusDropTarget: (tag: Tag, element: HTMLElement | null) => void
   onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
   onMoveStatus?: (
     record: RecordResponse<RecordItem<RecordBody>>,
@@ -221,10 +265,19 @@ function BoardStatusDropColumn({
     accept: BOARD_RECORD_DND_TYPE,
     disabled: !isStatusDropTarget || dragDisabled,
   })
+  const setDropRef = useCallback(
+    (element: HTMLElement | null) => {
+      ref(element)
+      if (column.tag?.startsWith('status:')) {
+        registerStatusDropTarget(column.tag, element)
+      }
+    },
+    [column.tag, ref, registerStatusDropTarget]
+  )
 
   return (
     <section
-      ref={ref as unknown as Ref<HTMLElement>}
+      ref={setDropRef}
       className={cn(
         'grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3 rounded-lg border border-slate-200 bg-slate-100 p-4 transition-colors',
         isDropTarget && 'border-emerald-400 bg-emerald-50'
@@ -332,4 +385,21 @@ function parseStatusDropId(id: string | number | null | undefined): Tag | null {
   if (!id.startsWith(STATUS_DROP_ID_PREFIX)) return null
   const tag = id.slice(STATUS_DROP_ID_PREFIX.length)
   return tag.startsWith('status:') ? (tag as Tag) : null
+}
+
+function isPointInsideStatusDropTarget(
+  tag: Tag,
+  point: { x: number; y: number },
+  targets: ReadonlyMap<Tag, HTMLElement>
+): boolean {
+  const element = targets.get(tag)
+  if (!element) return false
+
+  const rect = element.getBoundingClientRect()
+  return (
+    point.x >= rect.left &&
+    point.x <= rect.right &&
+    point.y >= rect.top &&
+    point.y <= rect.bottom
+  )
 }

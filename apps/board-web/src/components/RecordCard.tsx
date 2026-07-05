@@ -360,7 +360,7 @@ function RelationsList({
   maxVisible,
   compact = false,
 }: {
-  relations: RecordBody['relations']
+  relations: RecordItem<RecordBody>['relations']
   relationTargetOptions: RecordReferenceOption[]
   maxVisible: number
   compact?: boolean
@@ -408,7 +408,7 @@ function RelationsList({
   )
 }
 
-function asDisplayBody(body: RecordBody['body']): Record<string, string> {
+function asDisplayBody(body: RecordBody): Record<string, string> {
   if (!body || typeof body !== 'object') return {}
   const result: Record<string, string> = {}
   for (const [key, value] of Object.entries(body)) {
