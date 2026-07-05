@@ -25,7 +25,7 @@ export function TagConfigReadOnlyPanel({
   error,
 }: TagConfigReadOnlyPanelProps) {
   const { i18n } = useTranslation()
-  const lang = i18n.resolvedLanguage
+  const lang = i18n.resolvedLanguage ?? i18n.language ?? 'en-US'
   const copy = getCopy(lang)
   const tagGroups = config ? buildTagGroups(config, copy.groups) : []
   const tagCount = tagGroups.reduce((total, group) => total + group.tags.length, 0)
