@@ -57,7 +57,7 @@ export function AgentPatchDraftPanel({
   const recordOptions = useMemo(
     () =>
       records.map((r) => {
-        const title = getRecordDisplayTitle(r.body.body)
+        const title = getRecordDisplayTitle(r.body.body, t('record.none'))
         const tagDisplay =
           r.body.tags.length > 0
             ? ` [${r.body.tags.map((tag) => formatTagLabel(tag, lang)).join(', ')}]`
@@ -68,7 +68,7 @@ export function AgentPatchDraftPanel({
           meta: r.body.id,
         }
       }),
-    [records, lang]
+    [records, lang, t]
   )
 
   const selectedRecord = useMemo(
@@ -168,8 +168,8 @@ export function AgentPatchDraftPanel({
   )
 }
 
-function getRecordDisplayTitle(body: RecordBody): string {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) return ''
+function getRecordDisplayTitle(body: RecordBody, fallback: string): string {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return fallback
   const value = (body as Record<string, unknown>).title
-  return typeof value === 'string' && value.trim() ? value : '(no title)'
+  return typeof value === 'string' && value.trim() ? value : fallback
 }
