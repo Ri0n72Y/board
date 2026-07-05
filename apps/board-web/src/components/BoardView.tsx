@@ -19,9 +19,7 @@ import { getMoveStatusOptions } from '../utils/statusMove'
 import type { MoveStatusOption } from '../utils/statusMove'
 import { formatTagLabel } from '../utils/tagDisplay'
 import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
-import { dismissToast, toastInfo } from '../utils/toasts'
-
-const BOARD_HIDDEN_COLUMNS_TOAST_ID = 'board-hidden-columns'
+import { APP_TOAST_IDS, dismissToast, toastInfo } from '../utils/toasts'
 
 interface BoardViewProps {
   records: RecordResponse<RecordItem<RecordBody>>[]
@@ -116,9 +114,9 @@ export function BoardView({
       )
     }
     if (parts.length > 0) {
-      toastInfo(parts.join(' '), BOARD_HIDDEN_COLUMNS_TOAST_ID)
+      toastInfo(parts.join(' '), APP_TOAST_IDS.boardHiddenColumns)
     } else {
-      dismissToast(BOARD_HIDDEN_COLUMNS_TOAST_ID)
+      dismissToast(APP_TOAST_IDS.boardHiddenColumns)
     }
   }, [hiddenNoticeKey, hiddenSummary, t])
 
