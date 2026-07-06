@@ -38,7 +38,17 @@ export function appToast(
   message: string,
   options?: AppToastOptions
 ) {
-  return toast[level](message, buildOptions(options))
+  const toastOptions = buildOptions(options)
+  if (options?.toastId && toast.isActive(options.toastId)) {
+    toast.update(options.toastId, {
+      ...toastOptions,
+      render: message,
+      type: level,
+    })
+    return options.toastId
+  }
+
+  return toast[level](message, toastOptions)
 }
 
 export function toastSuccess(message: string, toastId?: AppToastId) {
