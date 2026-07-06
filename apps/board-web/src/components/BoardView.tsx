@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { DragDropProvider } from '@dnd-kit/react'
 import type {
   BoardConfig,
@@ -10,18 +10,10 @@ import type {
 } from '@labour-board/shared'
 import { useTranslation } from 'react-i18next'
 import { BoardStatusDropColumn } from './BoardStatusDropColumn'
-import { getStatusColumns, groupRecordsByStatus } from '../utils/boardView'
-import {
-  getUncategorizedColumnLabel,
-  resolveVisibleColumnIds,
-  summarizeHiddenColumns,
-} from '../utils/boardViewColumns'
-import { getMoveStatusOptions } from '../utils/statusMove'
-import type { MoveStatusOption } from '../utils/statusMove'
-import { formatTagLabel } from '../utils/tagDisplay'
 import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
 import { APP_TOAST_IDS, dismissToast, toastInfo } from '../utils/toasts'
 import { useBoardStatusDnd } from '../hooks/useBoardStatusDnd'
+import { useBoardViewModel } from '../hooks/useBoardViewModel'
 
 interface BoardViewProps {
   records: RecordResponse<RecordItem<RecordBody>>[]
@@ -54,48 +46,17 @@ export function BoardView({
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
   const hiddenNoticeKeyRef = useRef<string | null>(null)
-  const tagLabel = useCallback(
-    (tag: string) => formatTagLabel(tag, lang),
-    [lang]
-  )
-  const uncategorizedLabel = getUncategorizedColumnLabel(lang)
-  const columns = useMemo(() => {
-    const statusColumns = getStatusColumns(config, records, tagLabel, {
-      uncategorizedLabel,
-    })
-    const groupedColumns = groupRecordsByStatus(records, statusColumns)
-    const selectedIds = resolveVisibleColumnIds(
-      groupedColumns.map((column) => column.id),
-      visibleColumnIds
-    )
-    const visible = new Set(selectedIds)
-    return groupedColumns.filter((column) => visible.has(column.id))
-  }, [config, records, tagLabel, uncategorizedLabel, visibleColumnIds])
-  const allColumns = useMemo(() => {
-    const statusColumns = getStatusColumns(config, records, tagLabel, {
-      uncategorizedLabel,
-    })
-    return groupRecordsByStatus(records, statusColumns)
-  }, [config, records, tagLabel, uncategorizedLabel])
-  const hiddenSummary = useMemo(
-    () =>
-      summarizeHiddenColumns(
-        allColumns,
-        columns.map((column) => column.id)
-      ),
-    [allColumns, columns]
-  )
-  const moveStatusOptions: MoveStatusOption[] = useMemo(
-    () => getMoveStatusOptions(allColumns),
-    [allColumns]
-  )
-  const visibleStatusTags = useMemo(() => {
-    const tags = new Set<Tag>()
-    for (const column of columns) {
-      if (column.tag?.startsWith('status:')) tags.add(column.tag)
-    }
-    return tags
-  }, [columns])
+  const {
+    columns,
+    hiddenSummary,
+    moveStatusOptions,
+    visibleStatusTags,
+  } = useBoardViewModel({
+    records,
+    config,
+    language: lang,
+    visibleColumnIds,
+  })
   const hiddenNoticeKey = visibleColumnIds?.join('|') ?? 'default'
   const isMovePending = movingRecordId != null
   const { handleDragEnd, handleDragStart, registerStatusDropTarget } =
