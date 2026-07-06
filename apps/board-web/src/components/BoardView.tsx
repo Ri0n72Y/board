@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import type { Ref } from 'react'
-import { DragDropProvider, useDraggable, useDroppable } from '@dnd-kit/react'
+import { DragDropProvider } from '@dnd-kit/react'
 import type {
   BoardConfig,
   Profile,
@@ -21,16 +20,18 @@ import {
   resolveVisibleColumnIds,
   summarizeHiddenColumns,
 } from '../utils/boardViewColumns'
-import { getMoveStatusOptions } from '../utils/statusMove'
+import { getMoveStatusOptions }
+from '../utils/statusMove'
 import type { MoveStatusOption } from '../utils/statusMove'
 import { formatTagLabel } from '../utils/tagDisplay'
 import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
 import { APP_TOAST_IDS, dismissToast, toastInfo } from '../utils/toasts'
 import { cn } from '../lib/cn'
-
-const BOARD_RECORD_DND_TYPE = 'board-record-status-card'
-const RECORD_DRAG_ID_PREFIX = 'record:'
-const STATUS_DROP_ID_PREFIX = 'status-column:'
+import {
+  useBoardStatusDnd,
+  useRecordStatusDraggable,
+  useStatusColumnDropTarget,
+} from '../hooks/useBoardStatusDnd'
 
 interface BoardViewProps {
   records: RecordResponse<RecordItem<RecordBody>>[]
@@ -63,21 +64,9 @@ export function BoardView({
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
   const hiddenNoticeKeyRef = useRef<string | null>(null)
-  const statusDropTargetsRef = useRef(new Map<Tag, HTMLElement>())
-  const lastPointerPositionRef = useRef<{ x: number; y: number } | null>(null)
   const tagLabel = useCallback(
     (tag: string) => formatTagLabel(tag, lang),
     [lang]
-  )
-  const registerStatusDropTarget = useCallback(
-    (tag: Tag, element: HTMLElement | null) => {
-      if (element) {
-        statusDropTargetsRef.current.set(tag, element)
-      } else {
-        statusDropTargetsRef.current.delete(tag)
-      }
-    },
-    []
   )
   const uncategorizedLabel = getUncategorizedColumnLabel(lang)
   const columns = useMemo(() => {
@@ -110,11 +99,6 @@ export function BoardView({
     () => getMoveStatusOptions(allColumns),
     [allColumns]
   )
-  const recordsById = useMemo(() => {
-    const byId = new Map<string, RecordResponse<RecordItem<RecordBody>>>()
-    for (const record of records) byId.set(record.body.id, record)
-    return byId
-  }, [records])
   const visibleStatusTags = useMemo(() => {
     const tags = new Set<Tag>()
     for (const column of columns) {
@@ -124,22 +108,13 @@ export function BoardView({
   }, [columns])
   const hiddenNoticeKey = visibleColumnIds?.join('|') ?? 'default'
   const isMovePending = movingRecordId != null
-
-  useEffect(() => {
-    const updatePointerPosition = (event: PointerEvent) => {
-      lastPointerPositionRef.current = {
-        x: event.clientX,
-        y: event.clientY,
-      }
-    }
-
-    window.addEventListener('pointermove', updatePointerPosition, true)
-    window.addEventListener('pointerup', updatePointerPosition, true)
-    return () => {
-      window.removeEventListener('pointermove', updatePointerPosition, true)
-      window.removeEventListener('pointerup', updatePointerPosition, true)
-    }
-  }, [])
+  const { handleDragEnd, handleDragStart, registerStatusDropTarget } =
+    useBoardStatusDnd({
+      records,
+      visibleStatusTags,
+      isMovePending,
+      onMoveStatus,
+    })
 
   // Show hidden columns notice only on board entry and visible-column preference changes.
   useEffect(() => {
@@ -171,37 +146,7 @@ export function BoardView({
   }, [hiddenNoticeKey, hiddenSummary, t])
 
   return (
-    <DragDropProvider
-      onDragStart={() => {
-        lastPointerPositionRef.current = null
-      }}
-      onDragEnd={(event) => {
-        if (event.canceled || isMovePending || !onMoveStatus) return
-
-        const recordId = parseRecordDragId(event.operation.source?.id)
-        const targetStatusTag = parseStatusDropId(event.operation.target?.id)
-        if (!recordId || !targetStatusTag) return
-        if (!visibleStatusTags.has(targetStatusTag)) return
-        if (
-          !isPointInsideStatusDropTarget(
-            targetStatusTag,
-            lastPointerPositionRef.current ??
-              event.operation.position.current,
-            statusDropTargetsRef.current
-          )
-        ) {
-          return
-        }
-
-        const record = recordsById.get(recordId)
-        if (!record) return
-        const currentStatus =
-          record.body.tags.find((tag) => tag.startsWith('status:')) ?? null
-        if (currentStatus === targetStatusTag) return
-
-        onMoveStatus(record, targetStatusTag)
-      }}
-    >
+    <DragDropProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <section className="h-full min-h-0" aria-label="Current records board">
         <div className="h-full min-h-0 rounded-lg border border-slate-200 bg-white/70 p-3 pb-5">
           <div className="h-full min-h-0 overflow-x-auto pb-4 [scrollbar-width:thin]">
@@ -259,21 +204,12 @@ function BoardStatusDropColumn({
   ) => void
 }) {
   const { t } = useTranslation()
-  const isStatusDropTarget = column.tag?.startsWith('status:') ?? false
-  const { ref, isDropTarget } = useDroppable({
-    id: column.tag ? `${STATUS_DROP_ID_PREFIX}${column.tag}` : column.id,
-    accept: BOARD_RECORD_DND_TYPE,
-    disabled: !isStatusDropTarget || dragDisabled,
+  const { isDropTarget, setDropRef } = useStatusColumnDropTarget({
+    columnId: column.id,
+    tag: column.tag,
+    dragDisabled,
+    registerStatusDropTarget,
   })
-  const setDropRef = useCallback(
-    (element: HTMLElement | null) => {
-      ref(element)
-      if (column.tag?.startsWith('status:')) {
-        registerStatusDropTarget(column.tag, element)
-      }
-    },
-    [column.tag, ref, registerStatusDropTarget]
-  )
 
   return (
     <section
@@ -348,10 +284,9 @@ function DraggableRecordCard({
     targetStatusTag: Tag
   ) => void
 }) {
-  const { ref, handleRef, isDragging } = useDraggable({
-    id: `${RECORD_DRAG_ID_PREFIX}${record.body.id}`,
-    type: BOARD_RECORD_DND_TYPE,
-    disabled: dragDisabled,
+  const { cardRef, dragHandleRef, isDragging } = useRecordStatusDraggable({
+    recordId: record.body.id,
+    dragDisabled,
   })
 
   return (
@@ -366,40 +301,10 @@ function DraggableRecordCard({
       moveStatusError={moveStatusError}
       isDragEnabled={!dragDisabled}
       isDragging={isDragging || isMovingStatus}
-      dragRef={ref as unknown as Ref<HTMLElement>}
-      dragHandleRef={handleRef as unknown as Ref<HTMLButtonElement>}
+      dragRef={cardRef}
+      dragHandleRef={dragHandleRef}
       onCardClick={onCardClick}
       onMoveStatus={onMoveStatus}
     />
-  )
-}
-
-function parseRecordDragId(id: string | number | null | undefined): string | null {
-  if (typeof id !== 'string') return null
-  if (!id.startsWith(RECORD_DRAG_ID_PREFIX)) return null
-  return id.slice(RECORD_DRAG_ID_PREFIX.length) || null
-}
-
-function parseStatusDropId(id: string | number | null | undefined): Tag | null {
-  if (typeof id !== 'string') return null
-  if (!id.startsWith(STATUS_DROP_ID_PREFIX)) return null
-  const tag = id.slice(STATUS_DROP_ID_PREFIX.length)
-  return tag.startsWith('status:') ? (tag as Tag) : null
-}
-
-function isPointInsideStatusDropTarget(
-  tag: Tag,
-  point: { x: number; y: number },
-  targets: ReadonlyMap<Tag, HTMLElement>
-): boolean {
-  const element = targets.get(tag)
-  if (!element) return false
-
-  const rect = element.getBoundingClientRect()
-  return (
-    point.x >= rect.left &&
-    point.x <= rect.right &&
-    point.y >= rect.top &&
-    point.y <= rect.bottom
   )
 }
