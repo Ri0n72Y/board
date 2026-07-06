@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import type { ComponentProps, Ref } from 'react'
-import { DragDropProvider, useDraggable, useDroppable } from '@dnd-kit/react'
+import type { Ref } from 'react'
+import { useDraggable, useDroppable } from '@dnd-kit/react'
 import type {
   RecordBody,
   RecordItem,
@@ -12,9 +12,14 @@ const BOARD_RECORD_DND_TYPE = 'board-record-status-card'
 const RECORD_DRAG_ID_PREFIX = 'record:'
 const STATUS_DROP_ID_PREFIX = 'status-column:'
 
-type DragEndEvent = Parameters<
-  NonNullable<ComponentProps<typeof DragDropProvider>['onDragEnd']>
->[0]
+interface BoardDragEndEvent {
+  canceled?: boolean
+  operation: {
+    source?: { id?: string | number | null } | null
+    target?: { id?: string | number | null } | null
+    position: { current: { x: number; y: number } }
+  }
+}
 
 interface UseBoardStatusDndArgs {
   records: RecordResponse<RecordItem<RecordBody>>[]
@@ -73,7 +78,7 @@ export function useBoardStatusDnd({
   }, [])
 
   const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
+    (event: BoardDragEndEvent) => {
       if (event.canceled || isMovePending || !onMoveStatus) return
 
       const recordId = parseRecordDragId(event.operation.source?.id)
