@@ -20,8 +20,7 @@ import {
   resolveVisibleColumnIds,
   summarizeHiddenColumns,
 } from '../utils/boardViewColumns'
-import { getMoveStatusOptions }
-from '../utils/statusMove'
+import { getMoveStatusOptions } from '../utils/statusMove'
 import type { MoveStatusOption } from '../utils/statusMove'
 import { formatTagLabel } from '../utils/tagDisplay'
 import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
