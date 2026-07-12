@@ -9,6 +9,11 @@ const DEFAULT_DONE_STATUS = 'status:done'
 const DEFAULT_DOING_STATUS = 'status:doing'
 const DEFAULT_WIP_STATUS = 'status:wip'
 
+export interface BoardColumnPreference {
+  visibleColumnIds: string[]
+  columnOrderIds: string[]
+}
+
 export interface HiddenColumnSummary {
   hiddenColumnCount: number
   hiddenRecordCount: number
@@ -30,15 +35,29 @@ export function getDefaultVisibleColumnIds(
   return columnIds.filter((id) => desired.includes(id))
 }
 
+export function resolveColumnOrderIds(
+  columnIds: readonly string[],
+  storedOrderIds: readonly string[] | null | undefined
+): string[] {
+  const available = new Set(columnIds)
+  const ordered = uniqueStrings(storedOrderIds ?? []).filter((id) =>
+    available.has(id)
+  )
+  const orderedSet = new Set(ordered)
+  const missing = columnIds.filter((id) => !orderedSet.has(id))
+  return [...ordered, ...missing]
+}
+
 export function resolveVisibleColumnIds(
   columnIds: readonly string[],
   storedColumnIds: readonly string[] | null | undefined
 ): string[] {
   const available = new Set(columnIds)
-  const selected = (storedColumnIds ?? []).filter((id) => available.has(id))
+  const selected = uniqueStrings(storedColumnIds ?? []).filter((id) =>
+    available.has(id)
+  )
 
-  if (selected.length > 0)
-    return sortColumnIdsByConfigOrder(columnIds, selected)
+  if (selected.length > 0) return selected
 
   const defaults = getDefaultVisibleColumnIds(columnIds)
   if (defaults.length > 0) return defaults
@@ -51,6 +70,33 @@ export function normalizeColumnSelectionForSave(
   nextColumnIds: readonly string[]
 ): string[] {
   return resolveVisibleColumnIds(columnIds, nextColumnIds)
+}
+
+export function normalizeBoardColumnPreference(
+  columnIds: readonly string[],
+  visibleColumnIds: readonly string[] | null | undefined,
+  columnOrderIds: readonly string[] | null | undefined
+): BoardColumnPreference {
+  const columnOrder = resolveColumnOrderIds(columnIds, columnOrderIds)
+  const visibleColumns = resolveVisibleColumnIds(columnOrder, visibleColumnIds)
+  return {
+    visibleColumnIds: visibleColumns,
+    columnOrderIds: columnOrder,
+  }
+}
+
+export function orderColumns<T extends { id: string }>(
+  columns: readonly T[],
+  columnOrderIds: readonly string[] | null | undefined
+): T[] {
+  const byId = new Map(columns.map((column) => [column.id, column]))
+  const orderedIds = resolveColumnOrderIds(
+    columns.map((column) => column.id),
+    columnOrderIds
+  )
+  return orderedIds
+    .map((id) => byId.get(id))
+    .filter((column): column is T => column != null)
 }
 
 export function summarizeHiddenColumns(
@@ -80,24 +126,66 @@ export function summarizeHiddenColumns(
   }
 }
 
-export function readVisibleColumnPreference(
+export function readBoardColumnPreference(
   storage: Pick<Storage, 'getItem'> | undefined = getLocalStorage()
-): string[] | null {
+): BoardColumnPreference | null {
   if (!storage) return null
 
   try {
     const raw = storage.getItem(BOARD_VISIBLE_COLUMNS_STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return null
 
-    const values = parsed.filter(
-      (value): value is string => typeof value === 'string' && value.length > 0
+    if (Array.isArray(parsed)) {
+      const legacyVisible = uniqueStrings(parsed)
+      return legacyVisible.length > 0
+        ? { visibleColumnIds: legacyVisible, columnOrderIds: legacyVisible }
+        : null
+    }
+
+    if (!parsed || typeof parsed !== 'object') return null
+    const visibleColumnIds = uniqueStrings(
+      (parsed as { visibleColumnIds?: unknown }).visibleColumnIds
     )
-    return values.length > 0 ? [...new Set(values)] : null
+    const columnOrderIds = uniqueStrings(
+      (parsed as { columnOrderIds?: unknown }).columnOrderIds
+    )
+
+    if (visibleColumnIds.length === 0 && columnOrderIds.length === 0)
+      return null
+
+    return { visibleColumnIds, columnOrderIds }
   } catch {
     return null
   }
+}
+
+export function readVisibleColumnPreference(
+  storage: Pick<Storage, 'getItem'> | undefined = getLocalStorage()
+): string[] | null {
+  return readBoardColumnPreference(storage)?.visibleColumnIds ?? null
+}
+
+export function writeBoardColumnPreference(
+  columnIds: readonly string[],
+  selectedColumnIds: readonly string[],
+  columnOrderIds: readonly string[],
+  storage: Pick<Storage, 'setItem'> | undefined = getLocalStorage()
+): BoardColumnPreference {
+  const normalized = normalizeBoardColumnPreference(
+    columnIds,
+    selectedColumnIds,
+    columnOrderIds
+  )
+  if (!storage) return normalized
+
+  try {
+    storage.setItem(BOARD_VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify(normalized))
+  } catch {
+    // localStorage unavailable
+  }
+
+  return normalized
 }
 
 export function writeVisibleColumnPreference(
@@ -105,22 +193,13 @@ export function writeVisibleColumnPreference(
   selectedColumnIds: readonly string[],
   storage: Pick<Storage, 'setItem'> | undefined = getLocalStorage()
 ): string[] {
-  const normalized = normalizeColumnSelectionForSave(
+  const normalized = writeBoardColumnPreference(
     columnIds,
-    selectedColumnIds
+    selectedColumnIds,
+    selectedColumnIds,
+    storage
   )
-  if (!storage) return normalized
-
-  try {
-    storage.setItem(
-      BOARD_VISIBLE_COLUMNS_STORAGE_KEY,
-      JSON.stringify(normalized)
-    )
-  } catch {
-    // localStorage unavailable
-  }
-
-  return normalized
+  return normalized.visibleColumnIds
 }
 
 export function getUncategorizedColumnLabel(
@@ -129,12 +208,15 @@ export function getUncategorizedColumnLabel(
   return language === 'zh-CN' ? '未分类' : 'Uncategorized'
 }
 
-function sortColumnIdsByConfigOrder(
-  columnIds: readonly string[],
-  selectedColumnIds: readonly string[]
-): string[] {
-  const selected = new Set(selectedColumnIds)
-  return columnIds.filter((id) => selected.has(id))
+function uniqueStrings(values: unknown): string[] {
+  if (!Array.isArray(values)) return []
+  return [
+    ...new Set(
+      values.filter(
+        (value): value is string => typeof value === 'string' && value.length > 0
+      )
+    ),
+  ]
 }
 
 function getLocalStorage(): Storage | undefined {
