@@ -46,12 +46,7 @@ export function BoardView({
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
   const hiddenNoticeKeyRef = useRef<string | null>(null)
-  const {
-    columns,
-    hiddenSummary,
-    moveStatusOptions,
-    visibleStatusTags,
-  } = useBoardViewModel({
+  const { columns, hiddenSummary, visibleStatusTags } = useBoardViewModel({
     records,
     config,
     language: lang,
@@ -109,13 +104,11 @@ export function BoardView({
                   profiles={profiles}
                   assetOptions={assetOptions}
                   relationTargetOptions={relationTargetOptions}
-                  moveStatusOptions={moveStatusOptions}
                   movingRecordId={movingRecordId}
                   moveErrors={moveErrors}
                   dragDisabled={isMovePending || !onMoveStatus}
                   registerStatusDropTarget={registerStatusDropTarget}
                   onCardClick={onCardClick}
-                  onMoveStatus={onMoveStatus}
                 />
               ))}
             </div>
