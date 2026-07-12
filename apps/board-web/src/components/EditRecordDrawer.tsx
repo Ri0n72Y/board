@@ -6,6 +6,8 @@ import {
   useRef,
   useState,
   type MutableRefObject,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react'
 import type {
   Profile,
@@ -41,6 +43,7 @@ import { AnimatedDrawer } from './ui/AnimatedDrawer'
 import { Button } from './ui/Button'
 import { SearchSelect } from './ui/SearchSelect'
 import { TextInput } from './ui/TextInput'
+import { cn } from '../lib/cn'
 
 interface EditRecordDrawerProps {
   open: boolean
@@ -64,6 +67,19 @@ interface BaseHead {
   currentVersion: number
 }
 
+type EditableFieldId =
+  | 'title'
+  | 'summary'
+  | 'details'
+  | 'assignee'
+  | 'statusTag'
+  | 'priorityTag'
+  | 'otherTags'
+  | 'assets'
+  | 'relations'
+
+type FieldDirtyState = Record<EditableFieldId, boolean>
+
 export function EditRecordDrawer({
   open,
   record,
@@ -82,8 +98,17 @@ export function EditRecordDrawer({
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
   const current = record.body
+  const baseForm = useMemo(
+    () => initialFormState(current, configOtherTags ?? knownTags, statusTags),
+    [configOtherTags, current, knownTags, statusTags]
+  )
   const [form, setForm] = useState<EditPatchFormState>(() =>
     initialFormState(current, configOtherTags ?? knownTags, statusTags)
+  )
+  const [activeField, setActiveField] = useState<EditableFieldId | null>(null)
+  const fieldDirty = useMemo(
+    () => buildFieldDirtyState(form, baseForm),
+    [baseForm, form]
   )
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -190,6 +215,20 @@ export function EditRecordDrawer({
     abortEdit(requestIdRef, abortRef, setIsSaving)
     onClose()
   }, [onClose])
+
+  const handleFormPointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLFormElement>) => {
+      if (!(event.target instanceof Element)) {
+        setActiveField(null)
+        return
+      }
+      const field = event.target
+        .closest<HTMLElement>('[data-edit-field]')
+        ?.dataset.editField
+      setActiveField(isEditableFieldId(field) ? field : null)
+    },
+    []
+  )
 
   async function submit() {
     const validation = buildPatchDraft(form, current)
@@ -303,6 +342,7 @@ export function EditRecordDrawer({
     >
       <form
         className="grid gap-4"
+        onPointerDown={handleFormPointerDown}
         onSubmit={(event) => {
           event.preventDefault()
           void submit()
@@ -328,129 +368,169 @@ export function EditRecordDrawer({
             label={t('record.schema')}
             value={schemaLabel(current.schema, t)}
           />
-          <TextInput
-            label={t('edit.titleField')}
-            value={form.title}
-            onChange={(event) =>
-              setForm((state) => ({ ...state, title: event.target.value }))
+          <EditableFieldFrame
+            field="title"
+            activeField={activeField}
+            dirty={fieldDirty.title}
+          >
+            <TextInput
+              label={t('edit.titleField')}
+              value={form.title}
+              onChange={(event) =>
+                setForm((state) => ({ ...state, title: event.target.value }))
+              }
+              onFocus={() => setActiveField('title')}
+              placeholder={t('edit.titlePlaceholder')}
+              disabled={isSaving}
+              required
+            />
+          </EditableFieldFrame>
+        </div>
+
+        <EditableFieldFrame
+          field="summary"
+          activeField={activeField}
+          dirty={fieldDirty.summary}
+        >
+          <TextAreaField
+            label={t('edit.summary')}
+            value={form.summary}
+            onChange={(value) =>
+              setForm((state) => ({ ...state, summary: value }))
             }
-            placeholder={t('edit.titlePlaceholder')}
+            onFocus={() => setActiveField('summary')}
+            placeholder={t('edit.summaryPlaceholder')}
             disabled={isSaving}
-            required
+            rows={3}
           />
-        </div>
+        </EditableFieldFrame>
 
-        <TextAreaField
-          label={t('edit.summary')}
-          value={form.summary}
-          onChange={(value) =>
-            setForm((state) => ({ ...state, summary: value }))
-          }
-          placeholder={t('edit.summaryPlaceholder')}
-          disabled={isSaving}
-          rows={3}
-        />
+        <EditableFieldFrame
+          field="details"
+          activeField={activeField}
+          dirty={fieldDirty.details}
+        >
+          <TextAreaField
+            label={t('edit.details')}
+            value={form.details}
+            onChange={(value) =>
+              setForm((state) => ({ ...state, details: value }))
+            }
+            onFocus={() => setActiveField('details')}
+            placeholder={t('edit.detailsPlaceholder')}
+            disabled={isSaving}
+            rows={5}
+          />
+        </EditableFieldFrame>
 
-        <TextAreaField
-          label={t('edit.details')}
-          value={form.details}
-          onChange={(value) =>
-            setForm((state) => ({ ...state, details: value }))
-          }
-          placeholder={t('edit.detailsPlaceholder')}
-          disabled={isSaving}
-          rows={5}
-        />
-
-        {/* Assignee — moved up near title/summary per Fix 4 */}
-        <SearchSelect
-          mode="option"
-          label={t('edit.assignee')}
-          value={form.assignee || null}
-          onChange={(next) =>
-            setForm((state) => ({ ...state, assignee: next ?? '' }))
-          }
-          options={profileOptions}
-          placeholder={t('edit.assigneePlaceholder')}
-          disabled={isSaving}
-        />
-
-        {/* Status select-only chip grid */}
-        <div className="grid gap-2">
-          <label className="text-xs font-bold text-slate-500">
-            {t('edit.statusTag')}
-          </label>
-          <div className="flex flex-wrap gap-1.5">
-            {statusTags.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                className={
-                  form.statusTag === tag
-                    ? 'inline-flex min-h-7 max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
-                    : 'inline-flex min-h-7 max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
-                }
-                onClick={() => setForm((c) => ({ ...c, statusTag: tag }))}
-                disabled={isSaving}
-              >
-                {formatTagLabel(tag, lang)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Priority select-only chip grid */}
-        <div className="grid gap-2">
-          <label className="text-xs font-bold text-slate-500">
-            {t('edit.priorityTag')}
-          </label>
-          <div className="flex flex-wrap gap-1.5">
-            {priorityTags.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                className={
-                  form.priorityTag === tag
-                    ? 'inline-flex min-h-7 max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
-                    : 'inline-flex min-h-7 max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
-                }
-                onClick={() =>
-                  setForm((c) => ({
-                    ...c,
-                    priorityTag: c.priorityTag === tag ? '' : tag,
-                  }))
-                }
-                disabled={isSaving}
-              >
-                {formatTagLabel(tag, lang)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Other tags */}
-        {otherTagOptions.length > 0 && (
+        <EditableFieldFrame
+          field="assignee"
+          activeField={activeField}
+          dirty={fieldDirty.assignee}
+        >
           <SearchSelect
-            mode="tag"
-            label={t('edit.otherTags')}
-            options={otherTagSelectOptions}
-            values={form.otherTags}
-            multiple
-            onChangeMany={(nextTags) =>
-              setForm((current) => ({
-                ...current,
-                otherTags: nextTags.filter((tag) =>
-                  otherTagOptions.includes(tag as Tag)
-                ) as Tag[],
-              }))
+            mode="option"
+            label={t('edit.assignee')}
+            value={form.assignee || null}
+            onChange={(next) =>
+              setForm((state) => ({ ...state, assignee: next ?? '' }))
             }
-            placeholder={t('searchSelect.searchPlaceholder')}
-            selectedLabel={t('edit.otherTags')}
+            options={profileOptions}
+            placeholder={t('edit.assigneePlaceholder')}
             disabled={isSaving}
           />
+        </EditableFieldFrame>
+
+        <EditableFieldFrame
+          field="statusTag"
+          activeField={activeField}
+          dirty={fieldDirty.statusTag}
+        >
+          <div className="grid gap-2">
+            <label className="text-xs font-bold text-slate-500">
+              {t('edit.statusTag')}
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {statusTags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className={
+                    form.statusTag === tag
+                      ? 'inline-flex min-h-7 max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
+                      : 'inline-flex min-h-7 max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
+                  }
+                  onClick={() => setForm((c) => ({ ...c, statusTag: tag }))}
+                  disabled={isSaving}
+                >
+                  {formatTagLabel(tag, lang)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </EditableFieldFrame>
+
+        <EditableFieldFrame
+          field="priorityTag"
+          activeField={activeField}
+          dirty={fieldDirty.priorityTag}
+        >
+          <div className="grid gap-2">
+            <label className="text-xs font-bold text-slate-500">
+              {t('edit.priorityTag')}
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {priorityTags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className={
+                    form.priorityTag === tag
+                      ? 'inline-flex min-h-7 max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
+                      : 'inline-flex min-h-7 max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
+                  }
+                  onClick={() =>
+                    setForm((c) => ({
+                      ...c,
+                      priorityTag: c.priorityTag === tag ? '' : tag,
+                    }))
+                  }
+                  disabled={isSaving}
+                >
+                  {formatTagLabel(tag, lang)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </EditableFieldFrame>
+
+        {otherTagOptions.length > 0 && (
+          <EditableFieldFrame
+            field="otherTags"
+            activeField={activeField}
+            dirty={fieldDirty.otherTags}
+          >
+            <SearchSelect
+              mode="tag"
+              label={t('edit.otherTags')}
+              options={otherTagSelectOptions}
+              values={form.otherTags}
+              multiple
+              onChangeMany={(nextTags) =>
+                setForm((current) => ({
+                  ...current,
+                  otherTags: nextTags.filter((tag) =>
+                    otherTagOptions.includes(tag as Tag)
+                  ) as Tag[],
+                }))
+              }
+              placeholder={t('searchSelect.searchPlaceholder')}
+              selectedLabel={t('edit.otherTags')}
+              disabled={isSaving}
+            />
+          </EditableFieldFrame>
         )}
 
-        {/* Unsupported existing tags (read-only) */}
         {form.unsupportedTags.length > 0 && (
           <div className="grid gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
             <label className="text-xs font-bold text-amber-800">
@@ -472,31 +552,43 @@ export function EditRecordDrawer({
           </div>
         )}
 
-        <SearchSelect
-          mode="option"
-          label={t('edit.assetSelector')}
-          options={selectableAssetOptions}
-          values={form.assets}
-          multiple
-          onChangeMany={(assets) => setForm((state) => ({ ...state, assets }))}
-          placeholder={t('searchSelect.searchPlaceholder')}
-          selectedLabel={t('edit.assets')}
-          emptyText={t('filters.noAssetOptions')}
-          allowCustomValue={false}
-          disabled={isSaving}
-        />
+        <EditableFieldFrame
+          field="assets"
+          activeField={activeField}
+          dirty={fieldDirty.assets}
+        >
+          <SearchSelect
+            mode="option"
+            label={t('edit.assetSelector')}
+            options={selectableAssetOptions}
+            values={form.assets}
+            multiple
+            onChangeMany={(assets) => setForm((state) => ({ ...state, assets }))}
+            placeholder={t('searchSelect.searchPlaceholder')}
+            selectedLabel={t('edit.assets')}
+            emptyText={t('filters.noAssetOptions')}
+            allowCustomValue={false}
+            disabled={isSaving}
+          />
+        </EditableFieldFrame>
 
-        <RelationEditor
-          label={t('relations.title')}
-          value={form.relations}
-          targetOptions={selectableRelationTargetOptions}
-          constraintOptions={relationConstraintOptions}
-          currentRecordId={current.id}
-          onChange={(relations) =>
-            setForm((state) => ({ ...state, relations }))
-          }
-          disabled={isSaving}
-        />
+        <EditableFieldFrame
+          field="relations"
+          activeField={activeField}
+          dirty={fieldDirty.relations}
+        >
+          <RelationEditor
+            label={t('relations.title')}
+            value={form.relations}
+            targetOptions={selectableRelationTargetOptions}
+            constraintOptions={relationConstraintOptions}
+            currentRecordId={current.id}
+            onChange={(relations) =>
+              setForm((state) => ({ ...state, relations }))
+            }
+            disabled={isSaving}
+          />
+        </EditableFieldFrame>
       </form>
     </AnimatedDrawer>
   )
@@ -532,6 +624,71 @@ function initialFormState(
     assets: [...(record.assets ?? [])],
     relations: (record.relations ?? []).map((relation) => ({ ...relation })),
   }
+}
+
+function buildFieldDirtyState(
+  form: EditPatchFormState,
+  base: EditPatchFormState
+): FieldDirtyState {
+  return {
+    title: form.title !== base.title,
+    summary: form.summary !== base.summary,
+    details: form.details !== base.details,
+    assignee: form.assignee !== base.assignee,
+    statusTag: form.statusTag !== base.statusTag,
+    priorityTag: form.priorityTag !== base.priorityTag,
+    otherTags: !sameStringList(form.otherTags, base.otherTags),
+    assets: !sameStringList(form.assets, base.assets),
+    relations: JSON.stringify(form.relations) !== JSON.stringify(base.relations),
+  }
+}
+
+function EditableFieldFrame({
+  field,
+  activeField,
+  dirty,
+  children,
+}: {
+  field: EditableFieldId
+  activeField: EditableFieldId | null
+  dirty: boolean
+  children: ReactNode
+}) {
+  const isActive = activeField === field
+  return (
+    <div
+      data-edit-field={field}
+      className={cn(
+        'rounded-lg border p-2 transition',
+        isActive
+          ? 'border-emerald-600 bg-emerald-50/30 ring-2 ring-emerald-100'
+          : dirty
+            ? 'border-amber-400 bg-amber-50/30'
+            : 'border-transparent bg-transparent'
+      )}
+    >
+      {children}
+    </div>
+  )
+}
+
+function isEditableFieldId(value: string | undefined): value is EditableFieldId {
+  return (
+    value === 'title' ||
+    value === 'summary' ||
+    value === 'details' ||
+    value === 'assignee' ||
+    value === 'statusTag' ||
+    value === 'priorityTag' ||
+    value === 'otherTags' ||
+    value === 'assets' ||
+    value === 'relations'
+  )
+}
+
+function sameStringList(left: readonly string[], right: readonly string[]) {
+  if (left.length !== right.length) return false
+  return left.every((value, index) => value === right[index])
 }
 
 function abortEdit(
@@ -577,6 +734,7 @@ function TextAreaField({
   label,
   value,
   onChange,
+  onFocus,
   placeholder,
   disabled,
   rows,
@@ -585,6 +743,7 @@ function TextAreaField({
   label: string
   value: string
   onChange: (value: string) => void
+  onFocus?: () => void
   placeholder?: string
   disabled?: boolean
   rows: number
@@ -602,6 +761,7 @@ function TextAreaField({
         className="w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        onFocus={onFocus}
         placeholder={placeholder}
         disabled={disabled}
         rows={rows}
