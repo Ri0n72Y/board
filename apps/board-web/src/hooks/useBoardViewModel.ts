@@ -9,6 +9,7 @@ import type {
 import { getStatusColumns, groupRecordsByStatus } from '../utils/boardView'
 import {
   getUncategorizedColumnLabel,
+  resolveColumnOrderIds,
   resolveVisibleColumnIds,
   summarizeHiddenColumns,
 } from '../utils/boardViewColumns'
@@ -21,6 +22,7 @@ interface UseBoardViewModelArgs {
   config: BoardConfig | null
   language: string | undefined
   visibleColumnIds?: string[] | null
+  columnOrderIds?: string[] | null
 }
 
 export function useBoardViewModel({
@@ -28,6 +30,7 @@ export function useBoardViewModel({
   config,
   language,
   visibleColumnIds,
+  columnOrderIds,
 }: UseBoardViewModelArgs) {
   const tagLabel = useCallback(
     (tag: string) => formatTagLabel(tag, language),
@@ -44,14 +47,20 @@ export function useBoardViewModel({
 
   const columns = useMemo(() => {
     const columnsById = new Map(allColumns.map((column) => [column.id, column]))
-    const selectedIds = resolveVisibleColumnIds(
+    const orderedIds = resolveColumnOrderIds(
       allColumns.map((column) => column.id),
+      columnOrderIds
+    )
+    const selectedIds = resolveVisibleColumnIds(
+      orderedIds,
       visibleColumnIds
     )
-    return selectedIds
+    const selected = new Set(selectedIds)
+    return orderedIds
+      .filter((id) => selected.has(id))
       .map((id) => columnsById.get(id))
       .filter((column): column is (typeof allColumns)[number] => column != null)
-  }, [allColumns, visibleColumnIds])
+  }, [allColumns, columnOrderIds, visibleColumnIds])
 
   const hiddenSummary = useMemo(
     () =>

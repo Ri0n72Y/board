@@ -25,6 +25,7 @@ interface BoardViewProps {
   movingRecordId?: string | null
   moveErrors?: Record<string, string>
   visibleColumnIds?: string[] | null
+  columnOrderIds?: string[] | null
   onMoveStatus?: (
     record: RecordResponse<RecordItem<RecordBody>>,
     targetStatusTag: Tag
@@ -41,6 +42,7 @@ export function BoardView({
   movingRecordId,
   moveErrors,
   visibleColumnIds,
+  columnOrderIds,
   onMoveStatus,
 }: BoardViewProps) {
   const { t, i18n } = useTranslation()
@@ -51,6 +53,7 @@ export function BoardView({
     config,
     language: lang,
     visibleColumnIds,
+    columnOrderIds,
   })
   const hiddenNoticeKey = visibleColumnIds?.join('|') ?? 'default'
   const isMovePending = movingRecordId != null

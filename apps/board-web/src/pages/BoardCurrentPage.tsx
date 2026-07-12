@@ -644,6 +644,7 @@ export function BoardCurrentPage() {
                   movingRecordId={statusMoveController.movingRecordId}
                   moveErrors={statusMoveController.moveErrors}
                   visibleColumnIds={visibleBoardColumnIds}
+                  columnOrderIds={boardColumnOrderIds}
                   onCardClick={openDetail}
                   onMoveStatus={statusMoveController.moveRecordStatus}
                 />
