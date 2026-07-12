@@ -249,6 +249,15 @@ export function RecordDetailDrawer({
     label: formatTagLabel(tag, lang),
     meta: tag,
   }))
+  const draftTags = buildDraftTags(editState.draft)
+  const draftAssignee = editState.draft.assignee.trim()
+  const draftAssigneeProfile = lookupProfile(profiles ?? null, draftAssignee)
+  const draftAssigneeDisplay = formatProfileCompact(
+    draftAssignee,
+    draftAssigneeProfile,
+    t('record.unassigned'),
+    t('record.unknownMember')
+  )
   const sectionDirty = {
     title: editState.draft.title.trim() !== displayBody.title,
     summary:
@@ -257,18 +266,16 @@ export function RecordDetailDrawer({
     details:
       normalizeNullable(editState.draft.details) !==
       normalizeNullable(displayBody.content),
-    assignee: editState.draft.assignee.trim() !== displayAssignee,
-    tags: !sameStringList(buildDraftTags(editState.draft), displayTags),
+    assignee: draftAssignee !== displayAssignee,
+    tags: !sameStringList(draftTags, displayTags),
   }
 
   function beginEdit(section: DetailEditSection) {
     editState.beginEdit(section)
   }
 
-  function clearCleanEditState() {
-    if (editState.editingSections.length === 0 || editState.dirty) return
-    editState.setDraft(initialDraft())
-    editState.setEditingSections([])
+  function deactivateActiveEditSection() {
+    editState.deactivateEditingSection()
   }
 
   function requestClose() {
@@ -380,13 +387,13 @@ export function RecordDetailDrawer({
           description: editState.draft.summary.trim(),
           content: editState.draft.details.trim(),
         },
-        assignee: editState.draft.assignee.trim(),
-        tags: buildDraftTags(editState.draft),
+        assignee: draftAssignee,
+        tags: draftTags,
       })
       setIsSaving(false)
       abortRef.current = null
       toastSuccess(t('edit.saveSuccess'))
-      editState.finishSave(editState.editingSection)
+      editState.finishSave(null)
       await loadCurrentBoard(effectiveFilters)
     } catch (caught: unknown) {
       if (
@@ -432,7 +439,7 @@ export function RecordDetailDrawer({
             {t('record.details')}
           </Button>
         )}
-        {activePanel === 'detail' && editState.editingSections.length > 0 && (
+        {activePanel === 'detail' && editState.dirty && (
           <Button
             type="button"
             onClick={() => void save()}
@@ -455,7 +462,7 @@ export function RecordDetailDrawer({
       <AnimatedDrawer
         open={open}
         onClose={requestClose}
-        title={displayBody.title || activeCurrent.pid}
+        title={sectionDirty.title ? editState.draft.title.trim() || activeCurrent.pid : displayBody.title || activeCurrent.pid}
         subtitle={
           activePanel === 'history'
             ? `${activeCurrent.pid} · ${t('history.subtitle')}`
@@ -487,13 +494,13 @@ export function RecordDetailDrawer({
           ) : (
             <div
               className="grid min-h-full content-start gap-4"
-              onClick={clearCleanEditState}
+              onClick={deactivateActiveEditSection}
             >
               <EditableSection
                 title={t('record.assignee')}
                 inline
                 editing={editState.isEditing('assignee')}
-                dirty={editState.isEditing('assignee') && sectionDirty.assignee}
+                dirty={sectionDirty.assignee}
                 disabled={isSaving}
                 onEdit={() => beginEdit('assignee')}
                 editor={
@@ -513,16 +520,23 @@ export function RecordDetailDrawer({
                 }
               >
                 <div className="flex min-w-0 items-center justify-end gap-3">
-                  {displayAssignee && (
+                  {(sectionDirty.assignee ? draftAssignee : displayAssignee) && (
                     <ProfileAvatar
-                      name={profile?.name ?? displayAssignee}
-                      pk={displayAssignee}
-                      avatarUrl={profile?.avatarUrl ?? null}
+                      name={
+                        (sectionDirty.assignee ? draftAssigneeProfile : profile)
+                          ?.name ??
+                        (sectionDirty.assignee ? draftAssignee : displayAssignee)
+                      }
+                      pk={sectionDirty.assignee ? draftAssignee : displayAssignee}
+                      avatarUrl={
+                        (sectionDirty.assignee ? draftAssigneeProfile : profile)
+                          ?.avatarUrl ?? null
+                      }
                       size={32}
                     />
                   )}
                   <p className="truncate text-sm font-semibold text-slate-900">
-                    {assigneeDisplay}
+                    {sectionDirty.assignee ? draftAssigneeDisplay : assigneeDisplay}
                   </p>
                 </div>
               </EditableSection>
@@ -531,7 +545,7 @@ export function RecordDetailDrawer({
                 title={t('edit.titleField')}
                 inline
                 editing={editState.isEditing('title')}
-                dirty={editState.isEditing('title') && sectionDirty.title}
+                dirty={sectionDirty.title}
                 disabled={isSaving}
                 onEdit={() => beginEdit('title')}
                 editor={
@@ -549,14 +563,16 @@ export function RecordDetailDrawer({
                 }
               >
                 <p className="truncate text-sm leading-relaxed text-slate-800">
-                  {displayBody.title || activeCurrent.pid}
+                  {sectionDirty.title
+                    ? editState.draft.title.trim() || activeCurrent.pid
+                    : displayBody.title || activeCurrent.pid}
                 </p>
               </EditableSection>
 
               <EditableSection
                 title={t('edit.summary')}
                 editing={editState.isEditing('summary')}
-                dirty={editState.isEditing('summary') && sectionDirty.summary}
+                dirty={sectionDirty.summary}
                 disabled={isSaving}
                 onEdit={() => beginEdit('summary')}
                 editor={
@@ -575,14 +591,16 @@ export function RecordDetailDrawer({
                 }
               >
                 <p className="text-sm leading-relaxed text-slate-800">
-                  {displayBody.description || '—'}
+                  {sectionDirty.summary
+                    ? editState.draft.summary || '—'
+                    : displayBody.description || '—'}
                 </p>
               </EditableSection>
 
               <EditableSection
                 title={t('edit.details')}
                 editing={editState.isEditing('details')}
-                dirty={editState.isEditing('details') && sectionDirty.details}
+                dirty={sectionDirty.details}
                 disabled={isSaving}
                 onEdit={() => beginEdit('details')}
                 editor={
@@ -601,7 +619,9 @@ export function RecordDetailDrawer({
                 }
               >
                 <pre className="max-h-60 overflow-y-auto whitespace-pre-wrap wrap-break-word rounded bg-slate-50 p-3 text-sm leading-relaxed text-slate-800">
-                  {displayBody.content || '—'}
+                  {sectionDirty.details
+                    ? editState.draft.details || '—'
+                    : displayBody.content || '—'}
                 </pre>
               </EditableSection>
 
@@ -609,7 +629,7 @@ export function RecordDetailDrawer({
                 title={t('filters.tag')}
                 inline={!editState.isEditing('tags')}
                 editing={editState.isEditing('tags')}
-                dirty={editState.isEditing('tags') && sectionDirty.tags}
+                dirty={sectionDirty.tags}
                 disabled={isSaving}
                 onEdit={() => beginEdit('tags')}
                 editor={
@@ -663,8 +683,8 @@ export function RecordDetailDrawer({
                   </div>
                 }
               >
-                {displayTags.length > 0 ? (
-                  <TagChipRow tags={displayTags} readonly />
+                {(sectionDirty.tags ? draftTags : displayTags).length > 0 ? (
+                  <TagChipRow tags={sectionDirty.tags ? draftTags : displayTags} readonly />
                 ) : (
                   <p className="text-sm text-slate-500">—</p>
                 )}
