@@ -8,7 +8,6 @@ import type {
 import { useTranslation } from 'react-i18next'
 import { RecordCard } from './RecordCard'
 import type { BoardStatusColumn } from '../utils/boardView'
-import type { MoveStatusOption } from '../utils/statusMove'
 import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
 import { cn } from '../lib/cn'
 import {
@@ -21,16 +20,11 @@ interface BoardStatusDropColumnProps {
   profiles?: Profile[] | null
   assetOptions: RecordReferenceOption[]
   relationTargetOptions: RecordReferenceOption[]
-  moveStatusOptions: MoveStatusOption[]
   movingRecordId?: string | null
   moveErrors?: Record<string, string>
   dragDisabled: boolean
   registerStatusDropTarget: (tag: Tag, element: HTMLElement | null) => void
   onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
-  onMoveStatus?: (
-    record: RecordResponse<RecordItem<RecordBody>>,
-    targetStatusTag: Tag
-  ) => void
 }
 
 export function BoardStatusDropColumn({
@@ -38,13 +32,11 @@ export function BoardStatusDropColumn({
   profiles,
   assetOptions,
   relationTargetOptions,
-  moveStatusOptions,
   movingRecordId,
   moveErrors,
   dragDisabled,
   registerStatusDropTarget,
   onCardClick,
-  onMoveStatus,
 }: BoardStatusDropColumnProps) {
   const { t } = useTranslation()
   const { isDropTarget, setDropRef } = useStatusColumnDropTarget({
@@ -83,17 +75,15 @@ export function BoardStatusDropColumn({
               profiles={profiles}
               assetOptions={assetOptions}
               relationTargetOptions={relationTargetOptions}
-              moveStatusOptions={moveStatusOptions}
               isMovingStatus={movingRecordId === record.body.id}
               moveStatusError={moveErrors?.[record.body.id] ?? null}
               dragDisabled={dragDisabled}
               onCardClick={onCardClick}
-              onMoveStatus={onMoveStatus}
             />
           ))}
         </div>
       ) : (
-        <p className="rounded-md border border-dashed border-slate-300 bg-white px-3 py-4 text-sm text-slate-500">
+        <p className="px-1 py-3 text-sm text-slate-400">
           {t('record.noRecords')}
         </p>
       )}
@@ -106,26 +96,19 @@ function DraggableRecordCard({
   profiles,
   assetOptions,
   relationTargetOptions,
-  moveStatusOptions,
   isMovingStatus,
   moveStatusError,
   dragDisabled,
   onCardClick,
-  onMoveStatus,
 }: {
   record: RecordResponse<RecordItem<RecordBody>>
   profiles?: Profile[] | null
   assetOptions: RecordReferenceOption[]
   relationTargetOptions: RecordReferenceOption[]
-  moveStatusOptions: MoveStatusOption[]
   isMovingStatus: boolean
   moveStatusError: string | null
   dragDisabled: boolean
   onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
-  onMoveStatus?: (
-    record: RecordResponse<RecordItem<RecordBody>>,
-    targetStatusTag: Tag
-  ) => void
 }) {
   const { cardRef, dragHandleRef, isDragging } = useRecordStatusDraggable({
     recordId: record.body.id,
@@ -139,7 +122,6 @@ function DraggableRecordCard({
       assetOptions={assetOptions}
       relationTargetOptions={relationTargetOptions}
       compact
-      moveStatusOptions={moveStatusOptions}
       isMovingStatus={isMovingStatus}
       moveStatusError={moveStatusError}
       isDragEnabled={!dragDisabled}
@@ -147,7 +129,6 @@ function DraggableRecordCard({
       dragRef={cardRef}
       dragHandleRef={dragHandleRef}
       onCardClick={onCardClick}
-      onMoveStatus={onMoveStatus}
     />
   )
 }
