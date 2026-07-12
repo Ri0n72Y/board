@@ -28,9 +28,9 @@ interface AppSettingsDrawerProps {
   onClose: () => void
   visibleColumnOptions: BoardStatusColumn[]
   visibleColumnIds: string[]
-  columnOrderIds: string[]
+  columnOrderIds?: string[]
   onVisibleColumnIdsChange: (columnIds: string[]) => void
-  onColumnOrderIdsChange: (columnIds: string[]) => void
+  onColumnOrderIdsChange?: (columnIds: string[]) => void
 }
 
 export function AppSettingsDrawer({
@@ -38,7 +38,7 @@ export function AppSettingsDrawer({
   onClose,
   visibleColumnOptions,
   visibleColumnIds,
-  columnOrderIds,
+  columnOrderIds = [],
   onVisibleColumnIdsChange,
   onColumnOrderIdsChange,
 }: AppSettingsDrawerProps) {
@@ -49,9 +49,27 @@ export function AppSettingsDrawer({
   const config = useBoardMetadataStore((state) => state.config)
   const metadataLoading = useBoardMetadataStore((state) => state.isLoading)
   const metadataError = useBoardMetadataStore((state) => state.error)
+  const orderedVisibleColumnOptions = useMemo(() => {
+    const byId = new Map(visibleColumnOptions.map((column) => [column.id, column]))
+    const preferredOrder =
+      columnOrderIds.length > 0
+        ? columnOrderIds
+        : [
+            ...visibleColumnIds,
+            ...visibleColumnOptions
+              .map((column) => column.id)
+              .filter((id) => !selected.has(id)),
+          ]
+    const ordered = preferredOrder
+      .map((id) => byId.get(id))
+      .filter((column): column is BoardStatusColumn => column != null)
+    const orderedIds = new Set(ordered.map((column) => column.id))
+    const missing = visibleColumnOptions.filter((column) => !orderedIds.has(column.id))
+    return [...ordered, ...missing]
+  }, [columnOrderIds, selected, visibleColumnIds, visibleColumnOptions])
   const orderedColumnIds = useMemo(
-    () => visibleColumnOptions.map((column) => column.id),
-    [visibleColumnOptions]
+    () => orderedVisibleColumnOptions.map((column) => column.id),
+    [orderedVisibleColumnOptions]
   )
 
   const toggleColumn = useCallback(
@@ -67,9 +85,13 @@ export function AppSettingsDrawer({
   const reorderColumn = useCallback(
     (sourceId: string, targetId: string) => {
       const next = moveColumnId(orderedColumnIds, sourceId, targetId)
-      onColumnOrderIdsChange(next)
+      if (onColumnOrderIdsChange) {
+        onColumnOrderIdsChange(next)
+        return
+      }
+      onVisibleColumnIdsChange(next.filter((id) => selected.has(id)))
     },
-    [onColumnOrderIdsChange, orderedColumnIds]
+    [onColumnOrderIdsChange, onVisibleColumnIdsChange, orderedColumnIds, selected]
   )
 
   const handleColumnDragEnd = useCallback(
@@ -137,7 +159,7 @@ export function AppSettingsDrawer({
             </div>
             <DragDropProvider onDragEnd={handleColumnDragEnd}>
               <div className="grid gap-2">
-                {visibleColumnOptions.map((column) => (
+                {orderedVisibleColumnOptions.map((column) => (
                   <ColumnOrderRow
                     key={column.id}
                     column={column}
@@ -150,11 +172,6 @@ export function AppSettingsDrawer({
             <p className="text-xs text-slate-500">
               {t('settings.visibleColumnsEmptyFallback')}
             </p>
-            {columnOrderIds.length > 0 && (
-              <p className="text-xs text-slate-400">
-                {t('settings.columnOrderSaved')}
-              </p>
-            )}
           </section>
         )}
 
