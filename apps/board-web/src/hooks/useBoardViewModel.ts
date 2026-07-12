@@ -35,25 +35,23 @@ export function useBoardViewModel({
   )
   const uncategorizedLabel = getUncategorizedColumnLabel(language)
 
-  const columns = useMemo(() => {
-    const statusColumns = getStatusColumns(config, records, tagLabel, {
-      uncategorizedLabel,
-    })
-    const groupedColumns = groupRecordsByStatus(records, statusColumns)
-    const selectedIds = resolveVisibleColumnIds(
-      groupedColumns.map((column) => column.id),
-      visibleColumnIds
-    )
-    const visible = new Set(selectedIds)
-    return groupedColumns.filter((column) => visible.has(column.id))
-  }, [config, records, tagLabel, uncategorizedLabel, visibleColumnIds])
-
   const allColumns = useMemo(() => {
     const statusColumns = getStatusColumns(config, records, tagLabel, {
       uncategorizedLabel,
     })
     return groupRecordsByStatus(records, statusColumns)
   }, [config, records, tagLabel, uncategorizedLabel])
+
+  const columns = useMemo(() => {
+    const columnsById = new Map(allColumns.map((column) => [column.id, column]))
+    const selectedIds = resolveVisibleColumnIds(
+      allColumns.map((column) => column.id),
+      visibleColumnIds
+    )
+    return selectedIds
+      .map((id) => columnsById.get(id))
+      .filter((column): column is (typeof allColumns)[number] => column != null)
+  }, [allColumns, visibleColumnIds])
 
   const hiddenSummary = useMemo(
     () =>
