@@ -6,6 +6,7 @@ import type {
 } from '@labour-board/shared'
 import {
   ArrowPathIcon,
+  Cog6ToothIcon,
   ExclamationTriangleIcon,
   PlusIcon,
   EllipsisHorizontalIcon,
@@ -56,9 +57,10 @@ import {
 import { getStatusColumns } from '../utils/boardView'
 import {
   getUncategorizedColumnLabel,
-  readVisibleColumnPreference,
+  readBoardColumnPreference,
+  resolveColumnOrderIds,
   resolveVisibleColumnIds,
-  writeVisibleColumnPreference,
+  writeBoardColumnPreference,
 } from '../utils/boardViewColumns'
 import {
   buildAssetReferenceOptions,
@@ -123,9 +125,9 @@ export function BoardCurrentPage() {
     useState<RecordReferenceOption | null>(null)
   const [selectedRelationTargetOption, setSelectedRelationTargetOption] =
     useState<RecordReferenceOption | null>(null)
-  const [storedVisibleColumnIds, setStoredVisibleColumnIds] = useState<
-    string[] | null
-  >(() => readVisibleColumnPreference())
+  const [storedBoardColumnPreference, setStoredBoardColumnPreference] = useState(
+    () => readBoardColumnPreference()
+  )
 
   useEffect(() => {
     const controller = new AbortController()
@@ -290,19 +292,43 @@ export function BoardCurrentPage() {
     () => boardColumnOptions.map((column) => column.id),
     [boardColumnOptions]
   )
+  const boardColumnOrderIds = useMemo(
+    () =>
+      resolveColumnOrderIds(
+        boardColumnIds,
+        storedBoardColumnPreference?.columnOrderIds
+      ),
+    [boardColumnIds, storedBoardColumnPreference]
+  )
   const visibleBoardColumnIds = useMemo(
-    () => resolveVisibleColumnIds(boardColumnIds, storedVisibleColumnIds),
-    [boardColumnIds, storedVisibleColumnIds]
+    () =>
+      resolveVisibleColumnIds(
+        boardColumnOrderIds,
+        storedBoardColumnPreference?.visibleColumnIds
+      ),
+    [boardColumnOrderIds, storedBoardColumnPreference]
   )
   const updateVisibleBoardColumnIds = useCallback(
     (nextColumnIds: string[]) => {
-      const normalized = writeVisibleColumnPreference(
+      const normalized = writeBoardColumnPreference(
         boardColumnIds,
-        nextColumnIds
+        nextColumnIds,
+        boardColumnOrderIds
       )
-      setStoredVisibleColumnIds(normalized)
+      setStoredBoardColumnPreference(normalized)
     },
-    [boardColumnIds]
+    [boardColumnIds, boardColumnOrderIds]
+  )
+  const updateBoardColumnOrderIds = useCallback(
+    (nextColumnOrderIds: string[]) => {
+      const normalized = writeBoardColumnPreference(
+        boardColumnIds,
+        visibleBoardColumnIds,
+        nextColumnOrderIds
+      )
+      setStoredBoardColumnPreference(normalized)
+    },
+    [boardColumnIds, visibleBoardColumnIds]
   )
 
   function refresh() {
@@ -337,7 +363,6 @@ export function BoardCurrentPage() {
     setEditInitialPatchDescription(undefined)
   }, [])
 
-  // ── Card detail ──
   const openDetail = useCallback(
     (record: RecordResponse<RecordItem<RecordBody>>) => {
       historyController.closeHistory()
@@ -383,7 +408,6 @@ export function BoardCurrentPage() {
     onMoved: refreshAfterPatch,
   })
 
-  // ── More menu items ──
   const moreMenuItems = [
     {
       key: 'snapshots',
@@ -408,17 +432,11 @@ export function BoardCurrentPage() {
       action: agentDraftController.openDrawer,
       disabled: !projection,
     },
-    {
-      key: 'settings',
-      label: t('header.settings'),
-      action: () => setIsSettingsOpen(true),
-    },
   ]
 
   return (
     <div className="h-svh overflow-hidden bg-slate-50 text-slate-950">
       <div className="grid h-full w-full grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden">
-        {/* Header — stable top bar */}
         <header
           className={cn(
             `z-30 h-18 min-h-16  gap-4  px-8 backdrop-blur-sm sm:px-10`,
@@ -460,6 +478,14 @@ export function BoardCurrentPage() {
             >
               {isLoading ? t('header.refreshing') : t('header.refresh')}
             </Button>
+            <Button
+              type="button"
+              onClick={() => setIsSettingsOpen(true)}
+              icon={<Cog6ToothIcon className="h-4 w-4" />}
+              className="min-h-8 px-2.5 text-xs"
+            >
+              {t('header.settings')}
+            </Button>
             <details className="relative">
               <summary className="inline-flex min-h-8 cursor-pointer items-center rounded-md border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 list-none hover:bg-slate-50">
                 <EllipsisHorizontalIcon className="h-4 w-4" />
@@ -487,7 +513,6 @@ export function BoardCurrentPage() {
           </div>
         </header>
 
-        {/* Filters — single row */}
         <BoardFilters
           q={draftFilters.q}
           tags={draftFilters.tags}
@@ -524,9 +549,7 @@ export function BoardCurrentPage() {
           }}
         />
 
-        {/* Main content area — board fills remaining height, columns scroll internally */}
         <main className="flex min-h-0 flex-col overflow-hidden px-6 pb-10 pt-4 sm:px-8">
-          {/* Compact warning banners — only when present */}
           {isRefreshError && (
             <section
               className="mb-1 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-900"
@@ -546,8 +569,7 @@ export function BoardCurrentPage() {
             >
               <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" />
               <span>
-                {t('status.exportError')}:{' '}
-                {boardExportController.currentExportError}
+                {t('status.exportError')}: {boardExportController.currentExportError}
               </span>
             </section>
           )}
@@ -562,7 +584,6 @@ export function BoardCurrentPage() {
             </section>
           )}
 
-          {/* Board / error / loading / empty — fills remaining height */}
           <div
             className={
               viewMode === 'board'
@@ -651,8 +672,6 @@ export function BoardCurrentPage() {
         </main>
       </div>
 
-      {/* ── Drawers ── */}
-
       <RecordDetailDrawer
         key={detailRecord?.body.id ?? 'record-detail'}
         open={detailRecord !== null}
@@ -667,9 +686,7 @@ export function BoardCurrentPage() {
       />
 
       <RecordHistoryDrawer
-        open={
-          historyController.historySelection !== null && detailRecord === null
-        }
+        open={historyController.historySelection !== null && detailRecord === null}
         recordId={historyController.historySelection?.recordId ?? null}
         title={historyController.historySelection?.title}
         pid={historyController.historySelection?.pid}
@@ -700,9 +717,7 @@ export function BoardCurrentPage() {
         onSelectSnapshot={snapshotController.loadSnapshotDetail}
         onRefreshList={snapshotController.loadSnapshots}
         onExportSnapshot={snapshotController.exportSelectedSnapshotMarkdown}
-        onExportSnapshotContext={
-          snapshotController.exportSelectedSnapshotContext
-        }
+        onExportSnapshotContext={snapshotController.exportSelectedSnapshotContext}
         onSaveSnapshotDraft={
           snapshotController.selectedSnapshot
             ? (title: string): Promise<void> => {
@@ -741,9 +756,7 @@ export function BoardCurrentPage() {
         suggestions={agentDraftController.suggestions}
         selectedSuggestion={agentDraftController.selectedSuggestion}
         isSuggestionListLoading={agentDraftController.isSuggestionListLoading}
-        isSuggestionDetailLoading={
-          agentDraftController.isSuggestionDetailLoading
-        }
+        isSuggestionDetailLoading={agentDraftController.isSuggestionDetailLoading}
         isSuggestionGenerating={agentDraftController.isSuggestionGenerating}
         suggestionListError={agentDraftController.suggestionListError}
         suggestionDetailError={agentDraftController.suggestionDetailError}
@@ -817,7 +830,9 @@ export function BoardCurrentPage() {
         open={isSettingsOpen}
         visibleColumnOptions={boardColumnOptions}
         visibleColumnIds={visibleBoardColumnIds}
+        columnOrderIds={boardColumnOrderIds}
         onVisibleColumnIdsChange={updateVisibleBoardColumnIds}
+        onColumnOrderIdsChange={updateBoardColumnOrderIds}
         onClose={() => setIsSettingsOpen(false)}
       />
       <AdvancedFiltersDrawer
