@@ -318,6 +318,7 @@ export function RecordDetailDrawer({
   }
 
   async function save() {
+    const savedDraft = editState.draft
     const validation = buildPatchDraft(editState.draft, activeBaseline)
     if (!validation.ok) {
       const message = t(validation.error)
@@ -383,9 +384,9 @@ export function RecordDetailDrawer({
       setSavedDisplayRecord({
         recordId: activeCurrent.id,
         body: {
-          title: editState.draft.title.trim(),
-          description: editState.draft.summary.trim(),
-          content: editState.draft.details.trim(),
+          title: savedDraft.title.trim(),
+          description: savedDraft.summary.trim(),
+          content: savedDraft.details.trim(),
         },
         assignee: draftAssignee,
         tags: draftTags,
@@ -393,7 +394,7 @@ export function RecordDetailDrawer({
       setIsSaving(false)
       abortRef.current = null
       toastSuccess(t('edit.saveSuccess'))
-      editState.finishSave(null)
+      editState.finishSave(null, savedDraft)
       await loadCurrentBoard(effectiveFilters)
     } catch (caught: unknown) {
       if (

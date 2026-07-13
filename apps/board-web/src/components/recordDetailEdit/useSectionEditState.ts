@@ -73,8 +73,8 @@ export function useSectionEditState<TSection extends string, TDraft>({
   }, [clearEditState])
 
   const finishSave = useCallback(
-    (section?: TSection | null) => {
-      setDraft(initialDraft())
+    (section?: TSection | null, nextDraft?: TDraft) => {
+      setDraft(nextDraft ?? initialDraft())
       setEditingSection(null)
       setSelectedSection(section ?? selectedSection)
       setPendingExit(false)
