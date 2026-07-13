@@ -36,6 +36,7 @@ import {
 } from '../utils/board'
 import {
   asEditableBody,
+  buildEditFieldDirtyState,
   buildPatchDraft,
   hasEditHeadChanged,
   type EditPatchFormState,
@@ -258,16 +259,16 @@ export function RecordDetailDrawer({
     t('record.unassigned'),
     t('record.unknownMember')
   )
+  const fieldDirty = buildEditFieldDirtyState(editState.draft, activeBaseline)
   const sectionDirty = {
-    title: editState.draft.title.trim() !== displayBody.title,
-    summary:
-      normalizeNullable(editState.draft.summary) !==
-      normalizeNullable(displayBody.description),
-    details:
-      normalizeNullable(editState.draft.details) !==
-      normalizeNullable(displayBody.content),
-    assignee: draftAssignee !== displayAssignee,
-    tags: !sameStringList(draftTags, displayTags),
+    title: fieldDirty.title,
+    summary: fieldDirty.summary,
+    details: fieldDirty.details,
+    assignee: fieldDirty.assignee,
+    tags:
+      fieldDirty.statusTag ||
+      fieldDirty.priorityTag ||
+      fieldDirty.otherTags,
   }
 
   function beginEdit(section: DetailEditSection) {
@@ -463,7 +464,11 @@ export function RecordDetailDrawer({
       <AnimatedDrawer
         open={open}
         onClose={requestClose}
-        title={sectionDirty.title ? editState.draft.title.trim() || activeCurrent.pid : displayBody.title || activeCurrent.pid}
+        title={
+          sectionDirty.title
+            ? editState.draft.title.trim() || activeCurrent.pid
+            : displayBody.title || activeCurrent.pid
+        }
         subtitle={
           activePanel === 'history'
             ? `${activeCurrent.pid} · ${t('history.subtitle')}`
@@ -524,20 +529,32 @@ export function RecordDetailDrawer({
                   {(sectionDirty.assignee ? draftAssignee : displayAssignee) && (
                     <ProfileAvatar
                       name={
-                        (sectionDirty.assignee ? draftAssigneeProfile : profile)
-                          ?.name ??
-                        (sectionDirty.assignee ? draftAssignee : displayAssignee)
+                        (sectionDirty.assignee
+                          ? draftAssigneeProfile
+                          : profile
+                        )?.name ??
+                        (sectionDirty.assignee
+                          ? draftAssignee
+                          : displayAssignee)
                       }
-                      pk={sectionDirty.assignee ? draftAssignee : displayAssignee}
+                      pk={
+                        sectionDirty.assignee
+                          ? draftAssignee
+                          : displayAssignee
+                      }
                       avatarUrl={
-                        (sectionDirty.assignee ? draftAssigneeProfile : profile)
-                          ?.avatarUrl ?? null
+                        (sectionDirty.assignee
+                          ? draftAssigneeProfile
+                          : profile
+                        )?.avatarUrl ?? null
                       }
                       size={32}
                     />
                   )}
                   <p className="truncate text-sm font-semibold text-slate-900">
-                    {sectionDirty.assignee ? draftAssigneeDisplay : assigneeDisplay}
+                    {sectionDirty.assignee
+                      ? draftAssigneeDisplay
+                      : assigneeDisplay}
                   </p>
                 </div>
               </EditableSection>
@@ -685,7 +702,10 @@ export function RecordDetailDrawer({
                 }
               >
                 {(sectionDirty.tags ? draftTags : displayTags).length > 0 ? (
-                  <TagChipRow tags={sectionDirty.tags ? draftTags : displayTags} readonly />
+                  <TagChipRow
+                    tags={sectionDirty.tags ? draftTags : displayTags}
+                    readonly
+                  />
                 ) : (
                   <p className="text-sm text-slate-500">—</p>
                 )}
@@ -891,16 +911,6 @@ function buildDraftTags(form: EditPatchFormState): Tag[] {
 
 function uniqueTags(tags: Tag[]): Tag[] {
   return [...new Set(tags)]
-}
-
-function sameStringList(left: readonly string[], right: readonly string[]) {
-  if (left.length !== right.length) return false
-  return left.every((value, index) => value === right[index])
-}
-
-function normalizeNullable(value: string): string | null {
-  const trimmed = value.trim()
-  return trimmed ? trimmed : null
 }
 
 function formatDate(value: string): string {
