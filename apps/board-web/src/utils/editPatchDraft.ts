@@ -40,6 +40,18 @@ export interface EditHeadState {
   currentVersion: number
 }
 
+export interface EditFieldDirtyState {
+  title: boolean
+  summary: boolean
+  details: boolean
+  statusTag: boolean
+  priorityTag: boolean
+  otherTags: boolean
+  assignee: boolean
+  assets: boolean
+  relations: boolean
+}
+
 export function hasEditHeadChanged(
   base: EditHeadState,
   latest: EditHeadState
@@ -48,6 +60,48 @@ export function hasEditHeadChanged(
     base.lastPatchId !== latest.lastPatchId ||
     base.currentVersion !== latest.currentVersion
   )
+}
+
+export function buildEditFieldDirtyState(
+  form: EditPatchFormState,
+  current: RecordItem<RecordBody>
+): EditFieldDirtyState {
+  const currentBody = asEditableBody(current.body)
+  const currentStatusTag =
+    current.tags.find((tag) => tag.startsWith('status:')) ?? ''
+  const currentPriorityTag =
+    current.tags.find((tag) => tag.startsWith('priority:')) ?? ''
+  const currentOtherTags = current.tags.filter(
+    (tag) => !tag.startsWith('status:') && !tag.startsWith('priority:')
+  )
+  const nextOtherTags = uniqueValues([
+    ...form.otherTags,
+    ...form.unsupportedTags,
+  ])
+  const nextAssets = normalizeAssets(form.assets)
+  const nextRelations = normalizeRelationDrafts(form.relations)
+  const currentAssignee = current.assignee ?? null
+  const nextAssignee = form.assignee.trim()
+    ? (form.assignee.trim() as PublicKey)
+    : null
+
+  return {
+    title: form.title.trim() !== currentBody.title,
+    summary:
+      nullableTrimmed(form.summary) !== nullableTrimmed(currentBody.description),
+    details:
+      nullableTrimmed(form.details) !== nullableTrimmed(currentBody.content),
+    statusTag: form.statusTag.trim() !== currentStatusTag,
+    priorityTag: form.priorityTag.trim() !== currentPriorityTag,
+    otherTags: !sameStringSet(nextOtherTags, currentOtherTags),
+    assignee: nextAssignee !== currentAssignee,
+    assets: !sameStringList(nextAssets, current.assets ?? []),
+    relations: !sameRelations(nextRelations, current.relations ?? []),
+  }
+}
+
+export function hasEditFieldChanges(state: EditFieldDirtyState): boolean {
+  return Object.values(state).some(Boolean)
 }
 
 export function buildPatchDraft(
@@ -62,9 +116,7 @@ export function buildPatchDraft(
       Boolean
     ) as Tag[]
   )
-  const assets = uniqueValues(
-    form.assets.map((asset) => asset.trim()).filter(Boolean)
-  ) as AssetRef[]
+  const assets = normalizeAssets(form.assets)
   const assignee = form.assignee.trim()
   const relations = normalizeRelationDrafts(form.relations)
 
@@ -146,11 +198,23 @@ function nullableTrimmed(value: string): string | null {
   return trimmed ? trimmed : null
 }
 
-function uniqueValues<T extends string>(values: T[]): T[] {
+function normalizeAssets(values: readonly string[]): AssetRef[] {
+  return uniqueValues(
+    values.map((asset) => asset.trim()).filter(Boolean)
+  ) as AssetRef[]
+}
+
+function uniqueValues<T extends string>(values: readonly T[]): T[] {
   return [...new Set(values)]
 }
 
 function sameStringList(left: readonly string[], right: readonly string[]) {
   if (left.length !== right.length) return false
   return left.every((value, index) => value === right[index])
+}
+
+function sameStringSet(left: readonly string[], right: readonly string[]) {
+  if (left.length !== right.length) return false
+  const rightSet = new Set(right)
+  return left.every((value) => rightSet.has(value))
 }
