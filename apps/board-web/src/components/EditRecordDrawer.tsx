@@ -95,11 +95,7 @@ export function EditRecordDrawer({
 }: EditRecordDrawerProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
-  const baselineRecordRef = useRef<RecordItem<RecordBody> | null>(null)
-  if (baselineRecordRef.current == null) {
-    baselineRecordRef.current = record.body
-  }
-  const baselineRecord = baselineRecordRef.current
+  const [baselineRecord] = useState<RecordItem<RecordBody>>(() => record.body)
   const [form, setForm] = useState<EditPatchFormState>(() =>
     initialFormState(
       baselineRecord,
@@ -443,28 +439,16 @@ export function EditRecordDrawer({
           dirty={fieldDirty.statusTag}
           onActivate={setActiveField}
         >
-          <div className="grid gap-2">
-            <label className="text-xs font-bold text-slate-500">
-              {t('edit.statusTag')}
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {statusTags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  className={
-                    form.statusTag === tag
-                      ? 'inline-flex min-h-7 max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
-                      : 'inline-flex min-h-7 max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
-                  }
-                  onClick={() => setForm((state) => ({ ...state, statusTag: tag }))}
-                  disabled={isSaving}
-                >
-                  {formatTagLabel(tag, lang)}
-                </button>
-              ))}
-            </div>
-          </div>
+          <TagOptionGrid
+            label={t('edit.statusTag')}
+            tags={statusTags}
+            selected={form.statusTag}
+            lang={lang}
+            disabled={isSaving}
+            onSelect={(tag) =>
+              setForm((state) => ({ ...state, statusTag: tag }))
+            }
+          />
         </EditableFieldFrame>
 
         <EditableFieldFrame
@@ -473,33 +457,19 @@ export function EditRecordDrawer({
           dirty={fieldDirty.priorityTag}
           onActivate={setActiveField}
         >
-          <div className="grid gap-2">
-            <label className="text-xs font-bold text-slate-500">
-              {t('edit.priorityTag')}
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {priorityTags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  className={
-                    form.priorityTag === tag
-                      ? 'inline-flex min-h-7 max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
-                      : 'inline-flex min-h-7 max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
-                  }
-                  onClick={() =>
-                    setForm((state) => ({
-                      ...state,
-                      priorityTag: state.priorityTag === tag ? '' : tag,
-                    }))
-                  }
-                  disabled={isSaving}
-                >
-                  {formatTagLabel(tag, lang)}
-                </button>
-              ))}
-            </div>
-          </div>
+          <TagOptionGrid
+            label={t('edit.priorityTag')}
+            tags={priorityTags}
+            selected={form.priorityTag}
+            lang={lang}
+            disabled={isSaving}
+            onSelect={(tag) =>
+              setForm((state) => ({
+                ...state,
+                priorityTag: state.priorityTag === tag ? '' : tag,
+              }))
+            }
+          />
         </EditableFieldFrame>
 
         {otherTagOptions.length > 0 && (
@@ -563,7 +533,9 @@ export function EditRecordDrawer({
             options={selectableAssetOptions}
             values={form.assets}
             multiple
-            onChangeMany={(assets) => setForm((state) => ({ ...state, assets }))}
+            onChangeMany={(assets) =>
+              setForm((state) => ({ ...state, assets }))
+            }
             placeholder={t('searchSelect.searchPlaceholder')}
             selectedLabel={t('edit.assets')}
             emptyText={t('filters.noAssetOptions')}
@@ -656,6 +628,45 @@ function EditableFieldFrame({
       onPointerDown={() => onActivate(field)}
     >
       {children}
+    </div>
+  )
+}
+
+function TagOptionGrid({
+  label,
+  tags,
+  selected,
+  lang,
+  disabled,
+  onSelect,
+}: {
+  label: string
+  tags: Tag[]
+  selected: string
+  lang: string | undefined
+  disabled: boolean
+  onSelect: (tag: Tag) => void
+}) {
+  return (
+    <div className="grid gap-2">
+      <label className="text-xs font-bold text-slate-500">{label}</label>
+      <div className="flex flex-wrap gap-1.5">
+        {tags.map((tag) => (
+          <button
+            key={tag}
+            type="button"
+            className={
+              selected === tag
+                ? 'inline-flex min-h-7 max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
+                : 'inline-flex min-h-7 max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
+            }
+            onClick={() => onSelect(tag)}
+            disabled={disabled}
+          >
+            {formatTagLabel(tag, lang)}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
