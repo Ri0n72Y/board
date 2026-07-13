@@ -1,8 +1,8 @@
 import type { BoardStatusColumn } from './boardView'
 import { UNCATEGORIZED_STATUS_ID } from './boardView'
 
-export const BOARD_VISIBLE_COLUMNS_STORAGE_KEY =
-  'labourboard.boardView.visibleColumns'
+export const BOARD_COLUMN_PREFERENCE_STORAGE_KEY =
+  'labourboard.boardView.columnPreference'
 
 const DEFAULT_TODO_STATUS = 'status:todo'
 const DEFAULT_DONE_STATUS = 'status:done'
@@ -132,18 +132,11 @@ export function readBoardColumnPreference(
   if (!storage) return null
 
   try {
-    const raw = storage.getItem(BOARD_VISIBLE_COLUMNS_STORAGE_KEY)
+    const raw = storage.getItem(BOARD_COLUMN_PREFERENCE_STORAGE_KEY)
     if (!raw) return null
-    const parsed = JSON.parse(raw)
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
 
-    if (Array.isArray(parsed)) {
-      const legacyVisible = uniqueStrings(parsed)
-      return legacyVisible.length > 0
-        ? { visibleColumnIds: legacyVisible, columnOrderIds: legacyVisible }
-        : null
-    }
-
-    if (!parsed || typeof parsed !== 'object') return null
     const visibleColumnIds = uniqueStrings(
       (parsed as { visibleColumnIds?: unknown }).visibleColumnIds
     )
@@ -180,7 +173,10 @@ export function writeBoardColumnPreference(
   if (!storage) return normalized
 
   try {
-    storage.setItem(BOARD_VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify(normalized))
+    storage.setItem(
+      BOARD_COLUMN_PREFERENCE_STORAGE_KEY,
+      JSON.stringify(normalized)
+    )
   } catch {
     // localStorage unavailable
   }
