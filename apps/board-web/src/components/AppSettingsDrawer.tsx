@@ -42,8 +42,7 @@ export function AppSettingsDrawer({
   onVisibleColumnIdsChange,
   onColumnOrderIdsChange,
 }: AppSettingsDrawerProps) {
-  const { t, i18n } = useTranslation()
-  const isZh = (i18n.resolvedLanguage ?? i18n.language).startsWith('zh')
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<SettingsTab>('board')
   const selected = useMemo(() => new Set(visibleColumnIds), [visibleColumnIds])
   const [isProfileManagerOpen, setIsProfileManagerOpen] = useState(false)
@@ -65,7 +64,9 @@ export function AppSettingsDrawer({
       .map((id) => byId.get(id))
       .filter((column): column is BoardStatusColumn => column != null)
     const orderedIds = new Set(ordered.map((column) => column.id))
-    const missing = visibleColumnOptions.filter((column) => !orderedIds.has(column.id))
+    const missing = visibleColumnOptions.filter(
+      (column) => !orderedIds.has(column.id)
+    )
     return [...ordered, ...missing]
   }, [columnOrderIds, selected, visibleColumnIds, visibleColumnOptions])
   const orderedColumnIds = useMemo(
@@ -107,24 +108,9 @@ export function AppSettingsDrawer({
   )
 
   const tabs: { id: SettingsTab; label: string }[] = [
-    {
-      id: 'board',
-      label: t('settings.tabs.board', {
-        defaultValue: isZh ? '看板' : 'Board',
-      }),
-    },
-    {
-      id: 'tags',
-      label: t('settings.tabs.tags', {
-        defaultValue: isZh ? '标签' : 'Tags',
-      }),
-    },
-    {
-      id: 'general',
-      label: t('settings.tabs.general', {
-        defaultValue: isZh ? '通用' : 'General',
-      }),
-    },
+    { id: 'board', label: t('settings.tabs.board') },
+    { id: 'tags', label: t('settings.tabs.tags') },
+    { id: 'general', label: t('settings.tabs.general') },
   ]
 
   return (
@@ -170,11 +156,7 @@ export function AppSettingsDrawer({
                 {t('settings.visibleColumnsHint')}
               </p>
               <p className="text-xs text-slate-500">
-                {t('settings.columnOrderHint', {
-                  defaultValue: isZh
-                    ? '拖拽行左侧手柄调整列顺序。'
-                    : 'Drag the row handle to reorder board columns.',
-                })}
+                {t('settings.columnOrderHint')}
               </p>
             </div>
             <DragDropProvider onDragEnd={handleColumnDragEnd}>
@@ -283,13 +265,9 @@ function ColumnOrderRow({
   checked: boolean
   onToggle: () => void
 }) {
-  const { t, i18n } = useTranslation()
-  const isZh = (i18n.resolvedLanguage ?? i18n.language).startsWith('zh')
+  const { t } = useTranslation()
   const dragLabel = t('settings.columnDragHandle', {
     column: column.label,
-    defaultValue: isZh
-      ? `拖拽调整 ${column.label} 列顺序`
-      : `Drag to reorder ${column.label}`,
   })
   const { ref: dragRef, handleRef, isDragging } = useDraggable({
     id: `${COLUMN_ORDER_ID_PREFIX}${column.id}`,
@@ -340,7 +318,9 @@ function ColumnOrderRow({
   )
 }
 
-function parseColumnOrderId(id: string | number | null | undefined): string | null {
+function parseColumnOrderId(
+  id: string | number | null | undefined
+): string | null {
   if (typeof id !== 'string') return null
   if (!id.startsWith(COLUMN_ORDER_ID_PREFIX)) return null
   return id.slice(COLUMN_ORDER_ID_PREFIX.length) || null
