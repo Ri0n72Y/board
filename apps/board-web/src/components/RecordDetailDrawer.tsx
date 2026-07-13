@@ -289,15 +289,19 @@ export function RecordDetailDrawer({
     onClose()
   }
 
+  function openHistoryDrawer() {
+    editState.setDraft(initialDraft())
+    editState.setEditingSections([])
+    onClose()
+    onHistoryClick(activeRecord)
+  }
+
   function requestHistory() {
     if (!editState.requestClose()) {
       setPendingAction({ type: 'history' })
       return
     }
-    editState.setDraft(initialDraft())
-    editState.setEditingSections([])
-    onHistoryClick(activeRecord)
-    setActivePanel('history')
+    openHistoryDrawer()
   }
 
   function cancelDiscard() {
@@ -314,8 +318,8 @@ export function RecordDetailDrawer({
       onClose()
       return
     }
+    onClose()
     onHistoryClick(activeRecord)
-    setActivePanel('history')
   }
 
   async function save() {
