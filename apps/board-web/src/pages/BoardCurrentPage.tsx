@@ -678,10 +678,6 @@ export function BoardCurrentPage() {
         open={detailRecord !== null}
         record={detailRecord}
         profiles={profiles}
-        assetOptions={assetOptions}
-        history={historyController.history}
-        isHistoryLoading={historyController.isHistoryLoading}
-        historyError={historyController.historyError}
         onClose={closeDetail}
         onHistoryClick={handleDetailHistory}
       />
