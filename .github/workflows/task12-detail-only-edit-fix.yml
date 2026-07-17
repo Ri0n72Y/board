@@ -1,0 +1,213 @@
+name: Task12 detail-only edit cleanup
+
+on:
+  push:
+    branches:
+      - task12-settings-columns-editing-ux
+    paths:
+      - .github/workflows/task12-detail-only-edit-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: task12-settings-columns-editing-ux
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Consolidate editing in record detail
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              if text.count(old) != 1:
+                  raise SystemExit(f'{label}: expected one match, found {text.count(old)}')
+              return text.replace(old, new, 1)
+
+          detail_path = Path('apps/board-web/src/components/RecordDetailDrawer.tsx')
+          detail = detail_path.read_text()
+          detail = replace_once(
+              detail,
+              "  buildPatchDraft,\n  hasEditHeadChanged,",
+              "  buildPatchDraft,\n  hasEditFieldChanges,\n  hasEditHeadChanged,",
+              'detail dirty helper import',
+          )
+          detail = replace_once(
+              detail,
+              "  assetOptions: RecordReferenceOption[]\n  onClose: () => void",
+              "  assetOptions: RecordReferenceOption[]\n  initialPatchDescription?: string\n  onInitialPatchDescriptionConsumed?: () => void\n  onClose: () => void",
+              'detail props',
+          )
+          detail = replace_once(
+              detail,
+              "  assetOptions,\n  onClose,",
+              "  assetOptions,\n  initialPatchDescription,\n  onInitialPatchDescriptionConsumed,\n  onClose,",
+              'detail prop destructuring',
+          )
+          detail = replace_once(
+              detail,
+              "  const isDraftDirty = useCallback(\n    (draft: EditPatchFormState) =>\n      Boolean(baselineRecord && buildPatchDraft(draft, baselineRecord).ok),\n    [baselineRecord]\n  )",
+              "  const isDraftDirty = useCallback(\n    (draft: EditPatchFormState) =>\n      Boolean(\n        baselineRecord &&\n          hasEditFieldChanges(buildEditFieldDirtyState(draft, baselineRecord))\n      ),\n    [baselineRecord]\n  )",
+              'detail dirty semantics',
+          )
+          detail = replace_once(
+              detail,
+              "      const payload: SubmitRecordPatchPayload = {\n        parentId: baseHead.lastPatchId,\n        currentVersion: baseHead.currentVersion,\n        ...validation.patch,\n      }\n      await submitRecordPatch(activeCurrent.id, payload, controller.signal)",
+              "      const payload: SubmitRecordPatchPayload = {\n        parentId: baseHead.lastPatchId,\n        currentVersion: baseHead.currentVersion,\n        ...validation.patch,\n      }\n      if (initialPatchDescription) {\n        payload.description = initialPatchDescription\n      }\n      await submitRecordPatch(activeCurrent.id, payload, controller.signal)",
+              'detail patch description payload',
+          )
+          detail = replace_once(
+              detail,
+              "      editState.finishSave(null, savedDraft)\n      await loadCurrentBoard(effectiveFilters)",
+              "      editState.finishSave(null, savedDraft)\n      if (initialPatchDescription) {\n        onInitialPatchDescriptionConsumed?.()\n      }\n      await loadCurrentBoard(effectiveFilters)",
+              'detail patch description consumption',
+          )
+          detail = replace_once(
+              detail,
+              "          )}\n\n          {activePanel === 'history' ? (",
+              "          )}\n\n          {activePanel === 'detail' && initialPatchDescription && (\n            <section className=\"rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900\">\n              <p className=\"text-xs font-semibold uppercase text-indigo-700\">\n                {t('edit.initialPatchDescriptionNotice')}\n              </p>\n              <p className=\"mt-1 whitespace-pre-wrap\">\n                {initialPatchDescription}\n              </p>\n            </section>\n          )}\n\n          {activePanel === 'history' ? (",
+              'detail patch description notice',
+          )
+          detail = detail.replace(
+              "import { RecordHistoryContent } from './RecordHistoryDrawer'",
+              "import { RecordHistoryContent } from './RecordHistoryContent'",
+          )
+          detail_path.write_text(detail)
+
+          page_path = Path('apps/board-web/src/pages/BoardCurrentPage.tsx')
+          page = page_path.read_text()
+          page = replace_once(
+              page,
+              "import { EditRecordDrawer } from '../components/EditRecordDrawer'\n",
+              "",
+              'remove edit drawer import',
+          )
+          page = replace_once(
+              page,
+              "  const [editRecord, setEditRecord] = useState<RecordResponse<\n    RecordItem<RecordBody>\n  > | null>(null)\n  const [editInitialPatchDescription, setEditInitialPatchDescription] =\n    useState<string | undefined>(undefined)\n",
+              "",
+              'remove edit drawer state',
+          )
+          page = replace_once(
+              page,
+              "  const [detailRecord, setDetailRecord] = useState<RecordResponse<\n    RecordItem<RecordBody>\n  > | null>(null)\n",
+              "  const [detailRecord, setDetailRecord] = useState<RecordResponse<\n    RecordItem<RecordBody>\n  > | null>(null)\n  const [detailInitialPatchDescription, setDetailInitialPatchDescription] =\n    useState<string | undefined>(undefined)\n",
+              'add detail patch description state',
+          )
+          page = replace_once(
+              page,
+              "    historyController.closeHistory()\n    setEditRecord(null)\n    setIsCreateOpen(true)",
+              "    historyController.closeHistory()\n    setDetailInitialPatchDescription(undefined)\n    setIsCreateOpen(true)",
+              'create cleanup',
+          )
+          page = replace_once(
+              page,
+              "  const openEdit = useCallback(\n    (record: RecordResponse<RecordItem<RecordBody>>) => {\n      setIsCreateOpen(false)\n      setEditInitialPatchDescription(undefined)\n      setEditRecord(record)\n    },\n    []\n  )\n\n  const closeEdit = useCallback(() => {\n    setEditRecord(null)\n    setEditInitialPatchDescription(undefined)\n  }, [])\n\n",
+              "",
+              'remove edit callbacks',
+          )
+          page = replace_once(
+              page,
+              "      historyController.closeHistory()\n      setDetailRecord(record)",
+              "      historyController.closeHistory()\n      setDetailInitialPatchDescription(undefined)\n      setDetailRecord(record)",
+              'normal detail open',
+          )
+          page = replace_once(
+              page,
+              "    historyController.closeHistory()\n    setDetailRecord(null)",
+              "    historyController.closeHistory()\n    setDetailInitialPatchDescription(undefined)\n    setDetailRecord(null)",
+              'detail close cleanup',
+          )
+          page = replace_once(
+              page,
+              "  const handleOpenPatchEditor = useCallback(\n    (recordId: string, patchDescription: string) => {\n      const found = records.find((r) => r.body.id === recordId)\n      if (!found) return\n      openEdit(found)\n      setEditInitialPatchDescription(patchDescription)\n    },\n    [openEdit, records]\n  )",
+              "  const handleOpenPatchDetail = useCallback(\n    (recordId: string, patchDescription: string) => {\n      const found = records.find((r) => r.body.id === recordId)\n      if (!found) return\n      agentDraftController.closeDrawer()\n      historyController.closeHistory()\n      setIsCreateOpen(false)\n      setDetailInitialPatchDescription(patchDescription)\n      setDetailRecord(found)\n    },\n    [agentDraftController, historyController, records]\n  )",
+              'agent patch detail opener',
+          )
+          page = replace_once(
+              page,
+              "        historyError={historyController.historyError}\n        onClose={closeDetail}",
+              "        historyError={historyController.historyError}\n        initialPatchDescription={detailInitialPatchDescription}\n        onInitialPatchDescriptionConsumed={() =>\n          setDetailInitialPatchDescription(undefined)\n        }\n        onClose={closeDetail}",
+              'detail patch description props',
+          )
+          page = page.replace(
+              "        onOpenEditor={handleOpenPatchEditor}",
+              "        onOpenRecord={handleOpenPatchDetail}",
+          )
+          edit_render_start = "      {editRecord && (\n        <EditRecordDrawer"
+          start = page.find(edit_render_start)
+          if start < 0:
+              raise SystemExit('missing edit drawer render start')
+          end_marker = "      )}\n\n      <AppSettingsDrawer"
+          end = page.find(end_marker, start)
+          if end < 0:
+              raise SystemExit('missing edit drawer render end')
+          page = page[:start] + "      <AppSettingsDrawer" + page[end + len(end_marker):]
+          page_path.write_text(page)
+
+          agent_files = [
+              Path('apps/board-web/src/components/AgentDraftsDrawer.tsx'),
+              Path('apps/board-web/src/components/agentDrafts/AgentDraftDetailWorkspace.tsx'),
+              Path('apps/board-web/src/components/agentDrafts/AgentSuggestionSection.tsx'),
+              Path('apps/board-web/src/components/agentDrafts/AgentSuggestionDetailSlot.tsx'),
+              Path('apps/board-web/src/components/agentDrafts/AgentSuggestionDetailPanel.tsx'),
+              Path('apps/board-web/src/components/agentDrafts/AgentSuggestionPatchDraftSection.tsx'),
+              Path('apps/board-web/src/components/agentDrafts/AgentPatchDraftPanel.tsx'),
+          ]
+          for path in agent_files:
+              text = path.read_text()
+              text = text.replace('onOpenEditor', 'onOpenRecord')
+              text = text.replace('handleOpenEditor', 'handleOpenRecord')
+              text = text.replace('open EditRecordDrawer', 'open RecordDetailDrawer')
+              text = text.replace(
+                  'delegated to the existing EditRecordDrawer',
+                  'delegated to the editable RecordDetailDrawer',
+              )
+              path.write_text(text)
+
+          history_old = Path('apps/board-web/src/components/RecordHistoryDrawer.tsx')
+          history_new = Path('apps/board-web/src/components/RecordHistoryContent.tsx')
+          if history_new.exists():
+              raise SystemExit('RecordHistoryContent.tsx already exists')
+          history_old.rename(history_new)
+
+          edit_path = Path('apps/board-web/src/components/EditRecordDrawer.tsx')
+          if not edit_path.exists():
+              raise SystemExit('EditRecordDrawer.tsx is already missing')
+          edit_path.unlink()
+          PY
+      - name: Verify architecture boundary
+        run: |
+          test ! -e apps/board-web/src/components/EditRecordDrawer.tsx
+          test ! -e apps/board-web/src/components/RecordHistoryDrawer.tsx
+          test -e apps/board-web/src/components/RecordHistoryContent.tsx
+          if grep -R "EditRecordDrawer\|onOpenEditor" apps/board-web/src; then
+            echo "Deprecated edit drawer references remain"
+            exit 1
+          fi
+      - name: Validate
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @labour-board/web typecheck
+          pnpm --filter @labour-board/web lint
+          pnpm --filter @labour-board/web build
+          git diff --check
+      - name: Commit fix and remove workflow
+        run: |
+          rm .github/workflows/task12-detail-only-edit-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "refactor: consolidate record editing in detail drawer"
+          git push origin HEAD:task12-settings-columns-editing-ux
