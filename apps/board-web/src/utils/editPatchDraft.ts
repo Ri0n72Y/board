@@ -121,7 +121,12 @@ export function buildPatchDraft(
   const relations = normalizeRelationDrafts(form.relations)
 
   if (!title) return { ok: false, error: 'edit.errorTitleRequired' }
-  if (!statusTag) return { ok: false, error: 'edit.errorStatusTagRequired' }
+
+  const currentStatusTag =
+    current.tags.find((tag) => tag.startsWith('status:')) ?? ''
+  if (!statusTag && currentStatusTag) {
+    return { ok: false, error: 'edit.errorStatusTagRequired' }
+  }
 
   const patch: EditPatchDraft = {}
   const tagChanges = buildTagChanges(current.tags, tags)

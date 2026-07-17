@@ -97,11 +97,7 @@ export function EditRecordDrawer({
   const lang = i18n.resolvedLanguage
   const [baselineRecord] = useState<RecordItem<RecordBody>>(() => record.body)
   const [form, setForm] = useState<EditPatchFormState>(() =>
-    initialFormState(
-      baselineRecord,
-      configOtherTags ?? knownTags,
-      statusTags
-    )
+    initialFormState(baselineRecord, configOtherTags ?? knownTags)
   )
   const [activeField, setActiveField] = useState<EditableFieldId | null>(null)
   const fieldDirty = useMemo(
@@ -569,12 +565,11 @@ export function EditRecordDrawer({
 
 function initialFormState(
   record: RecordItem<RecordBody>,
-  knownTags: Tag[],
-  statusTags: Tag[]
+  knownTags: Tag[]
 ): EditPatchFormState {
   const body = asEditableBody(record.body)
   const statusTag =
-    record.tags.find((tag) => tag.startsWith('status:')) ?? statusTags[0] ?? ''
+    record.tags.find((tag) => tag.startsWith('status:')) ?? ''
   const priorityTag =
     record.tags.find((tag) => tag.startsWith('priority:')) ?? ''
   const otherTags = record.tags.filter(
