@@ -30,8 +30,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git revert --no-commit 7fe47f0448f5f2e5504d58ff7f7b0f45cdf772a0
-          git revert --no-commit b4777fb2db5f710949d4de7afc6ac2cfe367fb56
+          git checkout 7077713887094cceff34df656b64479b5b20048b -- apps/board-web/src/components/RecordDetailDrawer.tsx
+          git checkout 8a42d9bfefbb05fd4e7e01793b3fcb97692d791a -- apps/board-web/src/pages/BoardCurrentPage.tsx
 
           python - <<'PY'
           from pathlib import Path
@@ -87,6 +87,7 @@ jobs:
           test -e apps/board-web/src/components/RecordHistoryContent.tsx
           ! grep -R "<RecordHistoryDrawer" apps/board-web/src
           grep -q "setActivePanel('history')" apps/board-web/src/components/RecordDetailDrawer.tsx
+          grep -q "history={historyController.history}" apps/board-web/src/pages/BoardCurrentPage.tsx
       - name: Commit restored structure and remove workflow
         run: |
           rm .github/workflows/task12-inline-history-restore.yml
