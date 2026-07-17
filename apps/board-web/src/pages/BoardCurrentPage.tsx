@@ -386,11 +386,10 @@ export function BoardCurrentPage() {
     (recordId: string, patchDescription: string) => {
       const found = records.find((r) => r.body.id === recordId)
       if (!found) return
-      setIsCreateOpen(false)
+      openEdit(found)
       setEditInitialPatchDescription(patchDescription)
-      setEditRecord(found)
     },
-    [records]
+    [openEdit, records]
   )
 
   const refreshAfterPatch = useCallback(
