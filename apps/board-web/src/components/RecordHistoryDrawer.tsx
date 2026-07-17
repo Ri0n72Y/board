@@ -1,123 +1,14 @@
-import type {
-  Profile,
-  RecordBody,
-  RecordHistoryResponse,
-  RecordItem,
-  RecordResponse,
-} from '@labour-board/shared'
-import {
-  ExclamationTriangleIcon,
-  PencilSquareIcon,
-} from '@heroicons/react/20/solid'
+import type { Profile, RecordHistoryResponse } from '@labour-board/shared'
+import { ExclamationTriangleIcon } from '@heroicons/react/20/solid'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AnimatedDrawer } from './ui/AnimatedDrawer'
 import { Badge } from './ui/Badge'
-import { Button } from './ui/Button'
 import {
   buildPatchTimeline,
   debugInitiallyOpen,
-  statusSummaryText,
-  titleFromBody,
   type HistorySummaryCopy,
 } from '../utils/historySummary'
 import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
-
-interface RecordHistoryDrawerProps {
-  open: boolean
-  recordId: string | null
-  title?: string
-  pid?: string
-  history: RecordHistoryResponse | null
-  isLoading: boolean
-  error: string | null
-  profiles?: Profile[] | null
-  assetOptions: RecordReferenceOption[]
-  onClose: () => void
-  onEditClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
-}
-
-export function RecordHistoryDrawer({
-  open,
-  recordId,
-  title,
-  pid,
-  history,
-  isLoading,
-  error,
-  profiles,
-  assetOptions,
-  onClose,
-  onEditClick,
-}: RecordHistoryDrawerProps) {
-  const { t, i18n } = useTranslation()
-  const language = i18n.resolvedLanguage
-  const baseRecord = history?.record.body
-  const finalState = history?.replay?.finalState
-  const editableRecord =
-    history && finalState
-      ? { ...history.record, body: finalState }
-      : history?.record
-  const displayPid = pid ?? finalState?.pid ?? baseRecord?.pid ?? recordId ?? ''
-  const displayTitle =
-    title ?? titleFromBody(finalState?.body) ?? titleFromBody(baseRecord?.body)
-  const statusText = statusSummaryText(finalState ?? baseRecord, language)
-
-  const headerTitle =
-    displayPid && displayTitle
-      ? `${displayPid} · ${displayTitle}`
-      : (displayTitle ?? displayPid ?? t('history.defaultTitle'))
-
-  const footer = (
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <div>
-        {history && (
-          <span className="text-sm text-slate-600">
-            {[
-              statusText,
-              t('history.changeCount', { count: history.patches.length }),
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </span>
-        )}
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {editableRecord && onEditClick && (
-          <Button
-            type="button"
-            onClick={() => onEditClick(editableRecord)}
-            title={t('history.editTitle')}
-            icon={<PencilSquareIcon className="h-4 w-4" />}
-          >
-            {t('history.edit')}
-          </Button>
-        )}
-      </div>
-    </div>
-  )
-
-  return (
-    <AnimatedDrawer
-      open={open}
-      onClose={onClose}
-      title={headerTitle}
-      subtitle={t('history.subtitle')}
-      closeLabel={t('history.close')}
-      size="lg"
-      footer={footer}
-    >
-      <RecordHistoryContent
-        history={history}
-        isLoading={isLoading}
-        error={error}
-        language={language}
-        assetOptions={assetOptions}
-        profiles={profiles ?? null}
-      />
-    </AnimatedDrawer>
-  )
-}
 
 export function RecordHistoryContent({
   history,
