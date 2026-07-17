@@ -38,6 +38,7 @@ import {
   asEditableBody,
   buildEditFieldDirtyState,
   buildPatchDraft,
+  hasEditFieldChanges,
   hasEditHeadChanged,
   type EditPatchFormState,
 } from '../utils/editPatchDraft'
@@ -52,7 +53,7 @@ import { SearchSelect } from './ui/SearchSelect'
 import { EditableSection } from './recordDetailEdit/EditableSection'
 import { UnsavedChangesDialog } from './recordDetailEdit/UnsavedChangesDialog'
 import { useSectionEditState } from './recordDetailEdit/useSectionEditState'
-import { RecordHistoryContent } from './RecordHistoryDrawer'
+import { RecordHistoryContent } from './RecordHistoryContent'
 import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
 
 type DetailEditSection = 'title' | 'summary' | 'details' | 'assignee' | 'tags'
@@ -78,6 +79,8 @@ interface RecordDetailDrawerProps {
   isHistoryLoading: boolean
   historyError: string | null
   assetOptions: RecordReferenceOption[]
+  initialPatchDescription?: string
+  onInitialPatchDescriptionConsumed?: () => void
   onClose: () => void
   onHistoryClick: (record: RecordResponse<RecordItem<RecordBody>>) => void
 }
@@ -96,6 +99,8 @@ export function RecordDetailDrawer({
   isHistoryLoading,
   historyError,
   assetOptions,
+  initialPatchDescription,
+  onInitialPatchDescriptionConsumed,
   onClose,
   onHistoryClick,
 }: RecordDetailDrawerProps) {
@@ -143,7 +148,10 @@ export function RecordDetailDrawer({
   )
   const isDraftDirty = useCallback(
     (draft: EditPatchFormState) =>
-      Boolean(baselineRecord && buildPatchDraft(draft, baselineRecord).ok),
+      Boolean(
+        baselineRecord &&
+          hasEditFieldChanges(buildEditFieldDirtyState(draft, baselineRecord))
+      ),
     [baselineRecord]
   )
   const editState = useSectionEditState<DetailEditSection, EditPatchFormState>({
@@ -364,6 +372,9 @@ export function RecordDetailDrawer({
         currentVersion: baseHead.currentVersion,
         ...validation.patch,
       }
+      if (initialPatchDescription) {
+        payload.description = initialPatchDescription
+      }
       await submitRecordPatch(activeCurrent.id, payload, controller.signal)
       if (requestIdRef.current !== requestId || controller.signal.aborted)
         return
@@ -396,6 +407,9 @@ export function RecordDetailDrawer({
       abortRef.current = null
       toastSuccess(t('edit.saveSuccess'))
       editState.finishSave(null, savedDraft)
+      if (initialPatchDescription) {
+        onInitialPatchDescriptionConsumed?.()
+      }
       await loadCurrentBoard(effectiveFilters)
     } catch (caught: unknown) {
       if (
@@ -485,6 +499,17 @@ export function RecordDetailDrawer({
               role="alert"
             >
               {error}
+            </section>
+          )}
+
+          {activePanel === 'detail' && initialPatchDescription && (
+            <section className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+              <p className="text-xs font-semibold uppercase text-indigo-700">
+                {t('edit.initialPatchDescriptionNotice')}
+              </p>
+              <p className="mt-1 whitespace-pre-wrap">
+                {initialPatchDescription}
+              </p>
             </section>
           )}
 

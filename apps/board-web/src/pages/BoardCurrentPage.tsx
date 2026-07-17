@@ -16,7 +16,6 @@ import { Button } from '../components/ui/Button'
 import { BoardFilters } from '../components/BoardFilters'
 import { BoardView } from '../components/BoardView'
 import { CreateRecordDrawer } from '../components/CreateRecordDrawer'
-import { EditRecordDrawer } from '../components/EditRecordDrawer'
 import { EmptyState } from '../components/EmptyState'
 import { ExportContextDrawer } from '../components/ExportContextDrawer'
 import { IssuesPanel } from '../components/IssuesPanel'
@@ -108,11 +107,6 @@ export function BoardCurrentPage() {
   const historyController = useRecordHistoryController()
   const snapshotController = useSnapshotController()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [editRecord, setEditRecord] = useState<RecordResponse<
-    RecordItem<RecordBody>
-  > | null>(null)
-  const [editInitialPatchDescription, setEditInitialPatchDescription] =
-    useState<string | undefined>(undefined)
   const [isContextExportOpen, setIsContextExportOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
@@ -120,6 +114,8 @@ export function BoardCurrentPage() {
   const [detailRecord, setDetailRecord] = useState<RecordResponse<
     RecordItem<RecordBody>
   > | null>(null)
+  const [detailInitialPatchDescription, setDetailInitialPatchDescription] =
+    useState<string | undefined>(undefined)
   const [selectedAssetOption, setSelectedAssetOption] =
     useState<RecordReferenceOption | null>(null)
   const [selectedRelationTargetOption, setSelectedRelationTargetOption] =
@@ -336,7 +332,7 @@ export function BoardCurrentPage() {
 
   const openCreate = useCallback(() => {
     historyController.closeHistory()
-    setEditRecord(null)
+    setDetailInitialPatchDescription(undefined)
     setIsCreateOpen(true)
   }, [historyController])
 
@@ -348,23 +344,10 @@ export function BoardCurrentPage() {
     void loadCurrentBoard(effectiveFilters)
   }, [effectiveFilters, loadCurrentBoard])
 
-  const openEdit = useCallback(
-    (record: RecordResponse<RecordItem<RecordBody>>) => {
-      setIsCreateOpen(false)
-      setEditInitialPatchDescription(undefined)
-      setEditRecord(record)
-    },
-    []
-  )
-
-  const closeEdit = useCallback(() => {
-    setEditRecord(null)
-    setEditInitialPatchDescription(undefined)
-  }, [])
-
   const openDetail = useCallback(
     (record: RecordResponse<RecordItem<RecordBody>>) => {
       historyController.closeHistory()
+      setDetailInitialPatchDescription(undefined)
       setDetailRecord(record)
     },
     [historyController]
@@ -372,6 +355,7 @@ export function BoardCurrentPage() {
 
   const closeDetail = useCallback(() => {
     historyController.closeHistory()
+    setDetailInitialPatchDescription(undefined)
     setDetailRecord(null)
   }, [historyController])
 
@@ -382,14 +366,17 @@ export function BoardCurrentPage() {
     [historyController]
   )
 
-  const handleOpenPatchEditor = useCallback(
+  const handleOpenPatchDetail = useCallback(
     (recordId: string, patchDescription: string) => {
       const found = records.find((r) => r.body.id === recordId)
       if (!found) return
-      openEdit(found)
-      setEditInitialPatchDescription(patchDescription)
+      agentDraftController.closeDrawer()
+      historyController.closeHistory()
+      setIsCreateOpen(false)
+      setDetailInitialPatchDescription(patchDescription)
+      setDetailRecord(found)
     },
-    [openEdit, records]
+    [agentDraftController, historyController, records]
   )
 
   const refreshAfterPatch = useCallback(
@@ -680,6 +667,10 @@ export function BoardCurrentPage() {
         history={historyController.history}
         isHistoryLoading={historyController.isHistoryLoading}
         historyError={historyController.historyError}
+        initialPatchDescription={detailInitialPatchDescription}
+        onInitialPatchDescriptionConsumed={() =>
+          setDetailInitialPatchDescription(undefined)
+        }
         onClose={closeDetail}
         onHistoryClick={handleDetailHistory}
       />
@@ -749,7 +740,7 @@ export function BoardCurrentPage() {
         onGenerateSuggestion={agentDraftController.generateSuggestion}
         onSelectSuggestion={agentDraftController.loadSuggestionDetail}
         records={records}
-        onOpenEditor={handleOpenPatchEditor}
+        onOpenRecord={handleOpenPatchDetail}
       />
 
       <ExportContextDrawer
@@ -789,25 +780,6 @@ export function BoardCurrentPage() {
           relationConstraintOptions={relationConstraintOptions}
           onClose={closeCreate}
           onCreated={refreshAfterCreate}
-        />
-      )}
-
-      {editRecord && (
-        <EditRecordDrawer
-          key={editRecord.body.id}
-          open
-          record={editRecord}
-          profiles={profiles}
-          knownTags={config ? knownTags : projectionKnownTags}
-          configOtherTags={configOtherTags}
-          statusTags={statusTags}
-          priorityTags={priorityTags}
-          assetOptions={assetOptions}
-          relationTargetOptions={relationTargetOptions}
-          relationConstraintOptions={relationConstraintOptions}
-          initialPatchDescription={editInitialPatchDescription}
-          onClose={closeEdit}
-          onPatched={refreshAfterPatch}
         />
       )}
 
