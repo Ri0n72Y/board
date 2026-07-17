@@ -10,11 +10,16 @@ import {
 import type {
   Profile,
   RecordBody,
+  RecordHistoryResponse,
   RecordItem,
   RecordResponse,
   Tag,
 } from '@labour-board/shared'
-import { ClockIcon, PencilSquareIcon } from '@heroicons/react/20/solid'
+import {
+  ArrowLeftIcon,
+  ClockIcon,
+  PencilSquareIcon,
+} from '@heroicons/react/20/solid'
 import axios from 'axios'
 import { useTranslation } from 'react-i18next'
 import { fetchRecordHead } from '../api/recordHead'
@@ -47,6 +52,8 @@ import { SearchSelect } from './ui/SearchSelect'
 import { EditableSection } from './recordDetailEdit/EditableSection'
 import { UnsavedChangesDialog } from './recordDetailEdit/UnsavedChangesDialog'
 import { useSectionEditState } from './recordDetailEdit/useSectionEditState'
+import { RecordHistoryContent } from './RecordHistoryDrawer'
+import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
 
 type DetailEditSection = 'title' | 'summary' | 'details' | 'assignee' | 'tags'
 
@@ -67,6 +74,10 @@ interface RecordDetailDrawerProps {
   open: boolean
   record: RecordResponse<RecordItem<RecordBody>> | null
   profiles?: Profile[] | null
+  history: RecordHistoryResponse | null
+  isHistoryLoading: boolean
+  historyError: string | null
+  assetOptions: RecordReferenceOption[]
   onClose: () => void
   onHistoryClick: (record: RecordResponse<RecordItem<RecordBody>>) => void
 }
@@ -81,6 +92,10 @@ export function RecordDetailDrawer({
   open,
   record,
   profiles,
+  history,
+  isHistoryLoading,
+  historyError,
+  assetOptions,
   onClose,
   onHistoryClick,
 }: RecordDetailDrawerProps) {
@@ -97,6 +112,7 @@ export function RecordDetailDrawer({
   const [isSaving, setIsSaving] = useState(false)
   const [baseHead, setBaseHead] = useState<BaseHead | null>(null)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
+  const [activePanel, setActivePanel] = useState<'detail' | 'history'>('detail')
   const [savedDisplayRecord, setSavedDisplayRecord] =
     useState<DisplayRecordState | null>(null)
   const requestIdRef = useRef(0)
@@ -149,6 +165,7 @@ export function RecordDetailDrawer({
     setBaseHead(null)
     setPendingAction(null)
     setSavedDisplayRecord(null)
+    setActivePanel('detail')
     clearEditState()
   }, [clearEditState, current, open])
 
@@ -268,14 +285,8 @@ export function RecordDetailDrawer({
       return
     }
     abortRequest(requestIdRef, abortRef, setIsSaving)
+    setActivePanel('detail')
     onClose()
-  }
-
-  function openHistoryDrawer() {
-    editState.setDraft(initialDraft())
-    editState.setEditingSections([])
-    onClose()
-    onHistoryClick(activeRecord)
   }
 
   function requestHistory() {
@@ -283,7 +294,10 @@ export function RecordDetailDrawer({
       setPendingAction({ type: 'history' })
       return
     }
-    openHistoryDrawer()
+    editState.setDraft(initialDraft())
+    editState.setEditingSections([])
+    onHistoryClick(activeRecord)
+    setActivePanel('history')
   }
 
   function cancelDiscard() {
@@ -296,11 +310,12 @@ export function RecordDetailDrawer({
     setPendingAction(null)
     editState.discardPendingExit()
     if (!action || action.type === 'close') {
-        onClose()
+      setActivePanel('detail')
+      onClose()
       return
     }
-    onClose()
     onHistoryClick(activeRecord)
+    setActivePanel('history')
   }
 
   async function save() {
@@ -407,15 +422,26 @@ export function RecordDetailDrawer({
   const footer = (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={requestHistory}
-          icon={<ClockIcon className="h-4 w-4" />}
-        >
-          {t('record.history')}
-        </Button>
-        {editState.dirty && (
+        {activePanel === 'detail' ? (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={requestHistory}
+            icon={<ClockIcon className="h-4 w-4" />}
+          >
+            {t('record.history')}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setActivePanel('detail')}
+            icon={<ArrowLeftIcon className="h-4 w-4" />}
+          >
+            {t('record.details')}
+          </Button>
+        )}
+        {activePanel === 'detail' && editState.dirty && (
           <Button
             type="button"
             onClick={() => void save()}
@@ -443,7 +469,11 @@ export function RecordDetailDrawer({
             ? editState.draft.title.trim() || activeCurrent.pid
             : displayBody.title || activeCurrent.pid
         }
-        subtitle={activeCurrent.pid}
+        subtitle={
+          activePanel === 'history'
+            ? `${activeCurrent.pid} · ${t('history.subtitle')}`
+            : activeCurrent.pid
+        }
         size="md"
         closeLabel={t('record.close')}
         footer={footer}
@@ -458,7 +488,17 @@ export function RecordDetailDrawer({
             </section>
           )}
 
-          <div
+          {activePanel === 'history' ? (
+            <RecordHistoryContent
+              history={history}
+              isLoading={isHistoryLoading}
+              error={historyError}
+              language={lang}
+              assetOptions={assetOptions}
+              profiles={profiles ?? null}
+            />
+          ) : (
+            <div
               className="grid min-h-full content-start gap-4"
               onClick={deactivateActiveEditSection}
             >
@@ -703,6 +743,7 @@ export function RecordDetailDrawer({
                 </ReadOnlyInfoSection>
               )}
             </div>
+          )}
         </div>
       </AnimatedDrawer>
 
