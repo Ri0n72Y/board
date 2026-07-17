@@ -22,7 +22,6 @@ import { ExportContextDrawer } from '../components/ExportContextDrawer'
 import { IssuesPanel } from '../components/IssuesPanel'
 import { RecordCard } from '../components/RecordCard'
 import { RecordDetailDrawer } from '../components/RecordDetailDrawer'
-import { RecordHistoryDrawer } from '../components/RecordHistoryDrawer'
 import { SnapshotDrawer } from '../components/SnapshotDrawer'
 import { AgentDraftsDrawer } from '../components/AgentDraftsDrawer'
 import { AppSettingsDrawer } from '../components/AppSettingsDrawer'
@@ -678,22 +677,12 @@ export function BoardCurrentPage() {
         open={detailRecord !== null}
         record={detailRecord}
         profiles={profiles}
+        assetOptions={assetOptions}
+        history={historyController.history}
+        isHistoryLoading={historyController.isHistoryLoading}
+        historyError={historyController.historyError}
         onClose={closeDetail}
         onHistoryClick={handleDetailHistory}
-      />
-
-      <RecordHistoryDrawer
-        open={historyController.historySelection !== null && detailRecord === null}
-        recordId={historyController.historySelection?.recordId ?? null}
-        title={historyController.historySelection?.title}
-        pid={historyController.historySelection?.pid}
-        history={historyController.history}
-        isLoading={historyController.isHistoryLoading}
-        error={historyController.historyError}
-        profiles={profiles}
-        assetOptions={assetOptions}
-        onClose={historyController.closeHistory}
-        onEditClick={openEdit}
       />
 
       <SnapshotDrawer
