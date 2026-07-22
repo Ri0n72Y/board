@@ -219,6 +219,7 @@ function sameRelationDrafts(
   if (left.length !== right.length) return false
   return left.every((relation, index) => {
     const current = right[index]
+    if (!current) return false
     return (
       relation.constraint === current.constraint &&
       relation.target === current.target &&
