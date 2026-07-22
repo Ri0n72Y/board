@@ -40,6 +40,7 @@ import {
   buildPatchDraft,
   hasEditFieldChanges,
   hasEditHeadChanged,
+  type EditPatchDraft,
   type EditPatchFormState,
 } from '../utils/editPatchDraft'
 import { formatProfileCompact } from '../utils/profileDisplay'
@@ -327,14 +328,17 @@ export function RecordDetailDrawer({
     : displayRelations
 
   function beginEdit(section: DetailEditSection) {
+    if (isSaving) return
     editState.beginEdit(section)
   }
 
   function deactivateActiveEditSection() {
+    if (isSaving) return
     editState.deactivateEditingSection()
   }
 
   function requestClose() {
+    if (isSaving) return
     if (!editState.requestClose()) {
       setPendingAction({ type: 'close' })
       return
@@ -345,22 +349,23 @@ export function RecordDetailDrawer({
   }
 
   function requestHistory() {
+    if (isSaving) return
     if (!editState.requestClose()) {
       setPendingAction({ type: 'history' })
       return
     }
-    editState.setDraft(initialDraft())
-    editState.setEditingSections([])
     onHistoryClick(activeRecord)
     setActivePanel('history')
   }
 
   function cancelDiscard() {
+    if (isSaving) return
     setPendingAction(null)
     editState.cancelPendingExit()
   }
 
   function confirmDiscard() {
+    if (isSaving) return
     const action = pendingAction
     setPendingAction(null)
     editState.discardPendingExit()
@@ -374,7 +379,6 @@ export function RecordDetailDrawer({
   }
 
   async function save() {
-    const savedDraft = editState.draft
     const validation = buildPatchDraft(editState.draft, activeBaseline)
     if (!validation.ok) {
       const message = t(validation.error)
@@ -422,46 +426,35 @@ export function RecordDetailDrawer({
       if (initialPatchDescription) {
         payload.description = initialPatchDescription
       }
-      await submitRecordPatch(activeCurrent.id, payload, controller.signal)
-      if (requestIdRef.current !== requestId || controller.signal.aborted)
-        return
-
-      const updatedHead = await fetchRecordHead(
+      const result = await submitRecordPatch(
         activeCurrent.id,
+        payload,
         controller.signal
       )
       if (requestIdRef.current !== requestId || controller.signal.aborted)
         return
-      if (updatedHead.exists) {
-        setBaseHead({
-          recordId: activeCurrent.id,
-          lastPatchId: updatedHead.lastPatchId,
-          currentVersion: updatedHead.currentVersion,
-        })
-      }
 
-      setSavedDisplayRecord({
+      const committedDisplayRecord = buildCommittedDisplayRecord(
+        activeBaseline,
+        validation.patch,
+        draftTags,
+        draftAssignee
+      )
+      const committedDraft = initialFormState(
+        buildBaselineRecord(activeCurrent, committedDisplayRecord),
+        committedDisplayRecord.body
+      )
+
+      setBaseHead({
         recordId: activeCurrent.id,
-        body: {
-          title: savedDraft.title.trim(),
-          description: savedDraft.summary.trim(),
-          content: savedDraft.details.trim(),
-        },
-        assignee: draftAssignee,
-        tags: draftTags,
-        assets: [
-          ...(validation.patch.assets ?? activeBaseline.assets ?? []),
-        ],
-        relations: (
-          validation.patch.relations ??
-          activeBaseline.relations ??
-          []
-        ).map((relation) => ({ ...relation })),
+        lastPatchId: result.patch.body.id,
+        currentVersion: result.newCurrentVersion,
       })
+      setSavedDisplayRecord(committedDisplayRecord)
       setIsSaving(false)
       abortRef.current = null
       toastSuccess(t('edit.saveSuccess'))
-      editState.finishSave(null, savedDraft)
+      editState.finishSave(committedDraft)
       if (initialPatchDescription) {
         onInitialPatchDescriptionConsumed?.()
       }
@@ -496,6 +489,7 @@ export function RecordDetailDrawer({
             type="button"
             variant="ghost"
             onClick={requestHistory}
+            disabled={isSaving}
             icon={<ClockIcon className="h-4 w-4" />}
           >
             {t('record.history')}
@@ -505,6 +499,7 @@ export function RecordDetailDrawer({
             type="button"
             variant="ghost"
             onClick={() => setActivePanel('detail')}
+            disabled={isSaving}
             icon={<ArrowLeftIcon className="h-4 w-4" />}
           >
             {t('record.details')}
@@ -545,6 +540,7 @@ export function RecordDetailDrawer({
         }
         size="md"
         closeLabel={t('record.close')}
+        closeDisabled={isSaving}
         footer={footer}
       >
         <div className="grid min-h-full content-start gap-4">
@@ -881,6 +877,7 @@ export function RecordDetailDrawer({
         cancelLabel={t('edit.unsavedDiscardCancel')}
         onCancel={cancelDiscard}
         onConfirm={confirmDiscard}
+        disabled={isSaving}
       />
     </>
   )
@@ -1009,6 +1006,36 @@ function buildBaselineRecord(
       content: displayRecord.body.content,
     } as RecordBody,
   } as RecordItem<RecordBody>
+}
+
+function buildCommittedDisplayRecord(
+  current: RecordItem<RecordBody>,
+  patch: EditPatchDraft,
+  nextTags: Tag[],
+  nextAssignee: string
+): DisplayRecordState {
+  const currentBody = asEditableBody(current.body)
+  const bodyPatch = patch.body
+  return {
+    recordId: current.id,
+    body: {
+      title: bodyPatch?.title ?? currentBody.title,
+      description:
+        bodyPatch && 'description' in bodyPatch
+          ? (bodyPatch.description ?? '')
+          : currentBody.description,
+      content:
+        bodyPatch && 'content' in bodyPatch
+          ? (bodyPatch.content ?? '')
+          : currentBody.content,
+    },
+    assignee: 'assignee' in patch ? nextAssignee : (current.assignee ?? ''),
+    tags: patch.tagChanges ? [...nextTags] : [...current.tags],
+    assets: [...(patch.assets ?? current.assets ?? [])],
+    relations: (patch.relations ?? current.relations ?? []).map((relation) => ({
+      ...relation,
+    })),
+  }
 }
 
 function buildDraftTags(form: EditPatchFormState): Tag[] {
