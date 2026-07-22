@@ -79,7 +79,6 @@ export function buildEditFieldDirtyState(
     ...form.unsupportedTags,
   ])
   const nextAssets = normalizeAssets(form.assets)
-  const nextRelations = normalizeRelationDrafts(form.relations)
   const currentAssignee = current.assignee ?? null
   const nextAssignee = form.assignee.trim()
     ? (form.assignee.trim() as PublicKey)
@@ -96,7 +95,7 @@ export function buildEditFieldDirtyState(
     otherTags: !sameStringSet(nextOtherTags, currentOtherTags),
     assignee: nextAssignee !== currentAssignee,
     assets: !sameStringList(nextAssets, current.assets ?? []),
-    relations: !sameRelations(nextRelations, current.relations ?? []),
+    relations: !sameRelationDrafts(form.relations, current.relations ?? []),
   }
 }
 
@@ -211,6 +210,21 @@ function normalizeAssets(values: readonly string[]): AssetRef[] {
 
 function uniqueValues<T extends string>(values: readonly T[]): T[] {
   return [...new Set(values)]
+}
+
+function sameRelationDrafts(
+  left: readonly RelationRef[],
+  right: readonly RelationRef[]
+): boolean {
+  if (left.length !== right.length) return false
+  return left.every((relation, index) => {
+    const current = right[index]
+    return (
+      relation.constraint === current.constraint &&
+      relation.target === current.target &&
+      (relation.description ?? '') === (current.description ?? '')
+    )
+  })
 }
 
 function sameStringList(left: readonly string[], right: readonly string[]) {
