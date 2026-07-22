@@ -142,6 +142,7 @@ export function RecordDetailDrawer({
   const requestIdRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
   const stateKeyRef = useRef<string | null>(null)
+  const savingRef = useRef(false)
 
   const current = record?.body ?? null
   const displayRecord = useMemo(() => {
@@ -190,6 +191,7 @@ export function RecordDetailDrawer({
     if (stateKeyRef.current === nextKey) return
     stateKeyRef.current = nextKey
     abortRequest(requestIdRef, abortRef, setIsSaving)
+    savingRef.current = false
     setError(null)
     setBaseHead(null)
     setPendingAction(null)
@@ -379,7 +381,10 @@ export function RecordDetailDrawer({
   }
 
   async function save() {
-    const validation = buildPatchDraft(editState.draft, activeBaseline)
+    if (savingRef.current) return
+
+    const savedDraft = editState.draft
+    const validation = buildPatchDraft(savedDraft, activeBaseline)
     if (!validation.ok) {
       const message = t(validation.error)
       setError(message)
@@ -387,6 +392,7 @@ export function RecordDetailDrawer({
       return
     }
 
+    savingRef.current = true
     const requestId = requestIdRef.current + 1
     requestIdRef.current = requestId
     abortRef.current?.abort()
@@ -398,7 +404,6 @@ export function RecordDetailDrawer({
     try {
       if (!baseHead || baseHead.recordId !== activeCurrent.id) {
         setError(t('edit.headMissing'))
-        setIsSaving(false)
         return
       }
 
@@ -407,14 +412,12 @@ export function RecordDetailDrawer({
         return
       if (!head.exists) {
         setError(t('edit.headMissing'))
-        setIsSaving(false)
         return
       }
       if (hasEditHeadChanged(baseHead, head)) {
         const message = t('edit.staleHead')
         setError(message)
         toastError(message)
-        setIsSaving(false)
         return
       }
 
@@ -437,13 +440,17 @@ export function RecordDetailDrawer({
       const committedDisplayRecord = buildCommittedDisplayRecord(
         activeBaseline,
         validation.patch,
-        draftTags,
-        draftAssignee
+        buildDraftTags(savedDraft),
+        savedDraft.assignee.trim()
       )
       const committedDraft = initialFormState(
         buildBaselineRecord(activeCurrent, committedDisplayRecord),
         committedDisplayRecord.body
       )
+      const nextDraft: EditPatchFormState = {
+        ...committedDraft,
+        relations: savedDraft.relations.map((relation) => ({ ...relation })),
+      }
 
       setBaseHead({
         recordId: activeCurrent.id,
@@ -451,10 +458,8 @@ export function RecordDetailDrawer({
         currentVersion: result.newCurrentVersion,
       })
       setSavedDisplayRecord(committedDisplayRecord)
-      setIsSaving(false)
-      abortRef.current = null
       toastSuccess(t('edit.saveSuccess'))
-      editState.finishSave(committedDraft)
+      editState.finishSave(nextDraft)
       if (initialPatchDescription) {
         onInitialPatchDescriptionConsumed?.()
       }
@@ -475,9 +480,10 @@ export function RecordDetailDrawer({
             : t('edit.errorGeneral')
       setError(message)
       toastError(message)
-      setIsSaving(false)
     } finally {
       if (requestIdRef.current === requestId) abortRef.current = null
+      savingRef.current = false
+      setIsSaving(false)
     }
   }
 
