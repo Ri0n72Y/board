@@ -664,6 +664,8 @@ export function BoardCurrentPage() {
         record={detailRecord}
         profiles={profiles}
         assetOptions={assetOptions}
+        relationTargetOptions={relationTargetOptions}
+        relationConstraintOptions={relationConstraintOptions}
         history={historyController.history}
         isHistoryLoading={historyController.isHistoryLoading}
         historyError={historyController.historyError}

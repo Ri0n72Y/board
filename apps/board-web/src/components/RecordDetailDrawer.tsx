@@ -5,7 +5,6 @@ import {
   useRef,
   useState,
   type MutableRefObject,
-  type ReactNode,
 } from 'react'
 import type {
   Profile,
@@ -13,6 +12,7 @@ import type {
   RecordHistoryResponse,
   RecordItem,
   RecordResponse,
+  RelationRef,
   Tag,
 } from '@labour-board/shared'
 import {
@@ -54,9 +54,21 @@ import { EditableSection } from './recordDetailEdit/EditableSection'
 import { UnsavedChangesDialog } from './recordDetailEdit/UnsavedChangesDialog'
 import { useSectionEditState } from './recordDetailEdit/useSectionEditState'
 import { RecordHistoryContent } from './RecordHistoryContent'
-import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
+import {
+  ensureReferenceOptions,
+  type RecordReferenceOption,
+} from '../utils/recordReferenceOptions'
+import type { RelationConstraintOption } from '../utils/relationDisplay'
+import { RelationEditor } from './RelationEditor'
 
-type DetailEditSection = 'title' | 'summary' | 'details' | 'assignee' | 'tags'
+type DetailEditSection =
+  | 'title'
+  | 'summary'
+  | 'details'
+  | 'assignee'
+  | 'tags'
+  | 'assets'
+  | 'relations'
 
 type PendingAction = { type: 'close' } | { type: 'history' }
 
@@ -69,6 +81,8 @@ interface DisplayRecordState {
   }
   assignee: string
   tags: Tag[]
+  assets: string[]
+  relations: RelationRef[]
 }
 
 interface RecordDetailDrawerProps {
@@ -79,6 +93,8 @@ interface RecordDetailDrawerProps {
   isHistoryLoading: boolean
   historyError: string | null
   assetOptions: RecordReferenceOption[]
+  relationTargetOptions: RecordReferenceOption[]
+  relationConstraintOptions: RelationConstraintOption[]
   initialPatchDescription?: string
   onInitialPatchDescriptionConsumed?: () => void
   onClose: () => void
@@ -99,6 +115,8 @@ export function RecordDetailDrawer({
   isHistoryLoading,
   historyError,
   assetOptions,
+  relationTargetOptions,
+  relationConstraintOptions,
   initialPatchDescription,
   onInitialPatchDescriptionConsumed,
   onClose,
@@ -133,6 +151,8 @@ export function RecordDetailDrawer({
       body: asEditableBody(current.body),
       assignee: current.assignee ?? '',
       tags: [...current.tags],
+      assets: [...(current.assets ?? [])],
+      relations: (current.relations ?? []).map((relation) => ({ ...relation })),
     }
   }, [current, savedDisplayRecord])
   const baselineRecord = useMemo(
@@ -228,6 +248,8 @@ export function RecordDetailDrawer({
   const displayBody = displayRecord.body
   const displayAssignee = displayRecord.assignee
   const displayTags = displayRecord.tags
+  const displayAssets = displayRecord.assets
+  const displayRelations = displayRecord.relations
   const profile = lookupProfile(profiles ?? null, displayAssignee)
   const assigneeDisplay = formatProfileCompact(
     displayAssignee,
@@ -267,6 +289,23 @@ export function RecordDetailDrawer({
     t('record.unassigned'),
     t('record.unknownMember')
   )
+  const recordReferenceCopy = {
+    unknownAsset: t('recordReference.unknownAsset'),
+    unknownRecord: t('recordReference.unknownRecord'),
+    rawId: t('recordReference.rawId'),
+  }
+  const selectableAssetOptions = ensureReferenceOptions(
+    assetOptions,
+    editState.draft.assets,
+    'asset',
+    recordReferenceCopy
+  )
+  const selectableRelationTargetOptions = ensureReferenceOptions(
+    relationTargetOptions,
+    editState.draft.relations.map((relation) => relation.target),
+    'record',
+    recordReferenceCopy
+  )
   const fieldDirty = buildEditFieldDirtyState(editState.draft, activeBaseline)
   const sectionDirty = {
     title: fieldDirty.title,
@@ -277,7 +316,15 @@ export function RecordDetailDrawer({
       fieldDirty.statusTag ||
       fieldDirty.priorityTag ||
       fieldDirty.otherTags,
+    assets: fieldDirty.assets,
+    relations: fieldDirty.relations,
   }
+  const visibleAssets = sectionDirty.assets
+    ? editState.draft.assets
+    : displayAssets
+  const visibleRelations = sectionDirty.relations
+    ? editState.draft.relations
+    : displayRelations
 
   function beginEdit(section: DetailEditSection) {
     editState.beginEdit(section)
@@ -402,6 +449,8 @@ export function RecordDetailDrawer({
         },
         assignee: draftAssignee,
         tags: draftTags,
+        assets: [...savedDraft.assets],
+        relations: savedDraft.relations.map((relation) => ({ ...relation })),
       })
       setIsSaving(false)
       abortRef.current = null
@@ -736,10 +785,33 @@ export function RecordDetailDrawer({
                 )}
               </EditableSection>
 
-              {(activeCurrent.assets?.length ?? 0) > 0 && (
-                <ReadOnlyInfoSection title={t('record.assets')}>
+              <EditableSection
+                title={t('record.assets')}
+                editing={editState.isEditing('assets')}
+                dirty={sectionDirty.assets}
+                disabled={isSaving}
+                onEdit={() => beginEdit('assets')}
+                editor={
+                  <SearchSelect
+                    mode="option"
+                    label={t('edit.assetSelector')}
+                    options={selectableAssetOptions}
+                    values={editState.draft.assets}
+                    multiple
+                    onChangeMany={(assets) =>
+                      editState.setDraft((draft) => ({ ...draft, assets }))
+                    }
+                    placeholder={t('searchSelect.searchPlaceholder')}
+                    selectedLabel={t('edit.assets')}
+                    emptyText={t('filters.noAssetOptions')}
+                    allowCustomValue={false}
+                    disabled={isSaving}
+                  />
+                }
+              >
+                {visibleAssets.length > 0 ? (
                   <ul className="grid gap-1">
-                    {activeCurrent.assets?.map((asset) => (
+                    {visibleAssets.map((asset) => (
                       <li
                         key={asset}
                         className="truncate font-mono text-xs text-slate-700"
@@ -749,24 +821,47 @@ export function RecordDetailDrawer({
                       </li>
                     ))}
                   </ul>
-                </ReadOnlyInfoSection>
-              )}
+                ) : (
+                  <p className="text-sm text-slate-500">—</p>
+                )}
+              </EditableSection>
 
-              {(activeCurrent.relations?.length ?? 0) > 0 && (
-                <ReadOnlyInfoSection title={t('record.relations')}>
+              <EditableSection
+                title={t('record.relations')}
+                editing={editState.isEditing('relations')}
+                dirty={sectionDirty.relations}
+                disabled={isSaving}
+                onEdit={() => beginEdit('relations')}
+                editor={
+                  <RelationEditor
+                    label={t('relations.title')}
+                    value={editState.draft.relations}
+                    targetOptions={selectableRelationTargetOptions}
+                    constraintOptions={relationConstraintOptions}
+                    currentRecordId={activeCurrent.id}
+                    onChange={(relations) =>
+                      editState.setDraft((draft) => ({ ...draft, relations }))
+                    }
+                    disabled={isSaving}
+                  />
+                }
+              >
+                {visibleRelations.length > 0 ? (
                   <ul className="grid gap-1">
-                    {activeCurrent.relations?.map((rel, index) => (
+                    {visibleRelations.map((relation, index) => (
                       <li
-                        key={`${rel.constraint}:${rel.target}:${index}`}
+                        key={`${relation.constraint}:${relation.target}:${index}`}
                         className="truncate text-xs text-slate-700"
-                        title={rel.target}
+                        title={relation.target}
                       >
-                        {rel.constraint}: {rel.target}
+                        {relation.constraint}: {relation.target}
                       </li>
                     ))}
                   </ul>
-                </ReadOnlyInfoSection>
-              )}
+                ) : (
+                  <p className="text-sm text-slate-500">—</p>
+                )}
+              </EditableSection>
             </div>
           )}
         </div>
@@ -830,23 +925,6 @@ function TagOptionGrid({
   )
 }
 
-function ReadOnlyInfoSection({
-  title,
-  children,
-}: {
-  title: string
-  children: ReactNode
-}) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <h3 className="mb-2 text-xs font-bold uppercase text-slate-500">
-        {title}
-      </h3>
-      {children}
-    </section>
-  )
-}
-
 function initialFormState(
   record: RecordItem<RecordBody>,
   body: { title: string; description: string; content: string }
@@ -897,6 +975,8 @@ function emptyDisplayRecord(): DisplayRecordState {
     body: emptyBody(),
     assignee: '',
     tags: [],
+    assets: [],
+    relations: [],
   }
 }
 
@@ -914,6 +994,8 @@ function buildBaselineRecord(
     ...record,
     assignee: displayRecord.assignee || undefined,
     tags: [...displayRecord.tags],
+    assets: [...displayRecord.assets],
+    relations: displayRecord.relations.map((relation) => ({ ...relation })),
     body: {
       ...sourceBody,
       title: displayRecord.body.title,
