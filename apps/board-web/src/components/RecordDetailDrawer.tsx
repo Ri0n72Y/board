@@ -449,8 +449,14 @@ export function RecordDetailDrawer({
         },
         assignee: draftAssignee,
         tags: draftTags,
-        assets: [...savedDraft.assets],
-        relations: savedDraft.relations.map((relation) => ({ ...relation })),
+        assets: [
+          ...(validation.patch.assets ?? activeBaseline.assets ?? []),
+        ],
+        relations: (
+          validation.patch.relations ??
+          activeBaseline.relations ??
+          []
+        ).map((relation) => ({ ...relation })),
       })
       setIsSaving(false)
       abortRef.current = null
