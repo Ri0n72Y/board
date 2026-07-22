@@ -28,6 +28,7 @@ interface AnimatedDrawerProps {
   footer?: ReactNode
   size?: DrawerSize
   closeLabel?: string
+  closeDisabled?: boolean
 }
 
 export function AnimatedDrawer({
@@ -39,10 +40,17 @@ export function AnimatedDrawer({
   footer,
   size = 'md',
   closeLabel = 'Close',
+  closeDisabled = false,
 }: AnimatedDrawerProps) {
   return (
     <Transition appear show={open} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog
+        as="div"
+        className="relative z-50"
+        onClose={() => {
+          if (!closeDisabled) onClose()
+        }}
+      >
         {/* Backdrop */}
         <TransitionChild
           as={Fragment}
@@ -64,7 +72,7 @@ export function AnimatedDrawer({
               enter="transform transition ease-out duration-300"
               enterFrom="translate-x-full"
               enterTo="translate-x-0"
-              leave="transform transition ease-in duration-200"
+              leave="ease-in duration-200"
               leaveFrom="translate-x-0"
               leaveTo="translate-x-full"
             >
@@ -93,6 +101,7 @@ export function AnimatedDrawer({
                     type="button"
                     variant="ghost"
                     onClick={onClose}
+                    disabled={closeDisabled}
                     title={closeLabel}
                     icon={<XMarkIcon className="h-4 w-4" />}
                   >
