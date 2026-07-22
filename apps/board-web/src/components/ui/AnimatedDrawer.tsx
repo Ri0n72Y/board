@@ -72,7 +72,7 @@ export function AnimatedDrawer({
               enter="transform transition ease-out duration-300"
               enterFrom="translate-x-full"
               enterTo="translate-x-0"
-              leave="ease-in duration-200"
+              leave="transform transition ease-in duration-200"
               leaveFrom="translate-x-0"
               leaveTo="translate-x-full"
             >
