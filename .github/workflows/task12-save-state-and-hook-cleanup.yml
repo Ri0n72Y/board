@@ -1,0 +1,214 @@
+name: Task12 save state and hook cleanup
+
+on:
+  push:
+    branches:
+      - task12-settings-columns-editing-ux
+    paths:
+      - .github/workflows/task12-save-state-and-hook-cleanup.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: task12-settings-columns-editing-ux
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Fix save state, relation drafts, and section hook
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected one match, found {count}')
+              return text.replace(old, new, 1)
+
+          patch_path = Path('apps/board-web/src/utils/editPatchDraft.ts')
+          patch = patch_path.read_text()
+          patch = replace_once(
+              patch,
+              "  const nextRelations = normalizeRelationDrafts(form.relations)\n",
+              "",
+              'remove semantic relation draft from dirty state',
+          )
+          patch = replace_once(
+              patch,
+              "    relations: !sameRelations(nextRelations, current.relations ?? []),",
+              "    relations: !sameRelationDrafts(form.relations, current.relations ?? []),",
+              'raw relation dirty state',
+          )
+          patch = replace_once(
+              patch,
+              "function sameStringList(left: readonly string[], right: readonly string[]) {",
+              "function sameRelationDrafts(\n  left: readonly RelationRef[],\n  right: readonly RelationRef[]\n): boolean {\n  if (left.length !== right.length) return false\n  return left.every((relation, index) => {\n    const current = right[index]\n    return (\n      relation.constraint === current.constraint &&\n      relation.target === current.target &&\n      (relation.description ?? '') === (current.description ?? '')\n    )\n  })\n}\n\nfunction sameStringList(left: readonly string[], right: readonly string[]) {",
+              'raw relation comparator',
+          )
+          patch_path.write_text(patch)
+
+          hook_path = Path('apps/board-web/src/components/recordDetailEdit/useSectionEditState.ts')
+          hook_path.write_text("""import { useCallback, useMemo, useState } from 'react'\n\ninterface SectionEditStateOptions<TDraft> {\n  initialDraft: () => TDraft\n  isDirty: (draft: TDraft) => boolean\n}\n\nexport function useSectionEditState<TSection extends string, TDraft>({\n  initialDraft,\n  isDirty,\n}: SectionEditStateOptions<TDraft>) {\n  const [editingSection, setEditingSection] = useState<TSection | null>(null)\n  const [draft, setDraft] = useState<TDraft>(() => initialDraft())\n  const [pendingExit, setPendingExit] = useState(false)\n\n  const dirty = useMemo(() => isDirty(draft), [draft, isDirty])\n\n  const isEditing = useCallback(\n    (section: TSection) => editingSection === section,\n    [editingSection]\n  )\n\n  const beginEdit = useCallback(\n    (section: TSection) => {\n      setDraft((currentDraft) =>\n        isDirty(currentDraft) ? currentDraft : initialDraft()\n      )\n      setEditingSection(section)\n    },\n    [initialDraft, isDirty]\n  )\n\n  const deactivateEditingSection = useCallback(() => {\n    setEditingSection(null)\n    setDraft((currentDraft) =>\n      isDirty(currentDraft) ? currentDraft : initialDraft()\n    )\n  }, [initialDraft, isDirty])\n\n  const clearEditState = useCallback(() => {\n    setDraft(initialDraft())\n    setEditingSection(null)\n    setPendingExit(false)\n  }, [initialDraft])\n\n  const requestClose = useCallback(() => {\n    if (dirty) {\n      setEditingSection(null)\n      setPendingExit(true)\n      return false\n    }\n    clearEditState()\n    return true\n  }, [clearEditState, dirty])\n\n  const cancelPendingExit = useCallback(() => {\n    setPendingExit(false)\n  }, [])\n\n  const discardPendingExit = useCallback(() => {\n    clearEditState()\n  }, [clearEditState])\n\n  const finishSave = useCallback(\n    (nextDraft?: TDraft) => {\n      setDraft(nextDraft ?? initialDraft())\n      setEditingSection(null)\n      setPendingExit(false)\n    },\n    [initialDraft]\n  )\n\n  return {\n    editingSection,\n    draft,\n    dirty,\n    pendingExit,\n    isEditing,\n    setDraft,\n    beginEdit,\n    deactivateEditingSection,\n    requestClose,\n    cancelPendingExit,\n    discardPendingExit,\n    clearEditState,\n    finishSave,\n  }\n}\n""")
+
+          drawer_path = Path('apps/board-web/src/components/ui/AnimatedDrawer.tsx')
+          drawer = drawer_path.read_text()
+          drawer = replace_once(
+              drawer,
+              "  closeLabel?: string\n}",
+              "  closeLabel?: string\n  closeDisabled?: boolean\n}",
+              'drawer closeDisabled prop',
+          )
+          drawer = replace_once(
+              drawer,
+              "  closeLabel = 'Close',\n}: AnimatedDrawerProps) {",
+              "  closeLabel = 'Close',\n  closeDisabled = false,\n}: AnimatedDrawerProps) {",
+              'drawer closeDisabled default',
+          )
+          drawer = replace_once(
+              drawer,
+              '<Dialog as="div" className="relative z-50" onClose={onClose}>',
+              '<Dialog\n        as="div"\n        className="relative z-50"\n        onClose={() => {\n          if (!closeDisabled) onClose()\n        }}\n      >',
+              'drawer guarded dialog close',
+          )
+          drawer = replace_once(
+              drawer,
+              "                    onClick={onClose}\n                    title={closeLabel}",
+              "                    onClick={onClose}\n                    disabled={closeDisabled}\n                    title={closeLabel}",
+              'drawer disabled close button',
+          )
+          drawer_path.write_text(drawer)
+
+          dialog_path = Path('apps/board-web/src/components/recordDetailEdit/UnsavedChangesDialog.tsx')
+          dialog = dialog_path.read_text()
+          dialog = replace_once(
+              dialog,
+              "  onConfirm: () => void\n  onCancel: () => void\n}",
+              "  onConfirm: () => void\n  onCancel: () => void\n  disabled?: boolean\n}",
+              'unsaved dialog disabled prop',
+          )
+          dialog = replace_once(
+              dialog,
+              "      onClose={props.onCancel}\n",
+              "      onClose={() => {\n        if (!props.disabled) props.onCancel()\n      }}\n",
+              'guard unsaved dialog close',
+          )
+          dialog = replace_once(
+              dialog,
+              "              onClick={props.onCancel}\n",
+              "              onClick={props.onCancel}\n              disabled={props.disabled}\n",
+              'disable keep editing button',
+          )
+          dialog = replace_once(
+              dialog,
+              "              onClick={props.onConfirm}\n",
+              "              onClick={props.onConfirm}\n              disabled={props.disabled}\n",
+              'disable discard button',
+          )
+          dialog_path.write_text(dialog)
+
+          detail_path = Path('apps/board-web/src/components/RecordDetailDrawer.tsx')
+          detail = detail_path.read_text()
+          detail = replace_once(
+              detail,
+              "  hasEditHeadChanged,\n  type EditPatchFormState,",
+              "  hasEditHeadChanged,\n  type EditPatchDraft,\n  type EditPatchFormState,",
+              'EditPatchDraft import',
+          )
+          detail = replace_once(
+              detail,
+              "  function beginEdit(section: DetailEditSection) {\n    editState.beginEdit(section)\n  }\n\n  function deactivateActiveEditSection() {\n    editState.deactivateEditingSection()\n  }\n\n  function requestClose() {",
+              "  function beginEdit(section: DetailEditSection) {\n    if (isSaving) return\n    editState.beginEdit(section)\n  }\n\n  function deactivateActiveEditSection() {\n    if (isSaving) return\n    editState.deactivateEditingSection()\n  }\n\n  function requestClose() {\n    if (isSaving) return",
+              'save interaction guards',
+          )
+          detail = replace_once(
+              detail,
+              "  function requestHistory() {\n    if (!editState.requestClose()) {",
+              "  function requestHistory() {\n    if (isSaving) return\n    if (!editState.requestClose()) {",
+              'history save guard',
+          )
+          detail = replace_once(
+              detail,
+              "    editState.setDraft(initialDraft())\n    editState.setEditingSections([])\n    onHistoryClick(activeRecord)",
+              "    onHistoryClick(activeRecord)",
+              'remove compatibility section reset',
+          )
+          detail = replace_once(
+              detail,
+              "  function cancelDiscard() {\n    setPendingAction(null)",
+              "  function cancelDiscard() {\n    if (isSaving) return\n    setPendingAction(null)",
+              'cancel discard save guard',
+          )
+          detail = replace_once(
+              detail,
+              "  function confirmDiscard() {\n    const action = pendingAction",
+              "  function confirmDiscard() {\n    if (isSaving) return\n    const action = pendingAction",
+              'confirm discard save guard',
+          )
+
+          old_save = """      await submitRecordPatch(activeCurrent.id, payload, controller.signal)\n      if (requestIdRef.current !== requestId || controller.signal.aborted)\n        return\n\n      const updatedHead = await fetchRecordHead(\n        activeCurrent.id,\n        controller.signal\n      )\n      if (requestIdRef.current !== requestId || controller.signal.aborted)\n        return\n      if (updatedHead.exists) {\n        setBaseHead({\n          recordId: activeCurrent.id,\n          lastPatchId: updatedHead.lastPatchId,\n          currentVersion: updatedHead.currentVersion,\n        })\n      }\n\n      setSavedDisplayRecord({\n        recordId: activeCurrent.id,\n        body: {\n          title: savedDraft.title.trim(),\n          description: savedDraft.summary.trim(),\n          content: savedDraft.details.trim(),\n        },\n        assignee: draftAssignee,\n        tags: draftTags,\n        assets: [\n          ...(validation.patch.assets ?? activeBaseline.assets ?? []),\n        ],\n        relations: (\n          validation.patch.relations ??\n          activeBaseline.relations ??\n          []\n        ).map((relation) => ({ ...relation })),\n      })\n      setIsSaving(false)\n      abortRef.current = null\n      toastSuccess(t('edit.saveSuccess'))\n      editState.finishSave(null, savedDraft)\n      if (initialPatchDescription) {\n        onInitialPatchDescriptionConsumed?.()\n      }\n      await loadCurrentBoard(effectiveFilters)"""
+          new_save = """      const result = await submitRecordPatch(\n        activeCurrent.id,\n        payload,\n        controller.signal\n      )\n      if (requestIdRef.current !== requestId || controller.signal.aborted)\n        return\n\n      const committedDisplayRecord = buildCommittedDisplayRecord(\n        activeBaseline,\n        validation.patch,\n        draftTags,\n        draftAssignee\n      )\n      const committedDraft = initialFormState(\n        buildBaselineRecord(activeCurrent, committedDisplayRecord),\n        committedDisplayRecord.body\n      )\n\n      setBaseHead({\n        recordId: activeCurrent.id,\n        lastPatchId: result.patch.body.id,\n        currentVersion: result.newCurrentVersion,\n      })\n      setSavedDisplayRecord(committedDisplayRecord)\n      setIsSaving(false)\n      abortRef.current = null\n      toastSuccess(t('edit.saveSuccess'))\n      editState.finishSave(committedDraft)\n      if (initialPatchDescription) {\n        onInitialPatchDescriptionConsumed?.()\n      }\n      await loadCurrentBoard(effectiveFilters)"""
+          detail = replace_once(detail, old_save, new_save, 'successful save state machine')
+          detail = replace_once(
+              detail,
+              "            onClick={requestHistory}\n            icon={<ClockIcon className=\"h-4 w-4\" />}",
+              "            onClick={requestHistory}\n            disabled={isSaving}\n            icon={<ClockIcon className=\"h-4 w-4\" />}",
+              'disable history while saving',
+          )
+          detail = replace_once(
+              detail,
+              "            onClick={() => setActivePanel('detail')}\n            icon={<ArrowLeftIcon className=\"h-4 w-4\" />}",
+              "            onClick={() => setActivePanel('detail')}\n            disabled={isSaving}\n            icon={<ArrowLeftIcon className=\"h-4 w-4\" />}",
+              'disable details while saving',
+          )
+          detail = replace_once(
+              detail,
+              "        closeLabel={t('record.close')}\n        footer={footer}",
+              "        closeLabel={t('record.close')}\n        closeDisabled={isSaving}\n        footer={footer}",
+              'lock drawer close while saving',
+          )
+          detail = replace_once(
+              detail,
+              "        onCancel={cancelDiscard}\n        onConfirm={confirmDiscard}",
+              "        onCancel={cancelDiscard}\n        onConfirm={confirmDiscard}\n        disabled={isSaving}",
+              'lock discard dialog while saving',
+          )
+          detail = replace_once(
+              detail,
+              "function buildDraftTags(form: EditPatchFormState): Tag[] {",
+              "function buildCommittedDisplayRecord(\n  current: RecordItem<RecordBody>,\n  patch: EditPatchDraft,\n  nextTags: Tag[],\n  nextAssignee: string\n): DisplayRecordState {\n  const currentBody = asEditableBody(current.body)\n  const bodyPatch = patch.body\n  return {\n    recordId: current.id,\n    body: {\n      title: bodyPatch?.title ?? currentBody.title,\n      description:\n        bodyPatch && 'description' in bodyPatch\n          ? (bodyPatch.description ?? '')\n          : currentBody.description,\n      content:\n        bodyPatch && 'content' in bodyPatch\n          ? (bodyPatch.content ?? '')\n          : currentBody.content,\n    },\n    assignee:\n      'assignee' in patch ? nextAssignee : (current.assignee ?? ''),\n    tags: patch.tagChanges ? [...nextTags] : [...current.tags],\n    assets: [...(patch.assets ?? current.assets ?? [])],\n    relations: (patch.relations ?? current.relations ?? []).map((relation) => ({\n      ...relation,\n    })),\n  }\n}\n\nfunction buildDraftTags(form: EditPatchFormState): Tag[] {",
+              'committed display helper',
+          )
+          detail_path.write_text(detail)
+          PY
+      - name: Verify boundaries
+        run: |
+          ! grep -R "editingSections\|setEditingSections\|requestSection\|selectedSection\|setSelectedSection" apps/board-web/src --include='*.ts' --include='*.tsx'
+          grep -q "closeDisabled={isSaving}" apps/board-web/src/components/RecordDetailDrawer.tsx
+          grep -q "result.patch.body.id" apps/board-web/src/components/RecordDetailDrawer.tsx
+          grep -q "sameRelationDrafts" apps/board-web/src/utils/editPatchDraft.ts
+      - name: Validate
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @labour-board/web typecheck
+          pnpm --filter @labour-board/web lint
+          pnpm --filter @labour-board/web build
+          git diff --check
+      - name: Commit fixes and remove workflow
+        run: |
+          rm .github/workflows/task12-save-state-and-hook-cleanup.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: close record edit save state gaps"
+          git push origin HEAD:task12-settings-columns-editing-ux
