@@ -2,6 +2,9 @@ import { create } from 'zustand'
 import type {
   BoardCurrentProjection,
   BoardCurrentTagMatch,
+  RecordBody,
+  RecordItem,
+  RecordResponse,
   Tag,
 } from '@labour-board/shared'
 import { fetchBoardCurrent } from '../api/boardCurrent'
@@ -34,6 +37,9 @@ interface BoardCurrentState {
   setRelationTarget: (relationTarget: string) => void
   setFilters: (filters: BoardCurrentFilters) => void
   setEffectiveFilters: (filters: BoardCurrentFilters) => void
+  applyCommittedRecord: (
+    record: RecordResponse<RecordItem<RecordBody>>
+  ) => void
   loadCurrentBoard: (
     filters: BoardCurrentFilters,
     signal?: AbortSignal
@@ -140,6 +146,24 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
       return areBoardFiltersEqual(state.effectiveFilters, normalized)
         ? state
         : { effectiveFilters: normalized }
+    }),
+
+  applyCommittedRecord: (record) =>
+    set((state) => {
+      if (!state.projection) return state
+      const recordIndex = state.projection.records.findIndex(
+        (candidate) => candidate.body.id === record.body.id
+      )
+      if (recordIndex < 0) return state
+
+      const records = [...state.projection.records]
+      records[recordIndex] = record
+      return {
+        projection: {
+          ...state.projection,
+          records,
+        },
+      }
     }),
 
   loadCurrentBoard: async (filters, signal) => {
