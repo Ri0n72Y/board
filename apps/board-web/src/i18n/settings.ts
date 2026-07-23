@@ -5,6 +5,8 @@ export const settingsTranslations = {
     'settings.tabs.general': 'General',
     'settings.columnOrderHint': 'Drag the row handle to reorder board columns.',
     'settings.columnDragHandle': 'Drag to reorder {{column}}',
+    'edit.errorIncompleteRelation':
+      'Complete or remove the unfinished relation before saving.',
   },
   'zh-CN': {
     'settings.tabs.board': '看板',
@@ -12,5 +14,6 @@ export const settingsTranslations = {
     'settings.tabs.general': '通用',
     'settings.columnOrderHint': '拖拽行左侧手柄调整列顺序。',
     'settings.columnDragHandle': '拖拽调整 {{column}} 列顺序',
+    'edit.errorIncompleteRelation': '请先补全或删除未完成的关联，再进行保存。',
   },
 } as const
