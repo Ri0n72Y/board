@@ -4,11 +4,15 @@ import type {
   AssetRef,
   PatchItem,
   PublicKey,
+  RecordBody,
   RecordId,
+  RecordItem,
   RecordResponse,
   RelationRef,
+  Tag,
   TagChanges,
 } from '@labour-board/shared'
+import { useBoardCurrentStore } from '../stores/boardCurrentStore'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
 
@@ -55,6 +59,7 @@ export async function submitRecordPatch(
       throw new Error(response.data.error.message)
     }
 
+    applySuccessfulPatchToProjection(recordId, payload)
     return response.data.data
   } catch (caught) {
     if (axios.isAxiosError<ApiResponse<SubmitRecordPatchResponse>>(caught)) {
@@ -70,4 +75,77 @@ export async function submitRecordPatch(
 
     throw caught
   }
+}
+
+function applySuccessfulPatchToProjection(
+  recordId: string,
+  payload: SubmitRecordPatchPayload
+): void {
+  const state = useBoardCurrentStore.getState()
+  const current = state.projection?.records.find(
+    (record) => record.body.id === recordId
+  )
+  if (!current) return
+
+  state.applyCommittedRecord({
+    ...current,
+    body: applyPatchToRecord(current.body, payload),
+  })
+}
+
+function applyPatchToRecord(
+  current: RecordItem<RecordBody>,
+  payload: SubmitRecordPatchPayload
+): RecordItem<RecordBody> {
+  const next: RecordItem<RecordBody> = {
+    ...current,
+    tags: applyTagChanges(current.tags, payload.tagChanges),
+    body: payload.body
+      ? (deepMerge(current.body, payload.body) as RecordBody)
+      : current.body,
+    assets:
+      payload.assets === undefined ? current.assets : [...payload.assets],
+    relations:
+      payload.relations === undefined
+        ? current.relations
+        : payload.relations.map((relation) => ({ ...relation })),
+  }
+
+  if ('assignee' in payload) {
+    next.assignee = payload.assignee ?? undefined
+  }
+
+  return next
+}
+
+function applyTagChanges(tags: readonly Tag[], changes?: TagChanges): Tag[] {
+  if (!changes) return [...tags]
+
+  const next = new Set<Tag>(tags)
+  for (const tag of changes.remove ?? []) next.delete(tag)
+  for (const change of changes.change ?? []) {
+    if (change.from) next.delete(change.from)
+    if (change.to) next.add(change.to)
+  }
+  for (const tag of changes.add ?? []) next.add(tag)
+  return [...next]
+}
+
+function deepMerge(current: unknown, patch: unknown): unknown {
+  if (!isPlainObject(current) || !isPlainObject(patch)) return patch
+
+  const merged: Record<string, unknown> = { ...current }
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === undefined) continue
+    merged[key] = deepMerge(merged[key], value)
+  }
+  return merged
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      !Array.isArray(value)
+  )
 }
