@@ -449,7 +449,10 @@ export function RecordDetailDrawer({
       )
       const nextDraft: EditPatchFormState = {
         ...committedDraft,
-        relations: savedDraft.relations.map((relation) => ({ ...relation })),
+        relations: [
+          ...committedDraft.relations,
+          ...getIncompleteRelationDrafts(savedDraft.relations),
+        ],
       }
 
       setBaseHead({
@@ -463,7 +466,7 @@ export function RecordDetailDrawer({
       if (initialPatchDescription) {
         onInitialPatchDescriptionConsumed?.()
       }
-      await loadCurrentBoard(effectiveFilters)
+      void loadCurrentBoard(effectiveFilters)
     } catch (caught: unknown) {
       if (
         requestIdRef.current !== requestId ||
@@ -1042,6 +1045,14 @@ function buildCommittedDisplayRecord(
       ...relation,
     })),
   }
+}
+
+function getIncompleteRelationDrafts(
+  relations: readonly RelationRef[]
+): RelationRef[] {
+  return relations
+    .filter((relation) => !relation.constraint.trim() || !relation.target.trim())
+    .map((relation) => ({ ...relation }))
 }
 
 function buildDraftTags(form: EditPatchFormState): Tag[] {
