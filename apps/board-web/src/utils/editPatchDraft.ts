@@ -213,6 +213,27 @@ function uniqueValues<T extends string>(values: readonly T[]): T[] {
 }
 
 function sameRelationDrafts(
+  drafts: readonly RelationRef[],
+  committed: readonly RelationRef[]
+): boolean {
+  const incompleteDrafts = drafts.filter((relation) => !isCompleteRelation(relation))
+  const incompleteCommitted = committed.filter(
+    (relation) => !isCompleteRelation(relation)
+  )
+
+  if (!sameRawRelationList(incompleteDrafts, incompleteCommitted)) return false
+
+  return sameRelations(
+    normalizeRelationDrafts(drafts),
+    normalizeRelationDrafts(committed)
+  )
+}
+
+function isCompleteRelation(relation: RelationRef): boolean {
+  return Boolean(relation.constraint.trim() && relation.target.trim())
+}
+
+function sameRawRelationList(
   left: readonly RelationRef[],
   right: readonly RelationRef[]
 ): boolean {
