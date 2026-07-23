@@ -1,0 +1,72 @@
+name: Task12 Static Test
+
+on:
+  push:
+    branches:
+      - task12-settings-columns-editing-ux
+
+permissions:
+  contents: write
+
+jobs:
+  static-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Run static tests and record results
+        shell: bash
+        run: |
+          set +e
+          RESULT=.static-test-result.md
+          echo '# Task12 static test result' > "$RESULT"
+          echo >> "$RESULT"
+          echo "Commit tested: $GITHUB_SHA" >> "$RESULT"
+          echo "Runner: ubuntu-latest / Node 22" >> "$RESULT"
+          echo >> "$RESULT"
+
+          pnpm install --frozen-lockfile
+          INSTALL=$?
+          echo "- pnpm install --frozen-lockfile: $INSTALL" >> "$RESULT"
+
+          if [ "$INSTALL" -eq 0 ]; then
+            pnpm --filter @labour-board/web typecheck
+            TYPECHECK=$?
+            pnpm --filter @labour-board/web lint
+            LINT=$?
+            pnpm --filter @labour-board/web build
+            BUILD=$?
+          else
+            TYPECHECK=99
+            LINT=99
+            BUILD=99
+          fi
+
+          git diff --check
+          DIFFCHECK=$?
+
+          echo "- web typecheck: $TYPECHECK" >> "$RESULT"
+          echo "- web lint: $LINT" >> "$RESULT"
+          echo "- web build: $BUILD" >> "$RESULT"
+          echo "- git diff --check: $DIFFCHECK" >> "$RESULT"
+          echo >> "$RESULT"
+
+          if [ "$INSTALL" -eq 0 ] && [ "$TYPECHECK" -eq 0 ] && [ "$LINT" -eq 0 ] && [ "$BUILD" -eq 0 ] && [ "$DIFFCHECK" -eq 0 ]; then
+            echo 'Overall: PASS' >> "$RESULT"
+          else
+            echo 'Overall: FAIL' >> "$RESULT"
+          fi
+
+          rm -f .github/workflows/task12-static-test.yml .github/task12-static-test-trigger
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add "$RESULT" .github/workflows/task12-static-test.yml .github/task12-static-test-trigger
+          git commit -m 'test: record task12 static results'
+          git push
