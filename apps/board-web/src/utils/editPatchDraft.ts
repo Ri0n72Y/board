@@ -168,7 +168,9 @@ export function buildPatchDraft(
   }
 
   if (Object.keys(patch).length === 0) {
-    return { ok: false, error: 'edit.errorNoChanges' }
+    return hasIncompleteRelationDrafts(form.relations)
+      ? { ok: false, error: 'edit.errorIncompleteRelation' }
+      : { ok: false, error: 'edit.errorNoChanges' }
   }
 
   return {
@@ -227,6 +229,10 @@ function sameRelationDrafts(
     normalizeRelationDrafts(drafts),
     normalizeRelationDrafts(committed)
   )
+}
+
+function hasIncompleteRelationDrafts(relations: readonly RelationRef[]): boolean {
+  return relations.some((relation) => !isCompleteRelation(relation))
 }
 
 function isCompleteRelation(relation: RelationRef): boolean {
