@@ -116,13 +116,10 @@ export function sameRelations(
   left: readonly Relation[] | undefined,
   right: readonly Relation[] | undefined
 ): boolean {
-  const normalizedLeft = normalizeRelationDrafts(left ?? [])
-  const normalizedRight = normalizeRelationDrafts(right ?? [])
-  if (normalizedLeft.length !== normalizedRight.length) return false
-  return normalizedLeft.every(
-    (relation, index) =>
-      relationKey(relation) === relationKey(normalizedRight[index])
-  )
+  const leftKeys = normalizedRelationKeys(left)
+  const rightKeys = normalizedRelationKeys(right)
+  if (leftKeys.length !== rightKeys.length) return false
+  return leftKeys.every((key, index) => key === rightKeys[index])
 }
 
 export function normalizeRelationDrafts(
@@ -175,6 +172,12 @@ export function relationTargetOptionsFromReferences(
       referenceState: 'resolved' as const,
     }
   })
+}
+
+function normalizedRelationKeys(
+  relations: readonly Relation[] | undefined
+): string[] {
+  return normalizeRelationDrafts(relations).map(relationKey).sort()
 }
 
 function countCompleteRelations(relations: readonly Relation[]): number {
