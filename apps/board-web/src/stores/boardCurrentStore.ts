@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+import { recordMatchesBoardFilter } from '@labour-board/shared'
 import type {
   BoardCurrentProjection,
   BoardCurrentTagMatch,
@@ -7,6 +7,7 @@ import type {
   RecordResponse,
   Tag,
 } from '@labour-board/shared'
+import { create } from 'zustand'
 import { fetchBoardCurrent } from '../api/boardCurrent'
 import {
   areBoardFiltersEqual,
@@ -49,7 +50,6 @@ interface BoardCurrentState {
 const initialFilters = getInitialFilters()
 
 let activeRequestId = 0
-
 export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
   filters: initialFilters,
   effectiveFilters: cloneFilters(initialFilters),
@@ -156,12 +156,22 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
       )
       if (recordIndex < 0) return state
 
-      const records = [...state.projection.records]
-      records[recordIndex] = record
+      const projectionFilters =
+        state.lastAppliedFilters ?? state.effectiveFilters
+      const records = recordMatchesBoardFilter(record, projectionFilters)
+        ? replaceRecordAt(state.projection.records, recordIndex, record)
+        : state.projection.records.filter(
+            (candidate) => candidate.body.id !== record.body.id
+          )
+
       return {
         projection: {
           ...state.projection,
           records,
+          summary: {
+            ...state.projection.summary,
+            visibleCurrentRecords: records.length,
+          },
         },
       }
     }),
@@ -191,6 +201,16 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
     }
   },
 }))
+
+function replaceRecordAt(
+  records: RecordResponse<RecordItem<RecordBody>>[],
+  index: number,
+  record: RecordResponse<RecordItem<RecordBody>>
+): RecordResponse<RecordItem<RecordBody>>[] {
+  const next = [...records]
+  next[index] = record
+  return next
+}
 
 function getInitialFilters(): BoardCurrentFilters {
   if (typeof window === 'undefined')
