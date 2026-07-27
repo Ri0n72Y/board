@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { applyTagChanges } from '@labour-board/shared'
 import type {
   ApiResponse,
   AssetRef,
@@ -9,7 +10,6 @@ import type {
   RecordItem,
   RecordResponse,
   RelationRef,
-  Tag,
   TagChanges,
 } from '@labour-board/shared'
 import { useBoardCurrentStore } from '../stores/boardCurrentStore'
@@ -99,7 +99,9 @@ function applyPatchToRecord(
 ): RecordItem<RecordBody> {
   const next: RecordItem<RecordBody> = {
     ...current,
-    tags: applyTagChanges(current.tags, payload.tagChanges),
+    tags: payload.tagChanges
+      ? applyTagChanges(current.tags, payload.tagChanges)
+      : current.tags,
     body: payload.body
       ? (deepMerge(current.body, payload.body) as RecordBody)
       : current.body,
@@ -116,19 +118,6 @@ function applyPatchToRecord(
   }
 
   return next
-}
-
-function applyTagChanges(tags: readonly Tag[], changes?: TagChanges): Tag[] {
-  if (!changes) return [...tags]
-
-  const next = new Set<Tag>(tags)
-  for (const tag of changes.remove ?? []) next.delete(tag)
-  for (const change of changes.change ?? []) {
-    if (change.from) next.delete(change.from)
-    if (change.to) next.add(change.to)
-  }
-  for (const tag of changes.add ?? []) next.add(tag)
-  return [...next]
 }
 
 function deepMerge(current: unknown, patch: unknown): unknown {
