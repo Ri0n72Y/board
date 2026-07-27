@@ -13,13 +13,16 @@ interface UnsavedChangesDialogProps {
   cancelLabel: string
   onConfirm: () => void
   onCancel: () => void
+  disabled?: boolean
 }
 
 export function UnsavedChangesDialog(props: UnsavedChangesDialogProps) {
   return (
     <Dialog
       open={props.open}
-      onClose={props.onCancel}
+      onClose={() => {
+        if (!props.disabled) props.onCancel()
+      }}
       className="relative z-[70]"
     >
       <DialogBackdrop className="fixed inset-0 bg-slate-950/40" />
@@ -34,15 +37,17 @@ export function UnsavedChangesDialog(props: UnsavedChangesDialogProps) {
           <div className="mt-5 flex justify-end gap-2">
             <button
               type="button"
-              className="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-700"
+              className="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
               onClick={props.onCancel}
+              disabled={props.disabled}
             >
               {props.cancelLabel}
             </button>
             <button
               type="button"
-              className="rounded-md bg-slate-950 px-3 py-1.5 text-sm font-semibold text-white"
+              className="rounded-md bg-slate-950 px-3 py-1.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
               onClick={props.onConfirm}
+              disabled={props.disabled}
             >
               {props.confirmLabel}
             </button>

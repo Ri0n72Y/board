@@ -2,6 +2,7 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import zhCN from './zh-CN'
 import enUS from './en-US'
+import { settingsTranslations } from './settings'
 
 export const LANGUAGES = ['en-US', 'zh-CN'] as const
 export type Language = (typeof LANGUAGES)[number]
@@ -21,8 +22,18 @@ function readStoredLanguage(): Language {
 
 void i18n.use(initReactI18next).init({
   resources: {
-    'zh-CN': zhCN,
-    'en-US': enUS,
+    'zh-CN': {
+      translation: {
+        ...zhCN.translation,
+        ...settingsTranslations['zh-CN'],
+      },
+    },
+    'en-US': {
+      translation: {
+        ...enUS.translation,
+        ...settingsTranslations['en-US'],
+      },
+    },
   },
   lng: readStoredLanguage(),
   fallbackLng: 'en-US',

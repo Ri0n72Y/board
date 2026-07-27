@@ -25,6 +25,7 @@ interface BoardViewProps {
   movingRecordId?: string | null
   moveErrors?: Record<string, string>
   visibleColumnIds?: string[] | null
+  columnOrderIds?: string[] | null
   onMoveStatus?: (
     record: RecordResponse<RecordItem<RecordBody>>,
     targetStatusTag: Tag
@@ -41,21 +42,18 @@ export function BoardView({
   movingRecordId,
   moveErrors,
   visibleColumnIds,
+  columnOrderIds,
   onMoveStatus,
 }: BoardViewProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
   const hiddenNoticeKeyRef = useRef<string | null>(null)
-  const {
-    columns,
-    hiddenSummary,
-    moveStatusOptions,
-    visibleStatusTags,
-  } = useBoardViewModel({
+  const { columns, hiddenSummary, visibleStatusTags } = useBoardViewModel({
     records,
     config,
     language: lang,
     visibleColumnIds,
+    columnOrderIds,
   })
   const hiddenNoticeKey = visibleColumnIds?.join('|') ?? 'default'
   const isMovePending = movingRecordId != null
@@ -109,13 +107,11 @@ export function BoardView({
                   profiles={profiles}
                   assetOptions={assetOptions}
                   relationTargetOptions={relationTargetOptions}
-                  moveStatusOptions={moveStatusOptions}
                   movingRecordId={movingRecordId}
                   moveErrors={moveErrors}
                   dragDisabled={isMovePending || !onMoveStatus}
                   registerStatusDropTarget={registerStatusDropTarget}
                   onCardClick={onCardClick}
-                  onMoveStatus={onMoveStatus}
                 />
               ))}
             </div>

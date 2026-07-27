@@ -9,6 +9,7 @@ import type {
 import { getStatusColumns, groupRecordsByStatus } from '../utils/boardView'
 import {
   getUncategorizedColumnLabel,
+  resolveColumnOrderIds,
   resolveVisibleColumnIds,
   summarizeHiddenColumns,
 } from '../utils/boardViewColumns'
@@ -21,6 +22,7 @@ interface UseBoardViewModelArgs {
   config: BoardConfig | null
   language: string | undefined
   visibleColumnIds?: string[] | null
+  columnOrderIds?: string[] | null
 }
 
 export function useBoardViewModel({
@@ -28,6 +30,7 @@ export function useBoardViewModel({
   config,
   language,
   visibleColumnIds,
+  columnOrderIds,
 }: UseBoardViewModelArgs) {
   const tagLabel = useCallback(
     (tag: string) => formatTagLabel(tag, language),
@@ -35,25 +38,29 @@ export function useBoardViewModel({
   )
   const uncategorizedLabel = getUncategorizedColumnLabel(language)
 
-  const columns = useMemo(() => {
-    const statusColumns = getStatusColumns(config, records, tagLabel, {
-      uncategorizedLabel,
-    })
-    const groupedColumns = groupRecordsByStatus(records, statusColumns)
-    const selectedIds = resolveVisibleColumnIds(
-      groupedColumns.map((column) => column.id),
-      visibleColumnIds
-    )
-    const visible = new Set(selectedIds)
-    return groupedColumns.filter((column) => visible.has(column.id))
-  }, [config, records, tagLabel, uncategorizedLabel, visibleColumnIds])
-
   const allColumns = useMemo(() => {
     const statusColumns = getStatusColumns(config, records, tagLabel, {
       uncategorizedLabel,
     })
     return groupRecordsByStatus(records, statusColumns)
   }, [config, records, tagLabel, uncategorizedLabel])
+
+  const columns = useMemo(() => {
+    const columnsById = new Map(allColumns.map((column) => [column.id, column]))
+    const orderedIds = resolveColumnOrderIds(
+      allColumns.map((column) => column.id),
+      columnOrderIds
+    )
+    const selectedIds = resolveVisibleColumnIds(
+      orderedIds,
+      visibleColumnIds
+    )
+    const selected = new Set(selectedIds)
+    return orderedIds
+      .filter((id) => selected.has(id))
+      .map((id) => columnsById.get(id))
+      .filter((column): column is (typeof allColumns)[number] => column != null)
+  }, [allColumns, columnOrderIds, visibleColumnIds])
 
   const hiddenSummary = useMemo(
     () =>

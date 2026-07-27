@@ -5,7 +5,6 @@ import {
   useRef,
   useState,
   type MutableRefObject,
-  type ReactNode,
 } from 'react'
 import type {
   Profile,
@@ -13,6 +12,7 @@ import type {
   RecordHistoryResponse,
   RecordItem,
   RecordResponse,
+  RelationRef,
   Tag,
 } from '@labour-board/shared'
 import {
@@ -36,8 +36,11 @@ import {
 } from '../utils/board'
 import {
   asEditableBody,
+  buildEditFieldDirtyState,
   buildPatchDraft,
+  hasEditFieldChanges,
   hasEditHeadChanged,
+  type EditPatchDraft,
   type EditPatchFormState,
 } from '../utils/editPatchDraft'
 import { formatProfileCompact } from '../utils/profileDisplay'
@@ -51,10 +54,22 @@ import { SearchSelect } from './ui/SearchSelect'
 import { EditableSection } from './recordDetailEdit/EditableSection'
 import { UnsavedChangesDialog } from './recordDetailEdit/UnsavedChangesDialog'
 import { useSectionEditState } from './recordDetailEdit/useSectionEditState'
-import { RecordHistoryContent } from './RecordHistoryDrawer'
-import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
+import { RecordHistoryContent } from './RecordHistoryContent'
+import {
+  ensureReferenceOptions,
+  type RecordReferenceOption,
+} from '../utils/recordReferenceOptions'
+import type { RelationConstraintOption } from '../utils/relationDisplay'
+import { RelationEditor } from './RelationEditor'
 
-type DetailEditSection = 'title' | 'summary' | 'details' | 'assignee' | 'tags'
+type DetailEditSection =
+  | 'title'
+  | 'summary'
+  | 'details'
+  | 'assignee'
+  | 'tags'
+  | 'assets'
+  | 'relations'
 
 type PendingAction = { type: 'close' } | { type: 'history' }
 
@@ -67,6 +82,8 @@ interface DisplayRecordState {
   }
   assignee: string
   tags: Tag[]
+  assets: string[]
+  relations: RelationRef[]
 }
 
 interface RecordDetailDrawerProps {
@@ -77,6 +94,10 @@ interface RecordDetailDrawerProps {
   isHistoryLoading: boolean
   historyError: string | null
   assetOptions: RecordReferenceOption[]
+  relationTargetOptions: RecordReferenceOption[]
+  relationConstraintOptions: RelationConstraintOption[]
+  initialPatchDescription?: string
+  onInitialPatchDescriptionConsumed?: () => void
   onClose: () => void
   onHistoryClick: (record: RecordResponse<RecordItem<RecordBody>>) => void
 }
@@ -95,6 +116,10 @@ export function RecordDetailDrawer({
   isHistoryLoading,
   historyError,
   assetOptions,
+  relationTargetOptions,
+  relationConstraintOptions,
+  initialPatchDescription,
+  onInitialPatchDescriptionConsumed,
   onClose,
   onHistoryClick,
 }: RecordDetailDrawerProps) {
@@ -117,6 +142,7 @@ export function RecordDetailDrawer({
   const requestIdRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
   const stateKeyRef = useRef<string | null>(null)
+  const savingRef = useRef(false)
 
   const current = record?.body ?? null
   const displayRecord = useMemo(() => {
@@ -127,6 +153,8 @@ export function RecordDetailDrawer({
       body: asEditableBody(current.body),
       assignee: current.assignee ?? '',
       tags: [...current.tags],
+      assets: [...(current.assets ?? [])],
+      relations: (current.relations ?? []).map((relation) => ({ ...relation })),
     }
   }, [current, savedDisplayRecord])
   const baselineRecord = useMemo(
@@ -142,7 +170,10 @@ export function RecordDetailDrawer({
   )
   const isDraftDirty = useCallback(
     (draft: EditPatchFormState) =>
-      Boolean(baselineRecord && buildPatchDraft(draft, baselineRecord).ok),
+      Boolean(
+        baselineRecord &&
+          hasEditFieldChanges(buildEditFieldDirtyState(draft, baselineRecord))
+      ),
     [baselineRecord]
   )
   const editState = useSectionEditState<DetailEditSection, EditPatchFormState>({
@@ -160,6 +191,7 @@ export function RecordDetailDrawer({
     if (stateKeyRef.current === nextKey) return
     stateKeyRef.current = nextKey
     abortRequest(requestIdRef, abortRef, setIsSaving)
+    savingRef.current = false
     setError(null)
     setBaseHead(null)
     setPendingAction(null)
@@ -219,6 +251,8 @@ export function RecordDetailDrawer({
   const displayBody = displayRecord.body
   const displayAssignee = displayRecord.assignee
   const displayTags = displayRecord.tags
+  const displayAssets = displayRecord.assets
+  const displayRelations = displayRecord.relations
   const profile = lookupProfile(profiles ?? null, displayAssignee)
   const assigneeDisplay = formatProfileCompact(
     displayAssignee,
@@ -249,29 +283,64 @@ export function RecordDetailDrawer({
     label: formatTagLabel(tag, lang),
     meta: tag,
   }))
-  const sectionDirty = {
-    title: editState.draft.title.trim() !== displayBody.title,
-    summary:
-      normalizeNullable(editState.draft.summary) !==
-      normalizeNullable(displayBody.description),
-    details:
-      normalizeNullable(editState.draft.details) !==
-      normalizeNullable(displayBody.content),
-    assignee: editState.draft.assignee.trim() !== displayAssignee,
-    tags: !sameStringList(buildDraftTags(editState.draft), displayTags),
+  const draftTags = buildDraftTags(editState.draft)
+  const draftAssignee = editState.draft.assignee.trim()
+  const draftAssigneeProfile = lookupProfile(profiles ?? null, draftAssignee)
+  const draftAssigneeDisplay = formatProfileCompact(
+    draftAssignee,
+    draftAssigneeProfile,
+    t('record.unassigned'),
+    t('record.unknownMember')
+  )
+  const recordReferenceCopy = {
+    unknownAsset: t('recordReference.unknownAsset'),
+    unknownRecord: t('recordReference.unknownRecord'),
+    rawId: t('recordReference.rawId'),
   }
+  const selectableAssetOptions = ensureReferenceOptions(
+    assetOptions,
+    editState.draft.assets,
+    'asset',
+    recordReferenceCopy
+  )
+  const selectableRelationTargetOptions = ensureReferenceOptions(
+    relationTargetOptions,
+    editState.draft.relations.map((relation) => relation.target),
+    'record',
+    recordReferenceCopy
+  )
+  const fieldDirty = buildEditFieldDirtyState(editState.draft, activeBaseline)
+  const sectionDirty = {
+    title: fieldDirty.title,
+    summary: fieldDirty.summary,
+    details: fieldDirty.details,
+    assignee: fieldDirty.assignee,
+    tags:
+      fieldDirty.statusTag ||
+      fieldDirty.priorityTag ||
+      fieldDirty.otherTags,
+    assets: fieldDirty.assets,
+    relations: fieldDirty.relations,
+  }
+  const visibleAssets = sectionDirty.assets
+    ? editState.draft.assets
+    : displayAssets
+  const visibleRelations = sectionDirty.relations
+    ? editState.draft.relations
+    : displayRelations
 
   function beginEdit(section: DetailEditSection) {
+    if (isSaving) return
     editState.beginEdit(section)
   }
 
-  function clearCleanEditState() {
-    if (editState.editingSections.length === 0 || editState.dirty) return
-    editState.setDraft(initialDraft())
-    editState.setEditingSections([])
+  function deactivateActiveEditSection() {
+    if (isSaving) return
+    editState.deactivateEditingSection()
   }
 
   function requestClose() {
+    if (isSaving) return
     if (!editState.requestClose()) {
       setPendingAction({ type: 'close' })
       return
@@ -282,22 +351,23 @@ export function RecordDetailDrawer({
   }
 
   function requestHistory() {
+    if (isSaving) return
     if (!editState.requestClose()) {
       setPendingAction({ type: 'history' })
       return
     }
-    editState.setDraft(initialDraft())
-    editState.setEditingSections([])
     onHistoryClick(activeRecord)
     setActivePanel('history')
   }
 
   function cancelDiscard() {
+    if (isSaving) return
     setPendingAction(null)
     editState.cancelPendingExit()
   }
 
   function confirmDiscard() {
+    if (isSaving) return
     const action = pendingAction
     setPendingAction(null)
     editState.discardPendingExit()
@@ -311,7 +381,10 @@ export function RecordDetailDrawer({
   }
 
   async function save() {
-    const validation = buildPatchDraft(editState.draft, activeBaseline)
+    if (savingRef.current) return
+
+    const savedDraft = editState.draft
+    const validation = buildPatchDraft(savedDraft, activeBaseline)
     if (!validation.ok) {
       const message = t(validation.error)
       setError(message)
@@ -319,6 +392,7 @@ export function RecordDetailDrawer({
       return
     }
 
+    savingRef.current = true
     const requestId = requestIdRef.current + 1
     requestIdRef.current = requestId
     abortRef.current?.abort()
@@ -330,7 +404,6 @@ export function RecordDetailDrawer({
     try {
       if (!baseHead || baseHead.recordId !== activeCurrent.id) {
         setError(t('edit.headMissing'))
-        setIsSaving(false)
         return
       }
 
@@ -339,14 +412,12 @@ export function RecordDetailDrawer({
         return
       if (!head.exists) {
         setError(t('edit.headMissing'))
-        setIsSaving(false)
         return
       }
       if (hasEditHeadChanged(baseHead, head)) {
         const message = t('edit.staleHead')
         setError(message)
         toastError(message)
-        setIsSaving(false)
         return
       }
 
@@ -355,39 +426,47 @@ export function RecordDetailDrawer({
         currentVersion: baseHead.currentVersion,
         ...validation.patch,
       }
-      await submitRecordPatch(activeCurrent.id, payload, controller.signal)
-      if (requestIdRef.current !== requestId || controller.signal.aborted)
-        return
-
-      const updatedHead = await fetchRecordHead(
+      if (initialPatchDescription) {
+        payload.description = initialPatchDescription
+      }
+      const result = await submitRecordPatch(
         activeCurrent.id,
+        payload,
         controller.signal
       )
       if (requestIdRef.current !== requestId || controller.signal.aborted)
         return
-      if (updatedHead.exists) {
-        setBaseHead({
-          recordId: activeCurrent.id,
-          lastPatchId: updatedHead.lastPatchId,
-          currentVersion: updatedHead.currentVersion,
-        })
+
+      const committedDisplayRecord = buildCommittedDisplayRecord(
+        activeBaseline,
+        validation.patch,
+        buildDraftTags(savedDraft),
+        savedDraft.assignee.trim()
+      )
+      const committedDraft = initialFormState(
+        buildBaselineRecord(activeCurrent, committedDisplayRecord),
+        committedDisplayRecord.body
+      )
+      const nextDraft: EditPatchFormState = {
+        ...committedDraft,
+        relations: [
+          ...committedDraft.relations,
+          ...getIncompleteRelationDrafts(savedDraft.relations),
+        ],
       }
 
-      setSavedDisplayRecord({
+      setBaseHead({
         recordId: activeCurrent.id,
-        body: {
-          title: editState.draft.title.trim(),
-          description: editState.draft.summary.trim(),
-          content: editState.draft.details.trim(),
-        },
-        assignee: editState.draft.assignee.trim(),
-        tags: buildDraftTags(editState.draft),
+        lastPatchId: result.patch.body.id,
+        currentVersion: result.newCurrentVersion,
       })
-      setIsSaving(false)
-      abortRef.current = null
+      setSavedDisplayRecord(committedDisplayRecord)
       toastSuccess(t('edit.saveSuccess'))
-      editState.finishSave(editState.editingSection)
-      await loadCurrentBoard(effectiveFilters)
+      editState.finishSave(nextDraft)
+      if (initialPatchDescription) {
+        onInitialPatchDescriptionConsumed?.()
+      }
+      void loadCurrentBoard(effectiveFilters)
     } catch (caught: unknown) {
       if (
         requestIdRef.current !== requestId ||
@@ -404,9 +483,10 @@ export function RecordDetailDrawer({
             : t('edit.errorGeneral')
       setError(message)
       toastError(message)
-      setIsSaving(false)
     } finally {
       if (requestIdRef.current === requestId) abortRef.current = null
+      savingRef.current = false
+      setIsSaving(false)
     }
   }
 
@@ -418,6 +498,7 @@ export function RecordDetailDrawer({
             type="button"
             variant="ghost"
             onClick={requestHistory}
+            disabled={isSaving}
             icon={<ClockIcon className="h-4 w-4" />}
           >
             {t('record.history')}
@@ -427,12 +508,13 @@ export function RecordDetailDrawer({
             type="button"
             variant="ghost"
             onClick={() => setActivePanel('detail')}
+            disabled={isSaving}
             icon={<ArrowLeftIcon className="h-4 w-4" />}
           >
             {t('record.details')}
           </Button>
         )}
-        {activePanel === 'detail' && editState.editingSections.length > 0 && (
+        {activePanel === 'detail' && editState.dirty && (
           <Button
             type="button"
             onClick={() => void save()}
@@ -455,7 +537,11 @@ export function RecordDetailDrawer({
       <AnimatedDrawer
         open={open}
         onClose={requestClose}
-        title={displayBody.title || activeCurrent.pid}
+        title={
+          sectionDirty.title
+            ? editState.draft.title.trim() || activeCurrent.pid
+            : displayBody.title || activeCurrent.pid
+        }
         subtitle={
           activePanel === 'history'
             ? `${activeCurrent.pid} · ${t('history.subtitle')}`
@@ -463,6 +549,7 @@ export function RecordDetailDrawer({
         }
         size="md"
         closeLabel={t('record.close')}
+        closeDisabled={isSaving}
         footer={footer}
       >
         <div className="grid min-h-full content-start gap-4">
@@ -472,6 +559,17 @@ export function RecordDetailDrawer({
               role="alert"
             >
               {error}
+            </section>
+          )}
+
+          {activePanel === 'detail' && initialPatchDescription && (
+            <section className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+              <p className="text-xs font-semibold uppercase text-indigo-700">
+                {t('edit.initialPatchDescriptionNotice')}
+              </p>
+              <p className="mt-1 whitespace-pre-wrap">
+                {initialPatchDescription}
+              </p>
             </section>
           )}
 
@@ -487,13 +585,13 @@ export function RecordDetailDrawer({
           ) : (
             <div
               className="grid min-h-full content-start gap-4"
-              onClick={clearCleanEditState}
+              onClick={deactivateActiveEditSection}
             >
               <EditableSection
                 title={t('record.assignee')}
                 inline
                 editing={editState.isEditing('assignee')}
-                dirty={editState.isEditing('assignee') && sectionDirty.assignee}
+                dirty={sectionDirty.assignee}
                 disabled={isSaving}
                 onEdit={() => beginEdit('assignee')}
                 editor={
@@ -513,16 +611,35 @@ export function RecordDetailDrawer({
                 }
               >
                 <div className="flex min-w-0 items-center justify-end gap-3">
-                  {displayAssignee && (
+                  {(sectionDirty.assignee ? draftAssignee : displayAssignee) && (
                     <ProfileAvatar
-                      name={profile?.name ?? displayAssignee}
-                      pk={displayAssignee}
-                      avatarUrl={profile?.avatarUrl ?? null}
+                      name={
+                        (sectionDirty.assignee
+                          ? draftAssigneeProfile
+                          : profile
+                        )?.name ??
+                        (sectionDirty.assignee
+                          ? draftAssignee
+                          : displayAssignee)
+                      }
+                      pk={
+                        sectionDirty.assignee
+                          ? draftAssignee
+                          : displayAssignee
+                      }
+                      avatarUrl={
+                        (sectionDirty.assignee
+                          ? draftAssigneeProfile
+                          : profile
+                        )?.avatarUrl ?? null
+                      }
                       size={32}
                     />
                   )}
                   <p className="truncate text-sm font-semibold text-slate-900">
-                    {assigneeDisplay}
+                    {sectionDirty.assignee
+                      ? draftAssigneeDisplay
+                      : assigneeDisplay}
                   </p>
                 </div>
               </EditableSection>
@@ -531,7 +648,7 @@ export function RecordDetailDrawer({
                 title={t('edit.titleField')}
                 inline
                 editing={editState.isEditing('title')}
-                dirty={editState.isEditing('title') && sectionDirty.title}
+                dirty={sectionDirty.title}
                 disabled={isSaving}
                 onEdit={() => beginEdit('title')}
                 editor={
@@ -549,14 +666,16 @@ export function RecordDetailDrawer({
                 }
               >
                 <p className="truncate text-sm leading-relaxed text-slate-800">
-                  {displayBody.title || activeCurrent.pid}
+                  {sectionDirty.title
+                    ? editState.draft.title.trim() || activeCurrent.pid
+                    : displayBody.title || activeCurrent.pid}
                 </p>
               </EditableSection>
 
               <EditableSection
                 title={t('edit.summary')}
                 editing={editState.isEditing('summary')}
-                dirty={editState.isEditing('summary') && sectionDirty.summary}
+                dirty={sectionDirty.summary}
                 disabled={isSaving}
                 onEdit={() => beginEdit('summary')}
                 editor={
@@ -575,14 +694,16 @@ export function RecordDetailDrawer({
                 }
               >
                 <p className="text-sm leading-relaxed text-slate-800">
-                  {displayBody.description || '—'}
+                  {sectionDirty.summary
+                    ? editState.draft.summary || '—'
+                    : displayBody.description || '—'}
                 </p>
               </EditableSection>
 
               <EditableSection
                 title={t('edit.details')}
                 editing={editState.isEditing('details')}
-                dirty={editState.isEditing('details') && sectionDirty.details}
+                dirty={sectionDirty.details}
                 disabled={isSaving}
                 onEdit={() => beginEdit('details')}
                 editor={
@@ -601,7 +722,9 @@ export function RecordDetailDrawer({
                 }
               >
                 <pre className="max-h-60 overflow-y-auto whitespace-pre-wrap wrap-break-word rounded bg-slate-50 p-3 text-sm leading-relaxed text-slate-800">
-                  {displayBody.content || '—'}
+                  {sectionDirty.details
+                    ? editState.draft.details || '—'
+                    : displayBody.content || '—'}
                 </pre>
               </EditableSection>
 
@@ -609,7 +732,7 @@ export function RecordDetailDrawer({
                 title={t('filters.tag')}
                 inline={!editState.isEditing('tags')}
                 editing={editState.isEditing('tags')}
-                dirty={editState.isEditing('tags') && sectionDirty.tags}
+                dirty={sectionDirty.tags}
                 disabled={isSaving}
                 onEdit={() => beginEdit('tags')}
                 editor={
@@ -663,17 +786,43 @@ export function RecordDetailDrawer({
                   </div>
                 }
               >
-                {displayTags.length > 0 ? (
-                  <TagChipRow tags={displayTags} readonly />
+                {(sectionDirty.tags ? draftTags : displayTags).length > 0 ? (
+                  <TagChipRow
+                    tags={sectionDirty.tags ? draftTags : displayTags}
+                    readonly
+                  />
                 ) : (
                   <p className="text-sm text-slate-500">—</p>
                 )}
               </EditableSection>
 
-              {(activeCurrent.assets?.length ?? 0) > 0 && (
-                <ReadOnlyInfoSection title={t('record.assets')}>
+              <EditableSection
+                title={t('record.assets')}
+                editing={editState.isEditing('assets')}
+                dirty={sectionDirty.assets}
+                disabled={isSaving}
+                onEdit={() => beginEdit('assets')}
+                editor={
+                  <SearchSelect
+                    mode="option"
+                    label={t('edit.assetSelector')}
+                    options={selectableAssetOptions}
+                    values={editState.draft.assets}
+                    multiple
+                    onChangeMany={(assets) =>
+                      editState.setDraft((draft) => ({ ...draft, assets }))
+                    }
+                    placeholder={t('searchSelect.searchPlaceholder')}
+                    selectedLabel={t('edit.assets')}
+                    emptyText={t('filters.noAssetOptions')}
+                    allowCustomValue={false}
+                    disabled={isSaving}
+                  />
+                }
+              >
+                {visibleAssets.length > 0 ? (
                   <ul className="grid gap-1">
-                    {activeCurrent.assets?.map((asset) => (
+                    {visibleAssets.map((asset) => (
                       <li
                         key={asset}
                         className="truncate font-mono text-xs text-slate-700"
@@ -683,24 +832,47 @@ export function RecordDetailDrawer({
                       </li>
                     ))}
                   </ul>
-                </ReadOnlyInfoSection>
-              )}
+                ) : (
+                  <p className="text-sm text-slate-500">—</p>
+                )}
+              </EditableSection>
 
-              {(activeCurrent.relations?.length ?? 0) > 0 && (
-                <ReadOnlyInfoSection title={t('record.relations')}>
+              <EditableSection
+                title={t('record.relations')}
+                editing={editState.isEditing('relations')}
+                dirty={sectionDirty.relations}
+                disabled={isSaving}
+                onEdit={() => beginEdit('relations')}
+                editor={
+                  <RelationEditor
+                    label={t('relations.title')}
+                    value={editState.draft.relations}
+                    targetOptions={selectableRelationTargetOptions}
+                    constraintOptions={relationConstraintOptions}
+                    currentRecordId={activeCurrent.id}
+                    onChange={(relations) =>
+                      editState.setDraft((draft) => ({ ...draft, relations }))
+                    }
+                    disabled={isSaving}
+                  />
+                }
+              >
+                {visibleRelations.length > 0 ? (
                   <ul className="grid gap-1">
-                    {activeCurrent.relations?.map((rel, index) => (
+                    {visibleRelations.map((relation, index) => (
                       <li
-                        key={`${rel.constraint}:${rel.target}:${index}`}
+                        key={`${relation.constraint}:${relation.target}:${index}`}
                         className="truncate text-xs text-slate-700"
-                        title={rel.target}
+                        title={relation.target}
                       >
-                        {rel.constraint}: {rel.target}
+                        {relation.constraint}: {relation.target}
                       </li>
                     ))}
                   </ul>
-                </ReadOnlyInfoSection>
-              )}
+                ) : (
+                  <p className="text-sm text-slate-500">—</p>
+                )}
+              </EditableSection>
             </div>
           )}
         </div>
@@ -714,6 +886,7 @@ export function RecordDetailDrawer({
         cancelLabel={t('edit.unsavedDiscardCancel')}
         onCancel={cancelDiscard}
         onConfirm={confirmDiscard}
+        disabled={isSaving}
       />
     </>
   )
@@ -761,23 +934,6 @@ function TagOptionGrid({
         {tags.length === 0 && <p className="text-sm text-slate-500">—</p>}
       </div>
     </div>
-  )
-}
-
-function ReadOnlyInfoSection({
-  title,
-  children,
-}: {
-  title: string
-  children: ReactNode
-}) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <h3 className="mb-2 text-xs font-bold uppercase text-slate-500">
-        {title}
-      </h3>
-      {children}
-    </section>
   )
 }
 
@@ -831,6 +987,8 @@ function emptyDisplayRecord(): DisplayRecordState {
     body: emptyBody(),
     assignee: '',
     tags: [],
+    assets: [],
+    relations: [],
   }
 }
 
@@ -848,6 +1006,8 @@ function buildBaselineRecord(
     ...record,
     assignee: displayRecord.assignee || undefined,
     tags: [...displayRecord.tags],
+    assets: [...displayRecord.assets],
+    relations: displayRecord.relations.map((relation) => ({ ...relation })),
     body: {
       ...sourceBody,
       title: displayRecord.body.title,
@@ -855,6 +1015,44 @@ function buildBaselineRecord(
       content: displayRecord.body.content,
     } as RecordBody,
   } as RecordItem<RecordBody>
+}
+
+function buildCommittedDisplayRecord(
+  current: RecordItem<RecordBody>,
+  patch: EditPatchDraft,
+  nextTags: Tag[],
+  nextAssignee: string
+): DisplayRecordState {
+  const currentBody = asEditableBody(current.body)
+  const bodyPatch = patch.body
+  return {
+    recordId: current.id,
+    body: {
+      title: bodyPatch?.title ?? currentBody.title,
+      description:
+        bodyPatch && 'description' in bodyPatch
+          ? (bodyPatch.description ?? '')
+          : currentBody.description,
+      content:
+        bodyPatch && 'content' in bodyPatch
+          ? (bodyPatch.content ?? '')
+          : currentBody.content,
+    },
+    assignee: 'assignee' in patch ? nextAssignee : (current.assignee ?? ''),
+    tags: patch.tagChanges ? [...nextTags] : [...current.tags],
+    assets: [...(patch.assets ?? current.assets ?? [])],
+    relations: (patch.relations ?? current.relations ?? []).map((relation) => ({
+      ...relation,
+    })),
+  }
+}
+
+function getIncompleteRelationDrafts(
+  relations: readonly RelationRef[]
+): RelationRef[] {
+  return relations
+    .filter((relation) => !relation.constraint.trim() || !relation.target.trim())
+    .map((relation) => ({ ...relation }))
 }
 
 function buildDraftTags(form: EditPatchFormState): Tag[] {
@@ -870,16 +1068,6 @@ function buildDraftTags(form: EditPatchFormState): Tag[] {
 
 function uniqueTags(tags: Tag[]): Tag[] {
   return [...new Set(tags)]
-}
-
-function sameStringList(left: readonly string[], right: readonly string[]) {
-  if (left.length !== right.length) return false
-  return left.every((value, index) => value === right[index])
-}
-
-function normalizeNullable(value: string): string | null {
-  const trimmed = value.trim()
-  return trimmed ? trimmed : null
 }
 
 function formatDate(value: string): string {

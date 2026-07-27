@@ -25,7 +25,7 @@ interface AgentSuggestionSectionProps {
   onGenerate: (draftId: string, instruction?: string) => void | Promise<unknown>
   onSelectSuggestion: (id: string) => void
   records?: RecordResponse<RecordItem<RecordBody>>[]
-  onOpenEditor?: (recordId: string, patchDescription: string) => void
+  onOpenRecord?: (recordId: string, patchDescription: string) => void
 }
 
 export function AgentSuggestionSection({
@@ -41,7 +41,7 @@ export function AgentSuggestionSection({
   onGenerate,
   onSelectSuggestion,
   records,
-  onOpenEditor,
+  onOpenRecord,
 }: AgentSuggestionSectionProps) {
   const { t } = useTranslation()
 
@@ -74,7 +74,7 @@ export function AgentSuggestionSection({
         isDetailLoading={isDetailLoading}
         detailError={detailError}
         records={records}
-        onOpenEditor={onOpenEditor}
+        onOpenRecord={onOpenRecord}
       />
     </div>
   )

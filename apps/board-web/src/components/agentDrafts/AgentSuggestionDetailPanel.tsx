@@ -16,13 +16,13 @@ import { AgentSuggestionDiagnosticsPanel } from './AgentSuggestionDiagnosticsPan
 interface AgentSuggestionDetailPanelProps {
   suggestion: AgentSuggestionDetail | null
   records?: RecordResponse<RecordItem<RecordBody>>[]
-  onOpenEditor?: (recordId: string, patchDescription: string) => void
+  onOpenRecord?: (recordId: string, patchDescription: string) => void
 }
 
 export function AgentSuggestionDetailPanel({
   suggestion,
   records,
-  onOpenEditor,
+  onOpenRecord,
 }: AgentSuggestionDetailPanelProps) {
   const { t } = useTranslation()
 
@@ -40,7 +40,7 @@ export function AgentSuggestionDetailPanel({
       <AgentSuggestionPatchDraftSection
         suggestion={suggestion}
         records={records}
-        onOpenEditor={onOpenEditor}
+        onOpenRecord={onOpenRecord}
       />
 
       <div className="rounded-lg border border-slate-200 bg-white">

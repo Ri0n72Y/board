@@ -13,18 +13,18 @@ import { canCreatePatchDraft } from '../../utils/agentPatchDraft'
 interface AgentSuggestionPatchDraftSectionProps {
   suggestion: AgentSuggestionDetail
   records?: RecordResponse<RecordItem<RecordBody>>[]
-  onOpenEditor?: (recordId: string, patchDescription: string) => void
+  onOpenRecord?: (recordId: string, patchDescription: string) => void
 }
 
 export function AgentSuggestionPatchDraftSection({
   suggestion,
   records,
-  onOpenEditor,
+  onOpenRecord,
 }: AgentSuggestionPatchDraftSectionProps) {
   const { t } = useTranslation()
   const [showPatchDraft, setShowPatchDraft] = useState(false)
 
-  if (!records || !onOpenEditor || !canCreatePatchDraft(suggestion)) return null
+  if (!records || !onOpenRecord || !canCreatePatchDraft(suggestion)) return null
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white">
@@ -47,7 +47,7 @@ export function AgentSuggestionPatchDraftSection({
             suggestionTitle={suggestion.title}
             suggestionMarkdown={suggestion.markdown}
             records={records}
-            onOpenEditor={onOpenEditor}
+            onOpenRecord={onOpenRecord}
             onClose={() => setShowPatchDraft(false)}
           />
         )}

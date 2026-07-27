@@ -1,9 +1,13 @@
-import { create } from 'zustand'
+import { recordMatchesBoardFilter } from '@labour-board/shared'
 import type {
   BoardCurrentProjection,
   BoardCurrentTagMatch,
+  RecordBody,
+  RecordItem,
+  RecordResponse,
   Tag,
 } from '@labour-board/shared'
+import { create } from 'zustand'
 import { fetchBoardCurrent } from '../api/boardCurrent'
 import {
   areBoardFiltersEqual,
@@ -34,6 +38,9 @@ interface BoardCurrentState {
   setRelationTarget: (relationTarget: string) => void
   setFilters: (filters: BoardCurrentFilters) => void
   setEffectiveFilters: (filters: BoardCurrentFilters) => void
+  applyCommittedRecord: (
+    record: RecordResponse<RecordItem<RecordBody>>
+  ) => void
   loadCurrentBoard: (
     filters: BoardCurrentFilters,
     signal?: AbortSignal
@@ -43,7 +50,6 @@ interface BoardCurrentState {
 const initialFilters = getInitialFilters()
 
 let activeRequestId = 0
-
 export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
   filters: initialFilters,
   effectiveFilters: cloneFilters(initialFilters),
@@ -142,6 +148,34 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
         : { effectiveFilters: normalized }
     }),
 
+  applyCommittedRecord: (record) =>
+    set((state) => {
+      if (!state.projection) return state
+      const recordIndex = state.projection.records.findIndex(
+        (candidate) => candidate.body.id === record.body.id
+      )
+      if (recordIndex < 0) return state
+
+      const projectionFilters =
+        state.lastAppliedFilters ?? state.effectiveFilters
+      const records = recordMatchesBoardFilter(record, projectionFilters)
+        ? replaceRecordAt(state.projection.records, recordIndex, record)
+        : state.projection.records.filter(
+            (candidate) => candidate.body.id !== record.body.id
+          )
+
+      return {
+        projection: {
+          ...state.projection,
+          records,
+          summary: {
+            ...state.projection.summary,
+            visibleCurrentRecords: records.length,
+          },
+        },
+      }
+    }),
+
   loadCurrentBoard: async (filters, signal) => {
     const requestId = ++activeRequestId
     set({ isLoading: true, error: null })
@@ -167,6 +201,16 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
     }
   },
 }))
+
+function replaceRecordAt(
+  records: RecordResponse<RecordItem<RecordBody>>[],
+  index: number,
+  record: RecordResponse<RecordItem<RecordBody>>
+): RecordResponse<RecordItem<RecordBody>>[] {
+  const next = [...records]
+  next[index] = record
+  return next
+}
 
 function getInitialFilters(): BoardCurrentFilters {
   if (typeof window === 'undefined')

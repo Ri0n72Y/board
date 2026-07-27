@@ -13,7 +13,7 @@ interface AgentSuggestionDetailSlotProps {
   isDetailLoading: boolean
   detailError: string | null
   records?: RecordResponse<RecordItem<RecordBody>>[]
-  onOpenEditor?: (recordId: string, patchDescription: string) => void
+  onOpenRecord?: (recordId: string, patchDescription: string) => void
 }
 
 export function AgentSuggestionDetailSlot({
@@ -21,7 +21,7 @@ export function AgentSuggestionDetailSlot({
   isDetailLoading,
   detailError,
   records,
-  onOpenEditor,
+  onOpenRecord,
 }: AgentSuggestionDetailSlotProps) {
   const { t } = useTranslation()
 
@@ -44,7 +44,7 @@ export function AgentSuggestionDetailSlot({
         <AgentSuggestionDetailPanel
           suggestion={selectedSuggestion}
           records={records}
-          onOpenEditor={onOpenEditor}
+          onOpenRecord={onOpenRecord}
         />
       )}
     </>

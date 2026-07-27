@@ -27,12 +27,15 @@ export function EditableSection({
   return (
     <section
       className={cn(
-        'rounded-lg border border-slate-200 bg-white p-4 transition',
+        'rounded-lg border bg-white p-4 transition',
+        editing
+          ? 'border-emerald-600 bg-emerald-50/30 ring-2 ring-emerald-100'
+          : dirty
+            ? 'border-amber-400 bg-amber-50/30'
+            : 'border-slate-200',
         canEdit &&
           !editing &&
-          'cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/20',
-        editing && 'border-emerald-300 bg-emerald-50/30',
-        dirty && 'shadow-[0_0_0_2px_rgba(16,185,129,0.35)]'
+          'cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/20'
       )}
       onClick={(event) => {
         event.stopPropagation()

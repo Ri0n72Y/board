@@ -19,16 +19,16 @@ interface AgentPatchDraftPanelProps {
   suggestionTitle: string
   suggestionMarkdown?: string
   records: RecordResponse<RecordItem<RecordBody>>[]
-  onOpenEditor: (recordId: string, patchDescription: string) => void
+  onOpenRecord: (recordId: string, patchDescription: string) => void
   onClose?: () => void
 }
 
 /**
  * AgentPatchDraftPanel handles only:
- *   suggestion → record selection → open EditRecordDrawer.
+ *   suggestion → record selection → open RecordDetailDrawer.
  *
  * It does NOT submit any patch itself.  The actual edit and submission
- * are delegated to the existing EditRecordDrawer, which enforces
+ * are delegated to the editable RecordDetailDrawer, which enforces
  * the buildPatchDraft no-empty-changes rule.
  */
 export function AgentPatchDraftPanel({
@@ -36,7 +36,7 @@ export function AgentPatchDraftPanel({
   suggestionTitle,
   suggestionMarkdown,
   records,
-  onOpenEditor,
+  onOpenRecord,
   onClose,
 }: AgentPatchDraftPanelProps) {
   const { t, i18n } = useTranslation()
@@ -76,9 +76,9 @@ export function AgentPatchDraftPanel({
     [records, selectedRecordId]
   )
 
-  const handleOpenEditor = () => {
+  const handleOpenRecord = () => {
     if (!selectedRecordId) return
-    onOpenEditor(selectedRecordId, patchDescription)
+    onOpenRecord(selectedRecordId, patchDescription)
     // Close self after delegating
     onClose?.()
   }
@@ -156,7 +156,7 @@ export function AgentPatchDraftPanel({
         <div className="flex justify-end">
           <Button
             type="button"
-            onClick={handleOpenEditor}
+            onClick={handleOpenRecord}
             disabled={!selectedRecord}
             icon={<PencilSquareIcon className="h-4 w-4" />}
           >

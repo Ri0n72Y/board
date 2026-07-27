@@ -47,7 +47,7 @@ interface AgentDraftSuggestionState {
 
 interface AgentDraftPatchDraftState {
   records?: RecordResponse<RecordItem<RecordBody>>[]
-  onOpenEditor?: (recordId: string, patchDescription: string) => void
+  onOpenRecord?: (recordId: string, patchDescription: string) => void
 }
 
 interface AgentDraftDetailWorkspaceProps {
@@ -112,7 +112,7 @@ export function AgentDraftDetailWorkspace({
               onGenerate={suggestion.onGenerate}
               onSelectSuggestion={suggestion.onSelectSuggestion}
               records={patchDraft?.records}
-              onOpenEditor={patchDraft?.onOpenEditor}
+              onOpenRecord={patchDraft?.onOpenRecord}
             />
           )}
         </div>

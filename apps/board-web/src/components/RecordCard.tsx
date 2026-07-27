@@ -4,11 +4,9 @@ import type {
   RecordBody,
   RecordItem,
   RecordResponse,
-  Tag,
 } from '@labour-board/shared'
 import { useTranslation } from 'react-i18next'
 import { TagChipRow } from './BoardFilters'
-import { MoveStatusControl } from './MoveStatusControl'
 import { ProfileAvatar } from './ProfileAvatar'
 import { lookupProfile } from '../utils/board'
 import {
@@ -21,7 +19,6 @@ import {
   type ReferenceDisplayItem,
 } from '../utils/referenceDisplay'
 import { formatProfileCompact } from '../utils/profileDisplay'
-import type { MoveStatusOption } from '../utils/statusMove'
 import { cn } from '../lib/cn'
 
 /** Tags that, when clicked inside a card, should NOT trigger card detail open. */
@@ -44,7 +41,6 @@ interface RecordCardProps {
   assetOptions: RecordReferenceOption[]
   relationTargetOptions: RecordReferenceOption[]
   compact?: boolean
-  moveStatusOptions?: MoveStatusOption[]
   moveStatusError?: string | null
   isMovingStatus?: boolean
   isDragEnabled?: boolean
@@ -52,10 +48,6 @@ interface RecordCardProps {
   dragRef?: Ref<HTMLElement>
   dragHandleRef?: Ref<HTMLButtonElement>
   onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
-  onMoveStatus?: (
-    record: RecordResponse<RecordItem<RecordBody>>,
-    targetStatusTag: Tag
-  ) => void
 }
 
 export function RecordCard({
@@ -64,7 +56,6 @@ export function RecordCard({
   assetOptions,
   relationTargetOptions,
   compact = false,
-  moveStatusOptions = [],
   moveStatusError,
   isMovingStatus = false,
   isDragEnabled = false,
@@ -72,18 +63,18 @@ export function RecordCard({
   dragRef,
   dragHandleRef,
   onCardClick,
-  onMoveStatus,
 }: RecordCardProps) {
   const { t, i18n } = useTranslation()
   const isZh = (i18n.resolvedLanguage ?? i18n.language).startsWith('zh')
   const dragHandleLabel = t('move.dragHandle', {
     defaultValue: isZh ? '拖拽移动状态' : 'Drag to move status',
   })
+  const movingLabel = t('move.moving', {
+    defaultValue: isZh ? '移动中...' : 'Moving...',
+  })
   const current = record.body
   const body = asDisplayBody(current.body)
   const title = body.title ?? current.pid
-  const currentStatus =
-    current.tags.find((tag) => tag.startsWith('status:')) ?? null
   const profile = lookupProfile(profiles ?? null, current.assignee ?? '')
   const assigneeDisplay = formatProfileCompact(
     current.assignee,
@@ -175,22 +166,21 @@ export function RecordCard({
           compact
         />
 
-        {onMoveStatus && moveStatusOptions.length > 0 && (
-          <div
-            data-card-interactive="true"
-            className="shrink-0 border-t border-slate-100 pt-2"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
-            <MoveStatusControl
-              currentStatus={currentStatus}
-              options={moveStatusOptions}
-              isMoving={isMovingStatus}
-              error={moveStatusError}
-              onMove={(targetStatusTag) =>
-                onMoveStatus(record, targetStatusTag)
-              }
-            />
+        {(isMovingStatus || moveStatusError) && (
+          <div data-card-interactive="true" className="grid gap-1">
+            {isMovingStatus && (
+              <p className="rounded-md bg-emerald-50 px-2 py-1.5 text-xs font-medium text-emerald-700">
+                {movingLabel}
+              </p>
+            )}
+            {moveStatusError && (
+              <p
+                className="rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700"
+                role="alert"
+              >
+                {moveStatusError}
+              </p>
+            )}
           </div>
         )}
       </article>
