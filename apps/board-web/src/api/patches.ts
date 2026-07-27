@@ -113,8 +113,8 @@ function applyPatchToRecord(
         : payload.relations.map((relation) => ({ ...relation })),
   }
 
-  if ('assignee' in payload) {
-    next.assignee = payload.assignee ?? undefined
+  if (payload.assignee !== undefined) {
+    next.assignee = payload.assignee
   }
 
   return next
