@@ -106,6 +106,7 @@ MVP 需求一律通过 GitHub issue 管理，状态用 label 流转（见 `.gith
 
 ## Architecture Notes
 
+- **文档体系**: 架构与模块文档见 `docs/`（`docs/README.md` 索引、`docs/architecture/c4.md` C4 图、`docs/architecture/dataflow.md` 数据流图、`docs/modules/*.md` 模块文档）。**改动任一模块必须同步更新对应文档与图**（见 "Issue & Delivery Workflow" 的文档随代码维护规则）。
 - **Backend**: Hono app assembled in `app.ts`, routes mounted in `src/routes/index.ts`, services wired in `src/services/index.ts`. MongoDB is optional — the app runs with memory storage when `MONGODB_URI` is absent.
 - **Frontend**: Single-page app (no React Router). Drawers manage modal navigation. Zustand stores manage board state. API layer uses Axios with `AbortController` support in all hooks.
 - **Agent workflow**: Non-executing — drafts are reviewed by humans before formal handoff. AI suggestions are read-only analysis artifacts. No board mutation occurs through the agent pipeline.
