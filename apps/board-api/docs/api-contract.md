@@ -248,6 +248,9 @@ Manual Agent Response:
 
 ## MVP 2.4 Addendum: Agent Provider Readiness
 
+> Superseded by MVP 2.5 (real provider calls implemented) — retained as the
+> historical boundary description. See "MVP 2.5 Addendum" below for current state.
+
 MVP 2.4 prepares the backend boundary for real Agent Suggestion providers. It
 does not implement real provider network calls.
 
@@ -259,7 +262,7 @@ Provider config:
 - `AGENT_SUGGESTION_API_KEY` is read only by backend config.
 - Public config/audit fields expose only `apiKeyPresent: boolean`; the key value is never returned.
 - `mock` uses `AGENT_SUGGESTION_MODEL` for its reported model and defaults to `mock-suggestion-v1`.
-- `openai-compatible` currently resolves to a disabled/stub provider and does not issue network requests.
+- `openai-compatible` — superseded by MVP 2.5: it is now a real HTTP-calling provider (see below).
 - Provider fallback is never silent. If `openai-compatible` is configured, suggestion generation fails with provider unavailable instead of falling back to mock.
 
 Budget check:

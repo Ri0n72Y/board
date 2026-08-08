@@ -4,6 +4,12 @@
 
 ## 目录
 
+### MVP 范围（当前）
+
+| 文档 | 内容 |
+| --- | --- |
+| [mvp-scope.md](mvp-scope.md) | LabourBoard MVP 收束（2026-08）：核心闭环、7 个系统能力、事实模型（Record / Patch）、View Preference、链边界、当前完成度（Task12 ✅ / Task15 ⏳） |
+
 ### 架构总览（`architecture/`）
 
 | 文档 | 内容 |

@@ -28,7 +28,7 @@ sequenceDiagram
         API-->>Hook: RecordPatchConflictError（提示合并）
     else 成功
         Submit->>Repo: appendPatchAndAdvanceHead（事务内写 patch + 推进快照头）
-        Repo->>DB: 写入 records（kind:patch）+ snapshotHead
+        Repo->>DB: 写 records collection（patch 文档带 targetId）+ snapshots 中 snapshotHead 文档
         DB-->>Submit: OK
         Submit-->>Svc: 返回新 patch
         Svc-->>Hook: 成功
@@ -37,7 +37,7 @@ sequenceDiagram
     end
 ```
 
-**要点**：`records` 与 `patch` 存同一 collection，用 `targetId` 是否存在区分（base record 无 `targetId`，patch 有）；并发冲突通过 `parentId + currentVersion` 校验，返回 409。
+**要点**：`records` 与 `patch` 存同一 collection，用 `targetId` 是否存在区分（base record 无 `targetId`，patch 有）；并发冲突通过 `parentId + currentVersion` 校验，返回 409。`snapshotHead` 不是独立 collection，而是 `snapshots` collection 中 `kind: 'snapshotHead'` 的文档（`version` + `records: { [recordId]: lastPatchId }`）；手动快照为 `kind: 'manualSnapshot:<id>'`。
 
 ## 2. 记录创建链路
 

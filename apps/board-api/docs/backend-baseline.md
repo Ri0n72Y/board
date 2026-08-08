@@ -6,8 +6,10 @@ current checkout.
 ## Product Boundary
 
 `board-api` stores base records and patch facts, exposes current board
-projection reads, supports manual snapshots, and stores manual Agent review
-artifacts. It does not run Agents and does not apply AI-generated patches.
+projection reads, supports manual snapshots, and stores Agent review artifacts
+(drafts, suggestions, manual responses). It never applies AI-generated content
+to board facts: suggestion/draft output requires human review and there is no
+patch apply route.
 
 Primary board-web read entry:
 
@@ -77,14 +79,14 @@ Snapshot restore/diff/apply is not implemented.
 
 ## Agent Boundary
 
-Phase 1 Agent functionality is non-executing:
+Agent functionality is non-executing — it never mutates board facts:
 
-- No AI provider call.
-- No use of `AGENT_API_KEY` in board-web.
-- Agent Draft stores static `contextMarkdown`.
+- Agent Draft stores static `contextMarkdown`; a draft must be reviewed before handoff or suggestion generation.
+- Suggestion generation is the only AI call: MVP 2.5 implements `openai-compatible` as a real HTTP provider (`AGENT_SUGGESTION_PROVIDER` / `BASE_URL` / `API_KEY` / `MODEL`); `mock` and `disabled` are the other supported kinds.
+- `AGENT_SUGGESTION_API_KEY` is read only by backend config; board-web never uses a provider key and only exposes `apiKeyPresent: boolean`.
 - Handoff is generated Markdown only.
 - Manual Agent Response is a human-pasted artifact.
-- Agent workflow does not create records, patches, snapshots, or board mutations.
+- Agent workflow (draft / suggestion / response) does not create records, patches, snapshots, or board mutations; no patch apply route exists.
 
 The following routes do not exist:
 
@@ -103,4 +105,4 @@ PUT *
 ## Known Backend Residuals
 
 - Mongo standalone fallback cannot provide the same durability guarantees as a replica-set transaction setup.
-- Permission/login, config editor, profile manager, dry-run/apply, restore, and real Agent provider integration are Phase 2+ work.
+- Permission/login, config editor, profile manager, dry-run/apply, and restore are Phase 2+ work.
