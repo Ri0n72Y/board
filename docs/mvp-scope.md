@@ -258,6 +258,8 @@ MVP 需要最基础的成员身份，用于 assignee、创建者、确认者、U
 Agent 辅助：agent_drafts、agent_responses、agent_suggestions
 ```
 
+> **注（2026-08 记录）**：增加 Agent 功能后 collection 从 3 个扩展到 6 个，其中 agent 相关 3 个主要用于存档（draft / suggestion / response 历史）。当前架构先保持现状，未来可评估是否收敛（如 agent 数据改内存 / 归档目录 / 独立库），暂不优化。
+
 配置从 YAML 读取。当前没有必要建立复杂组织 / RBAC / 权限数据库。
 
 ## 十六、Agent
