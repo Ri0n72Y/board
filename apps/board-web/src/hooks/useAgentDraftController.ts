@@ -48,14 +48,17 @@ export function useAgentDraftController() {
     isListLoading: isSuggestionListLoading,
     isDetailLoading: isSuggestionDetailLoading,
     isGenerating: isSuggestionGenerating,
+    isReviewing: isSuggestionReviewing,
     listError: suggestionListError,
     detailError: suggestionDetailError,
     generateError: suggestionGenerateError,
+    reviewError: suggestionReviewError,
     abortAll: abortAllSuggestions,
     clearSuggestions,
     loadSuggestionList,
     loadSuggestionDetail,
     generateSuggestion,
+    reviewSuggestion,
     setSelectedSuggestion,
   } = useAgentSuggestionController()
 
@@ -313,11 +316,14 @@ export function useAgentDraftController() {
     isSuggestionListLoading,
     isSuggestionDetailLoading,
     isSuggestionGenerating,
+    isSuggestionReviewing,
     suggestionListError,
     suggestionDetailError,
     suggestionGenerateError,
+    suggestionReviewError,
     loadSuggestionDetail,
     generateSuggestion,
+    reviewSuggestion,
     setSelectedSuggestion,
   }
 }

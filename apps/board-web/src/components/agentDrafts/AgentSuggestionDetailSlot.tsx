@@ -1,5 +1,6 @@
 import type {
   AgentSuggestionDetail,
+  AgentSuggestionStatus,
   RecordBody,
   RecordItem,
   RecordResponse,
@@ -12,16 +13,25 @@ interface AgentSuggestionDetailSlotProps {
   selectedSuggestion: AgentSuggestionDetail | null
   isDetailLoading: boolean
   detailError: string | null
+  isReviewing: boolean
+  reviewError: string | null
   records?: RecordResponse<RecordItem<RecordBody>>[]
   onOpenRecord?: (recordId: string, patchDescription: string) => void
+  onReviewSuggestion: (
+    suggestionId: string,
+    status: AgentSuggestionStatus
+  ) => void
 }
 
 export function AgentSuggestionDetailSlot({
   selectedSuggestion,
   isDetailLoading,
   detailError,
+  isReviewing,
+  reviewError,
   records,
   onOpenRecord,
+  onReviewSuggestion,
 }: AgentSuggestionDetailSlotProps) {
   const { t } = useTranslation()
 
@@ -45,6 +55,9 @@ export function AgentSuggestionDetailSlot({
           suggestion={selectedSuggestion}
           records={records}
           onOpenRecord={onOpenRecord}
+          isReviewing={isReviewing}
+          reviewError={reviewError}
+          onReviewSuggestion={onReviewSuggestion}
         />
       )}
     </>

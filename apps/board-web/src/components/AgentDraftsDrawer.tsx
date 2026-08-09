@@ -3,6 +3,7 @@ import type {
   AgentDraftStatus,
   AgentDraftSummary,
   AgentSuggestionDetail,
+  AgentSuggestionStatus,
   AgentSuggestionSummary,
   RecordBody,
   RecordItem,
@@ -39,14 +40,20 @@ interface AgentDraftsDrawerProps {
   isSuggestionListLoading?: boolean
   isSuggestionDetailLoading?: boolean
   isSuggestionGenerating?: boolean
+  isSuggestionReviewing?: boolean
   suggestionListError?: string | null
   suggestionDetailError?: string | null
   suggestionGenerateError?: string | null
+  suggestionReviewError?: string | null
   onGenerateSuggestion?: (
     draftId: string,
     instruction?: string
   ) => void | Promise<unknown>
   onSelectSuggestion?: (suggestionId: string) => void
+  onReviewSuggestion?: (
+    suggestionId: string,
+    status: AgentSuggestionStatus
+  ) => void
   // Patch Draft
   records?: RecordResponse<RecordItem<RecordBody>>[]
   onOpenRecord?: (recordId: string, patchDescription: string) => void
@@ -74,11 +81,14 @@ export function AgentDraftsDrawer({
   isSuggestionListLoading = false,
   isSuggestionDetailLoading = false,
   isSuggestionGenerating = false,
+  isSuggestionReviewing = false,
   suggestionListError = null,
   suggestionDetailError = null,
   suggestionGenerateError = null,
+  suggestionReviewError = null,
   onGenerateSuggestion,
   onSelectSuggestion,
+  onReviewSuggestion,
   // Patch Draft
   records,
   onOpenRecord,
@@ -91,18 +101,21 @@ export function AgentDraftsDrawer({
     ? { isReviewing, reviewError, onUpdateReview }
     : undefined
   const suggestion =
-    onGenerateSuggestion && onSelectSuggestion
+    onGenerateSuggestion && onSelectSuggestion && onReviewSuggestion
       ? {
           suggestions,
           selectedSuggestion,
           isListLoading: isSuggestionListLoading,
           isDetailLoading: isSuggestionDetailLoading,
           isGenerating: isSuggestionGenerating,
+          isReviewing: isSuggestionReviewing,
           listError: suggestionListError,
           detailError: suggestionDetailError,
           generateError: suggestionGenerateError,
+          reviewError: suggestionReviewError,
           onGenerate: onGenerateSuggestion,
           onSelectSuggestion,
+          onReviewSuggestion,
         }
       : undefined
   const patchDraft = { records, onOpenRecord }

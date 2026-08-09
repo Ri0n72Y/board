@@ -736,11 +736,14 @@ export function BoardCurrentPage() {
         isSuggestionListLoading={agentDraftController.isSuggestionListLoading}
         isSuggestionDetailLoading={agentDraftController.isSuggestionDetailLoading}
         isSuggestionGenerating={agentDraftController.isSuggestionGenerating}
+        isSuggestionReviewing={agentDraftController.isSuggestionReviewing}
         suggestionListError={agentDraftController.suggestionListError}
         suggestionDetailError={agentDraftController.suggestionDetailError}
         suggestionGenerateError={agentDraftController.suggestionGenerateError}
+        suggestionReviewError={agentDraftController.suggestionReviewError}
         onGenerateSuggestion={agentDraftController.generateSuggestion}
         onSelectSuggestion={agentDraftController.loadSuggestionDetail}
+        onReviewSuggestion={agentDraftController.reviewSuggestion}
         records={records}
         onOpenRecord={handleOpenPatchDetail}
       />
