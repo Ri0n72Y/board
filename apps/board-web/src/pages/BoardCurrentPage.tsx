@@ -695,13 +695,13 @@ export function BoardCurrentPage() {
                   ))}
                 </section>
               ))}
+          </div>
 
-            {viewMode !== 'board' && (
-              <IssuesPanel
-                blockedRecords={blockedRecords}
-                diagnostics={diagnostics}
-              />
-            )}
+          <div className="max-h-64 shrink-0 overflow-y-auto">
+            <IssuesPanel
+              blockedRecords={blockedRecords}
+              diagnostics={diagnostics}
+            />
           </div>
         </main>
       </div>
