@@ -24,6 +24,11 @@ interface BoardStatusDropColumnProps {
   moveErrors?: Record<string, string>
   dragDisabled: boolean
   registerStatusDropTarget: (tag: Tag, element: HTMLElement | null) => void
+  registerCardTarget: (
+    tag: Tag | null,
+    recordId: string,
+    element: HTMLElement | null
+  ) => void
   onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
 }
 
@@ -36,6 +41,7 @@ export function BoardStatusDropColumn({
   moveErrors,
   dragDisabled,
   registerStatusDropTarget,
+  registerCardTarget,
   onCardClick,
 }: BoardStatusDropColumnProps) {
   const { t } = useTranslation()
@@ -71,6 +77,7 @@ export function BoardStatusDropColumn({
           {column.records.map((record) => (
             <DraggableRecordCard
               key={record.body.id}
+              columnTag={column.tag}
               record={record}
               profiles={profiles}
               assetOptions={assetOptions}
@@ -78,6 +85,7 @@ export function BoardStatusDropColumn({
               isMovingStatus={movingRecordId === record.body.id}
               moveStatusError={moveErrors?.[record.body.id] ?? null}
               dragDisabled={dragDisabled}
+              registerCardTarget={registerCardTarget}
               onCardClick={onCardClick}
             />
           ))}
@@ -92,6 +100,7 @@ export function BoardStatusDropColumn({
 }
 
 function DraggableRecordCard({
+  columnTag,
   record,
   profiles,
   assetOptions,
@@ -99,8 +108,10 @@ function DraggableRecordCard({
   isMovingStatus,
   moveStatusError,
   dragDisabled,
+  registerCardTarget,
   onCardClick,
 }: {
+  columnTag: Tag | null
   record: RecordResponse<RecordItem<RecordBody>>
   profiles?: Profile[] | null
   assetOptions: RecordReferenceOption[]
@@ -108,6 +119,11 @@ function DraggableRecordCard({
   isMovingStatus: boolean
   moveStatusError: string | null
   dragDisabled: boolean
+  registerCardTarget: (
+    tag: Tag | null,
+    recordId: string,
+    element: HTMLElement | null
+  ) => void
   onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
 }) {
   const { cardRef, dragHandleRef, isDragging } = useRecordStatusDraggable({
@@ -116,19 +132,24 @@ function DraggableRecordCard({
   })
 
   return (
-    <RecordCard
-      record={record}
-      profiles={profiles}
-      assetOptions={assetOptions}
-      relationTargetOptions={relationTargetOptions}
-      compact
-      isMovingStatus={isMovingStatus}
-      moveStatusError={moveStatusError}
-      isDragEnabled={!dragDisabled}
-      isDragging={isDragging || isMovingStatus}
-      dragRef={cardRef}
-      dragHandleRef={dragHandleRef}
-      onCardClick={onCardClick}
-    />
+    <div
+      className="min-w-0"
+      ref={(element) => registerCardTarget(columnTag, record.body.id, element)}
+    >
+      <RecordCard
+        record={record}
+        profiles={profiles}
+        assetOptions={assetOptions}
+        relationTargetOptions={relationTargetOptions}
+        compact
+        isMovingStatus={isMovingStatus}
+        moveStatusError={moveStatusError}
+        isDragEnabled={!dragDisabled}
+        isDragging={isDragging || isMovingStatus}
+        dragRef={cardRef}
+        dragHandleRef={dragHandleRef}
+        onCardClick={onCardClick}
+      />
+    </div>
   )
 }

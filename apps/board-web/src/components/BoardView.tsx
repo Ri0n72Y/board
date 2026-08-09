@@ -14,6 +14,7 @@ import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
 import { APP_TOAST_IDS, dismissToast, toastInfo } from '../utils/toasts'
 import { useBoardStatusDnd } from '../hooks/useBoardStatusDnd'
 import { useBoardViewModel } from '../hooks/useBoardViewModel'
+import type { BoardRecordOrderPreference } from '../utils/boardRecordOrder'
 
 interface BoardViewProps {
   records: RecordResponse<RecordItem<RecordBody>>[]
@@ -26,9 +27,16 @@ interface BoardViewProps {
   moveErrors?: Record<string, string>
   visibleColumnIds?: string[] | null
   columnOrderIds?: string[] | null
+  recordOrder?: BoardRecordOrderPreference | null
   onMoveStatus?: (
     record: RecordResponse<RecordItem<RecordBody>>,
     targetStatusTag: Tag
+  ) => void
+  onReorderRecord?: (
+    record: RecordResponse<RecordItem<RecordBody>>,
+    fromStatus: Tag | null,
+    toStatus: Tag | null,
+    insertIndex: number
   ) => void
 }
 
@@ -43,7 +51,9 @@ export function BoardView({
   moveErrors,
   visibleColumnIds,
   columnOrderIds,
+  recordOrder,
   onMoveStatus,
+  onReorderRecord,
 }: BoardViewProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
@@ -54,16 +64,22 @@ export function BoardView({
     language: lang,
     visibleColumnIds,
     columnOrderIds,
+    recordOrder,
   })
   const hiddenNoticeKey = visibleColumnIds?.join('|') ?? 'default'
   const isMovePending = movingRecordId != null
-  const { handleDragEnd, handleDragStart, registerStatusDropTarget } =
-    useBoardStatusDnd({
-      records,
-      visibleStatusTags,
-      isMovePending,
-      onMoveStatus,
-    })
+  const {
+    handleDragEnd,
+    handleDragStart,
+    registerStatusDropTarget,
+    registerCardTarget,
+  } = useBoardStatusDnd({
+    records,
+    visibleStatusTags,
+    isMovePending,
+    onMoveStatus,
+    onReorderRecord,
+  })
 
   // Show hidden columns notice only on board entry and visible-column preference changes.
   useEffect(() => {
@@ -111,6 +127,7 @@ export function BoardView({
                   moveErrors={moveErrors}
                   dragDisabled={isMovePending || !onMoveStatus}
                   registerStatusDropTarget={registerStatusDropTarget}
+                  registerCardTarget={registerCardTarget}
                   onCardClick={onCardClick}
                 />
               ))}
