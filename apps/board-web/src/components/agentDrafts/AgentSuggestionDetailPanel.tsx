@@ -1,10 +1,12 @@
 import { useTranslation } from 'react-i18next'
 import type {
   AgentSuggestionDetail,
+  AgentSuggestionStatus,
   RecordBody,
   RecordItem,
   RecordResponse,
 } from '@labour-board/shared'
+import { Button } from '../ui/Button'
 import { MarkdownPreview } from '../ui/MarkdownPreview'
 import { AgentSuggestionMetaBar } from './AgentSuggestionMetaBar'
 import { AgentSuggestionActions } from './AgentSuggestionActions'
@@ -17,20 +19,64 @@ interface AgentSuggestionDetailPanelProps {
   suggestion: AgentSuggestionDetail | null
   records?: RecordResponse<RecordItem<RecordBody>>[]
   onOpenRecord?: (recordId: string, patchDescription: string) => void
+  isReviewing: boolean
+  reviewError: string | null
+  onReviewSuggestion: (
+    suggestionId: string,
+    status: AgentSuggestionStatus
+  ) => void
 }
 
 export function AgentSuggestionDetailPanel({
   suggestion,
   records,
   onOpenRecord,
+  isReviewing,
+  reviewError,
+  onReviewSuggestion,
 }: AgentSuggestionDetailPanelProps) {
   const { t } = useTranslation()
 
   if (!suggestion) return null
 
+  const { id, status } = suggestion
+
   return (
     <div className="grid gap-4">
       <AgentSuggestionMetaBar suggestion={suggestion} />
+
+      <div className="flex flex-wrap items-center gap-2">
+        {status === 'generated' ? (
+          <>
+            <Button
+              type="button"
+              onClick={() => onReviewSuggestion(id, 'reviewed')}
+              disabled={isReviewing}
+            >
+              {isReviewing
+                ? t('agent.suggestions.updating')
+                : t('agent.suggestions.accept')}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onReviewSuggestion(id, 'discarded')}
+              disabled={isReviewing}
+            >
+              {t('agent.suggestions.reject')}
+            </Button>
+          </>
+        ) : (
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+            {status === 'reviewed'
+              ? t('agent.suggestions.accepted')
+              : t('agent.suggestions.rejected')}
+          </span>
+        )}
+        {reviewError && (
+          <span className="text-xs text-red-600">{reviewError}</span>
+        )}
+      </div>
 
       <AgentSuggestionActions
         suggestionId={suggestion.id}

@@ -2,6 +2,7 @@ import type {
   AgentDraftDetail,
   AgentDraftStatus,
   AgentSuggestionDetail,
+  AgentSuggestionStatus,
   AgentSuggestionSummary,
   RecordBody,
   RecordItem,
@@ -38,11 +39,17 @@ interface AgentDraftSuggestionState {
   isListLoading: boolean
   isDetailLoading: boolean
   isGenerating: boolean
+  isReviewing: boolean
   listError: string | null
   detailError: string | null
   generateError: string | null
+  reviewError: string | null
   onGenerate: (draftId: string, instruction?: string) => void | Promise<unknown>
   onSelectSuggestion: (suggestionId: string) => void
+  onReviewSuggestion: (
+    suggestionId: string,
+    status: AgentSuggestionStatus
+  ) => void
 }
 
 interface AgentDraftPatchDraftState {
@@ -106,11 +113,14 @@ export function AgentDraftDetailWorkspace({
               isListLoading={suggestion.isListLoading}
               isDetailLoading={suggestion.isDetailLoading}
               isGenerating={suggestion.isGenerating}
+              isReviewing={suggestion.isReviewing}
               listError={suggestion.listError}
               detailError={suggestion.detailError}
               generateError={suggestion.generateError}
+              reviewError={suggestion.reviewError}
               onGenerate={suggestion.onGenerate}
               onSelectSuggestion={suggestion.onSelectSuggestion}
+              onReviewSuggestion={suggestion.onReviewSuggestion}
               records={patchDraft?.records}
               onOpenRecord={patchDraft?.onOpenRecord}
             />

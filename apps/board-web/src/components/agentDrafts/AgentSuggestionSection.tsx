@@ -1,6 +1,7 @@
 import type {
   AgentDraftDetail,
   AgentSuggestionDetail,
+  AgentSuggestionStatus,
   AgentSuggestionSummary,
   RecordBody,
   RecordItem,
@@ -19,11 +20,17 @@ interface AgentSuggestionSectionProps {
   isListLoading: boolean
   isDetailLoading: boolean
   isGenerating: boolean
+  isReviewing: boolean
   listError: string | null
   detailError: string | null
   generateError: string | null
+  reviewError: string | null
   onGenerate: (draftId: string, instruction?: string) => void | Promise<unknown>
   onSelectSuggestion: (id: string) => void
+  onReviewSuggestion: (
+    suggestionId: string,
+    status: AgentSuggestionStatus
+  ) => void
   records?: RecordResponse<RecordItem<RecordBody>>[]
   onOpenRecord?: (recordId: string, patchDescription: string) => void
 }
@@ -35,11 +42,14 @@ export function AgentSuggestionSection({
   isListLoading,
   isDetailLoading,
   isGenerating,
+  isReviewing,
   listError,
   detailError,
   generateError,
+  reviewError,
   onGenerate,
   onSelectSuggestion,
+  onReviewSuggestion,
   records,
   onOpenRecord,
 }: AgentSuggestionSectionProps) {
@@ -73,6 +83,9 @@ export function AgentSuggestionSection({
         selectedSuggestion={selectedSuggestion}
         isDetailLoading={isDetailLoading}
         detailError={detailError}
+        isReviewing={isReviewing}
+        reviewError={reviewError}
+        onReviewSuggestion={onReviewSuggestion}
         records={records}
         onOpenRecord={onOpenRecord}
       />
