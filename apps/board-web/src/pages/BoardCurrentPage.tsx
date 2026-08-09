@@ -696,12 +696,10 @@ export function BoardCurrentPage() {
                 </section>
               ))}
 
-            {viewMode !== 'board' && (
-              <IssuesPanel
-                blockedRecords={blockedRecords}
-                diagnostics={diagnostics}
-              />
-            )}
+            <IssuesPanel
+              blockedRecords={blockedRecords}
+              diagnostics={diagnostics}
+            />
           </div>
         </main>
       </div>
