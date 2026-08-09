@@ -7,7 +7,7 @@
 ```mermaid
 sequenceDiagram
     actor U as 用户
-    participant Drawer as RecordDetailDrawer / MoveStatusControl
+    participant Drawer as RecordDetailDrawer
     participant Hook as useStatusMoveController / Drawer 内逻辑
     participant API as api/patches.ts
     participant Route as recordPatchRoute
