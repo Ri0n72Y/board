@@ -463,6 +463,7 @@ const zhCN = {
 
     // ─── Agent Manual Response Section ───
     'agent.response.manualPaste': '手动粘贴',
+    'agent.response.saved': '已保存 Agent 响应',
     'agent.response.notApplied': '未应用',
     'agent.response.noBoardMutation': '无看板变更',
     'agent.response.notAppliedDesc':

@@ -1,6 +1,8 @@
 import type {
   AgentDraftDetail,
   AgentDraftStatus,
+  AgentResponseDetail,
+  AgentResponseSummary,
   AgentSuggestionDetail,
   AgentSuggestionStatus,
   AgentSuggestionSummary,
@@ -15,6 +17,8 @@ import { AgentDraftReviewInfo } from './AgentDraftReviewInfo'
 import { AgentDraftReviewActions } from './AgentDraftReviewActions'
 import { AgentDraftContextPreview } from './AgentDraftContextPreview'
 import { FormalHandoffSection } from './FormalHandoffSection'
+import { ManualAgentResponseSection } from './ManualAgentResponseSection'
+import { AgentManualWorkflowTimeline } from './AgentManualWorkflowTimeline'
 import { AgentSuggestionSection } from './AgentSuggestionSection'
 import { ErrorBlock } from './ErrorBlock'
 
@@ -66,12 +70,31 @@ interface AgentDraftHandoffState {
   onDownloadHandoff: (draftId: string) => void
 }
 
+interface AgentDraftManualResponseState {
+  responses: AgentResponseSummary[]
+  selectedResponse: AgentResponseDetail | null
+  isListLoading: boolean
+  isDetailLoading: boolean
+  isCreating: boolean
+  listError: string | null
+  detailError: string | null
+  createError: string | null
+  onLoadResponseDetail: (responseId: string) => void
+  onSaveResponse: (
+    draftId: string,
+    responseMarkdown: string,
+    externalAgentName?: string,
+    responseNote?: string
+  ) => Promise<AgentResponseDetail>
+}
+
 interface AgentDraftDetailWorkspaceProps {
   detail: AgentDraftDetailState
   review?: AgentDraftReviewState
   suggestion?: AgentDraftSuggestionState
   patchDraft?: AgentDraftPatchDraftState
   handoff?: AgentDraftHandoffState
+  manualResponse?: AgentDraftManualResponseState
 }
 
 export function AgentDraftDetailWorkspace({
@@ -80,6 +103,7 @@ export function AgentDraftDetailWorkspace({
   suggestion,
   patchDraft,
   handoff,
+  manualResponse,
 }: AgentDraftDetailWorkspaceProps) {
   const { t } = useTranslation()
   const { selectedDraft, isLoading, error } = detail
@@ -124,6 +148,31 @@ export function AgentDraftDetailWorkspace({
               handoffFeedback={handoff.handoffFeedback}
               onCopyHandoff={handoff.onCopyHandoff}
               onDownloadHandoff={handoff.onDownloadHandoff}
+            />
+          )}
+
+          {manualResponse && (
+            <AgentManualWorkflowTimeline
+              key={`draft-timeline:${selectedDraft.id}`}
+              draft={selectedDraft}
+              responses={manualResponse.responses}
+            />
+          )}
+
+          {manualResponse && (
+            <ManualAgentResponseSection
+              key={`draft-responses:${selectedDraft.id}`}
+              draft={selectedDraft}
+              responses={manualResponse.responses}
+              selectedResponse={manualResponse.selectedResponse}
+              isResponseListLoading={manualResponse.isListLoading}
+              isResponseDetailLoading={manualResponse.isDetailLoading}
+              isResponseCreating={manualResponse.isCreating}
+              responseListError={manualResponse.listError}
+              responseDetailError={manualResponse.detailError}
+              responseCreateError={manualResponse.createError}
+              onLoadResponseDetail={manualResponse.onLoadResponseDetail}
+              onSaveResponse={manualResponse.onSaveResponse}
             />
           )}
 

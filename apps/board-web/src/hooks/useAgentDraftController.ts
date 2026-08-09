@@ -16,6 +16,7 @@ import {
   updateAgentDraftReview,
 } from '../api/agentDrafts'
 import { useAgentSuggestionController } from './useAgentSuggestionController'
+import { useAgentResponseController } from './useAgentResponseController'
 import { downloadTextFile } from '../utils/download'
 import { toastError } from '../utils/toasts'
 
@@ -66,6 +67,20 @@ export function useAgentDraftController() {
     reviewSuggestion,
     setSelectedSuggestion,
   } = useAgentSuggestionController()
+  const {
+    responses,
+    selectedResponse,
+    isListLoading: isResponseListLoading,
+    isDetailLoading: isResponseDetailLoading,
+    isCreating: isResponseCreating,
+    listError: responseListError,
+    detailError: responseDetailError,
+    createError: responseCreateError,
+    loadResponseList,
+    loadResponseDetail,
+    saveResponse,
+    clearResponses,
+  } = useAgentResponseController()
 
   const abortAll = useCallback(() => {
     listRequestIdRef.current += 1
@@ -145,6 +160,7 @@ export function useAgentDraftController() {
 
       // Clear suggestion state for new draft
       clearSuggestions()
+      clearResponses()
 
       const controller = new AbortController()
       detailAbortRef.current = controller
@@ -161,6 +177,7 @@ export function useAgentDraftController() {
             return
           setSelectedDraft(data.draft)
           loadSuggestionList(draftId)
+          loadResponseList(draftId)
         })
         .catch((err: unknown) => {
           if (
@@ -177,7 +194,7 @@ export function useAgentDraftController() {
           detailAbortRef.current = null
         })
     },
-    [clearSuggestions, loadSuggestionList]
+    [clearSuggestions, clearResponses, loadSuggestionList, loadResponseList]
   )
 
   const saveDraft = useCallback(
@@ -376,5 +393,16 @@ export function useAgentDraftController() {
     handoffFeedback,
     copyHandoff,
     downloadHandoff,
+    responses,
+    selectedResponse,
+    isResponseListLoading,
+    isResponseDetailLoading,
+    isResponseCreating,
+    responseListError,
+    responseDetailError,
+    responseCreateError,
+    loadResponseDetail,
+    saveResponse,
+    clearResponses,
   }
 }
