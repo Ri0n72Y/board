@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import type {
   AgentDraftDetail,
@@ -10,12 +11,16 @@ import type { ExportContextPackOptions } from './useBoardExportController'
 import {
   createAgentDraft,
   fetchAgentDraft,
+  fetchAgentDraftHandoff,
   fetchAgentDrafts,
   updateAgentDraftReview,
 } from '../api/agentDrafts'
 import { useAgentSuggestionController } from './useAgentSuggestionController'
+import { downloadTextFile } from '../utils/download'
+import { toastError } from '../utils/toasts'
 
 export function useAgentDraftController() {
+  const { t } = useTranslation()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [drafts, setDrafts] = useState<AgentDraftSummary[]>([])
   const [selectedDraft, setSelectedDraft] = useState<AgentDraftDetail | null>(
@@ -247,6 +252,47 @@ export function useAgentDraftController() {
     [clearSuggestions]
   )
 
+  const [isHandoffLoading, setIsHandoffLoading] = useState(false)
+  const [handoffError, setHandoffError] = useState<string | null>(null)
+  const [handoffFeedback, setHandoffFeedback] = useState<string | null>(null)
+
+  const copyHandoff = useCallback(
+    async (draftId: string) => {
+      setIsHandoffLoading(true)
+      setHandoffError(null)
+      try {
+        const data = await fetchAgentDraftHandoff(draftId)
+        await navigator.clipboard.writeText(data.handoff.content)
+        setHandoffFeedback(t('agent.handoff.copied'))
+        setTimeout(() => setHandoffFeedback(null), 2000)
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'copy handoff failed'
+        setHandoffError(message)
+        toastError(message)
+      } finally {
+        setIsHandoffLoading(false)
+      }
+    },
+    [t]
+  )
+
+  const downloadHandoff = useCallback(async (draftId: string) => {
+    setIsHandoffLoading(true)
+    setHandoffError(null)
+    try {
+      const data = await fetchAgentDraftHandoff(draftId)
+      downloadTextFile(data.handoff.filename, data.handoff.content)
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'download handoff failed'
+      setHandoffError(message)
+      toastError(message)
+    } finally {
+      setIsHandoffLoading(false)
+    }
+  }, [])
+
   const updateDraftReview = useCallback(
     (draftId: string, status: AgentDraftStatus, reviewNote?: string) => {
       const requestId = reviewRequestIdRef.current + 1
@@ -325,5 +371,10 @@ export function useAgentDraftController() {
     generateSuggestion,
     reviewSuggestion,
     setSelectedSuggestion,
+    isHandoffLoading,
+    handoffError,
+    handoffFeedback,
+    copyHandoff,
+    downloadHandoff,
   }
 }

@@ -518,6 +518,7 @@ const zhCN = {
     'agent.handoff.discardedDesc':
       '已丢弃的草稿无法生成正式移交。请重置为草稿后重新审核。',
     'agent.handoff.failed': '移交失败',
+    'agent.handoff.copied': '已复制！',
 
     // ─── Agent Suggestions (2.3) ───
     'agent.suggestions.title': 'AI 建议 ({{count}})',

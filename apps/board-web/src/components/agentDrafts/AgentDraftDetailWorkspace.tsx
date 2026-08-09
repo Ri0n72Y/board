@@ -14,6 +14,7 @@ import { AgentDraftMetaPanel } from './AgentDraftMetaPanel'
 import { AgentDraftReviewInfo } from './AgentDraftReviewInfo'
 import { AgentDraftReviewActions } from './AgentDraftReviewActions'
 import { AgentDraftContextPreview } from './AgentDraftContextPreview'
+import { FormalHandoffSection } from './FormalHandoffSection'
 import { AgentSuggestionSection } from './AgentSuggestionSection'
 import { ErrorBlock } from './ErrorBlock'
 
@@ -57,11 +58,20 @@ interface AgentDraftPatchDraftState {
   onOpenRecord?: (recordId: string, patchDescription: string) => void
 }
 
+interface AgentDraftHandoffState {
+  isHandoffLoading: boolean
+  handoffError: string | null
+  handoffFeedback: string | null
+  onCopyHandoff: (draftId: string) => void
+  onDownloadHandoff: (draftId: string) => void
+}
+
 interface AgentDraftDetailWorkspaceProps {
   detail: AgentDraftDetailState
   review?: AgentDraftReviewState
   suggestion?: AgentDraftSuggestionState
   patchDraft?: AgentDraftPatchDraftState
+  handoff?: AgentDraftHandoffState
 }
 
 export function AgentDraftDetailWorkspace({
@@ -69,6 +79,7 @@ export function AgentDraftDetailWorkspace({
   review,
   suggestion,
   patchDraft,
+  handoff,
 }: AgentDraftDetailWorkspaceProps) {
   const { t } = useTranslation()
   const { selectedDraft, isLoading, error } = detail
@@ -103,6 +114,18 @@ export function AgentDraftDetailWorkspace({
           )}
 
           <AgentDraftContextPreview draft={selectedDraft} />
+
+          {handoff && (
+            <FormalHandoffSection
+              key={`draft-handoff:${selectedDraft.id}`}
+              draft={selectedDraft}
+              isHandoffLoading={handoff.isHandoffLoading}
+              handoffError={handoff.handoffError}
+              handoffFeedback={handoff.handoffFeedback}
+              onCopyHandoff={handoff.onCopyHandoff}
+              onDownloadHandoff={handoff.onDownloadHandoff}
+            />
+          )}
 
           {suggestion && (
             <AgentSuggestionSection

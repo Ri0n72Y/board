@@ -57,6 +57,12 @@ interface AgentDraftsDrawerProps {
   // Patch Draft
   records?: RecordResponse<RecordItem<RecordBody>>[]
   onOpenRecord?: (recordId: string, patchDescription: string) => void
+  // Formal Handoff
+  isHandoffLoading: boolean
+  handoffError: string | null
+  handoffFeedback: string | null
+  onCopyHandoff: (draftId: string) => void
+  onDownloadHandoff: (draftId: string) => void
 }
 
 export function AgentDraftsDrawer({
@@ -92,6 +98,12 @@ export function AgentDraftsDrawer({
   // Patch Draft
   records,
   onOpenRecord,
+  // Formal Handoff
+  isHandoffLoading = false,
+  handoffError = null,
+  handoffFeedback = null,
+  onCopyHandoff,
+  onDownloadHandoff,
 }: AgentDraftsDrawerProps) {
   const { t } = useTranslation()
 
@@ -119,6 +131,13 @@ export function AgentDraftsDrawer({
         }
       : undefined
   const patchDraft = { records, onOpenRecord }
+  const handoff = {
+    isHandoffLoading,
+    handoffError,
+    handoffFeedback,
+    onCopyHandoff,
+    onDownloadHandoff,
+  }
 
   return (
     <AnimatedDrawer
@@ -150,6 +169,7 @@ export function AgentDraftsDrawer({
           review={review}
           suggestion={suggestion}
           patchDraft={patchDraft}
+          handoff={handoff}
         />
       </div>
     </AnimatedDrawer>
