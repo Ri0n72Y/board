@@ -2,6 +2,8 @@ import type {
   AgentDraftDetail,
   AgentDraftStatus,
   AgentDraftSummary,
+  AgentResponseDetail,
+  AgentResponseSummary,
   AgentSuggestionDetail,
   AgentSuggestionStatus,
   AgentSuggestionSummary,
@@ -63,6 +65,22 @@ interface AgentDraftsDrawerProps {
   handoffFeedback: string | null
   onCopyHandoff: (draftId: string) => void
   onDownloadHandoff: (draftId: string) => void
+  // Manual Agent Response
+  responses?: AgentResponseSummary[]
+  selectedResponse?: AgentResponseDetail | null
+  isResponseListLoading?: boolean
+  isResponseDetailLoading?: boolean
+  isResponseCreating?: boolean
+  responseListError?: string | null
+  responseDetailError?: string | null
+  responseCreateError?: string | null
+  onLoadResponseDetail?: (responseId: string) => void
+  onSaveResponse?: (
+    draftId: string,
+    responseMarkdown: string,
+    externalAgentName?: string,
+    responseNote?: string
+  ) => Promise<AgentResponseDetail>
 }
 
 export function AgentDraftsDrawer({
@@ -104,6 +122,17 @@ export function AgentDraftsDrawer({
   handoffFeedback = null,
   onCopyHandoff,
   onDownloadHandoff,
+  // Manual Agent Response
+  responses = [],
+  selectedResponse = null,
+  isResponseListLoading = false,
+  isResponseDetailLoading = false,
+  isResponseCreating = false,
+  responseListError = null,
+  responseDetailError = null,
+  responseCreateError = null,
+  onLoadResponseDetail,
+  onSaveResponse,
 }: AgentDraftsDrawerProps) {
   const { t } = useTranslation()
 
@@ -138,6 +167,21 @@ export function AgentDraftsDrawer({
     onCopyHandoff,
     onDownloadHandoff,
   }
+  const manualResponse =
+    onLoadResponseDetail && onSaveResponse
+      ? {
+          responses,
+          selectedResponse,
+          isListLoading: isResponseListLoading,
+          isDetailLoading: isResponseDetailLoading,
+          isCreating: isResponseCreating,
+          listError: responseListError,
+          detailError: responseDetailError,
+          createError: responseCreateError,
+          onLoadResponseDetail,
+          onSaveResponse,
+        }
+      : undefined
 
   return (
     <AnimatedDrawer
@@ -170,6 +214,7 @@ export function AgentDraftsDrawer({
           suggestion={suggestion}
           patchDraft={patchDraft}
           handoff={handoff}
+          manualResponse={manualResponse}
         />
       </div>
     </AnimatedDrawer>

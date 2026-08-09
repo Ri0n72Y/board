@@ -498,6 +498,7 @@ const enUS = {
       'Discarded drafts cannot receive Agent responses.',
 
     // ─── Agent Manual Response Section ───
+    'agent.response.saved': 'Agent response saved',
     'agent.response.manualPaste': 'Manual Paste',
     'agent.response.notApplied': 'Not Applied',
     'agent.response.noBoardMutation': 'No board mutation',

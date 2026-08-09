@@ -786,6 +786,16 @@ export function BoardCurrentPage() {
         isHandoffLoading={agentDraftController.isHandoffLoading}
         handoffError={agentDraftController.handoffError}
         handoffFeedback={agentDraftController.handoffFeedback}
+        responses={agentDraftController.responses}
+        selectedResponse={agentDraftController.selectedResponse}
+        isResponseListLoading={agentDraftController.isResponseListLoading}
+        isResponseDetailLoading={agentDraftController.isResponseDetailLoading}
+        isResponseCreating={agentDraftController.isResponseCreating}
+        responseListError={agentDraftController.responseListError}
+        responseDetailError={agentDraftController.responseDetailError}
+        responseCreateError={agentDraftController.responseCreateError}
+        onLoadResponseDetail={agentDraftController.loadResponseDetail}
+        onSaveResponse={agentDraftController.saveResponse}
         suggestions={agentDraftController.suggestions}
         selectedSuggestion={agentDraftController.selectedSuggestion}
         isSuggestionListLoading={agentDraftController.isSuggestionListLoading}
