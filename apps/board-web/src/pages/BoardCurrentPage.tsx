@@ -781,6 +781,11 @@ export function BoardCurrentPage() {
         onRefreshList={agentDraftController.loadDraftList}
         onClose={agentDraftController.closeDrawer}
         onUpdateReview={agentDraftController.updateDraftReview}
+        onCopyHandoff={agentDraftController.copyHandoff}
+        onDownloadHandoff={agentDraftController.downloadHandoff}
+        isHandoffLoading={agentDraftController.isHandoffLoading}
+        handoffError={agentDraftController.handoffError}
+        handoffFeedback={agentDraftController.handoffFeedback}
         suggestions={agentDraftController.suggestions}
         selectedSuggestion={agentDraftController.selectedSuggestion}
         isSuggestionListLoading={agentDraftController.isSuggestionListLoading}
