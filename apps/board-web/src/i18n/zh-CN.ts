@@ -262,7 +262,6 @@ const zhCN = {
     'snapshot.exportButton': '导出快照',
     'snapshot.exporting': '导出中...',
     'snapshot.exportAgentContext': '导出 Agent 快照上下文',
-    'snapshot.restoreNotImplemented': '恢复功能未实现',
     'snapshot.detailCreated': '创建时间',
     'snapshot.detailCreatedBy': '创建者',
     'snapshot.detailReason': '原因',

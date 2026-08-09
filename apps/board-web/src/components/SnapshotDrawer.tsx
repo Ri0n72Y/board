@@ -289,13 +289,6 @@ function SnapshotDetailView({
                 ? t('snapshot.exporting')
                 : t('snapshot.exportAgentContext')}
             </Button>
-            <Button
-              type="button"
-              disabled
-              title={t('snapshot.restoreNotImplemented')}
-            >
-              {t('snapshot.restoreNotImplemented')}
-            </Button>
           </div>
         </div>
         {exportError && (
