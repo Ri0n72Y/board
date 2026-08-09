@@ -84,7 +84,7 @@ MVP 需求一律通过 GitHub issue 管理，状态用 label 流转（见 `.gith
 
 - **backlog** → **todo** → **doing** → **done**：创建时默认 `backlog`；排期后 `todo`；开始开发切 `doing`；PR 合并交付后切 `done`。
 - **Blocking 关系**：在 issue 正文用 `Blocked by #N` / `Blocks #N` 互相引用表达，不额外建 label。
-- **分支命名**：`feat/<issue号>-<短描述>`（如 `feat/12-settings-columns`）；需求变更统一走 issue → 分支 → PR 闭环，不在 master 直接提交功能代码（纯基础设施/文档除外）。
+- **分支命名**：`feat/<issue号>-<短描述>`（如 `feat/12-settings-columns`）；需求变更统一走 issue → 分支 → PR 闭环，不在 main 直接提交功能代码（纯基础设施/文档除外）。
 - **代码以云端为主**：本地分支必须与 `origin` 一一对应，本地有而云端没有的分支视为残留，及时清除。
 
 ## Commit & Pull Request Guidelines
