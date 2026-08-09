@@ -235,7 +235,7 @@ export function SearchSelect({
                   language
                 )}
               </span>
-              <XMarkIcon className="h-3.5 w-3.5 shrink-0" />
+              <XMarkIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             </button>
           ))}
         </div>
@@ -260,6 +260,11 @@ export function SearchSelect({
           role="combobox"
           aria-expanded={isOpen}
           aria-controls={`${id}-listbox`}
+          aria-activedescendant={
+            isOpen && visibleChoices.length > 0
+              ? `${id}-option-${clampedHighlight}`
+              : undefined
+          }
         />
         <div className="absolute inset-y-0 right-1 flex items-center gap-0.5">
           {selectedValues.length > 0 && (
@@ -271,7 +276,7 @@ export function SearchSelect({
               title={t('searchSelect.clear')}
               aria-label={t('searchSelect.clear')}
             >
-              <XMarkIcon className="h-4 w-4" />
+              <XMarkIcon className="h-4 w-4" aria-hidden="true" />
             </button>
           )}
           <button
@@ -286,6 +291,7 @@ export function SearchSelect({
           >
             <ChevronDownIcon
               className={cn('h-4 w-4 transition', isOpen && 'rotate-180')}
+              aria-hidden="true"
             />
           </button>
         </div>
@@ -301,9 +307,10 @@ export function SearchSelect({
             visibleChoices.map((choice, index) => (
               <button
                 key={`${choice.custom ? 'custom' : 'option'}:${choice.value}`}
+                id={`${id}-option-${index}`}
                 type="button"
                 className={cn(
-                  'grid w-full gap-0.5 px-3 py-2 text-left outline-none transition',
+                  'grid w-full gap-0.5 px-3 py-2 text-left outline-none transition focus-visible:bg-emerald-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-600',
                   choice.disabled
                     ? 'cursor-not-allowed text-slate-300'
                     : 'text-slate-700 hover:bg-emerald-50 hover:text-slate-950',

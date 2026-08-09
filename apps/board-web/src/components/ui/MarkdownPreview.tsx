@@ -27,9 +27,15 @@ export function MarkdownPreview({
 
   if (error) {
     return (
-      <div className="grid gap-1 rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+      <div
+        className="grid gap-1 rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-800"
+        role="alert"
+      >
         <strong>Preview failed</strong>
         <span>{error}</span>
+        <span className="text-xs">
+          Use the copy or download action below to get the raw content.
+        </span>
       </div>
     )
   }

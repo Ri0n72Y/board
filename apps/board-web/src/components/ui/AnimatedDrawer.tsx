@@ -54,10 +54,10 @@ export function AnimatedDrawer({
         {/* Backdrop */}
         <TransitionChild
           as={Fragment}
-          enter="ease-out duration-300"
+          enter="ease-out duration-300 motion-reduce:transition-none motion-reduce:duration-0"
           enterFrom="opacity-0"
           enterTo="opacity-100"
-          leave="ease-in duration-200"
+          leave="ease-in duration-200 motion-reduce:transition-none motion-reduce:duration-0"
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
@@ -69,10 +69,10 @@ export function AnimatedDrawer({
           <div className="flex h-full justify-end">
             <TransitionChild
               as={Fragment}
-              enter="transform transition ease-out duration-300"
+              enter="transform transition ease-out duration-300 motion-reduce:transition-none motion-reduce:duration-0"
               enterFrom="translate-x-full"
               enterTo="translate-x-0"
-              leave="transform transition ease-in duration-200"
+              leave="transform transition ease-in duration-200 motion-reduce:transition-none motion-reduce:duration-0"
               leaveFrom="translate-x-0"
               leaveTo="translate-x-full"
             >
