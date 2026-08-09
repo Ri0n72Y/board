@@ -26,7 +26,10 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
           )}
         >
           {icon && (
-            <span className="pointer-events-none absolute left-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-slate-400">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-slate-400"
+            >
               {icon}
             </span>
           )}
