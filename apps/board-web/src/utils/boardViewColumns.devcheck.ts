@@ -17,7 +17,7 @@ import {
   UNCATEGORIZED_STATUS_ID,
 } from './boardView'
 import {
-  BOARD_VISIBLE_COLUMNS_STORAGE_KEY,
+  BOARD_COLUMN_PREFERENCE_STORAGE_KEY,
   getDefaultVisibleColumnIds,
   getUncategorizedColumnLabel,
   readVisibleColumnPreference,
@@ -79,8 +79,8 @@ eq(
     'status:todo',
     'status:review',
   ]),
-  ['status:todo', 'status:review', 'status:done'],
-  'selected columns are sorted by config order'
+  ['status:done', 'status:todo', 'status:review'],
+  'selected columns keep stored order (column order is user preference)'
 )
 eq(
   resolveVisibleColumnIds(columnIds, []),
@@ -154,9 +154,12 @@ eq(
 )
 writeVisibleColumnPreference(columnIds, [], storage)
 eq(
-  JSON.parse(storage.getItem(BOARD_VISIBLE_COLUMNS_STORAGE_KEY) ?? '[]'),
-  ['status:todo', 'status:doing', 'status:done'],
-  'localStorage empty write falls back to default columns'
+  JSON.parse(storage.getItem(BOARD_COLUMN_PREFERENCE_STORAGE_KEY) ?? 'null'),
+  {
+    visibleColumnIds: ['status:todo', 'status:doing', 'status:done'],
+    columnOrderIds: columnIds,
+  },
+  'localStorage empty write falls back to default columns (object format)'
 )
 
 console.log('boardViewColumns devcheck passed')

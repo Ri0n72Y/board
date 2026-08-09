@@ -119,3 +119,5 @@ function assertJsonEqual(actual: unknown, expected: unknown, label: string) {
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message)
 }
+
+console.log('editPatchDraft.devcheck: all checks passed')
