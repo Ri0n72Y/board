@@ -44,6 +44,17 @@ export function useAgentResponseController() {
   useEffect(() => abortAll, [abortAll])
 
   const clearResponses = useCallback(() => {
+    // Invalidate in-flight requests so a late response cannot overwrite the
+    // next draft's list/detail (e.g. when switching drafts quickly).
+    listRequestIdRef.current += 1
+    detailRequestIdRef.current += 1
+    createRequestIdRef.current += 1
+    listAbortRef.current?.abort()
+    detailAbortRef.current?.abort()
+    createAbortRef.current?.abort()
+    listAbortRef.current = null
+    detailAbortRef.current = null
+    createAbortRef.current = null
     setResponses([])
     setSelectedResponse(null)
     setListError(null)
@@ -115,6 +126,9 @@ export function useAgentResponseController() {
     ): Promise<AgentResponseDetail> => {
       const requestId = createRequestIdRef.current + 1
       createRequestIdRef.current = requestId
+      createAbortRef.current?.abort()
+      const controller = new AbortController()
+      createAbortRef.current = controller
       setIsCreating(true)
       setCreateError(null)
 
@@ -125,8 +139,10 @@ export function useAgentResponseController() {
           responseMarkdown,
           externalAgentName,
           responseNote,
-        })
+        }, controller.signal)
         if (createRequestIdRef.current !== requestId) {
+          // Superseded by a newer save/clear; the request itself succeeded,
+          // but the current draft no longer owns this response.
           return data.response
         }
         toastSuccess('agent.response.saved')
