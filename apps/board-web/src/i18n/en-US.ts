@@ -274,7 +274,6 @@ const enUS = {
     'snapshot.exportButton': 'Export Snapshot',
     'snapshot.exporting': 'Exporting...',
     'snapshot.exportAgentContext': 'Export Agent Snapshot Context',
-    'snapshot.restoreNotImplemented': 'Restore not implemented',
     'snapshot.detailCreated': 'Created',
     'snapshot.detailCreatedBy': 'Created by',
     'snapshot.detailReason': 'Reason',
