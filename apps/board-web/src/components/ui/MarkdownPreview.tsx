@@ -50,7 +50,6 @@ export function MarkdownPreview({
 
   return (
     <pre
-      aria-live="polite"
       className={cn(
         'min-w-0 overflow-auto whitespace-pre-wrap break-words rounded-md border border-slate-200 bg-slate-950 p-4 font-mono text-xs leading-relaxed text-slate-50',
         maxHeight

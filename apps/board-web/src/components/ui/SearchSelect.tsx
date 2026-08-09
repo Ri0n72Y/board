@@ -261,7 +261,9 @@ export function SearchSelect({
           aria-expanded={isOpen}
           aria-controls={`${id}-listbox`}
           aria-activedescendant={
-            isOpen ? `${id}-option-${clampedHighlight}` : undefined
+            isOpen && visibleChoices.length > 0
+              ? `${id}-option-${clampedHighlight}`
+              : undefined
           }
         />
         <div className="absolute inset-y-0 right-1 flex items-center gap-0.5">
