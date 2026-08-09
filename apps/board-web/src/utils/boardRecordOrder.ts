@@ -137,12 +137,9 @@ export function moveRecordInOrder(
   if (toColumnId !== fromColumnId) removeFrom(toColumnId)
 
   // Rebuild the target column's full ordered list: existing order + dragged
-  // record at the requested index. Keeping the entry only when the user has
-  // ordered this column before, or when reordering within the same column.
+  // record at the requested index. The entry is created even for an empty
+  // target column so the first reorder establishes a stable order.
   const ordered = uniqueStrings(targetColumnRecordIds)
-  const hasPriorOrder = ordered.length > 0 || toColumnId === fromColumnId
-  if (!hasPriorOrder && ordered.length === 0) return { columns }
-
   const cleanIndex = Math.max(0, Math.min(toIndex, ordered.length))
   ordered.splice(cleanIndex, 0, recordId)
 
