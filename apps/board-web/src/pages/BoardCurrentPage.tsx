@@ -624,11 +624,24 @@ export function BoardCurrentPage() {
           >
             {isInitialError && (
               <section
-                className="grid gap-1.5 rounded-lg border-2 border-red-300 bg-red-50 p-5 text-red-800"
+                className="grid gap-2 rounded-lg border-2 border-red-300 bg-red-50 p-5 text-red-800"
                 role="alert"
               >
                 <strong>{t('status.loadError')}</strong>
                 <span>{error}</span>
+                <Button
+                  type="button"
+                  onClick={refresh}
+                  disabled={isLoading}
+                  icon={
+                    <ArrowPathIcon
+                      className={isLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'}
+                    />
+                  }
+                  className="mt-1 w-fit min-h-8 px-3 text-xs"
+                >
+                  {isLoading ? t('header.refreshing') : t('status.retry')}
+                </Button>
               </section>
             )}
 

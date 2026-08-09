@@ -101,6 +101,7 @@ const enUS = {
     // ─── Status / Alerts ───
     'status.loading': 'Loading current board...',
     'status.loadError': 'Failed to load current board',
+    'status.retry': 'Retry',
     'status.refreshError': 'Refresh failed - showing stale data',
     'status.exportError': 'Export failed',
     'status.projectionPartial':

@@ -95,6 +95,7 @@ const zhCN = {
     // ─── Status / Alerts ───
     'status.loading': '正在加载当前看板...',
     'status.loadError': '加载当前看板失败',
+    'status.retry': '重试',
     'status.refreshError': '刷新失败 - 显示的是旧数据',
     'status.exportError': '导出失败',
     'status.projectionPartial': '投影不完整 - 部分记录可能缺失。',
