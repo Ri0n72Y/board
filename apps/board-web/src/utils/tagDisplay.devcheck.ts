@@ -48,8 +48,8 @@ eq(
   'status:archived zh-CN'
 )
 eq(formatTagLabel('status:review', 'zh-CN'), '审核中', 'status:review zh-CN')
-eq(formatTagLabel('status:blocked', 'zh-CN'), '阻塞', 'status:blocked zh-CN')
-eq(formatTagLabel('status:backlog', 'zh-CN'), '待整理', 'status:backlog zh-CN')
+eq(formatTagLabel('status:blocked', 'zh-CN'), '已阻塞', 'status:blocked zh-CN')
+eq(formatTagLabel('status:backlog', 'zh-CN'), '待规划', 'status:backlog zh-CN')
 
 eq(formatTagLabel('priority:p0', 'zh-CN'), 'P0：重要紧急', 'priority:p0 zh-CN')
 eq(
