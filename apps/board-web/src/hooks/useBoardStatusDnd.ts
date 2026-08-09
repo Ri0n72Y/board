@@ -29,6 +29,12 @@ interface UseBoardStatusDndArgs {
     record: RecordResponse<RecordItem<RecordBody>>,
     targetStatusTag: Tag
   ) => void
+  onReorderRecord?: (
+    record: RecordResponse<RecordItem<RecordBody>>,
+    fromStatus: Tag | null,
+    toStatus: Tag | null,
+    insertIndex: number
+  ) => void
 }
 
 export function useBoardStatusDnd({
@@ -36,8 +42,10 @@ export function useBoardStatusDnd({
   visibleStatusTags,
   isMovePending,
   onMoveStatus,
+  onReorderRecord,
 }: UseBoardStatusDndArgs) {
   const statusDropTargetsRef = useRef(new Map<Tag, HTMLElement>())
+  const columnCardTargetsRef = useRef(new Map<Tag, Map<string, HTMLElement>>())
   const lastPointerPositionRef = useRef<{ x: number; y: number } | null>(null)
 
   const recordsById = useMemo(() => {
@@ -53,6 +61,43 @@ export function useBoardStatusDnd({
       } else {
         statusDropTargetsRef.current.delete(tag)
       }
+    },
+    []
+  )
+
+  const registerCardTarget = useCallback(
+    (tag: Tag | null, recordId: string, element: HTMLElement | null) => {
+      if (!tag) return
+      if (!element) {
+        columnCardTargetsRef.current.get(tag)?.delete(recordId)
+        return
+      }
+      let cards = columnCardTargetsRef.current.get(tag)
+      if (!cards) {
+        cards = new Map()
+        columnCardTargetsRef.current.set(tag, cards)
+      }
+      cards.set(recordId, element)
+    },
+    []
+  )
+
+  const computeInsertIndex = useCallback(
+    (tag: Tag, point: { x: number; y: number } | null): number => {
+      const cards = columnCardTargetsRef.current.get(tag)
+      if (!cards) return 0
+      const elements = [...cards.values()]
+      if (elements.length === 0 || !point) return 0
+
+      let index = elements.length
+      for (let i = 0; i < elements.length; i += 1) {
+        const rect = elements[i].getBoundingClientRect()
+        if (point.y < rect.top + rect.height / 2) {
+          index = i
+          break
+        }
+      }
+      return index
     },
     []
   )
@@ -99,17 +144,44 @@ export function useBoardStatusDnd({
       if (!record) return
       const currentStatus =
         record.body.tags.find((tag) => tag.startsWith('status:')) ?? null
+      const point =
+        lastPointerPositionRef.current ?? event.operation.position.current
+
+      let insertIndex = computeInsertIndex(targetStatusTag, point)
+      if (currentStatus === targetStatusTag) {
+        // Same-column reorder: the dragged card's own rect is part of the
+        // index math, so the insertion index shifts by one when it sat above
+        // the drop point.
+        const columnCards = [
+          ...(columnCardTargetsRef.current.get(targetStatusTag)?.keys() ?? []),
+        ]
+        const draggedIndex = columnCards.indexOf(recordId)
+        if (draggedIndex >= 0 && draggedIndex < insertIndex) {
+          insertIndex -= 1
+        }
+      }
+
+      onReorderRecord?.(record, currentStatus, targetStatusTag, insertIndex)
+
       if (currentStatus === targetStatusTag) return
 
       onMoveStatus(record, targetStatusTag)
     },
-    [isMovePending, onMoveStatus, recordsById, visibleStatusTags]
+    [
+      computeInsertIndex,
+      isMovePending,
+      onMoveStatus,
+      onReorderRecord,
+      recordsById,
+      visibleStatusTags,
+    ]
   )
 
   return {
     handleDragEnd,
     handleDragStart,
     registerStatusDropTarget,
+    registerCardTarget,
   }
 }
 
@@ -167,7 +239,9 @@ export function useRecordStatusDraggable({
   }
 }
 
-function parseRecordDragId(id: string | number | null | undefined): string | null {
+function parseRecordDragId(
+  id: string | number | null | undefined
+): string | null {
   if (typeof id !== 'string') return null
   if (!id.startsWith(RECORD_DRAG_ID_PREFIX)) return null
   return id.slice(RECORD_DRAG_ID_PREFIX.length) || null

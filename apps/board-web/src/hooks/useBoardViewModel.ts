@@ -13,6 +13,11 @@ import {
   resolveVisibleColumnIds,
   summarizeHiddenColumns,
 } from '../utils/boardViewColumns'
+import {
+  applyRecordOrder,
+  resolveRecordOrderForColumn,
+  type BoardRecordOrderPreference,
+} from '../utils/boardRecordOrder'
 import { getMoveStatusOptions } from '../utils/statusMove'
 import type { MoveStatusOption } from '../utils/statusMove'
 import { formatTagLabel } from '../utils/tagDisplay'
@@ -23,6 +28,7 @@ interface UseBoardViewModelArgs {
   language: string | undefined
   visibleColumnIds?: string[] | null
   columnOrderIds?: string[] | null
+  recordOrder?: BoardRecordOrderPreference | null
 }
 
 export function useBoardViewModel({
@@ -31,6 +37,7 @@ export function useBoardViewModel({
   language,
   visibleColumnIds,
   columnOrderIds,
+  recordOrder,
 }: UseBoardViewModelArgs) {
   const tagLabel = useCallback(
     (tag: string) => formatTagLabel(tag, language),
@@ -42,8 +49,17 @@ export function useBoardViewModel({
     const statusColumns = getStatusColumns(config, records, tagLabel, {
       uncategorizedLabel,
     })
-    return groupRecordsByStatus(records, statusColumns)
-  }, [config, records, tagLabel, uncategorizedLabel])
+    const grouped = groupRecordsByStatus(records, statusColumns)
+    if (!recordOrder) return grouped
+    return grouped.map((column) => {
+      const orderedIds = resolveRecordOrderForColumn(recordOrder, column.id)
+      if (orderedIds.length === 0) return column
+      return {
+        ...column,
+        records: applyRecordOrder(column.records, orderedIds),
+      }
+    })
+  }, [config, records, tagLabel, uncategorizedLabel, recordOrder])
 
   const columns = useMemo(() => {
     const columnsById = new Map(allColumns.map((column) => [column.id, column]))
@@ -51,10 +67,7 @@ export function useBoardViewModel({
       allColumns.map((column) => column.id),
       columnOrderIds
     )
-    const selectedIds = resolveVisibleColumnIds(
-      orderedIds,
-      visibleColumnIds
-    )
+    const selectedIds = resolveVisibleColumnIds(orderedIds, visibleColumnIds)
     const selected = new Set(selectedIds)
     return orderedIds
       .filter((id) => selected.has(id))

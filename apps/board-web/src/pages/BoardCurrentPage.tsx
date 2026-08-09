@@ -3,6 +3,7 @@ import type {
   RecordBody,
   RecordItem,
   RecordResponse,
+  Tag,
 } from '@labour-board/shared'
 import {
   ArrowPathIcon,
@@ -66,6 +67,12 @@ import {
   mergeReferenceOptions,
   type RecordReferenceOption,
 } from '../utils/recordReferenceOptions'
+import {
+  moveRecordInOrder,
+  readBoardRecordOrder,
+  resolveRecordOrderForColumn,
+  writeBoardRecordOrder,
+} from '../utils/boardRecordOrder'
 import { buildRelationConstraintOptions } from '../utils/relationDisplay'
 import { formatTagLabel } from '../utils/tagDisplay'
 import { useDebouncedValue } from '../utils/useDebounce'
@@ -119,8 +126,10 @@ export function BoardCurrentPage() {
     useState<RecordReferenceOption | null>(null)
   const [selectedRelationTargetOption, setSelectedRelationTargetOption] =
     useState<RecordReferenceOption | null>(null)
-  const [storedBoardColumnPreference, setStoredBoardColumnPreference] = useState(
-    () => readBoardColumnPreference()
+  const [storedBoardColumnPreference, setStoredBoardColumnPreference] =
+    useState(() => readBoardColumnPreference())
+  const [storedRecordOrder, setStoredRecordOrder] = useState(() =>
+    readBoardRecordOrder()
   )
 
   useEffect(() => {
@@ -392,6 +401,46 @@ export function BoardCurrentPage() {
     onMoved: refreshAfterPatch,
   })
 
+  const handleRecordReorder = useCallback(
+    (
+      record: RecordResponse<RecordItem<RecordBody>>,
+      fromStatus: Tag | null,
+      toStatus: Tag | null,
+      insertIndex: number
+    ) => {
+      if (!toStatus) return
+
+      const statusOf = (r: RecordResponse<RecordItem<RecordBody>>) =>
+        r.body.tags.find((tag) => tag.startsWith('status:')) ?? null
+      const rawIds = records
+        .filter((r) => statusOf(r) === toStatus && r.body.id !== record.body.id)
+        .map((r) => r.body.id)
+
+      // Keep any previously stored order for the target column, then place
+      // the dragged record at the requested index.
+      const storedIds = resolveRecordOrderForColumn(storedRecordOrder, toStatus)
+      const orderedIds =
+        storedIds.length === 0
+          ? rawIds
+          : [
+              ...storedIds.filter((id) => rawIds.includes(id)),
+              ...rawIds.filter((id) => !storedIds.includes(id)),
+            ]
+
+      const next = moveRecordInOrder(
+        storedRecordOrder,
+        record.body.id,
+        fromStatus ?? '',
+        toStatus,
+        insertIndex,
+        orderedIds
+      )
+      writeBoardRecordOrder(next)
+      setStoredRecordOrder(next)
+    },
+    [records, storedRecordOrder]
+  )
+
   const moreMenuItems = [
     {
       key: 'snapshots',
@@ -550,7 +599,8 @@ export function BoardCurrentPage() {
             >
               <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" />
               <span>
-                {t('status.exportError')}: {boardExportController.currentExportError}
+                {t('status.exportError')}:{' '}
+                {boardExportController.currentExportError}
               </span>
             </section>
           )}
@@ -626,8 +676,10 @@ export function BoardCurrentPage() {
                   moveErrors={statusMoveController.moveErrors}
                   visibleColumnIds={visibleBoardColumnIds}
                   columnOrderIds={boardColumnOrderIds}
+                  recordOrder={storedRecordOrder}
                   onCardClick={openDetail}
                   onMoveStatus={statusMoveController.moveRecordStatus}
+                  onReorderRecord={handleRecordReorder}
                 />
               ) : (
                 <section className="grid gap-3.5" aria-label="Current records">
@@ -691,7 +743,9 @@ export function BoardCurrentPage() {
         onSelectSnapshot={snapshotController.loadSnapshotDetail}
         onRefreshList={snapshotController.loadSnapshots}
         onExportSnapshot={snapshotController.exportSelectedSnapshotMarkdown}
-        onExportSnapshotContext={snapshotController.exportSelectedSnapshotContext}
+        onExportSnapshotContext={
+          snapshotController.exportSelectedSnapshotContext
+        }
         onSaveSnapshotDraft={
           snapshotController.selectedSnapshot
             ? (title: string): Promise<void> => {
@@ -730,7 +784,9 @@ export function BoardCurrentPage() {
         suggestions={agentDraftController.suggestions}
         selectedSuggestion={agentDraftController.selectedSuggestion}
         isSuggestionListLoading={agentDraftController.isSuggestionListLoading}
-        isSuggestionDetailLoading={agentDraftController.isSuggestionDetailLoading}
+        isSuggestionDetailLoading={
+          agentDraftController.isSuggestionDetailLoading
+        }
         isSuggestionGenerating={agentDraftController.isSuggestionGenerating}
         isSuggestionReviewing={agentDraftController.isSuggestionReviewing}
         suggestionListError={agentDraftController.suggestionListError}
