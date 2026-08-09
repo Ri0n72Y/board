@@ -695,7 +695,9 @@ export function BoardCurrentPage() {
                   ))}
                 </section>
               ))}
+          </div>
 
+          <div className="max-h-64 shrink-0 overflow-y-auto">
             <IssuesPanel
               blockedRecords={blockedRecords}
               diagnostics={diagnostics}
