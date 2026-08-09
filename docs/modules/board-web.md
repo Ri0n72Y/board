@@ -66,7 +66,7 @@ flowchart TB
 ## 页面与关键组件
 
 - **页面**：`pages/BoardCurrentPage.tsx`（约 30KB，聚合全部抽屉）
-- **顶层组件**：`BoardView`、`BoardFilters`、`RecordCard`、`RecordDetailDrawer`（最大）、`CreateRecordDrawer`、`SnapshotDrawer`、`AgentDraftsDrawer`、`ExportContextDrawer`、`AppSettingsDrawer`、`AdvancedFiltersDrawer`、`ProfileManagerDrawer`、`RecordHistoryContent`、`MoveStatusControl`、`BoardStatusDropColumn`、`IssuesPanel`、`ViewModeToggle`
+- **顶层组件**：`BoardView`、`BoardFilters`、`RecordCard`、`RecordDetailDrawer`（最大）、`CreateRecordDrawer`、`SnapshotDrawer`、`AgentDraftsDrawer`、`ExportContextDrawer`、`AppSettingsDrawer`、`AdvancedFiltersDrawer`、`ProfileManagerDrawer`、`RecordHistoryContent`、`BoardStatusDropColumn`、`IssuesPanel`、`ViewModeToggle`
 - **agentDrafts/**：`AgentDraftDetailWorkspace`、`AgentDraftQueuePanel`、`AgentPatchDraftPanel`、`ManualAgentResponseSection`、`FormalHandoffSection`、`AgentSuggestionSection/List/Card/DetailPanel/SkillsPanel/Toolbar/AuditPanel/DiagnosticsPanel` 等
 - **recordDetailEdit/**：`EditableSection`、`UnsavedChangesDialog`、`useSectionEditState`
 - **ui/**：`Button`、`Badge`、`Select`、`SearchSelect`、`TextInput`、`SwitchField`、`Panel`、`MarkdownPreview`、`AnimatedDrawer`、`ToastViewport`
