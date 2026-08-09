@@ -1,4 +1,4 @@
-import type { BoardCurrentTagMatch, Tag } from '@labour-board/shared'
+import type { Tag } from '@labour-board/shared'
 import {
   MagnifyingGlassIcon,
   ExclamationTriangleIcon,
@@ -24,7 +24,6 @@ interface MetadataErrorState {
 interface BoardFiltersProps {
   q: string
   tags: Tag[]
-  tagMatch: BoardCurrentTagMatch
   includeArchived: boolean
   assignee: string
   assetId: string
@@ -47,7 +46,6 @@ interface BoardFiltersProps {
   onQChange: (q: string) => void
   onAddTag: (tag: string) => void
   onRemoveTag: (tag: Tag) => void
-  onTagMatchChange: (tagMatch: BoardCurrentTagMatch) => void
   onIncludeArchivedChange: (includeArchived: boolean) => void
   onAssigneeChange: (assignee: string) => void
   onAssetIdChange: (assetId: string) => void

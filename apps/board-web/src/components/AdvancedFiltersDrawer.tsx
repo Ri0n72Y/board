@@ -1,12 +1,7 @@
 import { useMemo } from 'react'
-import type {
-  BoardCurrentProjection,
-  BoardCurrentTagMatch,
-  Tag,
-} from '@labour-board/shared'
+import type { BoardCurrentProjection, Tag } from '@labour-board/shared'
 import { useTranslation } from 'react-i18next'
 import { AnimatedDrawer } from './ui/AnimatedDrawer'
-import { Select } from './ui/Select'
 import { SearchSelect } from './ui/SearchSelect'
 import { SummaryBar } from './SummaryBar'
 import { formatTagLabel } from '../utils/tagDisplay'
@@ -18,14 +13,12 @@ interface AdvancedFiltersDrawerProps {
   projection?: BoardCurrentProjection | null
   knownTags: Tag[]
   tags: Tag[]
-  tagMatch: BoardCurrentTagMatch
   assetId: string
   relationTarget: string
   assetOptions: RecordReferenceOption[]
   relationTargetOptions: RecordReferenceOption[]
   onAddTag: (tag: string) => void
   onRemoveTag: (tag: Tag) => void
-  onTagMatchChange: (tagMatch: BoardCurrentTagMatch) => void
   onAssetIdChange: (assetId: string) => void
   onRelationTargetChange: (relationTarget: string) => void
   onClose: () => void
@@ -36,14 +29,12 @@ export function AdvancedFiltersDrawer({
   projection,
   knownTags,
   tags,
-  tagMatch,
   assetId,
   relationTarget,
   assetOptions,
   relationTargetOptions,
   onAddTag,
   onRemoveTag,
-  onTagMatchChange,
   onAssetIdChange,
   onRelationTargetChange,
   onClose,
@@ -60,11 +51,6 @@ export function AdvancedFiltersDrawer({
         meta: tag,
       })),
     [knownTags, lang]
-  )
-
-  const tagMatchOptions = useMemo(
-    () => [{ value: 'any' as const, label: t('filters.tagMatchAny') }],
-    [t]
   )
 
   return (
@@ -105,19 +91,6 @@ export function AdvancedFiltersDrawer({
             selectedLabel={t('filters.activeTag')}
             emptyText={t('filters.noKnownTags')}
           />
-        </section>
-
-        {/* Tag match */}
-        <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
-          <Select
-            label={t('filters.tagMatch')}
-            value="any"
-            onChange={() => onTagMatchChange('any')}
-            options={tagMatchOptions}
-          />
-          {tagMatch !== 'any' && (
-            <p className="text-xs text-slate-500">{t('filters.tagMatchAny')}</p>
-          )}
         </section>
 
         {/* Asset ID / Relation target */}

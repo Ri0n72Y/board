@@ -89,7 +89,6 @@ export function BoardCurrentPage() {
   const setQ = useBoardCurrentStore((s) => s.setQ)
   const addTag = useBoardCurrentStore((s) => s.addTag)
   const removeTag = useBoardCurrentStore((s) => s.removeTag)
-  const setTagMatch = useBoardCurrentStore((s) => s.setTagMatch)
   const setIncludeArchived = useBoardCurrentStore((s) => s.setIncludeArchived)
   const setAssignee = useBoardCurrentStore((s) => s.setAssignee)
   const setAssetId = useBoardCurrentStore((s) => s.setAssetId)
@@ -501,7 +500,6 @@ export function BoardCurrentPage() {
         <BoardFilters
           q={draftFilters.q}
           tags={draftFilters.tags}
-          tagMatch={draftFilters.tagMatch}
           includeArchived={draftFilters.includeArchived}
           assignee={draftFilters.assignee}
           assetId={draftFilters.assetId}
@@ -517,7 +515,6 @@ export function BoardCurrentPage() {
           onQChange={setQ}
           onAddTag={addTag}
           onRemoveTag={removeTag}
-          onTagMatchChange={setTagMatch}
           onIncludeArchivedChange={setIncludeArchived}
           onAssigneeChange={setAssignee}
           onAssetIdChange={updateAssetId}
@@ -526,7 +523,6 @@ export function BoardCurrentPage() {
           onClearFilters={() => {
             setQ('')
             draftFilters.tags.forEach((t) => removeTag(t))
-            setTagMatch('any')
             setAssignee('')
             updateAssetId('')
             updateRelationTarget('')
@@ -799,14 +795,12 @@ export function BoardCurrentPage() {
         projection={projection}
         knownTags={config ? knownTags : projectionKnownTags}
         tags={draftFilters.tags}
-        tagMatch={draftFilters.tagMatch}
         assetId={draftFilters.assetId}
         relationTarget={draftFilters.relationTarget}
         assetOptions={assetOptions}
         relationTargetOptions={relationTargetOptions}
         onAddTag={addTag}
         onRemoveTag={removeTag}
-        onTagMatchChange={setTagMatch}
         onAssetIdChange={updateAssetId}
         onRelationTargetChange={updateRelationTarget}
         onClose={() => setIsAdvancedFiltersOpen(false)}

@@ -1,7 +1,6 @@
 import { recordMatchesBoardFilter } from '@labour-board/shared'
 import type {
   BoardCurrentProjection,
-  BoardCurrentTagMatch,
   RecordBody,
   RecordItem,
   RecordResponse,
@@ -31,7 +30,6 @@ interface BoardCurrentState {
   setQ: (q: string) => void
   addTag: (tag: string) => void
   removeTag: (tag: Tag) => void
-  setTagMatch: (tagMatch: BoardCurrentTagMatch) => void
   setIncludeArchived: (includeArchived: boolean) => void
   setAssignee: (assignee: string) => void
   setAssetId: (assetId: string) => void
@@ -98,12 +96,6 @@ export const useBoardCurrentStore = create<BoardCurrentState>((set) => ({
         tags: state.effectiveFilters.tags.filter((value) => value !== tag),
         tagMatch: 'any',
       },
-    })),
-
-  setTagMatch: () =>
-    set((state) => ({
-      filters: { ...state.filters, tagMatch: 'any' },
-      effectiveFilters: { ...state.effectiveFilters, tagMatch: 'any' },
     })),
 
   setIncludeArchived: (includeArchived) =>
