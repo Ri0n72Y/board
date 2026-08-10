@@ -71,7 +71,7 @@ export async function loadBoardConfigState(
 
     if (isFileMissingError(error)) {
       throw new BoardConfigError(
-        `Board config file not found at ${configPath}. Create apps/board-api/config/board.yaml, set BOARD_CONFIG_PATH, or explicitly set BOARD_CONFIG_OPTIONAL=true for default development config.`
+        `Board config file not found at ${configPath}. Copy apps/board-api/config/board.example.yaml to board.yaml, set BOARD_CONFIG_PATH, or explicitly set BOARD_CONFIG_OPTIONAL=true for default development config.`
       )
     }
 

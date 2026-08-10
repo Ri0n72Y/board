@@ -1,3 +1,9 @@
+# LabourBoard board configuration template.
+#
+# Copy this file to `board.yaml` (same directory) and adjust to your board.
+# `board.yaml` is git-ignored and holds runtime state: the `pid` section is
+# rewritten by the server (PidAllocator) as records are created, so the values
+# here are only an example starting point.
 records:
   schemas:
     - CardBody
@@ -13,12 +19,9 @@ pid:
     CardBody: CARD
     AssetBody: ASSET
     TransactionBody: TX
-  nextNumber: 40
-  latest:
-    CARD:
-      recordId: b5521209-4c55-455c-8e4b-6060e5d64592
-      pid: CARD-40
-      number: 40
+  # Example starting state; the server updates these as records are created.
+  nextNumber: 1
+  latest: {}
 tags:
   namespaces:
     - id: status
