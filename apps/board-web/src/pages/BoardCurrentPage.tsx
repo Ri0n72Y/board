@@ -7,13 +7,12 @@ import type {
 } from '@labour-board/shared'
 import {
   ArrowPathIcon,
-  Cog6ToothIcon,
   ExclamationTriangleIcon,
   PlusIcon,
-  EllipsisHorizontalIcon,
 } from '@heroicons/react/20/solid'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../components/ui/Button'
+import { AppSidebar } from '../components/AppSidebar'
 import { BoardFilters } from '../components/BoardFilters'
 import { BoardView } from '../components/BoardView'
 import { CreateRecordDrawer } from '../components/CreateRecordDrawer'
@@ -117,6 +116,7 @@ export function BoardCurrentPage() {
   const [isContextExportOpen, setIsContextExportOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
+  const [isIssuesVisible, setIsIssuesVisible] = useState(true)
   const [viewMode, setViewMode] = useState<BoardViewMode>('board')
   const [detailRecord, setDetailRecord] = useState<RecordResponse<
     RecordItem<RecordBody>
@@ -446,35 +446,23 @@ export function BoardCurrentPage() {
     [records, storedRecordOrder]
   )
 
-  const moreMenuItems = [
-    {
-      key: 'snapshots',
-      label: t('header.snapshots'),
-      action: snapshotController.openSnapshots,
-    },
-    {
-      key: 'export',
-      label: t('header.exportCurrentBoard'),
-      action: boardExportController.exportCurrentMarkdown,
-      disabled: boardExportController.isCurrentExporting || !projection,
-    },
-    {
-      key: 'context',
-      label: t('header.contextPack'),
-      action: () => setIsContextExportOpen(true),
-      disabled: !projection,
-    },
-    {
-      key: 'agent',
-      label: t('header.agentDrafts'),
-      action: agentDraftController.openDrawer,
-      disabled: !projection,
-    },
-  ]
-
   return (
     <div className="h-svh overflow-hidden bg-slate-50 text-slate-950">
-      <div className="grid h-full w-full grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden">
+      <div className="grid h-full w-full grid-cols-[auto_minmax(0,1fr)] overflow-hidden">
+        <AppSidebar
+          issuesCount={blockedRecords.length + (diagnostics?.length ?? 0)}
+          issuesVisible={isIssuesVisible}
+          exportDisabled={boardExportController.isCurrentExporting || !projection}
+          contextDisabled={!projection}
+          onToggleIssues={() => setIsIssuesVisible((v) => !v)}
+          onOpenAgentDrafts={agentDraftController.openDrawer}
+          onOpenSnapshots={snapshotController.openSnapshots}
+          onOpenContextPack={() => setIsContextExportOpen(true)}
+          onExportCurrent={boardExportController.exportCurrentMarkdown}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+        />
+
+        <div className="grid h-full w-full grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden">
         <header
           className={cn(
             `z-30 h-18 min-h-16  gap-4  px-8 backdrop-blur-sm sm:px-10`,
@@ -516,38 +504,6 @@ export function BoardCurrentPage() {
             >
               {isLoading ? t('header.refreshing') : t('header.refresh')}
             </Button>
-            <Button
-              type="button"
-              onClick={() => setIsSettingsOpen(true)}
-              icon={<Cog6ToothIcon className="h-4 w-4" />}
-              className="min-h-8 px-2.5 text-xs"
-            >
-              {t('header.settings')}
-            </Button>
-            <details className="relative">
-              <summary className="inline-flex min-h-8 cursor-pointer items-center rounded-md border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 list-none hover:bg-slate-50">
-                <EllipsisHorizontalIcon className="h-4 w-4" />
-                <span className="ml-1">{t('header.more')}</span>
-              </summary>
-              <div className="absolute right-0 top-full z-40 mt-1 w-48 rounded-md border border-slate-200 bg-white py-1 shadow-lg">
-                {moreMenuItems.map((item) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    className="block w-full px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-                    onClick={(event) => {
-                      item.action()
-                      event.currentTarget
-                        .closest('details')
-                        ?.removeAttribute('open')
-                    }}
-                    disabled={item.disabled}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </details>
           </div>
         </header>
 
@@ -718,12 +674,15 @@ export function BoardCurrentPage() {
           </div>
 
           <div className="max-h-64 shrink-0 overflow-y-auto">
-            <IssuesPanel
-              blockedRecords={blockedRecords}
-              diagnostics={diagnostics}
-            />
+            {isIssuesVisible && (
+              <IssuesPanel
+                blockedRecords={blockedRecords}
+                diagnostics={diagnostics}
+              />
+            )}
           </div>
         </main>
+        </div>
       </div>
 
       <RecordDetailDrawer

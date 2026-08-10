@@ -14,6 +14,12 @@ const enUS = {
     'header.settings': 'Settings',
     'header.more': 'More',
 
+    // ─── Sidebar navigation ───
+    'sidebar.board': 'Board',
+    'sidebar.issues': 'Issues',
+    'sidebar.workspace': 'Workspace',
+    'sidebar.actions': 'Actions',
+
     // ─── View mode toggle ───
     'viewMode.list': 'List View',
     'viewMode.board': 'Board View',

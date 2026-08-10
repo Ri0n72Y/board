@@ -14,6 +14,12 @@ const zhCN = {
     'header.settings': '设置',
     'header.more': '更多',
 
+    // ─── Sidebar navigation ───
+    'sidebar.board': '看板',
+    'sidebar.issues': '问题',
+    'sidebar.workspace': '工作区',
+    'sidebar.actions': '操作',
+
     // ─── View mode toggle ───
     'viewMode.list': '列表视图',
     'viewMode.board': '看板视图',
