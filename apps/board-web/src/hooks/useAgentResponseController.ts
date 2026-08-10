@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type {
   AgentResponseDetail,
   AgentResponseSummary,
@@ -12,6 +13,7 @@ import { extractApiErrorMessage } from '../api/apiError'
 import { toastError, toastSuccess } from '../utils/toasts'
 
 export function useAgentResponseController() {
+  const { t } = useTranslation()
   const [responses, setResponses] = useState<AgentResponseSummary[]>([])
   const [selectedResponse, setSelectedResponse] =
     useState<AgentResponseDetail | null>(null)
@@ -145,7 +147,7 @@ export function useAgentResponseController() {
           // but the current draft no longer owns this response.
           return data.response
         }
-        toastSuccess('agent.response.saved')
+        toastSuccess(t('agent.response.saved'))
         await loadResponseList(draftId)
         return data.response
       } catch (error: unknown) {
@@ -162,7 +164,7 @@ export function useAgentResponseController() {
         }
       }
     },
-    [loadResponseList]
+    [loadResponseList, t]
   )
 
   return {

@@ -575,6 +575,8 @@ const enUS = {
       'Discarded drafts cannot generate formal handoff. Reset to Draft and review again if needed.',
     'agent.handoff.failed': 'Handoff failed',
     'agent.handoff.copied': 'Copied!',
+    'agent.handoff.copyFailed':
+      'Copy failed. Please copy the handoff manually from the preview.',
     // ─── Agent Suggestions (2.3) ───
     'agent.suggestions.title': 'AI Suggestions ({{count}})',
     'agent.suggestions.generate': 'Generate AI Suggestion',

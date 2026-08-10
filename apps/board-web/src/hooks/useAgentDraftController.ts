@@ -283,8 +283,21 @@ export function useAgentDraftController() {
         setHandoffFeedback(t('agent.handoff.copied'))
         setTimeout(() => setHandoffFeedback(null), 2000)
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'copy handoff failed'
+        // Distinguish server-side fetch failure from client-side clipboard
+        // failure. Clipboard write can reject when the document is not
+        // focused (e.g. DevTools open) — surface a friendly message instead
+        // of the raw DOMException.
+        const isClipboardError =
+          error instanceof DOMException ||
+          (error instanceof Error &&
+            (error.name === 'NotAllowedError' ||
+              error.name === 'SecurityError' ||
+              /clipboard|writeText/i.test(error.message)))
+        const message = isClipboardError
+          ? t('agent.handoff.copyFailed')
+          : error instanceof Error
+            ? error.message
+            : 'copy handoff failed'
         setHandoffError(message)
         toastError(message)
       } finally {
