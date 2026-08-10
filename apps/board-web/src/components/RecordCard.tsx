@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import type { Ref } from 'react'
 import type {
   Profile,
   RecordBody,
   RecordItem,
   RecordResponse,
+  Tag,
 } from '@labour-board/shared'
 import { useTranslation } from 'react-i18next'
 import { TagChipRow } from './BoardFilters'
@@ -19,6 +21,7 @@ import {
   type ReferenceDisplayItem,
 } from '../utils/referenceDisplay'
 import { formatProfileCompact } from '../utils/profileDisplay'
+import { formatTagLabel } from '../utils/tagDisplay'
 import { cn } from '../lib/cn'
 
 /** Tags that, when clicked inside a card, should NOT trigger card detail open. */
@@ -43,10 +46,13 @@ interface RecordCardProps {
   compact?: boolean
   moveStatusError?: string | null
   isMovingStatus?: boolean
-  isDragEnabled?: boolean
   isDragging?: boolean
   dragRef?: Ref<HTMLElement>
-  dragHandleRef?: Ref<HTMLButtonElement>
+  statusTags?: Tag[]
+  onStatusChange?: (
+    record: RecordResponse<RecordItem<RecordBody>>,
+    statusTag: Tag
+  ) => void
   onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
 }
 
@@ -58,17 +64,14 @@ export function RecordCard({
   compact = false,
   moveStatusError,
   isMovingStatus = false,
-  isDragEnabled = false,
   isDragging = false,
   dragRef,
-  dragHandleRef,
+  statusTags,
+  onStatusChange,
   onCardClick,
 }: RecordCardProps) {
   const { t, i18n } = useTranslation()
   const isZh = (i18n.resolvedLanguage ?? i18n.language).startsWith('zh')
-  const dragHandleLabel = t('move.dragHandle', {
-    defaultValue: isZh ? '拖拽移动状态' : 'Drag to move status',
-  })
   const movingLabel = t('move.moving', {
     defaultValue: isZh ? '移动中...' : 'Moving...',
   })
@@ -82,6 +85,8 @@ export function RecordCard({
     t('record.unassigned'),
     t('record.unknownMember')
   )
+  const statusTag = current.tags.find((tag) => tag.startsWith('status:')) ?? null
+  const nonStatusTags = current.tags.filter((tag) => !tag.startsWith('status:'))
 
   const handleClick = (event: React.MouseEvent) => {
     if (isInteractiveTarget(event.target as EventTarget, event.currentTarget))
@@ -119,21 +124,17 @@ export function RecordCard({
               {title}
             </h3>
           </div>
-          {isDragEnabled && (
-            <button
-              ref={dragHandleRef}
-              type="button"
-              data-card-interactive="true"
-              className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-500 transition hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 active:cursor-grabbing"
-              aria-label={dragHandleLabel}
-              title={dragHandleLabel}
-              onClick={(event) => event.stopPropagation()}
-              onKeyDown={(event) => event.stopPropagation()}
-            >
-              ⋮⋮
-            </button>
-          )}
         </div>
+
+        {statusTag && (
+          <div className="shrink-0">
+            <StatusBadgeMenu
+              tag={statusTag}
+              tags={statusTags ?? []}
+              onChange={(nextTag) => onStatusChange?.(record, nextTag)}
+            />
+          </div>
+        )}
 
         <div className="min-w-0 shrink-0">
           <AssigneeCompact
@@ -143,9 +144,9 @@ export function RecordCard({
           />
         </div>
 
-        {current.tags.length > 0 ? (
+        {nonStatusTags.length > 0 ? (
           <div className="max-h-7 shrink-0 overflow-hidden">
-            <TagChipRow tags={current.tags} readonly />
+            <TagChipRow tags={nonStatusTags} readonly />
           </div>
         ) : (
           <p className="text-xs text-slate-400">{t('record.noTags')}</p>
@@ -178,7 +179,7 @@ export function RecordCard({
                 className="rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700"
                 role="alert"
               >
-                {moveStatusError}
+                {t(moveStatusError, { defaultValue: moveStatusError })}
               </p>
             )}
           </div>
@@ -246,6 +247,107 @@ export function RecordCard({
         maxVisible={3}
       />
     </article>
+  )
+}
+
+const STATUS_DOT_STYLES: Record<string, string> = {
+  'status:todo': 'bg-slate-400',
+  'status:backlog': 'bg-amber-400',
+  'status:doing': 'bg-blue-500',
+  'status:done': 'bg-emerald-500',
+  'status:blocked': 'bg-red-500',
+}
+
+function StatusBadgeMenu({
+  tag,
+  tags,
+  onChange,
+}: {
+  tag: Tag
+  tags: Tag[]
+  onChange: (tag: Tag) => void
+}) {
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage ?? i18n.language
+  const [open, setOpen] = useState(false)
+  const statusLabel = formatTagLabel(tag, lang)
+  const options = tags.length > 0 ? tags : [tag]
+  const dotColor = STATUS_DOT_STYLES[tag] ?? 'bg-emerald-500'
+
+  return (
+    <div className="relative inline-block">
+      <button
+        type="button"
+        data-card-interactive="true"
+        className={cn(
+          'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition',
+          open
+            ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
+            : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-400 hover:text-emerald-700'
+        )}
+        onClick={(event) => {
+          event.stopPropagation()
+          setOpen((value) => !value)
+        }}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className={cn('h-1.5 w-1.5 rounded-full', dotColor)} />
+        <span>{statusLabel}</span>
+        <span aria-hidden="true" className="text-[10px] opacity-70">
+          ▾
+        </span>
+      </button>
+
+      {open && (
+        <>
+          <div
+            className="fixed inset-0 z-10"
+            data-card-interactive="true"
+            onClick={(event) => {
+              event.stopPropagation()
+              setOpen(false)
+            }}
+          />
+          <div
+            role="listbox"
+            aria-label={t('move.statusOptions', {
+              defaultValue: 'Change status',
+            })}
+            className="absolute left-0 top-full z-20 mt-1 min-w-36 rounded-lg border border-slate-200 bg-white p-1 shadow-lg"
+          >
+            {options.map((option) => (
+              <button
+                key={option}
+                type="button"
+                role="option"
+                aria-selected={option === tag}
+                data-card-interactive="true"
+                className={cn(
+                  'flex w-full items-center gap-1.5 rounded-md px-2.5 py-1.5 text-left text-xs transition',
+                  option === tag
+                    ? 'bg-emerald-50 font-semibold text-emerald-700'
+                    : 'text-slate-700 hover:bg-slate-100'
+                )}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  if (option !== tag) onChange(option)
+                  setOpen(false)
+                }}
+              >
+                <span
+                  className={cn(
+                    'h-1.5 w-1.5 rounded-full',
+                    STATUS_DOT_STYLES[option] ?? 'bg-emerald-500'
+                  )}
+                />
+                <span>{formatTagLabel(option, lang)}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   )
 }
 

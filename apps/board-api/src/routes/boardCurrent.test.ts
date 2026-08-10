@@ -232,7 +232,7 @@ describe('GET /api/v0/board/current', () => {
 
     const payload = await res.json()
     expect(payload.data.records).toHaveLength(1)
-    expect(payload.data.records[0].body.tags).toContain('status:archived')
+    expect(payload.data.records[0].body.tags).toContain('lifecycle:archived')
     expect(payload.data.summary.visibleCurrentRecords).toBe(1)
   })
 
@@ -265,7 +265,7 @@ describe('GET /api/v0/board/current', () => {
     expect(payload.data.records).toHaveLength(1)
     const tags = payload.data.records[0].body.tags
     expect(tags).toEqual(
-      expect.arrayContaining(['status:wip', 'status:archived'])
+      expect.arrayContaining(['status:wip', 'lifecycle:archived'])
     )
     expect(tags).not.toContain('status:todo')
   })

@@ -33,7 +33,10 @@ export async function getRecordCurrentHead(
   return {
     recordId,
     exists: true,
-    currentVersion: patches.length,
+    // Version is the length of THIS record's patch chain. Using the global
+    // patch count made every record's version move whenever any other record
+    // was patched, which produced spurious "current version mismatch" errors.
+    currentVersion: targetPatches.length,
     lastPatchId,
   }
 }

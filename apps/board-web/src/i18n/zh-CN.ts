@@ -95,6 +95,9 @@ const zhCN = {
     // ─── Status / Alerts ───
     'status.loading': '正在加载当前看板...',
     'status.loadError': '加载当前看板失败',
+    'status.networkError': '无法连接看板服务，请确认 board-api 已启动',
+    'status.backendUnavailable':
+      '看板服务暂时不可用（数据库可能未启动），请稍后重试',
     'status.retry': '重试',
     'status.refreshError': '刷新失败 - 显示的是旧数据',
     'status.exportError': '导出失败',
@@ -231,6 +234,15 @@ const zhCN = {
     'edit.initialPatchDescriptionNotice':
       '此补丁将附带一段来自 AI 建议的人工草稿说明。',
     'edit.saveSuccess': '记录已保存',
+    'edit.archive': '归档',
+    'edit.archiveTitle': '归档记录',
+    'edit.archiveHint': '归档后记录不可修改。',
+    'edit.archiveReason': '归档原因',
+    'edit.archiveReasonPlaceholder': '为什么归档这条记录？（可选）',
+    'edit.archiveConfirm': '确认归档',
+    'edit.archiveCancel': '取消',
+    'edit.archiving': '归档中...',
+    'edit.archiveSuccess': '记录已归档',
     'edit.optional': '（可选）',
     'edit.unsavedDiscardTitle': '放弃未保存的修改？',
     'edit.unsavedDiscardMessage':
@@ -655,6 +667,8 @@ const zhCN = {
     'move.label': '移动到',
     'move.placeholder': '选择状态',
     'move.moving': '移动中...',
+    'move.conflictError':
+      '这条记录已被其他操作修改（版本冲突）。请刷新看板后重试。',
     'move.noMoves': '无可移动状态',
 
     // ─── Summary Bar ───
@@ -684,8 +698,8 @@ const zhCN = {
     'tags.status:wip': '进行中',
     'tags.status:review': '审核中',
     'tags.status:done': '已完成',
-    'tags.status:blocked': '已阻塞',
-    'tags.status:archived': '已归档',
+    'tags.status:blocked': '阻塞',
+    'tags.lifecycle:archived': '已归档',
     'tags.priority:p0': 'P0 紧急且重要',
     'tags.priority:p1': 'P1 重要不紧急',
     'tags.priority:p2': 'P2 紧急不重要',

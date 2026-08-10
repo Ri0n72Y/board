@@ -7,10 +7,10 @@ describe('board config tools', () => {
     const cleaned = cleanExcludeTags({
       ...DEFAULT_BOARD_CONFIG,
       snapshot: {
-        excludeTags: ['status:archived', 'missing:tag'],
+        excludeTags: ['lifecycle:archived', 'missing:tag'],
       },
     })
 
-    expect(cleaned.snapshot.excludeTags).toEqual(['status:archived'])
+    expect(cleaned.snapshot.excludeTags).toEqual(['lifecycle:archived'])
   })
 })

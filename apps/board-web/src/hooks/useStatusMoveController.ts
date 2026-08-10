@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
+import { useTranslation } from 'react-i18next'
 import type {
   RecordBody,
   RecordItem,
@@ -20,6 +21,7 @@ interface UseStatusMoveControllerParams {
 export function useStatusMoveController({
   onMoved,
 }: UseStatusMoveControllerParams) {
+  const { t } = useTranslation()
   const [movingRecordId, setMovingRecordId] = useState<string | null>(null)
   const [moveErrors, setMoveErrors] = useState<Record<string, string>>({})
   const statusMoveRequestIdRef = useRef(0)
@@ -98,7 +100,7 @@ export function useStatusMoveController({
 
           const message =
             unknownError instanceof RecordPatchConflictError
-              ? `${unknownError.message} Refresh current board and try again.`
+              ? t('move.conflictError')
               : errorMessage(unknownError)
           setMoveErrors((current) => ({ ...current, [recordId]: message }))
         })
@@ -108,7 +110,7 @@ export function useStatusMoveController({
           statusMoveAbortRef.current = null
         })
     },
-    [onMoved]
+    [onMoved, t]
   )
 
   return {

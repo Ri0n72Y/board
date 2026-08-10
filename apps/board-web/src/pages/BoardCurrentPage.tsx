@@ -43,6 +43,7 @@ import {
   getConfigOtherTags,
   getConfigPriorityTags,
   getConfigStatusTags,
+  getCreatableStatusTags,
   getProfileOptions,
   hasEffectiveFilters,
   mergeKnownTags,
@@ -211,6 +212,10 @@ export function BoardCurrentPage() {
     [projection]
   )
   const statusTags = useMemo(() => getConfigStatusTags(config), [config])
+  const creatableStatusTags = useMemo(
+    () => getCreatableStatusTags(config),
+    [config]
+  )
   const priorityTags = useMemo(() => getConfigPriorityTags(config), [config])
   const configOtherTags = useMemo(() => getConfigOtherTags(config), [config])
   const profileOptions = useMemo(() => getProfileOptions(profiles), [profiles])
@@ -587,7 +592,7 @@ export function BoardCurrentPage() {
             >
               <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" />
               <span>
-                {t('status.refreshError')}: {error}
+                {t('status.refreshError')}: {t(error, { defaultValue: error })}
               </span>
             </section>
           )}
@@ -628,7 +633,7 @@ export function BoardCurrentPage() {
                 role="alert"
               >
                 <strong>{t('status.loadError')}</strong>
-                <span>{error}</span>
+                <span>{t(error, { defaultValue: error })}</span>
                 <Button
                   type="button"
                   onClick={refresh}
@@ -690,6 +695,8 @@ export function BoardCurrentPage() {
                   visibleColumnIds={visibleBoardColumnIds}
                   columnOrderIds={boardColumnOrderIds}
                   recordOrder={storedRecordOrder}
+                  statusTags={creatableStatusTags}
+                  onStatusChange={statusMoveController.moveRecordStatus}
                   onCardClick={openDetail}
                   onMoveStatus={statusMoveController.moveRecordStatus}
                   onReorderRecord={handleRecordReorder}
@@ -736,6 +743,7 @@ export function BoardCurrentPage() {
         }
         onClose={closeDetail}
         onHistoryClick={handleDetailHistory}
+        onArchived={() => void refreshAfterPatch(detailRecord?.body.id ?? '')}
       />
 
       <SnapshotDrawer
@@ -858,7 +866,7 @@ export function BoardCurrentPage() {
           config={config}
           profiles={profiles}
           knownTags={configOtherTags}
-          statusTags={statusTags}
+          statusTags={creatableStatusTags}
           priorityTags={priorityTags}
           assetOptions={assetOptions}
           relationTargetOptions={relationTargetOptions}

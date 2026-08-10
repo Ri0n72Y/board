@@ -73,7 +73,7 @@ export async function appendArchivePatch(
   return service.createRecordPatch(recordId, {
     parentId: head.lastPatchId,
     currentVersion: head.currentVersion,
-    tagChanges: { add: ['status:archived'] },
+    tagChanges: { add: ['lifecycle:archived'] },
     description: 'Archive record',
   })
 }

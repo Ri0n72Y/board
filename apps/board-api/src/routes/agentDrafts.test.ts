@@ -458,7 +458,7 @@ describe('Agent Drafts route', () => {
     const app = await createTestApp()
     await createRecord(app, {
       schema: 'CardBody',
-      tags: ['status:archived'],
+      tags: ['lifecycle:archived'],
       body: { title: 'Archived Draft Source' },
     })
 

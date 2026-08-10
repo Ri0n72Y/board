@@ -31,7 +31,7 @@ async function appendArchivedStatus(
       body: JSON.stringify({
         parentId: headPayload.data.lastPatchId,
         currentVersion: headPayload.data.currentVersion,
-        tagChanges: { add: ['status:archived'] },
+        tagChanges: { add: ['lifecycle:archived'] },
         description: 'Archive record',
       }),
       headers: { 'content-type': 'application/json' },
@@ -197,7 +197,7 @@ describe('app integration smoke', () => {
     expect(boardPayload.data.records).toHaveLength(1)
     const tags = boardPayload.data.records[0].body.tags
     expect(tags).toEqual(
-      expect.arrayContaining(['status:done', 'status:archived'])
+      expect.arrayContaining(['status:done', 'lifecycle:archived'])
     )
     expect(tags).not.toContain('status:todo')
   })
@@ -252,7 +252,7 @@ describe('app integration smoke', () => {
     const boardTags = boardPayload.data.records[0].body.tags
 
     expect(historyTags).toEqual(
-      expect.arrayContaining(['status:done', 'status:archived'])
+      expect.arrayContaining(['status:done', 'lifecycle:archived'])
     )
     expect(historyTags).not.toContain('status:todo')
     expect(boardTags).toEqual(historyTags)

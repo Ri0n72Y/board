@@ -8,7 +8,7 @@ import type {
   Tag,
   TagChanges,
 } from '@labour-board/shared'
-import { applyRecordPatch, tagNamespace } from '@labour-board/shared'
+import { applyRecordPatch, tagNamespace, ARCHIVED_TAG } from '@labour-board/shared'
 import { getConfiguredTags } from '../../config/boardConfigTools.js'
 import type { RecordRepository } from '../../repositories/recordRepository.js'
 import type {
@@ -141,7 +141,7 @@ export async function submitRecordPatch(
     return null
   }
 
-  if (target.tags.includes('status:archived')) {
+  if (target.tags.includes(ARCHIVED_TAG)) {
     throw new RecordValidationError(`Cannot patch archived record ${targetId}`)
   }
 
@@ -218,7 +218,9 @@ export async function submitRecordPatch(
     createdAt: now,
   }
 
-  const expectedSnapshotVersion = await getExpectedSnapshotHeadVersion(input)
+  const expectedSnapshotVersion = await getExpectedSnapshotHeadVersion(
+    snapshotHeadRepository
+  )
   const appendResult = await snapshotHeadRepository.appendPatchAndAdvanceHead({
     targetId: targetId as RecordId,
     patch,
@@ -279,7 +281,7 @@ async function assertRecordIsNotArchivedInCurrentState(params: {
     )
   }
   const current = replayRecordHistory(target, chain.orderedPatches).finalState
-  if (current.tags.includes('status:archived')) {
+  if (current.tags.includes(ARCHIVED_TAG)) {
     throw new RecordValidationError(`Cannot patch archived record ${targetId}`)
   }
 }
@@ -399,9 +401,15 @@ function isTag(value: string): value is Tag {
 }
 
 async function getExpectedSnapshotHeadVersion(
-  input: CreateRecordPatchInput<DeepPartial<RecordBody>>
+  snapshotHeadRepository: SnapshotHeadRepository
 ): Promise<number> {
-  return input.currentVersion
+  // The snapshot head version is a global counter that advances on every
+  // patch commit. The client only knows its per-record version, so read the
+  // global version here instead of trusting a client-supplied number.
+  // Concurrent commits are still guarded by the head CAS in
+  // appendPatchAndAdvanceHead and by the per-record parent chain.
+  const head = await snapshotHeadRepository.loadSnapshotHead()
+  return head.version
 }
 
 function getRawObservedVersion(

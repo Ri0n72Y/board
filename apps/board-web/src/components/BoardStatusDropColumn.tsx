@@ -9,7 +9,10 @@ import { useTranslation } from 'react-i18next'
 import { RecordCard } from './RecordCard'
 import type { BoardStatusColumn } from '../utils/boardView'
 import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
+import type { BoardColumnInsertion } from '../hooks/useBoardStatusDnd'
 import { cn } from '../lib/cn'
+import { lookupProfile } from '../utils/board'
+import { formatProfileCompact } from '../utils/profileDisplay'
 import {
   useRecordStatusDraggable,
   useStatusColumnDropTarget,
@@ -29,6 +32,14 @@ interface BoardStatusDropColumnProps {
     recordId: string,
     element: HTMLElement | null
   ) => void
+  draggingRecordId?: string | null
+  draggingRecord?: RecordResponse<RecordItem<RecordBody>> | null
+  hoverInsertion?: BoardColumnInsertion | null
+  statusTags?: Tag[]
+  onStatusChange?: (
+    record: RecordResponse<RecordItem<RecordBody>>,
+    statusTag: Tag
+  ) => void
   onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
 }
 
@@ -42,6 +53,11 @@ export function BoardStatusDropColumn({
   dragDisabled,
   registerStatusDropTarget,
   registerCardTarget,
+  draggingRecordId,
+  draggingRecord,
+  hoverInsertion,
+  statusTags,
+  onStatusChange,
   onCardClick,
 }: BoardStatusDropColumnProps) {
   const { t } = useTranslation()
@@ -51,6 +67,13 @@ export function BoardStatusDropColumn({
     dragDisabled,
     registerStatusDropTarget,
   })
+
+  const showPreviewInThisColumn =
+    column.tag != null &&
+    hoverInsertion?.tag === column.tag &&
+    draggingRecord != null &&
+    draggingRecordId != null
+  const previewIndex = showPreviewInThisColumn ? hoverInsertion!.index : -1
 
   return (
     <section
@@ -72,9 +95,16 @@ export function BoardStatusDropColumn({
         </span>
       </header>
 
-      {column.records.length > 0 ? (
+      {column.records.length > 0 || showPreviewInThisColumn ? (
         <div className="grid min-h-0 auto-rows-max items-start gap-3 overflow-y-auto pr-1 [scrollbar-width:thin]">
-          {column.records.map((record) => (
+          {column.records.flatMap((record, index) => [
+            showPreviewInThisColumn && index === previewIndex ? (
+              <DropPreviewCard
+                key="drop-preview"
+                record={draggingRecord!}
+                profiles={profiles}
+              />
+            ) : null,
             <DraggableRecordCard
               key={record.body.id}
               columnTag={column.tag}
@@ -86,9 +116,18 @@ export function BoardStatusDropColumn({
               moveStatusError={moveErrors?.[record.body.id] ?? null}
               dragDisabled={dragDisabled}
               registerCardTarget={registerCardTarget}
+              statusTags={statusTags}
+              onStatusChange={onStatusChange}
               onCardClick={onCardClick}
+            />,
+          ])}
+          {showPreviewInThisColumn && previewIndex >= column.records.length && (
+            <DropPreviewCard
+              key="drop-preview"
+              record={draggingRecord!}
+              profiles={profiles}
             />
-          ))}
+          )}
         </div>
       ) : (
         <p className="px-1 py-3 text-sm text-slate-400">
@@ -96,6 +135,49 @@ export function BoardStatusDropColumn({
         </p>
       )}
     </section>
+  )
+}
+
+function DropPreviewCard({
+  record,
+  profiles,
+}: {
+  record: RecordResponse<RecordItem<RecordBody>>
+  profiles?: Profile[] | null
+}) {
+  const { t } = useTranslation()
+  const cardBody = record.body.body
+  const title =
+    typeof cardBody === 'object' &&
+    cardBody !== null &&
+    'title' in cardBody &&
+    typeof cardBody.title === 'string'
+      ? cardBody.title
+      : record.body.pid
+  const profile = lookupProfile(profiles ?? null, record.body.assignee ?? '')
+  const assigneeDisplay = formatProfileCompact(
+    record.body.assignee,
+    profile,
+    t('record.unassigned'),
+    t('record.unknownMember')
+  )
+  return (
+    <div
+      className="flex h-fit w-full cursor-default flex-col gap-3 rounded-lg border border-emerald-300 bg-white p-4 opacity-60"
+      aria-hidden="true"
+    >
+      <div className="min-w-0">
+        <p className="mb-0.5 font-mono text-xs text-slate-500">
+          {record.body.pid}
+        </p>
+        <p className="line-clamp-2 text-sm font-semibold leading-tight text-slate-950">
+          {title}
+        </p>
+      </div>
+      {record.body.assignee && (
+        <p className="truncate text-xs text-slate-500">{assigneeDisplay}</p>
+      )}
+    </div>
   )
 }
 
@@ -109,6 +191,8 @@ function DraggableRecordCard({
   moveStatusError,
   dragDisabled,
   registerCardTarget,
+  statusTags,
+  onStatusChange,
   onCardClick,
 }: {
   columnTag: Tag | null
@@ -124,9 +208,14 @@ function DraggableRecordCard({
     recordId: string,
     element: HTMLElement | null
   ) => void
+  statusTags?: Tag[]
+  onStatusChange?: (
+    record: RecordResponse<RecordItem<RecordBody>>,
+    statusTag: Tag
+  ) => void
   onCardClick?: (record: RecordResponse<RecordItem<RecordBody>>) => void
 }) {
-  const { cardRef, dragHandleRef, isDragging } = useRecordStatusDraggable({
+  const { cardRef, isDragging } = useRecordStatusDraggable({
     recordId: record.body.id,
     dragDisabled,
   })
@@ -144,10 +233,10 @@ function DraggableRecordCard({
         compact
         isMovingStatus={isMovingStatus}
         moveStatusError={moveStatusError}
-        isDragEnabled={!dragDisabled}
-        isDragging={isDragging || isMovingStatus}
+        isDragging={isDragging}
         dragRef={cardRef}
-        dragHandleRef={dragHandleRef}
+        statusTags={statusTags}
+        onStatusChange={onStatusChange}
         onCardClick={onCardClick}
       />
     </div>

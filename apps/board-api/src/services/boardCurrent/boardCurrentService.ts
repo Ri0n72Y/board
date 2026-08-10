@@ -163,18 +163,16 @@ export async function getBoardCurrentProjection(
 function resolveBoardProjectionStatus(
   totalBase: number,
   visibleCurrent: number,
-  archived: number,
+  _archived: number,
   blocked: number,
   headCorrupted: boolean
 ): BoardProjectionStatus {
   if (totalBase === 0) return headCorrupted ? 'blocked' : 'empty'
 
-  const problemRecords = archived + blocked
-
-  if (problemRecords === 0 && !headCorrupted) return 'clean'
+  // Archived records are a normal part of the board lifecycle; only broken or
+  // conflicted patch chains make the projection partial/blocked.
+  if (blocked === 0 && !headCorrupted) return 'clean'
   if (visibleCurrent > 0) return 'partial'
-  // No visible records: all archived or blocked
-  if (blocked > 0 || headCorrupted) return 'blocked'
-  // All records are archived (none blocked, none visible, head ok)
-  return 'partial'
+  // No visible records and every record is blocked (or the head is corrupt).
+  return 'blocked'
 }

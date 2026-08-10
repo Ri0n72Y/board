@@ -94,7 +94,7 @@ describe('filterBoardCurrentRecords', () => {
           id: 'record-archived',
           pid: 'CARD-3',
           schema: 'CardBody',
-          tags: ['status:archived'],
+          tags: ['lifecycle:archived'],
           assignee: 'member-archived',
           assets: ['asset-archived'],
           relations: [{ constraint: 'duplicates', target: 'archived-target' }],

@@ -101,6 +101,10 @@ const enUS = {
     // ─── Status / Alerts ───
     'status.loading': 'Loading current board...',
     'status.loadError': 'Failed to load current board',
+    'status.networkError':
+      'Cannot reach the board API. Make sure board-api is running.',
+    'status.backendUnavailable':
+      'Board API is unavailable (database may be down). Try again.',
     'status.retry': 'Retry',
     'status.refreshError': 'Refresh failed - showing stale data',
     'status.exportError': 'Export failed',
@@ -240,6 +244,16 @@ const enUS = {
     'edit.saving': 'Saving...',
     'edit.saveButton': 'Save patch',
     'edit.saveSuccess': 'Record saved',
+    'edit.archive': 'Archive',
+    'edit.archiveTitle': 'Archive record',
+    'edit.archiveHint': 'Archived records cannot be edited.',
+    'edit.archiveReason': 'Archive reason',
+    'edit.archiveReasonPlaceholder':
+      'Why is this record being archived? (optional)',
+    'edit.archiveConfirm': 'Archive',
+    'edit.archiveCancel': 'Cancel',
+    'edit.archiving': 'Archiving...',
+    'edit.archiveSuccess': 'Record archived',
     'edit.conflictError':
       'Record changed on the server. Refresh and try again.',
     'edit.headMissing':
@@ -710,6 +724,8 @@ const enUS = {
     'move.label': 'Move to',
     'move.placeholder': 'Select status',
     'move.moving': 'Moving...',
+    'move.conflictError':
+      'This record was changed by another operation (version conflict). Refresh the board and try again.',
     'move.noMoves': 'No moves',
 
     // ─── Summary Bar ───
@@ -742,7 +758,7 @@ const enUS = {
     'tags.status:review': 'Review',
     'tags.status:done': 'Done',
     'tags.status:blocked': 'Blocked',
-    'tags.status:archived': 'Archived',
+    'tags.lifecycle:archived': 'Archived',
     'tags.priority:p0': 'P0 Urgent & Important',
     'tags.priority:p1': 'P1 Not Urgent & Important',
     'tags.priority:p2': 'P2 Urgent & Not Important',

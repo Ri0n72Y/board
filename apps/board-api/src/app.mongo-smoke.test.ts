@@ -321,7 +321,7 @@ describe('Mongo smoke', () => {
         body: JSON.stringify({
           parentId: archiveHead.data.lastPatchId,
           currentVersion: archiveHead.data.currentVersion,
-          tagChanges: { add: ['status:archived'] },
+          tagChanges: { add: ['lifecycle:archived'] },
           description: 'Archive record',
         }),
         headers: { 'content-type': 'application/json' },
@@ -344,7 +344,7 @@ describe('Mongo smoke', () => {
 
     const tags: string[] = archivedPayload.data.records[0].body.tags
     expect(tags).toEqual(
-      expect.arrayContaining(['status:done', 'status:archived'])
+      expect.arrayContaining(['status:done', 'lifecycle:archived'])
     )
     expect(tags).not.toContain('status:todo')
   })

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Ref } from 'react'
 import { useDraggable, useDroppable } from '@dnd-kit/react'
 import type {
@@ -12,6 +12,12 @@ const BOARD_RECORD_DND_TYPE = 'board-record-status-card'
 const RECORD_DRAG_ID_PREFIX = 'record:'
 const STATUS_DROP_ID_PREFIX = 'status-column:'
 
+interface BoardDragStartEvent {
+  operation: {
+    source?: { id?: string | number | null } | null
+  }
+}
+
 interface BoardDragEndEvent {
   canceled?: boolean
   operation: {
@@ -19,6 +25,11 @@ interface BoardDragEndEvent {
     target?: { id?: string | number | null } | null
     position: { current: { x: number; y: number } }
   }
+}
+
+export interface BoardColumnInsertion {
+  tag: Tag
+  index: number
 }
 
 interface UseBoardStatusDndArgs {
@@ -47,6 +58,14 @@ export function useBoardStatusDnd({
   const statusDropTargetsRef = useRef(new Map<Tag, HTMLElement>())
   const columnCardTargetsRef = useRef(new Map<Tag, Map<string, HTMLElement>>())
   const lastPointerPositionRef = useRef<{ x: number; y: number } | null>(null)
+  const draggingRecordIdRef = useRef<string | null>(null)
+  const recordsRef = useRef(records)
+  useEffect(() => {
+    recordsRef.current = records
+  }, [records])
+  const [draggingRecordId, setDraggingRecordId] = useState<string | null>(null)
+  const [hoverInsertion, setHoverInsertion] =
+    useState<BoardColumnInsertion | null>(null)
 
   const recordsById = useMemo(() => {
     const byId = new Map<string, RecordResponse<RecordItem<RecordBody>>>()
@@ -102,12 +121,89 @@ export function useBoardStatusDnd({
     []
   )
 
+  // Same-column reorder: the dragged card's own rect is part of the index
+  // math, so the insertion index shifts by one when it sat above the drop
+  // point. Applied both while hovering (preview) and on drop (commit).
+  const computeInsertIndexForPointer = useCallback(
+    (
+      tag: Tag,
+      point: { x: number; y: number } | null,
+      draggedRecordId: string | null
+    ): number => {
+      let index = computeInsertIndex(tag, point)
+      if (draggedRecordId) {
+        const columnCards = [
+          ...(columnCardTargetsRef.current.get(tag)?.keys() ?? []),
+        ]
+        const draggedIndex = columnCards.indexOf(draggedRecordId)
+        if (draggedIndex >= 0 && draggedIndex < index) {
+          index -= 1
+        }
+      }
+      return index
+    },
+    [computeInsertIndex]
+  )
+
   useEffect(() => {
     const updatePointerPosition = (event: PointerEvent) => {
-      lastPointerPositionRef.current = {
-        x: event.clientX,
-        y: event.clientY,
+      const point = { x: event.clientX, y: event.clientY }
+      lastPointerPositionRef.current = point
+
+      const draggedId = draggingRecordIdRef.current
+      if (!draggedId) {
+        setHoverInsertion(null)
+        return
       }
+
+      let next: BoardColumnInsertion | null = null
+      for (const [tag] of statusDropTargetsRef.current) {
+        if (
+          !isPointInsideStatusDropTarget(
+            tag,
+            point,
+            statusDropTargetsRef.current
+          )
+        ) {
+          continue
+        }
+        const index = computeInsertIndexForPointer(tag, point, draggedId)
+        next = { tag, index }
+        break
+      }
+
+      // Dropping back onto the record's current position is a no-op: it does
+      // not produce a patch, so it should not show a drop preview either.
+      const draggedRecord = recordsRef.current.find(
+        (record) => record.body.id === draggedId
+      )
+      if (next && draggedRecord) {
+        const currentStatus =
+          draggedRecord.body.tags.find((tag) => tag.startsWith('status:')) ??
+          null
+        if (currentStatus === next.tag) {
+          let currentIndex = -1
+          let seen = 0
+          for (const record of recordsRef.current) {
+            const status =
+              record.body.tags.find((tag) => tag.startsWith('status:')) ?? null
+            if (status !== currentStatus) continue
+            if (record.body.id === draggedId) {
+              currentIndex = seen
+              break
+            }
+            seen += 1
+          }
+          if (next.index === currentIndex) next = null
+        }
+      }
+
+      setHoverInsertion((current) => {
+        if (current?.tag === next?.tag && current?.index === next?.index) {
+          return current
+        }
+        return next
+      })
     }
 
     window.addEventListener('pointermove', updatePointerPosition, true)
@@ -116,14 +212,25 @@ export function useBoardStatusDnd({
       window.removeEventListener('pointermove', updatePointerPosition, true)
       window.removeEventListener('pointerup', updatePointerPosition, true)
     }
+  }, [computeInsertIndexForPointer])
+
+  const clearDragState = useCallback(() => {
+    draggingRecordIdRef.current = null
+    setDraggingRecordId(null)
+    setHoverInsertion(null)
   }, [])
 
-  const handleDragStart = useCallback(() => {
+  const handleDragStart = useCallback((event: BoardDragStartEvent) => {
     lastPointerPositionRef.current = null
+    setHoverInsertion(null)
+    const recordId = parseRecordDragId(event.operation.source?.id)
+    draggingRecordIdRef.current = recordId
+    setDraggingRecordId(recordId)
   }, [])
 
   const handleDragEnd = useCallback(
     (event: BoardDragEndEvent) => {
+      clearDragState()
       if (event.canceled || isMovePending || !onMoveStatus) return
 
       const recordId = parseRecordDragId(event.operation.source?.id)
@@ -147,19 +254,11 @@ export function useBoardStatusDnd({
       const point =
         lastPointerPositionRef.current ?? event.operation.position.current
 
-      let insertIndex = computeInsertIndex(targetStatusTag, point)
-      if (currentStatus === targetStatusTag) {
-        // Same-column reorder: the dragged card's own rect is part of the
-        // index math, so the insertion index shifts by one when it sat above
-        // the drop point.
-        const columnCards = [
-          ...(columnCardTargetsRef.current.get(targetStatusTag)?.keys() ?? []),
-        ]
-        const draggedIndex = columnCards.indexOf(recordId)
-        if (draggedIndex >= 0 && draggedIndex < insertIndex) {
-          insertIndex -= 1
-        }
-      }
+      const insertIndex = computeInsertIndexForPointer(
+        targetStatusTag,
+        point,
+        recordId
+      )
 
       onReorderRecord?.(record, currentStatus, targetStatusTag, insertIndex)
 
@@ -168,7 +267,8 @@ export function useBoardStatusDnd({
       onMoveStatus(record, targetStatusTag)
     },
     [
-      computeInsertIndex,
+      clearDragState,
+      computeInsertIndexForPointer,
       isMovePending,
       onMoveStatus,
       onReorderRecord,
@@ -182,6 +282,8 @@ export function useBoardStatusDnd({
     handleDragStart,
     registerStatusDropTarget,
     registerCardTarget,
+    draggingRecordId,
+    hoverInsertion,
   }
 }
 
@@ -226,7 +328,7 @@ export function useRecordStatusDraggable({
   recordId: string
   dragDisabled: boolean
 }) {
-  const { ref, handleRef, isDragging } = useDraggable({
+  const { ref, isDragging } = useDraggable({
     id: `${RECORD_DRAG_ID_PREFIX}${recordId}`,
     type: BOARD_RECORD_DND_TYPE,
     disabled: dragDisabled,
@@ -234,7 +336,6 @@ export function useRecordStatusDraggable({
 
   return {
     cardRef: ref as unknown as Ref<HTMLElement>,
-    dragHandleRef: handleRef as unknown as Ref<HTMLButtonElement>,
     isDragging,
   }
 }

@@ -1,5 +1,12 @@
 import type { TagDefinition, TagNamespaceConfig } from '../interfaces/tag.js'
 
+/**
+ * Archive is a special lifecycle tag, separate from the status namespace.
+ * Archived records keep their workflow status and stay in their status column;
+ * the lifecycle:archived tag only marks them as archived.
+ */
+export const ARCHIVED_TAG = 'lifecycle:archived'
+
 export const REQUIRED_TAG_NAMESPACES = [
   {
     id: 'status',
@@ -20,6 +27,11 @@ export const REQUIRED_TAG_NAMESPACES = [
     id: 'transaction',
     displayName: 'Transaction',
     locked: false,
+  },
+  {
+    id: 'lifecycle',
+    displayName: 'Lifecycle',
+    locked: true,
   },
 ] as const satisfies readonly TagNamespaceConfig[]
 
@@ -42,11 +54,6 @@ export const REQUIRED_STATUS_TAGS = [
   {
     id: 'status:done',
     displayName: 'done',
-    locked: true,
-  },
-  {
-    id: 'status:archived',
-    displayName: 'archived',
     locked: true,
   },
 ] as const satisfies readonly TagDefinition[]

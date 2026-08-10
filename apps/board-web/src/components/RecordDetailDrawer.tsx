@@ -15,7 +15,9 @@ import type {
   RelationRef,
   Tag,
 } from '@labour-board/shared'
+import { ARCHIVED_TAG } from '@labour-board/shared'
 import {
+  ArchiveBoxIcon,
   ArrowLeftIcon,
   ClockIcon,
   PencilSquareIcon,
@@ -30,7 +32,7 @@ import { useBoardMetadataStore } from '../stores/boardMetadataStore'
 import {
   getConfigOtherTags,
   getConfigPriorityTags,
-  getConfigStatusTags,
+  getCreatableStatusTags,
   getProfileOptions,
   lookupProfile,
 } from '../utils/board'
@@ -100,6 +102,7 @@ interface RecordDetailDrawerProps {
   onInitialPatchDescriptionConsumed?: () => void
   onClose: () => void
   onHistoryClick: (record: RecordResponse<RecordItem<RecordBody>>) => void
+  onArchived?: () => void
 }
 
 interface BaseHead {
@@ -122,6 +125,7 @@ export function RecordDetailDrawer({
   onInitialPatchDescriptionConsumed,
   onClose,
   onHistoryClick,
+  onArchived,
 }: RecordDetailDrawerProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage ?? i18n.language ?? 'en'
@@ -134,6 +138,9 @@ export function RecordDetailDrawer({
   const config = useBoardMetadataStore((state) => state.config)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false)
+  const [archiveReason, setArchiveReason] = useState('')
+  const [isArchiving, setIsArchiving] = useState(false)
   const [baseHead, setBaseHead] = useState<BaseHead | null>(null)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const [activePanel, setActivePanel] = useState<'detail' | 'history'>('detail')
@@ -261,11 +268,14 @@ export function RecordDetailDrawer({
     t('record.unknownMember')
   )
   const profileOptions = getProfileOptions(profiles ?? null)
-  const configuredStatusTags = getConfigStatusTags(config)
+  const creatableStatusTags = getCreatableStatusTags(config)
   const configuredPriorityTags = getConfigPriorityTags(config)
   const configuredOtherTags = getConfigOtherTags(config)
+  // Status editing only offers the five workflow states. archived and review
+  // are system-managed: the record's current status stays listed (so the
+  // editor shows it), but neither can be selected as a target.
   const statusOptions = uniqueTags([
-    ...configuredStatusTags,
+    ...creatableStatusTags,
     ...displayTags.filter((tag) => tag.startsWith('status:')),
   ])
   const priorityOptions = uniqueTags([
@@ -490,6 +500,73 @@ export function RecordDetailDrawer({
     }
   }
 
+  const isArchivedRecord =
+    activeCurrent?.tags.includes(ARCHIVED_TAG) ?? false
+
+  async function archiveRecord(reason: string) {
+      if (!activeCurrent) return
+      const requestId = requestIdRef.current + 1
+      requestIdRef.current = requestId
+      abortRef.current?.abort()
+
+      const controller = new AbortController()
+      abortRef.current = controller
+      setIsArchiving(true)
+      setError(null)
+
+      try {
+        const head = await fetchRecordHead(activeCurrent.id, controller.signal)
+        if (requestIdRef.current !== requestId || controller.signal.aborted)
+          return
+        if (!head.exists) {
+          setError(t('edit.headMissing'))
+          return
+        }
+
+        // Archive is a special lifecycle tag: the record keeps its workflow
+        // status and stays in its status column, only marked as archived.
+        const reasonText = reason.trim()
+        const payload: SubmitRecordPatchPayload = {
+          parentId: head.lastPatchId,
+          currentVersion: head.currentVersion,
+          tagChanges: {
+            add: [ARCHIVED_TAG],
+          },
+          description: reasonText
+            ? `Archive: ${reasonText}`
+            : 'Archive record',
+        }
+        await submitRecordPatch(activeCurrent.id, payload, controller.signal)
+        if (requestIdRef.current !== requestId || controller.signal.aborted)
+          return
+
+        toastSuccess(t('edit.archiveSuccess'))
+        setIsArchiveOpen(false)
+        setArchiveReason('')
+        onArchived?.()
+        onClose()
+      } catch (caught: unknown) {
+        if (
+          requestIdRef.current !== requestId ||
+          controller.signal.aborted ||
+          axios.isCancel(caught)
+        ) {
+          return
+        }
+        const message =
+          caught instanceof RecordPatchConflictError
+            ? `${t('edit.conflictError')} ${caught.message}`
+            : caught instanceof Error
+              ? caught.message
+              : t('edit.errorGeneral')
+        setError(message)
+        toastError(message)
+      } finally {
+        if (requestIdRef.current === requestId) abortRef.current = null
+        setIsArchiving(false)
+      }
+  }
+
   const footer = (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -522,6 +599,20 @@ export function RecordDetailDrawer({
             icon={<PencilSquareIcon className="h-4 w-4" />}
           >
             {isSaving ? t('edit.saving') : t('edit.saveButton')}
+          </Button>
+        )}
+        {activePanel === 'detail' && !isArchivedRecord && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setArchiveReason('')
+              setIsArchiveOpen(true)
+            }}
+            disabled={isSaving}
+            icon={<ArchiveBoxIcon className="h-4 w-4" />}
+          >
+            {t('edit.archive')}
           </Button>
         )}
       </div>
@@ -888,7 +979,86 @@ export function RecordDetailDrawer({
         onConfirm={confirmDiscard}
         disabled={isSaving}
       />
+
+      {isArchiveOpen && (
+        <ArchiveDialog
+          pid={activeCurrent.pid}
+          reason={archiveReason}
+          onReasonChange={setArchiveReason}
+          isSubmitting={isArchiving}
+          onCancel={() => setIsArchiveOpen(false)}
+          onConfirm={() => void archiveRecord(archiveReason)}
+        />
+      )}
     </>
+  )
+}
+
+function ArchiveDialog({
+  pid,
+  reason,
+  onReasonChange,
+  isSubmitting,
+  onCancel,
+  onConfirm,
+}: {
+  pid: string
+  reason: string
+  onReasonChange: (value: string) => void
+  isSubmitting: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('edit.archive')}
+    >
+      <div className="grid w-full max-w-md gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xl">
+        <header className="grid gap-1">
+          <h3 className="text-base font-semibold text-slate-950">
+            {t('edit.archiveTitle')}
+          </h3>
+          <p className="text-xs text-slate-500">
+            {pid} · {t('edit.archiveHint')}
+          </p>
+        </header>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-700">
+            {t('edit.archiveReason')}
+          </span>
+          <textarea
+            value={reason}
+            onChange={(event) => onReasonChange(event.target.value)}
+            rows={3}
+            placeholder={t('edit.archiveReasonPlaceholder')}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+            disabled={isSubmitting}
+          />
+        </label>
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            {t('edit.archiveCancel')}
+          </Button>
+          <Button
+            type="button"
+            onClick={onConfirm}
+            disabled={isSubmitting}
+            icon={<ArchiveBoxIcon className="h-4 w-4" />}
+          >
+            {isSubmitting ? t('edit.archiving') : t('edit.archiveConfirm')}
+          </Button>
+        </div>
+      </div>
+    </div>
   )
 }
 

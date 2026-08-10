@@ -13,12 +13,12 @@ pid:
     CardBody: CARD
     AssetBody: ASSET
     TransactionBody: TX
-  nextNumber: 34
+  nextNumber: 40
   latest:
     CARD:
-      recordId: faaabc3b-fa62-5365-8486-c31590fad468
-      pid: CARD-33
-      number: 33
+      recordId: b5521209-4c55-455c-8e4b-6060e5d64592
+      pid: CARD-40
+      number: 40
 tags:
   namespaces:
     - id: status
@@ -51,6 +51,9 @@ tags:
     - id: transaction
       displayName: Transaction
       locked: true
+    - id: lifecycle
+      displayName: Lifecycle
+      locked: true
   status:
     required:
       - id: status:todo
@@ -59,8 +62,6 @@ tags:
         displayName: Doing
       - id: status:done
         displayName: Done
-      - id: status:archived
-        displayName: Archived
     custom:
       - id: status:backlog
         displayName: Backlog
@@ -152,6 +153,8 @@ tags:
         displayName: Bulk
     custom: []
   custom:
+    - id: lifecycle:archived
+      displayName: Archived
     - id: type:user-story
       displayName: User Story
     - id: milestone:first-month
@@ -238,4 +241,4 @@ relations:
     - progress:contributes-to
 snapshot:
   excludeTags:
-    - status:archived
+    - lifecycle:archived

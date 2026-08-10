@@ -21,6 +21,7 @@ export type TagLabelNamespace =
   | 'type'
   | 'milestone'
   | 'asset'
+  | 'lifecycle'
 
 const KNOWN_NAMESPACES: readonly string[] = [
   'status',
@@ -33,6 +34,7 @@ const KNOWN_NAMESPACES: readonly string[] = [
   'type',
   'milestone',
   'asset',
+  'lifecycle',
 ]
 
 export type TagLabelDictionary = Partial<

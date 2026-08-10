@@ -9,7 +9,9 @@ export const zhCNTagLabels: TagLabelDictionary = {
     wip: '进行中',
     review: '审核中',
     done: '已完成',
-    blocked: '已阻塞',
+    blocked: '阻塞',
+  },
+  lifecycle: {
     archived: '已归档',
   },
   priority: {

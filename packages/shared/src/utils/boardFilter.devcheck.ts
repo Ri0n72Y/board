@@ -98,7 +98,7 @@ const records: BoardCurrentProjection['records'] = [
       id: 'record-archived',
       pid: 'CARD-3',
       schema: 'CardBody',
-      tags: ['status:archived', 'priority:urgent-important'],
+      tags: ['lifecycle:archived', 'priority:urgent-important'],
       assignee: 'member-archived',
       assets: ['asset-archived'],
       relations: [{ constraint: 'duplicates', target: 'archived-target' }],
@@ -118,12 +118,12 @@ function ids(query?: BoardCurrentQuery): string[] {
 eq(
   ids().includes('record-archived'),
   false,
-  'includeArchived false excludes status:archived'
+  'includeArchived false excludes lifecycle:archived'
 )
 eq(
   ids({ includeArchived: true }).includes('record-archived'),
   true,
-  'includeArchived true includes status:archived'
+  'includeArchived true includes lifecycle:archived'
 )
 eq(
   ids({ tags: ['status:wip', 'priority:urgent-important'] }).join(','),

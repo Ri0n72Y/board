@@ -5,6 +5,7 @@ import type {
   RecordResponse,
   Tag,
 } from '../interfaces/index.js'
+import { ARCHIVED_TAG } from '../constants/index.js'
 
 export type BoardFilterQuery = BoardCurrentQuery
 
@@ -41,7 +42,10 @@ export function recordMatchesBoardFilter(
   const normalized = normalizeBoardFilterQuery(query)
   const body = record.body
 
-  if (!normalized.includeArchived && body.tags.includes('status:archived')) {
+  if (
+    !normalized.includeArchived &&
+    body.tags.includes(ARCHIVED_TAG)
+  ) {
     return false
   }
   if (normalized.assignee && body.assignee !== normalized.assignee) return false

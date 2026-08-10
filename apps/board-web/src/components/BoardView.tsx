@@ -38,6 +38,11 @@ interface BoardViewProps {
     toStatus: Tag | null,
     insertIndex: number
   ) => void
+  statusTags?: Tag[]
+  onStatusChange?: (
+    record: RecordResponse<RecordItem<RecordBody>>,
+    statusTag: Tag
+  ) => void
 }
 
 export function BoardView({
@@ -54,6 +59,8 @@ export function BoardView({
   recordOrder,
   onMoveStatus,
   onReorderRecord,
+  statusTags,
+  onStatusChange,
 }: BoardViewProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
@@ -73,6 +80,8 @@ export function BoardView({
     handleDragStart,
     registerStatusDropTarget,
     registerCardTarget,
+    draggingRecordId,
+    hoverInsertion,
   } = useBoardStatusDnd({
     records,
     visibleStatusTags,
@@ -80,6 +89,10 @@ export function BoardView({
     onMoveStatus,
     onReorderRecord,
   })
+
+  const draggingRecord = draggingRecordId
+    ? (records.find((record) => record.body.id === draggingRecordId) ?? null)
+    : null
 
   // Show hidden columns notice only on board entry and visible-column preference changes.
   useEffect(() => {
@@ -128,6 +141,11 @@ export function BoardView({
                   dragDisabled={isMovePending || !onMoveStatus}
                   registerStatusDropTarget={registerStatusDropTarget}
                   registerCardTarget={registerCardTarget}
+                  draggingRecordId={draggingRecordId}
+                  draggingRecord={draggingRecord}
+                  hoverInsertion={hoverInsertion}
+                  statusTags={statusTags}
+                  onStatusChange={onStatusChange}
                   onCardClick={onCardClick}
                 />
               ))}

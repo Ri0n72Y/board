@@ -43,12 +43,12 @@ eq(formatTagLabel('status:todo', 'zh-CN'), '待办', 'status:todo zh-CN')
 eq(formatTagLabel('status:doing', 'zh-CN'), '进行中', 'status:doing zh-CN')
 eq(formatTagLabel('status:done', 'zh-CN'), '已完成', 'status:done zh-CN')
 eq(
-  formatTagLabel('status:archived', 'zh-CN'),
+  formatTagLabel('lifecycle:archived', 'zh-CN'),
   '已归档',
-  'status:archived zh-CN'
+  'lifecycle:archived zh-CN'
 )
 eq(formatTagLabel('status:review', 'zh-CN'), '审核中', 'status:review zh-CN')
-eq(formatTagLabel('status:blocked', 'zh-CN'), '已阻塞', 'status:blocked zh-CN')
+eq(formatTagLabel('status:blocked', 'zh-CN'), '阻塞', 'status:blocked zh-CN')
 eq(formatTagLabel('status:backlog', 'zh-CN'), '待规划', 'status:backlog zh-CN')
 
 eq(formatTagLabel('priority:p0', 'zh-CN'), 'P0：重要紧急', 'priority:p0 zh-CN')
@@ -110,9 +110,9 @@ eq(formatTagLabel('status:todo', 'en-US'), 'Todo', 'status:todo en-US')
 eq(formatTagLabel('status:doing', 'en-US'), 'Doing', 'status:doing en-US')
 eq(formatTagLabel('status:done', 'en-US'), 'Done', 'status:done en-US')
 eq(
-  formatTagLabel('status:archived', 'en-US'),
+  formatTagLabel('lifecycle:archived', 'en-US'),
   'Archived',
-  'status:archived en-US'
+  'lifecycle:archived en-US'
 )
 eq(
   formatTagLabel('priority:p0', 'en-US'),

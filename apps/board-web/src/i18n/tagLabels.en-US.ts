@@ -10,6 +10,8 @@ export const enUSTagLabels: TagLabelDictionary = {
     review: 'In Review',
     done: 'Done',
     blocked: 'Blocked',
+  },
+  lifecycle: {
     archived: 'Archived',
   },
   priority: {

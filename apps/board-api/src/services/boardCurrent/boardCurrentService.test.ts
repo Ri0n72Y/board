@@ -381,7 +381,9 @@ describe('boardCurrentService', () => {
     expect(board.summary.totalBaseRecords).toBe(1)
     expect(board.summary.visibleCurrentRecords).toBe(0)
     expect(board.summary.archivedRecords).toBe(1)
-    expect(board.summary.projectionStatus).toBe('partial')
+    // Archiving is a normal lifecycle transition; it must not make the
+    // projection look partial.
+    expect(board.summary.projectionStatus).toBe('clean')
   })
 
   it('includeArchived=true returns archived current records', async () => {
@@ -401,7 +403,7 @@ describe('boardCurrentService', () => {
     })
 
     expect(board.records).toHaveLength(1)
-    expect(board.records[0].body.tags).toContain('status:archived')
+    expect(board.records[0].body.tags).toContain('lifecycle:archived')
     expect(board.summary.visibleCurrentRecords).toBe(1)
   })
 
@@ -425,7 +427,9 @@ describe('boardCurrentService', () => {
     expect(board.summary.visibleCurrentRecords).toBe(0)
     expect(board.summary.visibleCurrentRecords).toBe(board.records.length)
     expect(board.summary.archivedRecords).toBe(1)
-    expect(board.summary.projectionStatus).toBe('partial')
+    // Archiving is normal; projection stays clean even when filters hide the
+    // archived record.
+    expect(board.summary.projectionStatus).toBe('clean')
   })
 
   it('archived record tags come from replay finalState, not base tags', async () => {
@@ -458,7 +462,7 @@ describe('boardCurrentService', () => {
     expect(board.records).toHaveLength(1)
     const tags = board.records[0].body.tags
     expect(tags).toEqual(
-      expect.arrayContaining(['status:wip', 'status:archived'])
+      expect.arrayContaining(['status:wip', 'lifecycle:archived'])
     )
     expect(tags).not.toContain('status:todo')
   })

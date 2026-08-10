@@ -88,6 +88,26 @@ export function getConfigStatusTags(config: BoardConfig | null): Tag[] {
   return [...tags].sort()
 }
 
+/**
+ * Status tags a record can be moved/created into from the UI.
+ *
+ * The board treats archived as an end state reached through explicit
+ * archiving, never as a status you can create a record with. Creation and
+ * quick status switching are limited to these five workflow states.
+ */
+export const CREATABLE_STATUS_TAGS: readonly Tag[] = [
+  'status:todo',
+  'status:backlog',
+  'status:doing',
+  'status:done',
+  'status:blocked',
+]
+
+export function getCreatableStatusTags(config: BoardConfig | null): Tag[] {
+  const available = new Set(getConfigStatusTags(config))
+  return CREATABLE_STATUS_TAGS.filter((tag) => available.has(tag))
+}
+
 /** Extract priority tag options (Tag ids only) from config. */
 export function getConfigPriorityTags(config: BoardConfig | null): Tag[] {
   if (!config) return []

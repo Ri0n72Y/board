@@ -6,6 +6,7 @@ import {
   DEFAULT_TRANSACTION_TAGS,
   REQUIRED_STATUS_TAGS,
   REQUIRED_TAG_NAMESPACES,
+  ARCHIVED_TAG,
 } from './tags.js'
 
 export const DEFAULT_BOARD_CONFIG = {
@@ -43,7 +44,12 @@ export const DEFAULT_BOARD_CONFIG = {
       defaults: [...DEFAULT_TRANSACTION_TAGS],
       custom: [],
     },
-    custom: [],
+    custom: [
+      {
+        id: ARCHIVED_TAG,
+        displayName: 'Archived',
+      },
+    ],
   },
   relations: {
     constraints: [
@@ -61,6 +67,6 @@ export const DEFAULT_BOARD_CONFIG = {
     ],
   },
   snapshot: {
-    excludeTags: ['status:archived'],
+    excludeTags: [ARCHIVED_TAG],
   },
 } as const satisfies BoardConfig

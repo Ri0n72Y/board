@@ -32,7 +32,7 @@ describe('MemoryRecordRepository', () => {
     await expect(
       repository.list({
         includeArchived: false,
-        excludeTags: ['status:archived'],
+        excludeTags: ['lifecycle:archived'],
       })
     ).resolves.toEqual([BASE_RECORD])
     await expect(repository.findById(BASE_RECORD.id)).resolves.toEqual(
@@ -46,7 +46,7 @@ describe('MemoryRecordRepository', () => {
       ...BASE_RECORD,
       id: 'record-2',
       pid: 'CARD-2',
-      tags: ['status:archived'],
+      tags: ['lifecycle:archived'],
     } satisfies StoredRecordDoc
 
     await repository.create(BASE_RECORD)
@@ -55,13 +55,13 @@ describe('MemoryRecordRepository', () => {
     await expect(
       repository.list({
         includeArchived: false,
-        excludeTags: ['status:archived'],
+        excludeTags: ['lifecycle:archived'],
       })
     ).resolves.toEqual([BASE_RECORD])
     await expect(
       repository.list({
         includeArchived: true,
-        excludeTags: ['status:archived'],
+        excludeTags: ['lifecycle:archived'],
       })
     ).resolves.toEqual([BASE_RECORD, archived])
   })
@@ -128,7 +128,7 @@ describe('MemoryRecordRepository', () => {
     // list does not include the patch
     const list = await repository.list({
       includeArchived: false,
-      excludeTags: ['status:archived'],
+      excludeTags: ['lifecycle:archived'],
     })
     expect(list).toEqual([BASE_RECORD])
   })
@@ -165,7 +165,7 @@ describe('MemoryRecordRepository', () => {
 
     const patches = await repository.findPatchesByTargetId('r1')
     expect(patches).toHaveLength(1)
-    patches[0].tagChanges = { add: ['status:archived'] }
+    patches[0].tagChanges = { add: ['lifecycle:archived'] }
 
     const refetch = await repository.findPatchesByTargetId('r1')
     expect(refetch[0].tagChanges).toEqual({
@@ -191,13 +191,13 @@ describe('MongoRecordRepository', () => {
     await expect(
       repository.list({
         includeArchived: false,
-        excludeTags: ['status:archived'],
+        excludeTags: ['lifecycle:archived'],
       })
     ).resolves.toEqual([BASE_RECORD])
     expect(findCalls).toEqual([
       {
         ...RECORD_ONLY_FILTER,
-        tags: { $nin: ['status:archived'] },
+        tags: { $nin: ['lifecycle:archived'] },
       },
     ])
   })

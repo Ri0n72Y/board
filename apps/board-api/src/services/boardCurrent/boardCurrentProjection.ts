@@ -4,6 +4,7 @@ import type {
   RecordId,
   RecordItem,
 } from '@labour-board/shared'
+import { ARCHIVED_TAG } from '@labour-board/shared'
 import type { StoredRecordDoc } from '../../repositories/recordRepository.js'
 import type { StoredPatchDoc } from '../../repositories/snapshotHeadRepository.js'
 import {
@@ -71,6 +72,6 @@ export function isArchivedInCurrent(
 ): boolean {
   return (
     projection.status === 'ok' &&
-    projection.current.tags.includes('status:archived')
+    projection.current.tags.includes(ARCHIVED_TAG)
   )
 }

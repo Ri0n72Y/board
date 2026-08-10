@@ -51,7 +51,7 @@ const configWithDoing: BoardConfig = {
         { id: 'status:review', displayName: 'review', locked: true },
         { id: 'status:done', displayName: 'done', locked: true },
         { id: 'status:blocked', displayName: 'blocked', locked: true },
-        { id: 'status:archived', displayName: 'archived', locked: true },
+        { id: 'lifecycle:archived', displayName: 'archived', locked: true },
       ],
       custom: [],
     },
@@ -91,7 +91,7 @@ for (const hiddenByDefault of [
   'status:backlog',
   'status:review',
   'status:blocked',
-  'status:archived',
+  'lifecycle:archived',
   UNCATEGORIZED_STATUS_ID,
 ]) {
   notIncludes(

@@ -46,7 +46,7 @@ relations:
   constraints: []
 snapshot:
   excludeTags:
-    - status:archived
+    - lifecycle:archived
 `)
     const writer = createBoardConfigPidWriter(configPath, 60_000)
     const config = structuredClone(DEFAULT_BOARD_CONFIG)
@@ -67,7 +67,7 @@ snapshot:
       snapshot: { excludeTags: string[] }
     }
     expect(written.records.schemas).toEqual(['CardBody'])
-    expect(written.snapshot.excludeTags).toEqual(['status:archived'])
+    expect(written.snapshot.excludeTags).toEqual(['lifecycle:archived'])
     expect(written.pid.latest?.CARD).toEqual({
       recordId: 'record-1',
       pid: 'CARD-9',

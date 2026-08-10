@@ -4,6 +4,7 @@ import {
   serializeBoardFilterUrl,
   type BoardCurrentFilters,
 } from '../utils/boardFilterUrl'
+import { toApiErrorMessage } from './apiError'
 export type { BoardCurrentFilters } from '../utils/boardFilterUrl'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v0'
@@ -20,13 +21,17 @@ export async function fetchBoardCurrent(
 ): Promise<BoardCurrentProjection> {
   const params = buildBoardCurrentSearchParams(filters)
   const url = `${apiBaseUrl}/board/current${params.size ? `?${params}` : ''}`
-  const response = await axios.get<ApiResponse<BoardCurrentProjection>>(url, {
-    signal,
-  })
+  try {
+    const response = await axios.get<ApiResponse<BoardCurrentProjection>>(url, {
+      signal,
+    })
 
-  if (!response.data.ok) {
-    throw new Error(response.data.error.message)
+    if (!response.data.ok) {
+      throw new Error(response.data.error.message)
+    }
+
+    return response.data.data
+  } catch (caught) {
+    throw toApiErrorMessage(caught)
   }
-
-  return response.data.data
 }

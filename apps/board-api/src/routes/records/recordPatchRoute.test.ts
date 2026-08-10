@@ -367,7 +367,7 @@ describe('recordPatchRoute', () => {
         body: JSON.stringify({
           parentId: archiveHeadPayload.data.lastPatchId,
           currentVersion: archiveHeadPayload.data.currentVersion,
-          tagChanges: { add: ['status:archived'] },
+          tagChanges: { add: ['lifecycle:archived'] },
           description: 'Archive record',
         }),
         headers: { 'content-type': 'application/json' },

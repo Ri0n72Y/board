@@ -421,7 +421,7 @@ describe('recordHistoryRoute', () => {
         body: JSON.stringify({
           parentId: archiveHeadPayload.data.lastPatchId,
           currentVersion: archiveHeadPayload.data.currentVersion,
-          tagChanges: { add: ['status:archived'] },
+          tagChanges: { add: ['lifecycle:archived'] },
           description: 'Archive record',
         }),
         headers: { 'content-type': 'application/json' },
@@ -435,9 +435,9 @@ describe('recordHistoryRoute', () => {
     expect(payload.data.patches).toHaveLength(1)
     expect(payload.data.patches[0].body.parentId).toBeNull()
     expect(payload.data.patches[0].body.tagChanges).toEqual({
-      add: ['status:archived'],
+      add: ['lifecycle:archived'],
     })
     expect(payload.data.replay).toBeDefined()
-    expect(payload.data.replay.finalState.tags).toContain('status:archived')
+    expect(payload.data.replay.finalState.tags).toContain('lifecycle:archived')
   })
 })

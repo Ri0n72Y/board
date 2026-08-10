@@ -118,7 +118,7 @@ describe('boardCurrentProjection', () => {
     })
   })
 
-  it('archive patch: current.tags includes status:archived', async () => {
+  it('archive patch: current.tags includes lifecycle:archived', async () => {
     const { service, repo, recordId, stored } = await createBaseRecord()
 
     await service.createRecordPatch(recordId, {
@@ -138,7 +138,7 @@ describe('boardCurrentProjection', () => {
     expect(result.status).toBe('ok')
     const ok = result as RecordCurrentOk
     expect(ok.current.tags).toEqual(
-      expect.arrayContaining(['status:wip', 'status:archived'])
+      expect.arrayContaining(['status:wip', 'lifecycle:archived'])
     )
     expect(ok.current.tags).not.toContain('status:todo')
   })
@@ -293,7 +293,7 @@ describe('boardCurrentProjection', () => {
     expect(isArchivedInCurrent(result)).toBe(false)
   })
 
-  it('isArchivedInCurrent: true when current tags include status:archived', async () => {
+  it('isArchivedInCurrent: true when current tags include lifecycle:archived', async () => {
     const { service, repo, recordId, stored } = await createBaseRecord()
     await appendArchivePatch(service, recordId)
 

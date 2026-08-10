@@ -48,7 +48,7 @@ relations:
     - relatedTo
 snapshot:
   excludeTags:
-    - status:archived
+    - lifecycle:archived
 `
 
 let tempDir: string | undefined
@@ -75,7 +75,7 @@ describe('loadBoardConfig', () => {
       schemaPrefixes: DEFAULT_BOARD_CONFIG.pid.schemaPrefixes,
       nextNumber: 7,
     })
-    expect(config.snapshot.excludeTags).toEqual(['status:archived'])
+    expect(config.snapshot.excludeTags).toEqual(['lifecycle:archived'])
   })
 
   it('throws a clear error when an explicit config path is missing', async () => {
@@ -168,7 +168,7 @@ relations:
   constraints: []
 snapshot:
   excludeTags:
-    - status:archived
+    - lifecycle:archived
     - missing:tag
 `)
 
