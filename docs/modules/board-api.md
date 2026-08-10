@@ -83,7 +83,7 @@ classDiagram
 
 | Service | 职责 | 关键内部 |
 | --- | --- | --- |
-| `RecordService` | 记录 CRUD、patch 提交、历史、PID 分配 | `PidAllocator`（`pid/pidAllocator.ts`）；patch 校验委托 `record/recordPatchSubmit.ts`（`parentId`/`currentVersion` 乐观并发，冲突抛 409） |
+| `RecordService` | 记录 CRUD、patch 提交、历史、PID 分配 | `PidAllocator`（`pid/pidAllocator.ts`）；patch 校验委托 `record/recordPatchSubmit.ts`（`parentId`/`currentVersion` 乐观并发，冲突抛 409）。`currentVersion` 为该记录 patch 链长度；快照头全局 `version` 由服务端读取（不信任客户端值）。**归档**：`lifecycle:archived` 独立 tag，不占用状态列（记录保留原 workflow 状态），已归档记录拒绝后续 patch |
 | `SnapshotService` | 手动快照创建/列表/读取/导出 | 投影装配只读，写 `snapshots` collection |
 | `ConfigService` | 持有 BoardConfig + AgentRuntimeConfig | — |
 | `ProfileService` | 成员 CRUD | — |

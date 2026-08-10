@@ -38,7 +38,7 @@ flowchart TB
 | Hook | 用途 |
 | --- | --- |
 | `useBoardViewModel` | 记录按状态分列、列排序/可见列 |
-| `useBoardStatusDnd` | dnd-kit 状态列拖拽 |
+| `useBoardStatusDnd` | dnd-kit 状态列拖拽（整卡可拖，长按激活；拖拽中目标列显示半透明插入预览卡，放回原位不显示） |
 | `useStatusMoveController` | 状态移动（→ `submitRecordPatch`） |
 | `useRecordHistoryController` | 记录历史 |
 | `useSnapshotController` | 快照列表/详情/创建/导出 |
@@ -66,7 +66,7 @@ flowchart TB
 ## 页面与关键组件
 
 - **页面**：`pages/BoardCurrentPage.tsx`（约 30KB，聚合全部抽屉）
-- **顶层组件**：`BoardView`、`BoardFilters`、`RecordCard`、`RecordDetailDrawer`（最大）、`CreateRecordDrawer`、`SnapshotDrawer`、`AgentDraftsDrawer`、`ExportContextDrawer`、`AppSettingsDrawer`、`AdvancedFiltersDrawer`、`ProfileManagerDrawer`、`RecordHistoryContent`、`BoardStatusDropColumn`、`IssuesPanel`、`ViewModeToggle`
+- **顶层组件**：`BoardView`、`BoardFilters`、`RecordCard`（含状态 badge 快速修改 `StatusBadgeMenu`）、`RecordDetailDrawer`（最大，含归档对话框 `ArchiveDialog`）、`CreateRecordDrawer`、`SnapshotDrawer`、`AgentDraftsDrawer`、`ExportContextDrawer`、`AppSettingsDrawer`、`AdvancedFiltersDrawer`、`ProfileManagerDrawer`、`RecordHistoryContent`、`BoardStatusDropColumn`（含拖拽预览卡 `DropPreviewCard`）、`IssuesPanel`、`ViewModeToggle`
 - **agentDrafts/**：`AgentDraftDetailWorkspace`、`AgentDraftQueuePanel`、`AgentPatchDraftPanel`、`ManualAgentResponseSection`、`FormalHandoffSection`、`AgentSuggestionSection/List/Card/DetailPanel/SkillsPanel/Toolbar/AuditPanel/DiagnosticsPanel` 等
 - **recordDetailEdit/**：`EditableSection`、`UnsavedChangesDialog`、`useSectionEditState`
 - **ui/**：`Button`、`Badge`、`Select`、`SearchSelect`、`TextInput`、`SwitchField`、`Panel`、`MarkdownPreview`、`AnimatedDrawer`、`ToastViewport`
@@ -84,3 +84,4 @@ flowchart TB
 | 日期 | 变更 | 对应 commit |
 | --- | --- | --- |
 | 2026-08-08 | 初版：基于 P10-P12 后代码 | cc07945 |
+| 2026-08-10 | 交互收束：整卡拖拽 + 插入预览、状态 badge 快速修改、编辑界面归档按钮（归档为 `lifecycle:archived` 独立 tag，保留状态列） | ff1dd4f |
