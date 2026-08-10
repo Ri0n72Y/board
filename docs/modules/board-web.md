@@ -60,7 +60,7 @@ flowchart TB
 | `config.ts` / `profiles.ts` | 配置与成员 |
 | `agentDrafts.ts` | 5 个草稿函数 |
 | `agentSuggestions.ts` | 4 个建议函数 |
-| `agentSkills.ts` | 2 个 skill 函数 |
+| `agentResponses.ts` | 3 个响应函数（创建/列表/详情） |
 | `apiError.ts` | 错误类型 |
 
 ## 页面与关键组件
