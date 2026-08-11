@@ -219,7 +219,9 @@ Task15 补完 View 的 `record order`（列内人工排序），需要这种顺�
 
 同时改善 DnD 的插入位置（`CARD-A ── 插入位置 ── CARD-B`），避免大范围重新排列、页面跳动、不必要 refresh。
 
-**Task15 仍然属于 MVP**：当前目标是让 Board 真正承担团队日常组织工作，一个 Kanban Board 连卡片人工顺序都无法稳定保留，会明显破坏实际使用。（当前未实现。）
+**Task15 仍然属于 MVP**：当前目标是让 Board 真正承担团队日常组织工作，一个 Kanban Board 连卡片人工顺序都无法稳定保留，会明显破坏实际使用。
+
+✅ **Task15 已实现**（2026-08 收尾）：列内人工排序已落地（`apps/board-web/src/utils/boardRecordOrder.ts`，localStorage 持久化 `labourboard.boardView.recordOrder`），DnD 插入位置优化（插入指示线、避免大范围重排与页面跳动）。
 
 ## 十三、无 Status Record
 
@@ -354,18 +356,31 @@ Export / Context Pack    ✅
 
 Settings / View          ✅ Task12
 Column order             ✅ Task12
-Record order             ⏳ Task15
-Task12 browser acceptance ⏳
+Record order             ✅ Task15（2026-08 收尾）
+Task12 browser acceptance ✅（docs/browser-acceptance-2026-08.md 链路 A-F 走查完成）
 ```
 
 当前主要矛盾：
 
-> **底层事实模型和主体产品结构基本成立，MVP 剩下的重点正在从"能力有没有"转向"Board 能否稳定承担真实团队的连续使用"。**
+> **底层事实模型和主体产品结构基本成立，MVP 的 7 个系统能力（Fact / Projection / Organization / View / History / Human-Agent / Portability）已全部落地。** 之后不应继续无止境加功能，而应开始拿真实工作流跑一轮 MVP，观察"Record → Patch → Projection → Human/Agent → Patch"的循环是否真的成立。
 
-Task12 是编辑和 View 基础设施收口；Task15 是 Board 人工组织能力的最后一块重要缺口。之后不应继续无止境加功能，而应开始拿真实工作流跑一轮 MVP，观察"Record → Patch → Projection → Human/Agent → Patch"的循环是否真的成立。
+### 超范围功能记录（MVP 之外已实现，2026-08 UX 打磨轮）
+
+以下功能超出 MVP 定义范围，作为产品体验增强已并入 main，不改变 MVP 验证结论：
+
+- 全局搜索命令面板（Cmd/Ctrl+K）与快捷键体系（N/B/L/?）
+- Linear 风格左侧导航（AppSidebar），替代右上角 More 菜单
+- Issues 独立视图（IssuesDrawer）
+- 列表视图表格化（ListViewTable：列排序）与列重排（管理列对话框，非拖拽）
+- 看板列头密度信息（优先级分布 / 负责人头像堆叠）
+- 空态首次使用引导
+- a11y 批量修复（icon aria-hidden、Intl 日期、aria-pressed 等）
+
+> 后续新功能应明确评估"是否服务于 MVP 验证"，避免继续超范围扩张。
 
 ## 变更记录
 
 | 日期 | 变更 | 对应 commit |
 | --- | --- | --- |
 | 2026-08-08 | 初版：基于 MVP 收束讨论（Task12 完成、Task15 待办）编写 | — |
+| 2026-08-11 | Task15 标记完成；Task12 acceptance 标记完成；补记超范围 UX 功能清单 | docs 更新（mvp-scope-update） |
