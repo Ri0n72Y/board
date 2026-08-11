@@ -131,13 +131,20 @@ function CommandPalettePanel({
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'ArrowDown') {
       event.preventDefault()
-      setActiveIndex((index) => Math.min(index + 1, results.length - 1))
+      setActiveIndex((index) =>
+        Math.min(index + 1, Math.max(results.length - 1, 0))
+      )
     } else if (event.key === 'ArrowUp') {
       event.preventDefault()
       setActiveIndex((index) => Math.max(index - 1, 0))
     } else if (event.key === 'Enter') {
+      // Ignore Enter while an IME composition is in flight (e.g. Chinese
+      // pinyin confirm), otherwise we'd open a record mid-composition.
+      if (event.nativeEvent.isComposing) return
       event.preventDefault()
-      select(activeIndex)
+      const index =
+        activeIndex >= 0 && activeIndex < results.length ? activeIndex : 0
+      select(index)
     }
   }
 

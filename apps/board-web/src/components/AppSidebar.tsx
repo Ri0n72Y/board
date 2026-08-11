@@ -14,7 +14,7 @@ import { cn } from '../lib/cn'
 
 interface AppSidebarProps {
   issuesCount: number
-  issuesVisible: boolean
+  issuesActive: boolean
   exportDisabled: boolean
   contextDisabled: boolean
   onToggleIssues: () => void
@@ -49,7 +49,7 @@ function SidebarItem({
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        `flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-sm transition`,
+        `flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors`,
         active
           ? 'bg-slate-200/70 font-medium text-slate-950'
           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
@@ -79,7 +79,7 @@ function SidebarGroupLabel({ children }: { children: React.ReactNode }) {
 
 export function AppSidebar({
   issuesCount,
-  issuesVisible,
+  issuesActive,
   exportDisabled,
   contextDisabled,
   onToggleIssues,
@@ -113,7 +113,7 @@ export function AppSidebar({
           <button
             type="button"
             onClick={onOpenSearch}
-            className="flex h-8 w-full items-center rounded-md border border-slate-200 bg-slate-50 pl-8 pr-2 text-sm text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+            className="flex h-8 w-full items-center rounded-md border border-slate-200 bg-slate-50 pl-8 pr-2 text-sm text-slate-500 transition-colors hover:border-slate-300 hover:text-slate-700"
           >
             <span className="min-w-0 flex-1 truncate text-left">
               {t('sidebar.search')}
@@ -157,7 +157,7 @@ export function AppSidebar({
         <SidebarItem
           icon={<ExclamationTriangleIcon className="h-4 w-4" />}
           label={t('sidebar.issues')}
-          active={issuesVisible}
+          active={issuesActive}
           badge={issuesCount}
           onClick={onToggleIssues}
         />

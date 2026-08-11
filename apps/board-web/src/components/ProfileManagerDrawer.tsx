@@ -170,6 +170,7 @@ export function ProfileManagerDrawer({
         <div className="flex items-center gap-2">
           <TextInput
             label=""
+            aria-label={t('profileManager.searchLabel')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('profileManager.searchPlaceholder')}
@@ -276,6 +277,7 @@ function ProfileManagerProfileItem({
           className="min-h-8 px-2 text-xs"
           onClick={onCopyPk}
           title={t('profileManager.copyPk')}
+          aria-live="polite"
           icon={
             justCopied ? (
               <CheckIcon className="h-3.5 w-3.5 text-emerald-600" />
@@ -361,7 +363,7 @@ function ProfileManagerFormCard({
         {isCreate ? (
           <input
             id={pkId}
-            className="min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-mono text-slate-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+            className="min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-mono text-slate-950 outline-none transition-colors focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50"
             value={form.pk}
             onChange={(e) => onChangePk(e.target.value)}
             placeholder={t('profileManager.pkPlaceholder')}
@@ -383,7 +385,7 @@ function ProfileManagerFormCard({
         <input
           id={nameId}
           className={cn(
-            'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50'
+            'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50'
           )}
           value={form.name}
           onChange={(e) => onChangeName(e.target.value)}
@@ -404,7 +406,7 @@ function ProfileManagerFormCard({
         <input
           id={avatarUrlId}
           className={cn(
-            'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50'
+            'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50'
           )}
           value={form.avatarUrl}
           onChange={(e) => onChangeAvatarUrl(e.target.value)}

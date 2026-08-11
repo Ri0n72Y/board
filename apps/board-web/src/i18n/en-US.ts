@@ -11,6 +11,7 @@ const enUS = {
     'header.agentDrafts': 'Agent Drafts',
     'header.refresh': 'Refresh',
     'header.refreshing': 'Refreshing...',
+    'header.skipToContent': 'Skip to content',
     'header.settings': 'Settings',
     'header.more': 'More',
 
@@ -21,11 +22,22 @@ const enUS = {
     'sidebar.workspace': 'Workspace',
     'sidebar.actions': 'Actions',
     'sidebar.search': 'Search…',
+    'issues.subtitle': 'Projection diagnostics',
+    'issues.close': 'Close',
 
     // ─── Command palette ───
     'commandPalette.placeholder': 'Search records…',
     'commandPalette.noResults': 'No matching records',
     'commandPalette.hint': '↑↓ navigate · Enter open · Esc close',
+
+    // ─── Keyboard shortcuts ───
+    'shortcuts.title': 'Keyboard shortcuts',
+    'shortcuts.search': 'Global search',
+    'shortcuts.createRecord': 'Create record',
+    'shortcuts.boardView': 'Board view',
+    'shortcuts.listView': 'List view',
+    'shortcuts.help': 'Shortcut help',
+    'shortcuts.close': 'Close',
 
     // ─── View mode toggle ───
     'viewMode.list': 'List View',
@@ -875,6 +887,7 @@ const enUS = {
     'profileManager.subtitle': 'Members',
     'profileManager.close': 'Close',
     'profileManager.searchPlaceholder': 'Search by name or public key…',
+    'profileManager.searchLabel': 'Search members',
     'profileManager.create': 'Create',
     'profileManager.edit': 'Edit',
     'profileManager.copyPk': 'Copy PK',

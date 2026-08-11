@@ -96,7 +96,7 @@ export function BoardStatusDropColumn({
       </header>
 
       {column.records.length > 0 || showPreviewInThisColumn ? (
-        <div className="grid min-h-0 auto-rows-max items-start gap-3 overflow-y-auto pr-1 [scrollbar-width:thin]">
+        <div className="grid min-h-0 auto-rows-max items-start gap-3 overflow-y-auto overscroll-behavior-contain pr-1 [scrollbar-width:thin]">
           {column.records.flatMap((record, index) => [
             showPreviewInThisColumn && index === previewIndex ? (
               <DropPreviewCard

@@ -280,7 +280,7 @@ function StatusBadgeMenu({
         type="button"
         data-card-interactive="true"
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition',
+          'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors',
           open
             ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
             : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-400 hover:text-emerald-700'
@@ -324,7 +324,7 @@ function StatusBadgeMenu({
                 aria-selected={option === tag}
                 data-card-interactive="true"
                 className={cn(
-                  'flex w-full items-center gap-1.5 rounded-md px-2.5 py-1.5 text-left text-xs transition',
+                  'flex w-full items-center gap-1.5 rounded-md px-2.5 py-1.5 text-left text-xs transition-colors',
                   option === tag
                     ? 'bg-emerald-50 font-semibold text-emerald-700'
                     : 'text-slate-700 hover:bg-slate-100'

@@ -14,12 +14,14 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '../components/ui/Button'
 import { AppSidebar } from '../components/AppSidebar'
 import { CommandPalette } from '../components/CommandPalette'
+import { KeyboardShortcutsDialog } from '../components/KeyboardShortcutsDialog'
 import { BoardFilters } from '../components/BoardFilters'
 import { BoardView } from '../components/BoardView'
 import { CreateRecordDrawer } from '../components/CreateRecordDrawer'
 import { EmptyState } from '../components/EmptyState'
 import { ExportContextDrawer } from '../components/ExportContextDrawer'
 import { IssuesPanel } from '../components/IssuesPanel'
+import { IssuesDrawer } from '../components/IssuesDrawer'
 import { RecordCard } from '../components/RecordCard'
 import { RecordDetailDrawer } from '../components/RecordDetailDrawer'
 import { SnapshotDrawer } from '../components/SnapshotDrawer'
@@ -119,8 +121,9 @@ export function BoardCurrentPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isMembersOpen, setIsMembersOpen] = useState(false)
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
-  const [isIssuesVisible, setIsIssuesVisible] = useState(true)
+  const [isIssuesDrawerOpen, setIsIssuesDrawerOpen] = useState(false)
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false)
   const [viewMode, setViewMode] = useState<BoardViewMode>('board')
   const [detailRecord, setDetailRecord] = useState<RecordResponse<
     RecordItem<RecordBody>
@@ -206,20 +209,6 @@ export function BoardCurrentPage() {
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [setFilters])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault()
-        setIsCommandPaletteOpen((open) => !open)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
 
   const knownTags = useMemo(
     () => mergeKnownTags(projection, config),
@@ -367,6 +356,46 @@ export function BoardCurrentPage() {
     setIsCreateOpen(true)
   }, [historyController])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Cmd/Ctrl+K always available regardless of focus
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setIsCommandPaletteOpen((open) => !open)
+        return
+      }
+
+      // Ignore plain-key shortcuts while typing or with modifier keys
+      const target = event.target as HTMLElement | null
+      const isTyping =
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        target?.isContentEditable === true
+      if (isTyping || event.metaKey || event.ctrlKey || event.altKey) return
+      if (event.repeat) return
+
+      const key = event.key.toLowerCase()
+      if (key === 'n') {
+        event.preventDefault()
+        openCreate()
+      } else if (key === 'b') {
+        event.preventDefault()
+        setViewMode('board')
+      } else if (key === 'l') {
+        event.preventDefault()
+        setViewMode('list')
+      } else if (event.key === '?') {
+        event.preventDefault()
+        setIsShortcutsOpen(true)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [openCreate])
+
   const closeCreate = useCallback(() => {
     setIsCreateOpen(false)
   }, [])
@@ -466,13 +495,19 @@ export function BoardCurrentPage() {
 
   return (
     <div className="h-svh overflow-hidden bg-slate-50 text-slate-950">
+      <a
+        href="#main-content"
+        className="sr-only z-50 rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
+      >
+        {t('header.skipToContent')}
+      </a>
       <div className="grid h-full w-full grid-cols-[auto_minmax(0,1fr)] overflow-hidden">
         <AppSidebar
           issuesCount={blockedRecords.length + (diagnostics?.length ?? 0)}
-          issuesVisible={isIssuesVisible}
+          issuesActive={hasIssues}
           exportDisabled={boardExportController.isCurrentExporting || !projection}
           contextDisabled={!projection}
-          onToggleIssues={() => setIsIssuesVisible((v) => !v)}
+          onToggleIssues={() => setIsIssuesDrawerOpen(true)}
           onOpenAgentDrafts={agentDraftController.openDrawer}
           onOpenSnapshots={snapshotController.openSnapshots}
           onOpenContextPack={() => setIsContextExportOpen(true)}
@@ -560,7 +595,10 @@ export function BoardCurrentPage() {
           }}
         />
 
-        <main className="flex min-h-0 flex-col overflow-hidden px-6 pb-10 pt-4 sm:px-8">
+        <main
+          id="main-content"
+          className="flex min-h-0 flex-col overflow-hidden px-6 pb-10 pt-4 sm:px-8"
+        >
           {isRefreshError && (
             <section
               className="mb-1 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-900"
@@ -680,26 +718,28 @@ export function BoardCurrentPage() {
               ) : (
                 <section className="grid gap-3.5" aria-label="Current records">
                   {records.map((record) => (
-                    <RecordCard
+                    <div
                       key={record.body.id}
-                      record={record}
-                      profiles={profiles}
-                      assetOptions={assetOptions}
-                      relationTargetOptions={relationTargetOptions}
-                      onCardClick={openDetail}
-                    />
+                      className="[content-visibility:auto] [contain-intrinsic-size:auto_120px]"
+                    >
+                      <RecordCard
+                        record={record}
+                        profiles={profiles}
+                        assetOptions={assetOptions}
+                        relationTargetOptions={relationTargetOptions}
+                        onCardClick={openDetail}
+                      />
+                    </div>
                   ))}
                 </section>
               ))}
           </div>
 
           <div className="max-h-64 shrink-0 overflow-y-auto">
-            {isIssuesVisible && (
-              <IssuesPanel
-                blockedRecords={blockedRecords}
-                diagnostics={diagnostics}
-              />
-            )}
+            <IssuesPanel
+              blockedRecords={blockedRecords}
+              diagnostics={diagnostics}
+            />
           </div>
         </main>
         </div>
@@ -839,21 +879,20 @@ export function BoardCurrentPage() {
         onClose={() => setIsContextExportOpen(false)}
       />
 
-      {isCreateOpen && (
-        <CreateRecordDrawer
-          open
-          config={config}
-          profiles={profiles}
-          knownTags={configOtherTags}
-          statusTags={creatableStatusTags}
-          priorityTags={priorityTags}
-          assetOptions={assetOptions}
-          relationTargetOptions={relationTargetOptions}
-          relationConstraintOptions={relationConstraintOptions}
-          onClose={closeCreate}
-          onCreated={refreshAfterCreate}
-        />
-      )}
+      <CreateRecordDrawer
+        key={isCreateOpen ? 'open' : 'closed'}
+        open={isCreateOpen}
+        config={config}
+        profiles={profiles}
+        knownTags={configOtherTags}
+        statusTags={creatableStatusTags}
+        priorityTags={priorityTags}
+        assetOptions={assetOptions}
+        relationTargetOptions={relationTargetOptions}
+        relationConstraintOptions={relationConstraintOptions}
+        onClose={closeCreate}
+        onCreated={refreshAfterCreate}
+      />
 
       <AppSettingsDrawer
         open={isSettingsOpen}
@@ -866,6 +905,7 @@ export function BoardCurrentPage() {
         onClose={() => setIsSettingsOpen(false)}
       />
       <ProfileManagerDrawer
+        key={isMembersOpen ? 'open' : 'closed'}
         open={isMembersOpen}
         onClose={() => setIsMembersOpen(false)}
       />
@@ -890,6 +930,18 @@ export function BoardCurrentPage() {
         records={records}
         onOpenRecord={openDetail}
         onClose={() => setIsCommandPaletteOpen(false)}
+      />
+
+      <KeyboardShortcutsDialog
+        open={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
+      />
+
+      <IssuesDrawer
+        open={isIssuesDrawerOpen}
+        blockedRecords={blockedRecords}
+        diagnostics={diagnostics}
+        onClose={() => setIsIssuesDrawerOpen(false)}
       />
     </div>
   )

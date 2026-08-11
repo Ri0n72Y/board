@@ -85,7 +85,7 @@ export function SnapshotDrawer({
             <label className="grid gap-1.5 text-xs font-bold uppercase text-slate-500">
               {t('snapshot.reason')}
               <textarea
-                className="min-h-20 resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal normal-case text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
+                className="min-h-20 resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal normal-case text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
                 value={reason}
                 onChange={(event) => onReasonChange(event.target.value)}
                 placeholder={t('snapshot.reasonPlaceholder')}
@@ -444,7 +444,7 @@ function SnapshotRecords({
         <ol className="grid gap-3">
           {projection.records.map((record) => (
             <li
-              className="grid gap-2 rounded-md border border-slate-200 bg-slate-50 p-4"
+              className="grid gap-2 rounded-md border border-slate-200 bg-slate-50 p-4 [content-visibility:auto] [contain-intrinsic-size:auto_96px]"
               key={record.body.id}
             >
               <div className="min-w-0">

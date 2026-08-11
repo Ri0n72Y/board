@@ -59,6 +59,7 @@ export function AgentDraftMetaPanel({ draft }: AgentDraftMetaPanelProps) {
           <Button
             type="button"
             onClick={copyMarkdown}
+            aria-live="polite"
             icon={<ClipboardDocumentIcon className="h-4 w-4" />}
           >
             {copyFeedback ?? t('agent.meta.copyMarkdown')}

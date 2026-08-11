@@ -35,7 +35,7 @@ export function ViewModeToggle({ value, onChange }: ViewModeToggleProps) {
             key={option.value}
             type="button"
             className={cn(
-              'inline-flex items-center justify-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition',
+              'inline-flex items-center justify-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors',
               selected
                 ? 'bg-emerald-100 text-emerald-800'
                 : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'

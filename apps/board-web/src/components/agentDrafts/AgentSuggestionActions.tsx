@@ -33,7 +33,12 @@ export function AgentSuggestionActions({
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Button type="button" variant="default" onClick={handleCopyMarkdown}>
+      <Button
+        type="button"
+        variant="default"
+        aria-live="polite"
+        onClick={handleCopyMarkdown}
+      >
         {copyFeedback ?? t('agent.suggestions.copyFullMarkdown')}
       </Button>
       <Button type="button" variant="default" onClick={handleDownloadMarkdown}>

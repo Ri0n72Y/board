@@ -11,6 +11,7 @@ const zhCN = {
     'header.agentDrafts': 'Agent 草稿',
     'header.refresh': '刷新',
     'header.refreshing': '刷新中...',
+    'header.skipToContent': '跳到主要内容',
     'header.settings': '设置',
     'header.more': '更多',
 
@@ -21,11 +22,22 @@ const zhCN = {
     'sidebar.workspace': '工作区',
     'sidebar.actions': '操作',
     'sidebar.search': '搜索…',
+    'issues.subtitle': '投影诊断',
+    'issues.close': '关闭',
 
     // ─── Command palette ───
     'commandPalette.placeholder': '搜索记录…',
     'commandPalette.noResults': '没有匹配的记录',
     'commandPalette.hint': '↑↓ 导航 · Enter 打开 · Esc 关闭',
+
+    // ─── Keyboard shortcuts ───
+    'shortcuts.title': '键盘快捷键',
+    'shortcuts.search': '全局搜索',
+    'shortcuts.createRecord': '新建记录',
+    'shortcuts.boardView': '看板视图',
+    'shortcuts.listView': '列表视图',
+    'shortcuts.help': '快捷键帮助',
+    'shortcuts.close': '关闭',
 
     // ─── View mode toggle ───
     'viewMode.list': '列表视图',
@@ -813,6 +825,7 @@ const zhCN = {
     'profileManager.subtitle': '成员',
     'profileManager.close': '关闭',
     'profileManager.searchPlaceholder': '按名称或公钥搜索…',
+    'profileManager.searchLabel': '搜索成员',
     'profileManager.create': '创建',
     'profileManager.edit': '编辑',
     'profileManager.copyPk': '复制公钥',

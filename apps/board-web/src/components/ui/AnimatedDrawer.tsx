@@ -110,7 +110,7 @@ export function AnimatedDrawer({
                 </header>
 
                 {/* Body — scrollable */}
-                <div className="min-h-0 overflow-y-auto px-5 py-4">
+                <div className="min-h-0 overflow-y-auto overscroll-behavior-contain px-5 py-4">
                   {children}
                 </div>
 

@@ -8,7 +8,7 @@ interface SelectProps extends ComponentProps<'select'> {
 }
 
 const selectClass =
-  'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100'
+  'min-h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-950 outline-none transition-colors focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100'
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
   function Select({ label, options, className, ...props }, ref) {

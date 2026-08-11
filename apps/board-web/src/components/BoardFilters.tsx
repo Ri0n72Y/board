@@ -289,7 +289,7 @@ export function TagChipRow({
 
 function chipClassName({ selected }: { selected?: boolean }) {
   return cn(
-    'inline-flex min-h-[28px] max-w-full items-center rounded-full px-2.5 font-mono text-xs leading-tight break-all transition',
+    'inline-flex min-h-[28px] max-w-full items-center rounded-full px-2.5 font-mono text-xs leading-tight break-all transition-colors',
     selected
       ? 'border border-emerald-700 bg-emerald-100 text-emerald-800'
       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'

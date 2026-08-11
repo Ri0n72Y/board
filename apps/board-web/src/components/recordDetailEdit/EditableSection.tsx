@@ -28,7 +28,7 @@ export function EditableSection({
   return (
     <section
       className={cn(
-        'rounded-lg border bg-white p-4 transition',
+        'rounded-lg border bg-white p-4 transition-colors',
         editing
           ? 'border-emerald-600 bg-emerald-50/30 ring-2 ring-emerald-100'
           : dirty

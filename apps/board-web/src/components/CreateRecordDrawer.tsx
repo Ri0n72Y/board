@@ -174,12 +174,9 @@ export function CreateRecordDrawer({
     }
   }
 
-  if (!open) return null
-
   return (
     <AnimatedDrawer
-      open={open}
-      onClose={close}
+      open={open}      onClose={close}
       title={t('create.title')}
       subtitle={t('create.subtitle')}
       closeLabel={t('create.close')}
@@ -509,7 +506,7 @@ function TextAreaField({
       </label>
       <textarea
         id={id}
-        className="w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
+        className="w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}

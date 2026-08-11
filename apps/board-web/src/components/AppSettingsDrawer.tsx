@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type Ref } from 'react'
+import { useCallback, useMemo, useRef, useState, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DragDropProvider, useDraggable, useDroppable } from '@dnd-kit/react'
 import { Cog6ToothIcon } from '@heroicons/react/20/solid'
@@ -45,6 +45,9 @@ export function AppSettingsDrawer({
 }: AppSettingsDrawerProps) {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<SettingsTab>('board')
+  const tabRefs = useRef<Record<SettingsTab, HTMLButtonElement | null>>(
+    {} as Record<SettingsTab, HTMLButtonElement | null>
+  )
   const selected = useMemo(() => new Set(visibleColumnIds), [visibleColumnIds])
   const config = useBoardMetadataStore((state) => state.config)
   const metadataLoading = useBoardMetadataStore((state) => state.isLoading)
@@ -132,17 +135,24 @@ export function AppSettingsDrawer({
             const current = tabs.findIndex((tab) => tab.id === activeTab)
             const offset = event.key === 'ArrowRight' ? 1 : -1
             const next = tabs[(current + offset + tabs.length) % tabs.length]
-            if (next) setActiveTab(next.id)
+            if (next) {
+              setActiveTab(next.id)
+              tabRefs.current[next.id]?.focus()
+            }
           }}
         >
           {tabs.map((tab) => (
             <button
               key={tab.id}
+              ref={(el) => {
+                tabRefs.current[tab.id] = el
+              }}
               type="button"
               role="tab"
               aria-selected={activeTab === tab.id}
+              tabIndex={activeTab === tab.id ? 0 : -1}
               className={cn(
-                'rounded-md border px-3 py-1.5 text-sm font-medium transition',
+                'rounded-md border px-3 py-1.5 text-sm font-medium transition-colors',
                 activeTab === tab.id
                   ? 'border-emerald-600 bg-emerald-100 text-emerald-800'
                   : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-500 hover:bg-emerald-50'
@@ -224,7 +234,7 @@ function GeneralSettingsPanel({
                 key={lang}
                 type="button"
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-medium transition',
+                  'inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-medium transition-colors',
                   isActive
                     ? 'border-emerald-500 bg-emerald-100 text-emerald-800 cursor-default'
                     : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-500 hover:bg-emerald-50'
@@ -256,7 +266,7 @@ function GeneralSettingsPanel({
           <p className="text-xs text-slate-500">{t('settings.membersHint')}</p>
           <button
             type="button"
-            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-500 hover:bg-emerald-50"
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-emerald-500 hover:bg-emerald-50"
             onClick={onOpenProfileManager}
           >
             {t('settings.manageMembers')}
@@ -300,7 +310,7 @@ function ColumnOrderRow({
     <div
       ref={setRowRef}
       className={cn(
-        'flex min-h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition',
+        'flex min-h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition-colors',
         isDropTarget && 'border-emerald-500 bg-emerald-50',
         isDragging && 'opacity-60 ring-2 ring-emerald-100'
       )}

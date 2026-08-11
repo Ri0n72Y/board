@@ -245,7 +245,7 @@ export function SearchSelect({
         <input
           ref={inputRef}
           id={id}
-          className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 pr-14 text-sm font-normal text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+          className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 pr-14 text-sm font-normal text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
           value={inputValue}
           onChange={(event) => {
             setQuery(event.target.value)
@@ -290,7 +290,7 @@ export function SearchSelect({
             }
           >
             <ChevronDownIcon
-              className={cn('h-4 w-4 transition', isOpen && 'rotate-180')}
+              className={cn('h-4 w-4 transition-colors', isOpen && 'rotate-180')}
               aria-hidden="true"
             />
           </button>
@@ -310,7 +310,7 @@ export function SearchSelect({
                 id={`${id}-option-${index}`}
                 type="button"
                 className={cn(
-                  'grid w-full gap-0.5 px-3 py-2 text-left outline-none transition focus-visible:bg-emerald-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-600',
+                  'grid w-full gap-0.5 px-3 py-2 text-left outline-none transition-colors focus-visible:bg-emerald-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-600',
                   choice.disabled
                     ? 'cursor-not-allowed text-slate-300'
                     : 'text-slate-700 hover:bg-emerald-50 hover:text-slate-950',
