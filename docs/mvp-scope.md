@@ -310,10 +310,13 @@ parentId / version / append-only history / snapshot / projection
 
 ```text
 Web → API → Record / Patch / Projection / Snapshot services → MongoDB
+              └─ Redis（配置运行时源 + PID 原子计数器）
 ```
 
 * MongoDB collections：`records`、`snapshots`、`profiles`、`agent_drafts`、`agent_responses`、`agent_suggestions`。
-* 配置：YAML 读取；不建立 config collection；不做配置在线编辑、热更新和自动写回 YAML（仅 PID 分配器写回 `pid.nextNumber/latest`）。
+* **配置（2026-08 调整）**：Redis 为配置的运行时单一事实源（`board:config`，含 PID 运行态 `nextNumber/latest`）；YAML 只做导出与可视化配置（AI 编辑 YAML 后经 `POST /api/v0/config/yaml` 导入，静态部分更新、PID 运行态保留）；无 Redis 时回退内存 PID 分配（单进程开发/测试）。
+* **PID 分配（2026-08 调整）**：改用 Redis 原子递增（`INCR board:pid:next:<prefix>`），替代原 YAML 文件写回（`boardConfigWriter` 已删除）——并发可靠且重启不丢。
+* 不再做配置的 YAML 自动写回（原 `pid.nextNumber/latest` 写回机制已移除）。
 
 ## 二十、明确不进入 MVP
 

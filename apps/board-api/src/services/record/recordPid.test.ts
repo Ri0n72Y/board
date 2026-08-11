@@ -1,13 +1,9 @@
-import { DEFAULT_BOARD_CONFIG } from '@labour-board/shared'
 import { describe, expect, it } from 'vitest'
 import { MemoryRecordRepository } from '../../repositories/recordRepository.js'
 import { MemorySnapshotHeadRepository } from '../../repositories/snapshotHeadRepository.js'
+import { createMemoryPidStore } from '../../config/memoryPidStore.js'
 import { RecordService } from '../recordService.js'
-import {
-  cloneDefaultBoardConfig,
-  createRecordService,
-  createWriter,
-} from './recordTestUtils.js'
+import { cloneDefaultBoardConfig, createRecordService } from './recordTestUtils.js'
 
 describe('RecordService pid allocation', () => {
   it('creates card and asset records with config-driven public ids', async () => {
@@ -46,15 +42,15 @@ describe('RecordService pid allocation', () => {
     expect(second.body.pid).toBe('CARD-2')
   })
 
-  it('serializes concurrent pid draws and persists pid cache state', async () => {
+  it('serializes concurrent pid draws and persists latest state', async () => {
     const config = cloneDefaultBoardConfig()
-    const writer = createWriter()
+    const store = createMemoryPidStore(config)
     const repository = new MemoryRecordRepository()
     const service = new RecordService(
       repository,
       new MemorySnapshotHeadRepository(repository),
       config,
-      writer
+      store
     )
 
     const records = await Promise.all(
@@ -74,8 +70,7 @@ describe('RecordService pid allocation', () => {
       'CARD-4',
       'CARD-5',
     ])
-    expect(config.pid.latest?.CARD?.pid).toBe('CARD-5')
-    expect(writer.schedulePidWrite).toHaveBeenCalledTimes(5)
+    expect(await store.readLatestNumber('CARD')).toBe(5)
   })
 
   it('uses a heavy record scan when cached pid state conflicts', async () => {
@@ -104,10 +99,10 @@ describe('RecordService pid allocation', () => {
     expect(record.body.pid).toBe('CARD-2')
   })
 
-  it('reconciles pid cache and nextNumber from existing records', async () => {
+  it('reconciles pid counter and latest from existing records', async () => {
     const repository = new MemoryRecordRepository()
     const config = cloneDefaultBoardConfig()
-    const writer = createWriter()
+    const store = createMemoryPidStore(config)
     await repository.create({
       id: 'record-1',
       pid: 'CARD-7',
@@ -130,37 +125,41 @@ describe('RecordService pid allocation', () => {
       repository,
       new MemorySnapshotHeadRepository(repository),
       config,
-      writer
+      store
     )
 
     await service.reconcilePidState()
 
-    expect(config.pid.nextNumber).toBe(8)
-    expect(config.pid.latest?.CARD?.number).toBe(7)
-    expect(config.pid.latest?.ASSET?.number).toBe(3)
-    expect(writer.schedulePidWrite).toHaveBeenCalledOnce()
+    expect(await store.readLatestNumber('CARD')).toBe(7)
+    expect(await store.readLatestNumber('ASSET')).toBe(3)
+
+    // The next draw for CARD continues past the reconciled max.
+    const record = await service.create({
+      schema: 'CardBody',
+      tags: ['status:todo'],
+      body: { title: 'After reconcile' },
+    })
+    expect(record.body.pid).toBe('CARD-8')
   })
 
-  it('keeps nextNumber at least 1 when no records exist', async () => {
-    const config = {
-      ...cloneDefaultBoardConfig(),
-      pid: {
-        ...structuredClone(DEFAULT_BOARD_CONFIG.pid),
-        nextNumber: 0,
-      },
-    }
-    const writer = createWriter()
+  it('keeps counter at least 1 when no records exist', async () => {
+    const config = cloneDefaultBoardConfig()
+    const store = createMemoryPidStore(config)
     const repository = new MemoryRecordRepository()
     const service = new RecordService(
       repository,
       new MemorySnapshotHeadRepository(repository),
       config,
-      writer
+      store
     )
 
     await service.reconcilePidState()
 
-    expect(config.pid.nextNumber).toBe(1)
-    expect(writer.schedulePidWrite).toHaveBeenCalledOnce()
+    const record = await service.create({
+      schema: 'CardBody',
+      tags: ['status:todo'],
+      body: { title: 'First after empty reconcile' },
+    })
+    expect(record.body.pid).toBe('CARD-1')
   })
 })
