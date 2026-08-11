@@ -10,10 +10,7 @@ import { cn } from '../lib/cn'
 import { ProfileAvatar } from './ProfileAvatar'
 import { lookupProfile } from '../utils/board'
 import { formatTagLabel } from '../utils/tagDisplay'
-import {
-  priorityLevel,
-  PRIORITY_ORDER,
-} from '../utils/columnDensity'
+import { priorityLevel } from '../utils/columnDensity'
 import type { BoardStatusColumn } from '../utils/boardView'
 
 export type ListSortKey = 'pid' | 'title' | 'status' | 'priority' | 'assignee' | 'createdAt'
@@ -56,13 +53,33 @@ export function ListViewTable({
   const [sortKey, setSortKey] = useState<ListSortKey>('pid')
   const [sortDir, setSortDir] = useState<ListSortDirection>('asc')
 
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(lang, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    [lang]
+  )
+
+  const formatCreatedAt = (value: string) => {
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return value
+    return dateFormatter.format(date)
+  }
+
   const sorted = useMemo(() => {
     const dir = sortDir === 'asc' ? 1 : -1
     return [...records].sort((a, b) => {
       let cmp = 0
       switch (sortKey) {
         case 'pid':
-          cmp = a.body.pid.localeCompare(b.body.pid)
+          cmp = a.body.pid.localeCompare(b.body.pid, undefined, {
+            numeric: true,
+          })
           break
         case 'title':
           cmp = titleOf(a).localeCompare(titleOf(b))
@@ -147,11 +164,13 @@ export function ListViewTable({
             const level = priorityLevel(record)
             const assignee = record.body.assignee
             const profile = assignee ? lookupProfile(profiles ?? null, assignee) : null
-            const dotClass = level ? PRIORITY_ORDER.includes(level) : false
+            const hasPriority = level != null
+            const rowLabel = `${record.body.pid} ${titleOf(record)}`
             return (
               <tr
                 key={record.body.id}
-                className="cursor-pointer border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50"
+                aria-label={rowLabel}
+                className="cursor-pointer border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50 [content-visibility:auto] [contain-intrinsic-size:auto_44px]"
                 onClick={() => onCardClick(record)}
                 tabIndex={0}
                 onKeyDown={(event) => {
@@ -173,7 +192,7 @@ export function ListViewTable({
                   </span>
                 </td>
                 <td className="px-3 py-2">
-                  {level && dotClass ? (
+                  {level && hasPriority ? (
                     <span
                       className="inline-flex items-center gap-1 text-xs text-slate-600"
                       title={formatTagLabel(`priority:${level}`, lang)}
@@ -215,13 +234,7 @@ export function ListViewTable({
                   )}
                 </td>
                 <td className="px-3 py-2 text-xs tabular-nums text-slate-500">
-                  {new Intl.DateTimeFormat(lang, {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  }).format(new Date(record.createdAt))}
+                  {formatCreatedAt(record.createdAt)}
                 </td>
               </tr>
             )
