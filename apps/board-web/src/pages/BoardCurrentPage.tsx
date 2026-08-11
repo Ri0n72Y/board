@@ -17,12 +17,12 @@ import { CommandPalette } from '../components/CommandPalette'
 import { KeyboardShortcutsDialog } from '../components/KeyboardShortcutsDialog'
 import { BoardFilters } from '../components/BoardFilters'
 import { BoardView } from '../components/BoardView'
+import { ListViewTable } from '../components/ListViewTable'
 import { CreateRecordDrawer } from '../components/CreateRecordDrawer'
 import { EmptyState } from '../components/EmptyState'
 import { ExportContextDrawer } from '../components/ExportContextDrawer'
 import { IssuesPanel } from '../components/IssuesPanel'
 import { IssuesDrawer } from '../components/IssuesDrawer'
-import { RecordCard } from '../components/RecordCard'
 import { RecordDetailDrawer } from '../components/RecordDetailDrawer'
 import { SnapshotDrawer } from '../components/SnapshotDrawer'
 import { AgentDraftsDrawer } from '../components/AgentDraftsDrawer'
@@ -722,22 +722,13 @@ export function BoardCurrentPage() {
                   onReorderRecord={handleRecordReorder}
                 />
               ) : (
-                <section className="grid gap-3.5" aria-label="Current records">
-                  {records.map((record) => (
-                    <div
-                      key={record.body.id}
-                      className="[content-visibility:auto] [contain-intrinsic-size:auto_120px]"
-                    >
-                      <RecordCard
-                        record={record}
-                        profiles={profiles}
-                        assetOptions={assetOptions}
-                        relationTargetOptions={relationTargetOptions}
-                        onCardClick={openDetail}
-                      />
-                    </div>
-                  ))}
-                </section>
+                <ListViewTable
+                  records={records}
+                  profiles={profiles}
+                  columns={boardColumnOptions}
+                  lang={i18n.resolvedLanguage}
+                  onCardClick={openDetail}
+                />
               ))}
           </div>
 
