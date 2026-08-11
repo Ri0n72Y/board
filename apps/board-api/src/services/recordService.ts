@@ -8,7 +8,8 @@ import type {
   RecordQuery,
   RecordItem,
 } from '@labour-board/shared'
-import type { BoardConfigPidWriter } from '../config/boardConfig.js'
+import type { RedisConfigStore } from '../config/redisConfigStore.js'
+import { createMemoryPidStore } from '../config/memoryPidStore.js'
 import type {
   StoredRecordDoc,
   RecordRepository,
@@ -63,7 +64,7 @@ export class RecordService {
     repository: RecordRepository,
     snapshotHeadRepository: SnapshotHeadRepository,
     boardConfig: BoardConfig,
-    boardConfigWriter?: BoardConfigPidWriter
+    configStore?: RedisConfigStore
   ) {
     this.repository = repository
     this.snapshotHeadRepository = snapshotHeadRepository
@@ -71,7 +72,7 @@ export class RecordService {
     this.pidAllocator = new PidAllocator(
       repository,
       boardConfig,
-      boardConfigWriter
+      configStore ?? createMemoryPidStore(boardConfig)
     )
   }
 

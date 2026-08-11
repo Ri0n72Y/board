@@ -1,7 +1,11 @@
+import type { Redis } from 'ioredis'
 import type { BoardConfig } from '@labour-board/shared'
+import type { RedisConfigStore } from './redisConfigStore.js'
 
 export interface LoadBoardConfigOptions {
   defaultConfigPath?: string
+  /** When provided, config loads from Redis (runtime source of truth). */
+  redis?: Redis
 }
 
 export interface LoadedBoardConfig {
@@ -10,11 +14,8 @@ export interface LoadedBoardConfig {
   needsPidReconciliation: boolean
   warnings: string[]
   writable: boolean
-}
-
-export interface BoardConfigPidWriter {
-  schedulePidWrite(config: BoardConfig): void
-  flush(): Promise<void>
+  /** Present when Redis is enabled. */
+  configStore?: RedisConfigStore
 }
 
 export class BoardConfigError extends Error {

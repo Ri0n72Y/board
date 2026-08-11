@@ -1,10 +1,7 @@
 import type { Collection, Document } from 'mongodb'
 import type { ApiEnv } from '../config/env.js'
 import { loadAgentRuntimeConfig } from '../config/agentEnv.js'
-import {
-  createBoardConfigPidWriter,
-  loadBoardConfigState,
-} from '../config/boardConfig.js'
+import { loadBoardConfigState } from '../config/boardConfig.js'
 import {
   getProfilesCollection,
   getMongoClient,
@@ -14,6 +11,7 @@ import {
   getAgentResponsesCollection,
   getAgentSuggestionsCollection,
 } from '../db/mongo.js'
+import { getRedisClient } from '../db/redis.js'
 import {
   MemoryProfileRepository,
   MongoProfileRepository,
@@ -77,8 +75,10 @@ export interface ApiServices {
 }
 
 export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
-  const boardConfigState = await loadBoardConfigState(env)
+  const redis = env.redisUrl ? getRedisClient(env.redisUrl) : undefined
+  const boardConfigState = await loadBoardConfigState(env, { redis })
   const boardConfig = boardConfigState.config
+  const configStore = boardConfigState.configStore
   const agentRuntimeConfig = loadAgentRuntimeConfig(process.env)
   const internalAgentProviderConfig = loadInternalAgentProviderRuntimeConfig(
     process.env
@@ -124,9 +124,7 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
     recordRepository,
     snapshotHeadRepository,
     boardConfig,
-    boardConfigState.writable
-      ? createBoardConfigPidWriter(boardConfigState.configPath)
-      : undefined
+    configStore
   )
   await recordService.reconcilePidState()
   const snapshotService = new SnapshotService(
@@ -155,7 +153,7 @@ export async function createApiServices(env: ApiEnv): Promise<ApiServices> {
     : new MemoryAgentResponseRepository()
 
   return {
-    configService: new ConfigService(boardConfig, agentRuntimeConfig),
+    configService: new ConfigService(boardConfig, agentRuntimeConfig, configStore),
     profileService: new ProfileService(profileRepository),
     recordService,
     snapshotService,

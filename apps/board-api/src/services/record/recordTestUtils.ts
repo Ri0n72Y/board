@@ -1,6 +1,4 @@
 import { DEFAULT_BOARD_CONFIG, type BoardConfig } from '@labour-board/shared'
-import { vi } from 'vitest'
-import type { BoardConfigPidWriter } from '../../config/boardConfig.js'
 import { MemoryRecordRepository } from '../../repositories/recordRepository.js'
 import {
   MemorySnapshotHeadRepository,
@@ -48,15 +46,6 @@ export function makePatchDoc(
     createdBy: 'local',
     createdAt: new Date().toISOString(),
     ...overrides,
-  }
-}
-
-export function createWriter(): BoardConfigPidWriter & {
-  schedulePidWrite: ReturnType<typeof vi.fn>
-} {
-  return {
-    schedulePidWrite: vi.fn<(config: BoardConfig) => void>(),
-    flush: vi.fn(async () => {}),
   }
 }
 

@@ -3,6 +3,7 @@ export interface ApiEnv {
   boardConfigPath?: string
   mongodbUri?: string
   mongodbDb: string
+  redisUrl?: string
   port: number
 }
 
@@ -12,6 +13,7 @@ export function loadApiEnv(env: NodeJS.ProcessEnv = process.env): ApiEnv {
     boardConfigPath: env.BOARD_CONFIG_PATH,
     mongodbUri: env.MONGODB_URI,
     mongodbDb: env.MONGODB_DB ?? 'labour_board',
+    redisUrl: env.REDIS_URL,
     port: Number(env.PORT ?? 8787),
   }
 }

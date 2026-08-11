@@ -1,5 +1,5 @@
 import type { BoardConfig } from '@labour-board/shared'
-import type { BoardConfigPidWriter } from '../../config/boardConfig.js'
+import type { RedisConfigStore } from '../../config/redisConfigStore.js'
 import type {
   StoredRecordDoc,
   RecordRepository,
@@ -9,35 +9,39 @@ import { escapeRegExp } from '../../utils/string.js'
 
 export class PidAllocator {
   private readonly boardConfig: BoardConfig
-  private readonly boardConfigWriter?: BoardConfigPidWriter
+  private readonly configStore: RedisConfigStore
   private pidLock: Promise<void> = Promise.resolve()
   private readonly repository: RecordRepository
 
   constructor(
     repository: RecordRepository,
     boardConfig: BoardConfig,
-    boardConfigWriter?: BoardConfigPidWriter
+    configStore: RedisConfigStore
   ) {
     this.repository = repository
     this.boardConfig = boardConfig
-    this.boardConfigWriter = boardConfigWriter
+    this.configStore = configStore
   }
 
   async drawPid(prefix: string, recordId: string): Promise<string> {
     return this.withPidLock(async () => {
-      const cachedNumber = this.boardConfig.pid.latest?.[prefix]?.number
-      const nextNumber = Math.max(
-        this.boardConfig.pid.nextNumber,
-        cachedNumber === undefined ? 0 : cachedNumber + 1
+      // Loop with atomic INCR + conflict probe: each iteration claims a fresh
+      // number from Redis and checks it is unused. Safe across processes
+      // (unlike a shared record scan, which can hand out the same max+1).
+      let pid: string
+      for (let attempt = 0; attempt < 1000; attempt++) {
+        const nextNumber = await this.configStore.drawNextNumber(prefix)
+        const candidate = `${prefix}-${nextNumber}`
+        const existing = await this.repository.findByPid(candidate)
+        if (!existing) {
+          pid = candidate
+          await this.persistPidState(prefix, recordId, pid)
+          return pid
+        }
+      }
+      throw new RecordValidationError(
+        `Unable to allocate a unique pid for prefix ${prefix} after 1000 attempts`
       )
-      const cachedPid = `${prefix}-${nextNumber}`
-      const existing = await this.repository.findByPid(cachedPid)
-      const pid = existing
-        ? await this.drawPidFromRecordScan(prefix)
-        : cachedPid
-
-      this.persistPidState(prefix, recordId, pid)
-      return pid
     })
   }
 
@@ -46,8 +50,6 @@ export class PidAllocator {
       includeArchived: true,
       excludeTags: this.boardConfig.snapshot.excludeTags,
     })
-    let changed = false
-    let maxNumber = 0
 
     for (const prefix of this.boardConfig.pid.prefixes) {
       const max = findMaxPidRecord(records, prefix)
@@ -55,68 +57,34 @@ export class PidAllocator {
         continue
       }
 
-      maxNumber = Math.max(maxNumber, max.number)
-      const current = this.boardConfig.pid.latest?.[prefix]
-      if (
-        current?.recordId === max.record.id &&
-        current.number === max.number
-      ) {
+      const latestNumber = await this.configStore.readLatestNumber(prefix)
+      if (latestNumber === max.number) {
         continue
       }
 
-      this.boardConfig.pid.latest = {
-        ...this.boardConfig.pid.latest,
-        [prefix]: {
-          recordId: max.record.id,
-          pid: max.record.pid,
-          number: max.number,
-        },
-      }
-      changed = true
-    }
-
-    const reconciledNextNumber = Math.max(1, maxNumber + 1)
-    if (this.boardConfig.pid.nextNumber !== reconciledNextNumber) {
-      this.boardConfig.pid.nextNumber = reconciledNextNumber
-      changed = true
-    }
-
-    if (changed) {
-      this.boardConfigWriter?.schedulePidWrite(this.boardConfig)
+      // Seed the atomic counter past the DB max so the next draw continues
+      // after the highest record. This is atomic (SET if less).
+      await this.configStore.reconcileCounter(prefix, max.number)
+      await this.configStore.saveLatestNumber(
+        prefix,
+        max.record.id,
+        max.record.pid,
+        max.number
+      )
     }
   }
 
-  private async drawPidFromRecordScan(prefix: string): Promise<string> {
-    const records = await this.repository.list({
-      includeArchived: true,
-      excludeTags: this.boardConfig.snapshot.excludeTags,
-    })
-    const nextNumber = Math.max(
-      this.boardConfig.pid.nextNumber,
-      ...records
-        .map((record) => parsePublicIdNumber(record.pid, prefix))
-        .filter((value): value is number => value !== undefined)
-        .map((value) => value + 1)
-    )
-
-    return `${prefix}-${nextNumber}`
-  }
-
-  private persistPidState(prefix: string, recordId: string, pid: string): void {
+  private async persistPidState(
+    prefix: string,
+    recordId: string,
+    pid: string
+  ): Promise<void> {
     const number = parsePublicIdNumber(pid, prefix)
     if (number === undefined) {
       throw new RecordValidationError(`Invalid generated pid: ${pid}`)
     }
 
-    this.boardConfig.pid.latest = {
-      ...this.boardConfig.pid.latest,
-      [prefix]: {
-        recordId,
-        pid,
-        number,
-      },
-    }
-    this.boardConfigWriter?.schedulePidWrite(this.boardConfig)
+    await this.configStore.saveLatestNumber(prefix, recordId, pid, number)
   }
 
   private async withPidLock<T>(operation: () => Promise<T>): Promise<T> {
