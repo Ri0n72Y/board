@@ -97,6 +97,8 @@ const enUS = {
     'filters.projectionSummary': 'Projection summary',
     'board.horizontalScrollHint':
       'Scroll horizontally in this area to see more columns.',
+    'board.columnPriorityDistribution': 'Priority distribution per column',
+    'board.columnAssignees': 'Assignees',
     'board.hiddenColumnsNotice_one':
       '{{columns}} status column is hidden, containing {{records}} records.',
     'board.hiddenColumnsNotice_other':
