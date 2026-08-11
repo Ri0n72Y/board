@@ -262,9 +262,31 @@ Agent 辅助：agent_drafts、agent_responses、agent_suggestions
 
 > **注（2026-08 记录）**：增加 Agent 功能后 collection 从 3 个扩展到 6 个，其中 agent 相关 3 个主要用于存档（draft / suggestion / response 历史）。当前架构先保持现状，未来可评估是否收敛（如 agent 数据改内存 / 归档目录 / 独立库），暂不优化。
 
-配置从 YAML 读取。当前没有必要建立复杂组织 / RBAC / 权限数据库。
+当前没有必要建立复杂组织 / RBAC / 权限数据库。
 
-## 十六、Agent
+## 十六、配置与运行时状态管理
+
+MVP 的配置与运行时状态采用分层管理（2026-08 确立）：
+
+```text
+Redis（运行时单一事实源）
+ ├── board:config                完整 BoardConfig（含 pid 运行态）
+ ├── board:pid:next:<prefix>     PID 原子计数器（INCR）
+ └── board:pid:latest:<prefix>   PID 最新分配记录（hash）
+        ↑ 导入 / 导出 ↓
+YAML（board.example.yaml / board.yaml）
+ └── 只承载静态配置：records / pid.prefixes / tags / status / priority
+```
+
+* **配置分层**：Redis 是配置的运行时单一事实源（`board:config`，含 PID 运行态 `nextNumber/latest`）；YAML 只做导出与可视化配置。AI 编辑 YAML 后经 `POST /api/v0/config/yaml` 导入，静态部分更新、PID 运行态保留；`GET /api/v0/config/yaml` 导出静态配置（剥离运行态）。
+* **PID 分配原子化**：改用 Redis `INCR board:pid:next:<prefix>` 原子递增，替代原 YAML 文件写回（`boardConfigWriter` 已删除）——并发可靠、重启不丢；冲突路径用循环 INCR + `findByPid` 探测（跨进程安全）；启动 reconcile 用 Lua `SET-if-less` 原子校准计数器。
+* **热更新**：`ConfigService` 原地 mutate 共享配置引用，`RecordService` / `PidAllocator` 立即生效（无需重启）；`POST /api/v0/config` 支持整体 JSON 更新（保留 pid 运行态）。
+* **无 Redis 降级**：未配置 `REDIS_URL` 时回退内存 PID 分配（`memoryPidStore`），用于单进程开发与测试。
+* **加载优先级**：有 Redis 且已有 config → 从 Redis 读；无 → 从 YAML 读并 seed 到 Redis；YAML 也无且 `BOARD_CONFIG_OPTIONAL=true` → 用默认配置 seed 并自举。
+
+（代码：`apps/board-api/src/config/redisConfigStore.ts`、`services/pid/pidAllocator.ts`、`db/redis.ts`；API：`routes/config.ts`。）
+
+## 十七、Agent
 
 Agent 在 MVP 中的角色：
 
@@ -278,7 +300,7 @@ Agent 当前不能：自动提交 Patch、自动修改 Record、绕开人工确�
 
 （代码：draft 必须 reviewed 才能 handoff / 生成 suggestion；不存在 patch apply 路由。）
 
-## 十七、Export / Context Pack
+## 十八、Export / Context Pack
 
 MVP 还需要把事实移出系统：
 
@@ -287,7 +309,7 @@ MVP 还需要把事实移出系统：
 
 这承担了 LabourChain 很重要的一项验证：**劳动材料能不能脱离原来的 UI，继续被其他人或机器读取和利用。**
 
-## 十八、当前 MVP 的"链"做到什么程度
+## 十九、当前 MVP 的"链"做到什么程度
 
 长期 LabourChain 有：PoA、链、多节点、事实确认、repo 准入、链上协议。
 
@@ -306,7 +328,7 @@ parentId / version / append-only history / snapshot / projection
 
 未来 PoA / 链节点可以接在稳定的事实协议下面。
 
-## 十九、MVP 后端边界
+## 二十、MVP 后端边界
 
 ```text
 Web → API → Record / Patch / Projection / Snapshot services → MongoDB
@@ -314,21 +336,21 @@ Web → API → Record / Patch / Projection / Snapshot services → MongoDB
 ```
 
 * MongoDB collections：`records`、`snapshots`、`profiles`、`agent_drafts`、`agent_responses`、`agent_suggestions`。
-* **配置（2026-08 调整）**：Redis 为配置的运行时单一事实源（`board:config`，含 PID 运行态 `nextNumber/latest`）；YAML 只做导出与可视化配置（AI 编辑 YAML 后经 `POST /api/v0/config/yaml` 导入，静态部分更新、PID 运行态保留）；无 Redis 时回退内存 PID 分配（单进程开发/测试）。
-* **PID 分配（2026-08 调整）**：改用 Redis 原子递增（`INCR board:pid:next:<prefix>`），替代原 YAML 文件写回（`boardConfigWriter` 已删除）——并发可靠且重启不丢。
-* 不再做配置的 YAML 自动写回（原 `pid.nextNumber/latest` 写回机制已移除）。
+* Redis：配置运行时源（`board:config`）与 PID 原子计数器（`board:pid:*`）；无 Redis 时降级内存实现。
+* YAML：只做静态配置的导出与可视化（AI 编辑后导入），不再自动写回。
+* 配置管理 API：`GET/POST /api/v0/config`、`GET/POST /api/v0/config/yaml`（开放在线编辑与热更新边界）。
 
-## 二十、明确不进入 MVP
+## 二十一、明确不进入 MVP
 
 * 真正区块链节点、多节点共识、链上签名、节点同步；
-* 完整权限系统、RBAC、完整组织管理、完整 Tag 编辑后台；
+* 完整权限系统、RBAC、完整组织管理、完整 Tag 编辑后台（API 层无鉴权，公网部署前需补）；
 * 多人实时协同编辑、CRDT、View 排序 merge / conflict；
 * Agent 自动执行 Patch、自动绩效评价、大规模数据分析、推荐算法；
 * 完整商业化体系、复杂社交系统。
 
 这些暂时都不会提高当前核心假设的验证质量。
 
-## 二十一、MVP 压缩成 7 个系统能力
+## 二十二、MVP 压缩成 7 个系统能力
 
 ```text
 1. Fact            Record + Patch
@@ -342,7 +364,7 @@ Web → API → Record / Patch / Projection / Snapshot services → MongoDB
 
 其中 **1～6 构成核心闭环，7 保证这些事实能够迁移出应用。**
 
-## 二十二、当前完成度
+## 二十三、当前完成度
 
 ```text
 事实模型                ✅
@@ -361,11 +383,13 @@ Settings / View          ✅ Task12
 Column order             ✅ Task12
 Record order             ✅ Task15（2026-08 收尾）
 Task12 browser acceptance ✅（docs/browser-acceptance-2026-08.md 链路 A-F 走查完成）
+
+配置运行时管理          ✅（Redis 运行时源 + YAML 导入导出 + 热更新 + 原子 PID）
 ```
 
 当前主要矛盾：
 
-> **底层事实模型和主体产品结构基本成立，MVP 的 7 个系统能力（Fact / Projection / Organization / View / History / Human-Agent / Portability）已全部落地。** 之后不应继续无止境加功能，而应开始拿真实工作流跑一轮 MVP，观察"Record → Patch → Projection → Human/Agent → Patch"的循环是否真的成立。
+> **底层事实模型和主体产品结构基本成立，MVP 的 7 个系统能力（Fact / Projection / Organization / View / History / Human-Agent / Portability）与配置运行时管理已全部落地。** 之后不应继续无止境加功能，而应开始拿真实工作流跑一轮 MVP，观察"Record → Patch → Projection → Human/Agent → Patch"的循环是否真的成立。
 
 ### 超范围功能记录（MVP 之外已实现，2026-08 UX 打磨轮）
 
@@ -387,3 +411,4 @@ Task12 browser acceptance ✅（docs/browser-acceptance-2026-08.md 链路 A-F �
 | --- | --- | --- |
 | 2026-08-08 | 初版：基于 MVP 收束讨论（Task12 完成、Task15 待办）编写 | — |
 | 2026-08-11 | Task15 标记完成；Task12 acceptance 标记完成；补记超范围 UX 功能清单 | docs 更新（mvp-scope-update） |
+| 2026-08-11 | 整体重写：新增"配置与运行时状态管理"一节（Redis 运行时源 + YAML 导入导出 + 热更新 + 原子 PID）；后端边界与完成度同步更新 | PR #42（feat/redis-config-cache） |
