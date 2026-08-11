@@ -8,22 +8,20 @@ import { useTranslation } from 'react-i18next'
 import { ProfileAvatar } from './ProfileAvatar'
 import { lookupProfile } from '../utils/board'
 import { formatTagLabel } from '../utils/tagDisplay'
+import {
+  buildColumnDensity,
+  PRIORITY_ORDER,
+  type PriorityLevel,
+} from '../utils/columnDensity'
 
-const PRIORITY_ORDER = ['p0', 'p1', 'p2', 'p3']
-
-const PRIORITY_DOT_CLASS: Record<string, string> = {
+const PRIORITY_DOT_CLASS: Record<PriorityLevel, string> = {
   p0: 'bg-red-500',
   p1: 'bg-amber-500',
   p2: 'bg-sky-500',
   p3: 'bg-slate-300',
 }
 
-function priorityLevel(record: RecordResponse<RecordItem<RecordBody>>) {
-  const tag = record.body.tags.find((tag) => tag.startsWith('priority:'))
-  if (!tag) return null
-  const level = tag.slice('priority:'.length).toLowerCase()
-  return PRIORITY_ORDER.includes(level) ? level : null
-}
+const MAX_ASSIGNEE_AVATARS = 4
 
 interface ColumnDensitySummaryProps {
   records: RecordResponse<RecordItem<RecordBody>>[]
@@ -44,31 +42,23 @@ export function ColumnDensitySummary({
 
   if (records.length === 0) return null
 
-  const priorityCounts = new Map<string, number>()
-  const assigneeCounts = new Map<string, number>()
-  for (const record of records) {
-    const level = priorityLevel(record)
-    if (level) priorityCounts.set(level, (priorityCounts.get(level) ?? 0) + 1)
-    const assignee = record.body.assignee
-    if (assignee) assigneeCounts.set(assignee, (assigneeCounts.get(assignee) ?? 0) + 1)
-  }
-
+  const density = buildColumnDensity(records)
   const shownPriorities = PRIORITY_ORDER.filter((level) =>
-    priorityCounts.has(level)
+    density.priorityCounts.has(level)
   )
-  const shownAssignees = [...assigneeCounts.keys()].slice(0, 4)
+  const shownAssignees = density.assignees.slice(0, MAX_ASSIGNEE_AVATARS)
   const hiddenAssigneeCount = Math.max(
-    assigneeCounts.size - shownAssignees.length,
+    density.totalAssignees - shownAssignees.length,
     0
   )
 
   if (shownPriorities.length === 0 && shownAssignees.length === 0) return null
 
   return (
-    <div className="mt-1.5 flex min-w-0 items-center gap-2">
+    <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
       {shownPriorities.length > 0 && (
         <div
-          className="flex min-w-0 items-center gap-1"
+          className="flex min-w-0 flex-1 flex-wrap items-center gap-1"
           aria-label={t('board.columnPriorityDistribution')}
         >
           {shownPriorities.map((level) => (
@@ -81,7 +71,7 @@ export function ColumnDensitySummary({
                 aria-hidden="true"
                 className={`h-1.5 w-1.5 rounded-full ${PRIORITY_DOT_CLASS[level]}`}
               />
-              {priorityCounts.get(level)}
+              {density.priorityCounts.get(level)}
             </span>
           ))}
         </div>
