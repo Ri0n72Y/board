@@ -1,4 +1,4 @@
-import { useCallback, useId, useMemo, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { Profile } from '@labour-board/shared'
 import {
   CheckIcon,
@@ -55,6 +55,26 @@ export function ProfileManagerDrawer({
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [copiedPk, setCopiedPk] = useState<string | null>(null)
+  const copyResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (copyResetTimerRef.current) clearTimeout(copyResetTimerRef.current)
+    }
+  }, [])
+
+  // Reset local state each time the drawer opens. The drawer stays mounted
+  // so AnimatedDrawer can play its close transition.
+  useEffect(() => {
+    if (!open) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset on open
+    setSearch('')
+    setMode('idle')
+    setForm(emptyForm())
+    setError(null)
+    setIsSubmitting(false)
+    setCopiedPk(null)
+  }, [open])
 
   const filteredProfiles = useMemo(() => {
     if (!profiles) return []
@@ -150,9 +170,10 @@ export function ProfileManagerDrawer({
     try {
       await navigator.clipboard.writeText(pk)
       setCopiedPk(pk)
-      setTimeout(() => setCopiedPk(null), 2000)
+      if (copyResetTimerRef.current) clearTimeout(copyResetTimerRef.current)
+      copyResetTimerRef.current = setTimeout(() => setCopiedPk(null), 2000)
     } catch {
-      // clipboard API not available
+      setError(t('profileManager.copyFailed'))
     }
   }
 

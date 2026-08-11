@@ -3,6 +3,7 @@ import type {
   ProjectionDiagnostic,
 } from '@labour-board/shared'
 import { ExclamationTriangleIcon } from '@heroicons/react/20/solid'
+import { useTranslation } from 'react-i18next'
 import { Panel } from './ui/Panel'
 
 interface IssuesPanelProps {
@@ -11,18 +12,21 @@ interface IssuesPanelProps {
 }
 
 export function IssuesPanel({ blockedRecords, diagnostics }: IssuesPanelProps) {
+  const { t } = useTranslation()
   if (blockedRecords.length === 0 && diagnostics.length === 0) return null
 
   return (
     <Panel className="mt-4 border-red-200">
       <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-950">
         <ExclamationTriangleIcon className="h-5 w-5 text-red-500" aria-hidden="true" />
-        Projection Issues
+        {t('issues.title')}
       </h2>
 
       {diagnostics.length > 0 && (
         <div className="mt-3 grid gap-2">
-          <h3 className="text-sm font-semibold text-slate-500">Diagnostics</h3>
+          <h3 className="text-sm font-semibold text-slate-500">
+            {t('issues.diagnostics')}
+          </h3>
           <IssueList
             items={diagnostics.map((diagnostic) => ({
               key: diagnostic.code,
@@ -36,7 +40,7 @@ export function IssuesPanel({ blockedRecords, diagnostics }: IssuesPanelProps) {
       {blockedRecords.length > 0 && (
         <div className="mt-3 grid gap-2">
           <h3 className="text-sm font-semibold text-slate-500">
-            Blocked records
+            {t('issues.blockedRecords')}
           </h3>
           {blockedRecords.map((blocked) => (
             <article

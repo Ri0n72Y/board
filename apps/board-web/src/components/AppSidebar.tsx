@@ -31,6 +31,7 @@ function SidebarItem({
   icon,
   label,
   active = false,
+  pressed = false,
   disabled = false,
   badge,
   onClick,
@@ -38,19 +39,22 @@ function SidebarItem({
   icon: React.ReactNode
   label: string
   active?: boolean
+  pressed?: boolean
   disabled?: boolean
   badge?: number
   onClick?: () => void
 }) {
+  const selected = active || pressed
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
+      aria-pressed={pressed ? true : undefined}
       className={cn(
         `flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors`,
-        active
+        selected
           ? 'bg-slate-200/70 font-medium text-slate-950'
           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
         disabled && 'cursor-not-allowed opacity-40 hover:bg-transparent'
@@ -157,7 +161,7 @@ export function AppSidebar({
         <SidebarItem
           icon={<ExclamationTriangleIcon className="h-4 w-4" />}
           label={t('sidebar.issues')}
-          active={issuesActive}
+          pressed={issuesActive}
           badge={issuesCount}
           onClick={onToggleIssues}
         />

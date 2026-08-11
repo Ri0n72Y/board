@@ -50,9 +50,15 @@ export function CommandPalette({
   records,
   onOpenRecord,
 }: CommandPaletteProps) {
+  const { t } = useTranslation()
   return (
     <Transition appear show={open} as="div">
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog
+        as="div"
+        className="relative z-50"
+        onClose={onClose}
+        aria-label={t('commandPalette.title')}
+      >
         <TransitionChild
           as="div"
           enter="ease-out duration-150 motion-reduce:transition-none"
@@ -121,6 +127,10 @@ function CommandPalettePanel({
       .slice(0, MAX_RESULTS)
   }, [query, records])
 
+  // Derive a safe index: when the query narrows results, the stored index may
+  // point past the end. Clamp for display, aria-activedescendant, and Enter.
+  const activeIndexSafe = Math.min(activeIndex, Math.max(results.length - 1, 0))
+
   const select = (index: number) => {
     const record = results[index]
     if (!record) return
@@ -142,9 +152,7 @@ function CommandPalettePanel({
       // pinyin confirm), otherwise we'd open a record mid-composition.
       if (event.nativeEvent.isComposing) return
       event.preventDefault()
-      const index =
-        activeIndex >= 0 && activeIndex < results.length ? activeIndex : 0
-      select(index)
+      select(activeIndexSafe)
     }
   }
 
@@ -163,8 +171,8 @@ function CommandPalettePanel({
           aria-expanded="true"
           aria-controls="command-palette-results"
           aria-activedescendant={
-            results[activeIndex]
-              ? `command-result-${results[activeIndex].body.id}`
+            results[activeIndexSafe]
+              ? `command-result-${results[activeIndexSafe].body.id}`
               : undefined
           }
           value={query}
@@ -181,6 +189,7 @@ function CommandPalettePanel({
       <div
         id="command-palette-results"
         role="listbox"
+        aria-label={t('commandPalette.title')}
         className="max-h-[45vh] overflow-y-auto overscroll-behavior-contain p-1.5"
       >
         {results.length === 0 ? (
@@ -196,12 +205,12 @@ function CommandPalettePanel({
                 id={`command-result-${record.body.id}`}
                 type="button"
                 role="option"
-                aria-selected={index === activeIndex}
+                aria-selected={index === activeIndexSafe}
                 onClick={() => select(index)}
                 onMouseEnter={() => setActiveIndex(index)}
                 className={cn(
                   'flex w-full items-baseline gap-3 rounded-md px-3 py-2 text-left',
-                  index === activeIndex
+                  index === activeIndexSafe
                     ? 'bg-slate-100'
                     : 'hover:bg-slate-50'
                 )}

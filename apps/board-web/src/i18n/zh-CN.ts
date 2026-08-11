@@ -23,9 +23,13 @@ const zhCN = {
     'sidebar.actions': '操作',
     'sidebar.search': '搜索…',
     'issues.subtitle': '投影诊断',
+    'issues.title': '投影问题',
+    'issues.diagnostics': '诊断',
+    'issues.blockedRecords': '阻塞记录',
     'issues.close': '关闭',
 
     // ─── Command palette ───
+    'commandPalette.title': '全局搜索',
     'commandPalette.placeholder': '搜索记录…',
     'commandPalette.noResults': '没有匹配的记录',
     'commandPalette.hint': '↑↓ 导航 · Enter 打开 · Esc 关闭',
@@ -826,6 +830,7 @@ const zhCN = {
     'profileManager.close': '关闭',
     'profileManager.searchPlaceholder': '按名称或公钥搜索…',
     'profileManager.searchLabel': '搜索成员',
+    'profileManager.copyFailed': '复制失败，请手动复制。',
     'profileManager.create': '创建',
     'profileManager.edit': '编辑',
     'profileManager.copyPk': '复制公钥',

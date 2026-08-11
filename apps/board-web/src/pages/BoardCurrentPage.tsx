@@ -360,6 +360,9 @@ export function BoardCurrentPage() {
     if (typeof window === 'undefined') return
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Ignore key repeat (holding a key would toggle shortcuts repeatedly)
+      if (event.repeat) return
+
       // Cmd/Ctrl+K always available regardless of focus
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
@@ -374,16 +377,15 @@ export function BoardCurrentPage() {
         target?.tagName === 'TEXTAREA' ||
         target?.isContentEditable === true
       if (isTyping || event.metaKey || event.ctrlKey || event.altKey) return
-      if (event.repeat) return
 
       const key = event.key.toLowerCase()
-      if (key === 'n') {
+      if (key === 'n' && !event.shiftKey) {
         event.preventDefault()
         openCreate()
-      } else if (key === 'b') {
+      } else if (key === 'b' && !event.shiftKey) {
         event.preventDefault()
         setViewMode('board')
-      } else if (key === 'l') {
+      } else if (key === 'l' && !event.shiftKey) {
         event.preventDefault()
         setViewMode('list')
       } else if (event.key === '?') {
@@ -880,7 +882,6 @@ export function BoardCurrentPage() {
       />
 
       <CreateRecordDrawer
-        key={isCreateOpen ? 'open' : 'closed'}
         open={isCreateOpen}
         config={config}
         profiles={profiles}
@@ -905,7 +906,6 @@ export function BoardCurrentPage() {
         onClose={() => setIsSettingsOpen(false)}
       />
       <ProfileManagerDrawer
-        key={isMembersOpen ? 'open' : 'closed'}
         open={isMembersOpen}
         onClose={() => setIsMembersOpen(false)}
       />

@@ -23,9 +23,13 @@ const enUS = {
     'sidebar.actions': 'Actions',
     'sidebar.search': 'Search…',
     'issues.subtitle': 'Projection diagnostics',
+    'issues.title': 'Projection Issues',
+    'issues.diagnostics': 'Diagnostics',
+    'issues.blockedRecords': 'Blocked records',
     'issues.close': 'Close',
 
     // ─── Command palette ───
+    'commandPalette.title': 'Global search',
     'commandPalette.placeholder': 'Search records…',
     'commandPalette.noResults': 'No matching records',
     'commandPalette.hint': '↑↓ navigate · Enter open · Esc close',
@@ -888,6 +892,7 @@ const enUS = {
     'profileManager.close': 'Close',
     'profileManager.searchPlaceholder': 'Search by name or public key…',
     'profileManager.searchLabel': 'Search members',
+    'profileManager.copyFailed': 'Copy failed. Copy manually instead.',
     'profileManager.create': 'Create',
     'profileManager.edit': 'Edit',
     'profileManager.copyPk': 'Copy PK',

@@ -119,6 +119,16 @@ export function CreateRecordDrawer({
     return () => abortCreate(createRequestIdRef, createAbortRef)
   }, [])
 
+  // Reset the form each time the drawer opens (open: false -> true). The
+  // drawer stays mounted so AnimatedDrawer can play its close transition.
+  useEffect(() => {
+    if (!open) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset on open
+    setForm(initialFormState(config, statusTags, priorityTags))
+    setError(null)
+    setIsCreating(false)
+  }, [open, config, statusTags, priorityTags])
+
   // Derive effective status/priority: use form choice, fallback to config default
   const effectiveStatusTag = form.statusTag || statusTags[0] || ''
   const effectivePriorityTag = form.priorityTag || priorityTags[0] || ''

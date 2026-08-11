@@ -129,6 +129,7 @@ export function AppSettingsDrawer({
         <div
           className="mb-4 flex flex-wrap gap-2"
           role="tablist"
+          aria-label={t('settings.title')}
           onKeyDown={(event) => {
             if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
             event.preventDefault()
