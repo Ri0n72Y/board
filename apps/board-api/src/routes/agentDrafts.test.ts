@@ -352,7 +352,7 @@ describe('Agent Drafts route', () => {
     const createPayload = await createRes.json()
     const markdown = createPayload.data.draft.contextMarkdown as string
 
-    expect(markdown).toContain('ASSET-1 - Draft Asset')
+    expect(markdown).toContain(`${asset.pid} - Draft Asset`)
     expect(markdown).toContain(`raw id: ${asset.id}`)
     expect(markdown).toContain('Depends on CARD-')
     expect(markdown).toContain('Draft Target')
@@ -519,7 +519,7 @@ describe('Agent Drafts route', () => {
     const markdown = (await createRes.json()).data.draft
       .contextMarkdown as string
 
-    expect(markdown).toContain('ASSET-1 - Snapshot Asset')
+    expect(markdown).toContain(`${asset.pid} - Snapshot Asset`)
     expect(markdown).toContain(`raw id: ${asset.id}`)
     expect(markdown).toContain('Blocks CARD-')
     expect(markdown).toContain('Snapshot Target')
