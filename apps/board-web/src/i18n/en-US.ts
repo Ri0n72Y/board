@@ -54,6 +54,13 @@ const enUS = {
     'list.priority': 'Priority',
     'list.assignee': 'Assignee',
     'list.createdAt': 'Created',
+    'list.columnMenu': 'Column menu',
+    'list.manageColumns': 'Manage columns',
+    'list.manageColumnsSubtitle': 'Reorder the visible columns',
+    'list.moveLeft': 'Move left',
+    'list.moveRight': 'Move right',
+    'list.done': 'Done',
+    'list.close': 'Close',
 
     // ─── Settings ───
     'settings.title': 'Settings',

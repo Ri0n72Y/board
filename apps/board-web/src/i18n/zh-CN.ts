@@ -54,6 +54,13 @@ const zhCN = {
     'list.priority': '优先级',
     'list.assignee': '负责人',
     'list.createdAt': '创建时间',
+    'list.columnMenu': '列菜单',
+    'list.manageColumns': '管理列',
+    'list.manageColumnsSubtitle': '调整列的显示顺序',
+    'list.moveLeft': '左移',
+    'list.moveRight': '右移',
+    'list.done': '完成',
+    'list.close': '关闭',
 
     // ─── Settings ───
     'settings.title': '设置',
