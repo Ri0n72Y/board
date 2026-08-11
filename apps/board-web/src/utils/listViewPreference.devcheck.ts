@@ -6,7 +6,9 @@
 import {
   moveListViewColumn,
   moveListViewColumnByOffset,
+  readListViewColumnOrder,
   resolveListViewColumnOrder,
+  writeListViewColumnOrder,
 } from './listViewPreference'
 
 let failures = 0
@@ -99,6 +101,57 @@ eq(
   ['a', 'b', 'c'],
   'unknown id no-op'
 )
+
+// resolve dedupe
+eq(
+  resolveListViewColumnOrder(['a', 'b', 'c'], ['b', 'a', 'b', 'c', 'a']),
+  ['b', 'a', 'c'],
+  'duplicate persisted ids deduped'
+)
+
+// persistence boundaries with injected storage mock
+{
+  const store = new Map<string, string>()
+  const storage = {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      store.set(key, value)
+    },
+  }
+
+  writeListViewColumnOrder(['c', 'a', 'b'], storage)
+  const written = readListViewColumnOrder(storage)
+  assert(
+    written?.join(',') === 'c,a,b',
+    `write+read roundtrip, got [${written?.join(',')}]`
+  )
+
+  store.set('board:listViewPreference', 'not-json{{{')
+  assert(
+    readListViewColumnOrder(storage) === null,
+    'corrupted JSON -> null'
+  )
+
+  store.set('board:listViewPreference', '{"columnOrder": "not-array"}')
+  assert(
+    readListViewColumnOrder(storage) === null,
+    'non-array columnOrder -> null'
+  )
+
+  store.set('board:listViewPreference', '{"columnOrder": ["a", 42, null]}')
+  assert(
+    readListViewColumnOrder(storage)?.join(',') === 'a',
+    'non-string ids filtered, got ['
+      .concat(readListViewColumnOrder(storage)?.join(',') ?? '')
+      .concat(']')
+  )
+
+  store.set('board:listViewPreference', '{}')
+  assert(
+    readListViewColumnOrder(storage) === null,
+    'empty preference object -> null'
+  )
+}
 
 if (failures > 0) {
   console.error(`listViewPreference devcheck: ${failures} failure(s)`)

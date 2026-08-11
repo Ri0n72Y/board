@@ -356,6 +356,13 @@ function ManageColumnsDrawer({
       subtitle={t('list.manageColumnsSubtitle')}
       size="sm"
       closeLabel={t('list.close')}
+      footer={
+        <div className="flex justify-end">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            {t('list.done')}
+          </Button>
+        </div>
+      }
     >
       <ol className="grid gap-1.5">
         {columns.map((column, index) => (
@@ -391,11 +398,6 @@ function ManageColumnsDrawer({
           </li>
         ))}
       </ol>
-      <div className="mt-4 flex justify-end">
-        <Button type="button" variant="ghost" onClick={onClose}>
-          {t('list.done')}
-        </Button>
-      </div>
     </AnimatedDrawer>
   )
 }

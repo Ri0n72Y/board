@@ -74,9 +74,15 @@ export function resolveListViewColumnOrder(
 ): string[] {
   if (!persistedOrder || persistedOrder.length === 0) return [...knownColumnIds]
   const known = new Set(knownColumnIds)
-  const ordered = persistedOrder.filter((id) => known.has(id))
-  const orderedSet = new Set(ordered)
-  const missing = knownColumnIds.filter((id) => !orderedSet.has(id))
+  const seen = new Set<string>()
+  const ordered: string[] = []
+  for (const id of persistedOrder) {
+    if (known.has(id) && !seen.has(id)) {
+      seen.add(id)
+      ordered.push(id)
+    }
+  }
+  const missing = knownColumnIds.filter((id) => !seen.has(id))
   return [...ordered, ...missing]
 }
 
