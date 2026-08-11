@@ -693,7 +693,11 @@ export function BoardCurrentPage() {
             {projection &&
               projectionStatus !== 'blocked' &&
               records.length === 0 && (
-                <EmptyState hasActiveFilters={active} hasIssues={hasIssues} />
+                <EmptyState
+                  hasActiveFilters={active}
+                  hasIssues={hasIssues}
+                  onCreate={openCreate}
+                />
               )}
 
             {projection &&

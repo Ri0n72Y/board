@@ -139,6 +139,9 @@ const zhCN = {
     'status.projectionIssues': '请查看下方的投影问题以了解详情。',
     'status.emptyFiltered': '没有当前记录匹配这些筛选项。',
     'status.empty': '当前看板没有记录。',
+    'empty.firstUseTitle': '开始你的第一个看板',
+    'empty.firstUseDescription': '创建第一条记录，把它放在对应的状态列里。也可以试试快捷键 N 快速新建。',
+    'empty.createFirstRecord': '创建第一条记录',
     'status.projectionIssuesHint':
       '下方列出了投影问题，可能解释记录缺失的原因。',
 

@@ -147,6 +147,9 @@ const enUS = {
     'status.projectionIssues': 'See projection issues below for details.',
     'status.emptyFiltered': 'No current records match these filters.',
     'status.empty': 'The current board has no records.',
+    'empty.firstUseTitle': 'Start your first board',
+    'empty.firstUseDescription': 'Create your first record and place it in a status column. Press N for a shortcut.',
+    'empty.createFirstRecord': 'Create first record',
     'status.projectionIssuesHint':
       'Projection issues are listed below and may explain missing records.',
 
