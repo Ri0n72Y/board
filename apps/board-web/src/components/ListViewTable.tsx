@@ -6,14 +6,31 @@ import type {
   RecordResponse,
 } from '@labour-board/shared'
 import { useTranslation } from 'react-i18next'
+import {
+  EllipsisHorizontalIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+} from '@heroicons/react/20/solid'
 import { cn } from '../lib/cn'
 import { ProfileAvatar } from './ProfileAvatar'
+import { Button } from './ui/Button'
+import { AnimatedDrawer } from './ui/AnimatedDrawer'
 import { lookupProfile } from '../utils/board'
 import { formatTagLabel } from '../utils/tagDisplay'
 import { priorityLevel } from '../utils/columnDensity'
+import {
+  moveListViewColumnByOffset,
+  readListViewColumnOrder,
+  resolveListViewColumnOrder,
+  writeListViewColumnOrder,
+} from '../utils/listViewPreference'
+import {
+  LIST_COLUMNS,
+  type ListColumnDef,
+  type ListSortKey,
+} from '../utils/listViewColumns'
 import type { BoardStatusColumn } from '../utils/boardView'
 
-export type ListSortKey = 'pid' | 'title' | 'status' | 'priority' | 'assignee' | 'createdAt'
 export type ListSortDirection = 'asc' | 'desc'
 
 interface ListViewTableProps {
@@ -52,6 +69,13 @@ export function ListViewTable({
   const { t } = useTranslation()
   const [sortKey, setSortKey] = useState<ListSortKey>('pid')
   const [sortDir, setSortDir] = useState<ListSortDirection>('asc')
+  const [isManageColumnsOpen, setIsManageColumnsOpen] = useState(false)
+  const [columnOrder, setColumnOrder] = useState<string[]>(() =>
+    resolveListViewColumnOrder(
+      LIST_COLUMNS.map((c) => c.key),
+      readListViewColumnOrder()
+    )
+  )
 
   const dateFormatter = useMemo(
     () =>
@@ -70,6 +94,14 @@ export function ListViewTable({
     if (Number.isNaN(date.getTime())) return value
     return dateFormatter.format(date)
   }
+
+  const orderedColumns = useMemo(
+    () =>
+      columnOrder
+        .map((key) => LIST_COLUMNS.find((c) => c.key === key))
+        .filter((c): c is ListColumnDef => c != null),
+    [columnOrder]
+  )
 
   const sorted = useMemo(() => {
     const dir = sortDir === 'asc' ? 1 : -1
@@ -95,7 +127,9 @@ export function ListViewTable({
         case 'priority': {
           const pa = priorityLevel(a)
           const pb = priorityLevel(b)
-          cmp = (pa == null ? 99 : PRIORITY_RANK[pa]) - (pb == null ? 99 : PRIORITY_RANK[pb])
+          cmp =
+            (pa == null ? 99 : PRIORITY_RANK[pa]) -
+            (pb == null ? 99 : PRIORITY_RANK[pb])
           break
         }
         case 'assignee':
@@ -118,129 +152,252 @@ export function ListViewTable({
     }
   }
 
-  const headerCell = (key: ListSortKey, label: string) => {
-    const active = sortKey === key
+  const moveColumn = (key: string, offset: number) => {
+    setColumnOrder((order) => {
+      const next = moveListViewColumnByOffset(order, key, offset)
+      writeListViewColumnOrder(next)
+      return next
+    })
+  }
+
+  const headerCell = (column: ListColumnDef) => {
+    const active = sortKey === column.key
     return (
       <th
         scope="col"
         className="px-3 py-2 text-left"
-        aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
+        aria-sort={
+          active ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined
+        }
       >
-        <button
-          type="button"
-          onClick={() => toggleSort(key)}
-          className={cn(
-            'inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide transition-colors',
-            active
-              ? 'text-slate-950'
-              : 'text-slate-500 hover:text-slate-800'
-          )}
-        >
-          {label}
-          <span aria-hidden="true" className="text-[10px]">
-            {active ? (sortDir === 'asc' ? '↑' : '↓') : ''}
-          </span>
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => toggleSort(column.key)}
+            className={cn(
+              'inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide transition-colors',
+              active
+                ? 'text-slate-950'
+                : 'text-slate-500 hover:text-slate-800'
+            )}
+          >
+            {t(column.labelKey)}
+            <span aria-hidden="true" className="text-[10px]">
+              {active ? (sortDir === 'asc' ? '↑' : '↓') : ''}
+            </span>
+          </button>
+          <button
+            type="button"
+            className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+            title={t('list.columnMenu')}
+            aria-label={`${t('list.columnMenu')}: ${t(column.labelKey)}`}
+            onClick={() => setIsManageColumnsOpen(true)}
+          >
+            <EllipsisHorizontalIcon className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </div>
       </th>
     )
   }
 
-  return (
-    <div className="overflow-x-auto overscroll-behavior-contain rounded-lg border border-slate-200 bg-white">
-      <table className="w-full min-w-[44rem] border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-slate-200 bg-slate-50">
-            {headerCell('pid', t('list.pid'))}
-            {headerCell('title', t('list.title'))}
-            {headerCell('status', t('list.status'))}
-            {headerCell('priority', t('list.priority'))}
-            {headerCell('assignee', t('list.assignee'))}
-            {headerCell('createdAt', t('list.createdAt'))}
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((record) => {
-            const statusTag = statusOf(record)
-            const level = priorityLevel(record)
-            const assignee = record.body.assignee
-            const profile = assignee ? lookupProfile(profiles ?? null, assignee) : null
-            const hasPriority = level != null
-            const rowLabel = `${record.body.pid} ${titleOf(record)}`
-            return (
-              <tr
-                key={record.body.id}
-                aria-label={rowLabel}
-                className="cursor-pointer border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50 [content-visibility:auto] [contain-intrinsic-size:auto_44px]"
-                onClick={() => onCardClick(record)}
-                tabIndex={0}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    onCardClick(record)
-                  }
-                }}
+  const renderCell = (record: RecordResponse<RecordItem<RecordBody>>, key: ListSortKey) => {
+    switch (key) {
+      case 'pid':
+        return (
+          <td className="px-3 py-2 font-mono text-xs text-slate-500">
+            {record.body.pid}
+          </td>
+        )
+      case 'title':
+        return (
+          <td className="max-w-[22rem] truncate px-3 py-2 font-medium text-slate-950">
+            {titleOf(record)}
+          </td>
+        )
+      case 'status': {
+        const statusTag = statusOf(record)
+        return (
+          <td className="px-3 py-2">
+            <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+              {statusTag ? formatTagLabel(statusTag, lang) : '—'}
+            </span>
+          </td>
+        )
+      }
+      case 'priority': {
+        const level = priorityLevel(record)
+        return (
+          <td className="px-3 py-2">
+            {level != null ? (
+              <span
+                className="inline-flex items-center gap-1 text-xs text-slate-600"
+                title={formatTagLabel(`priority:${level}`, lang)}
               >
-                <td className="px-3 py-2 font-mono text-xs text-slate-500">
-                  {record.body.pid}
-                </td>
-                <td className="max-w-[22rem] truncate px-3 py-2 font-medium text-slate-950">
-                  {titleOf(record)}
-                </td>
-                <td className="px-3 py-2">
-                  <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
-                    {statusTag ? formatTagLabel(statusTag, lang) : '—'}
-                  </span>
-                </td>
-                <td className="px-3 py-2">
-                  {level && hasPriority ? (
-                    <span
-                      className="inline-flex items-center gap-1 text-xs text-slate-600"
-                      title={formatTagLabel(`priority:${level}`, lang)}
-                    >
-                      <span
-                        aria-hidden="true"
-                        className={cn(
-                          'h-1.5 w-1.5 rounded-full',
-                          {
-                            p0: 'bg-red-500',
-                            p1: 'bg-amber-500',
-                            p2: 'bg-sky-500',
-                            p3: 'bg-slate-300',
-                          }[level]
-                        )}
-                      />
-                      {formatTagLabel(`priority:${level}`, lang)}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-slate-400">—</span>
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'h-1.5 w-1.5 rounded-full',
+                    {
+                      p0: 'bg-red-500',
+                      p1: 'bg-amber-500',
+                      p2: 'bg-sky-500',
+                      p3: 'bg-slate-300',
+                    }[level]
                   )}
-                </td>
-                <td className="px-3 py-2">
-                  {assignee && profile ? (
-                    <span className="inline-flex items-center gap-1.5">
-                      <ProfileAvatar
-                        name={profile.name ?? assignee}
-                        pk={assignee}
-                        avatarUrl={profile.avatarUrl}
-                        size={18}
-                        className="ring-1 ring-slate-200"
-                      />
-                      <span className="truncate text-xs text-slate-600">
-                        {profile.name ?? assignee}
-                      </span>
-                    </span>
-                  ) : (
-                    <span className="text-xs text-slate-400">—</span>
+                />
+                {formatTagLabel(`priority:${level}`, lang)}
+              </span>
+            ) : (
+              <span className="text-xs text-slate-400">—</span>
+            )}
+          </td>
+        )
+      }
+      case 'assignee': {
+        const assignee = record.body.assignee
+        const profile = assignee
+          ? lookupProfile(profiles ?? null, assignee)
+          : null
+        return (
+          <td className="px-3 py-2">
+            {assignee && profile ? (
+              <span className="inline-flex items-center gap-1.5">
+                <ProfileAvatar
+                  name={profile.name ?? assignee}
+                  pk={assignee}
+                  avatarUrl={profile.avatarUrl}
+                  size={18}
+                  className="ring-1 ring-slate-200"
+                />
+                <span className="truncate text-xs text-slate-600">
+                  {profile.name ?? assignee}
+                </span>
+              </span>
+            ) : (
+              <span className="text-xs text-slate-400">—</span>
+            )}
+          </td>
+        )
+      }
+      case 'createdAt':
+        return (
+          <td className="px-3 py-2 text-xs tabular-nums text-slate-500">
+            {formatCreatedAt(record.createdAt)}
+          </td>
+        )
+    }
+  }
+
+  return (
+    <>
+      <div className="overflow-x-auto overscroll-behavior-contain rounded-lg border border-slate-200 bg-white">
+        <table className="w-full min-w-[44rem] border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50">
+              {orderedColumns.map((column) => headerCell(column))}
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((record) => {
+              const rowLabel = `${record.body.pid} ${titleOf(record)}`
+              return (
+                <tr
+                  key={record.body.id}
+                  aria-label={rowLabel}
+                  className="cursor-pointer border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50 [content-visibility:auto] [contain-intrinsic-size:auto_44px]"
+                  onClick={() => onCardClick(record)}
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      onCardClick(record)
+                    }
+                  }}
+                >
+                  {orderedColumns.map((column) =>
+                    renderCell(record, column.key)
                   )}
-                </td>
-                <td className="px-3 py-2 text-xs tabular-nums text-slate-500">
-                  {formatCreatedAt(record.createdAt)}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <ManageColumnsDrawer
+        open={isManageColumnsOpen}
+        columns={orderedColumns}
+        onClose={() => setIsManageColumnsOpen(false)}
+        onMoveColumn={moveColumn}
+        t={t}
+      />
+    </>
+  )
+}
+
+function ManageColumnsDrawer({
+  open,
+  columns,
+  onClose,
+  onMoveColumn,
+  t,
+}: {
+  open: boolean
+  columns: ListColumnDef[]
+  onClose: () => void
+  onMoveColumn: (key: string, offset: number) => void
+  t: (key: string) => string
+}) {
+  return (
+    <AnimatedDrawer
+      open={open}
+      onClose={onClose}
+      title={t('list.manageColumns')}
+      subtitle={t('list.manageColumnsSubtitle')}
+      size="sm"
+      closeLabel={t('list.close')}
+      footer={
+        <div className="flex justify-end">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            {t('list.done')}
+          </Button>
+        </div>
+      }
+    >
+      <ol className="grid gap-1.5">
+        {columns.map((column, index) => (
+          <li
+            key={column.key}
+            className="flex min-h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+          >
+            <span className="min-w-0 flex-1 truncate">
+              {t(column.labelKey)}
+            </span>
+            <span className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                disabled={index === 0}
+                onClick={() => onMoveColumn(column.key, -1)}
+                title={t('list.moveLeft')}
+                aria-label={`${t('list.moveLeft')}: ${t(column.labelKey)}`}
+                className="inline-flex h-7 w-7 items-center justify-center rounded border border-slate-200 bg-white text-slate-500 transition-colors hover:border-emerald-500 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronUpIcon className="h-4 w-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                disabled={index === columns.length - 1}
+                onClick={() => onMoveColumn(column.key, 1)}
+                title={t('list.moveRight')}
+                aria-label={`${t('list.moveRight')}: ${t(column.labelKey)}`}
+                className="inline-flex h-7 w-7 items-center justify-center rounded border border-slate-200 bg-white text-slate-500 transition-colors hover:border-emerald-500 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </AnimatedDrawer>
   )
 }
