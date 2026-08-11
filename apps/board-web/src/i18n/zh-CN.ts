@@ -47,6 +47,14 @@ const zhCN = {
     'viewMode.list': '列表视图',
     'viewMode.board': '看板视图',
 
+    // ─── List view table ───
+    'list.pid': '编号',
+    'list.title': '标题',
+    'list.status': '状态',
+    'list.priority': '优先级',
+    'list.assignee': '负责人',
+    'list.createdAt': '创建时间',
+
     // ─── Settings ───
     'settings.title': '设置',
     'settings.language': '语言',

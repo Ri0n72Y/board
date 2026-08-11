@@ -47,6 +47,14 @@ const enUS = {
     'viewMode.list': 'List View',
     'viewMode.board': 'Board View',
 
+    // ─── List view table ───
+    'list.pid': 'ID',
+    'list.title': 'Title',
+    'list.status': 'Status',
+    'list.priority': 'Priority',
+    'list.assignee': 'Assignee',
+    'list.createdAt': 'Created',
+
     // ─── Settings ───
     'settings.title': 'Settings',
     'settings.language': 'Language',
