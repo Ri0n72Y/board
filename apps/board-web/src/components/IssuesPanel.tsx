@@ -16,7 +16,7 @@ export function IssuesPanel({ blockedRecords, diagnostics }: IssuesPanelProps) {
   return (
     <Panel className="mt-4 border-red-200">
       <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-950">
-        <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
+        <ExclamationTriangleIcon className="h-5 w-5 text-red-500" aria-hidden="true" />
         Projection Issues
       </h2>
 

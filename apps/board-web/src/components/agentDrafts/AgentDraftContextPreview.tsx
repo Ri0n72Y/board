@@ -26,7 +26,7 @@ export function AgentDraftContextPreview({
   const displayContent =
     expanded || !isLong
       ? fullContent
-      : fullContent.slice(0, COLLAPSED_LENGTH) + '\n\n...'
+      : fullContent.slice(0, COLLAPSED_LENGTH) + '\n\n…'
 
   return (
     <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">

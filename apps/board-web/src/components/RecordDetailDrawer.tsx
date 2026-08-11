@@ -1095,6 +1095,7 @@ function TagOptionGrid({
                   : 'inline-flex min-h-7 max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
               }
               disabled={disabled || (required && isSelected)}
+              aria-pressed={isSelected}
               onClick={() => onSelect(tag)}
             >
               {formatTagLabel(tag, lang)}
@@ -1240,10 +1241,18 @@ function uniqueTags(tags: Tag[]): Tag[] {
   return [...new Set(tags)]
 }
 
+const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
 function formatDate(value: string): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
+  return dateTimeFormatter.format(date)
 }
 
 function abortRequest(

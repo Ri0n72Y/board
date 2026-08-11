@@ -14,7 +14,7 @@ export function MarkdownPreview({
   isLoading = false,
   error = null,
   emptyMessage = 'No content',
-  loadingMessage = 'Loading preview...',
+  loadingMessage = 'Loading preview…',
   maxHeight = 'max-h-96',
 }: MarkdownPreviewProps) {
   if (isLoading) {

@@ -6,7 +6,6 @@ import type { BoardStatusColumn } from '../utils/boardView'
 import { AnimatedDrawer } from './ui/AnimatedDrawer'
 import { cn } from '../lib/cn'
 import { changeLanguage, type Language, LANGUAGES } from '../i18n'
-import { ProfileManagerDrawer } from './ProfileManagerDrawer'
 import { TagConfigReadOnlyPanel } from './TagConfigReadOnlyPanel'
 import { useBoardMetadataStore } from '../stores/boardMetadataStore'
 
@@ -31,6 +30,7 @@ interface AppSettingsDrawerProps {
   columnOrderIds?: string[]
   onVisibleColumnIdsChange: (columnIds: string[]) => void
   onColumnOrderIdsChange?: (columnIds: string[]) => void
+  onOpenMembers?: () => void
 }
 
 export function AppSettingsDrawer({
@@ -41,11 +41,11 @@ export function AppSettingsDrawer({
   columnOrderIds = [],
   onVisibleColumnIdsChange,
   onColumnOrderIdsChange,
+  onOpenMembers,
 }: AppSettingsDrawerProps) {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<SettingsTab>('board')
   const selected = useMemo(() => new Set(visibleColumnIds), [visibleColumnIds])
-  const [isProfileManagerOpen, setIsProfileManagerOpen] = useState(false)
   const config = useBoardMetadataStore((state) => state.config)
   const metadataLoading = useBoardMetadataStore((state) => state.isLoading)
   const metadataError = useBoardMetadataStore((state) => state.error)
@@ -116,14 +116,25 @@ export function AppSettingsDrawer({
   return (
     <>
       <AnimatedDrawer
-        open={open && !isProfileManagerOpen}
+        open={open}
         onClose={onClose}
         title={t('settings.title')}
         subtitle={t('header.settings')}
         size="sm"
         closeLabel={t('settings.close')}
       >
-        <div className="mb-4 flex flex-wrap gap-2" role="tablist">
+        <div
+          className="mb-4 flex flex-wrap gap-2"
+          role="tablist"
+          onKeyDown={(event) => {
+            if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
+            event.preventDefault()
+            const current = tabs.findIndex((tab) => tab.id === activeTab)
+            const offset = event.key === 'ArrowRight' ? 1 : -1
+            const next = tabs[(current + offset + tabs.length) % tabs.length]
+            if (next) setActiveTab(next.id)
+          }}
+        >
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -186,16 +197,9 @@ export function AppSettingsDrawer({
         )}
 
         {activeTab === 'general' && (
-          <GeneralSettingsPanel
-            onOpenProfileManager={() => setIsProfileManagerOpen(true)}
-          />
+          <GeneralSettingsPanel onOpenProfileManager={onOpenMembers} />
         )}
       </AnimatedDrawer>
-
-      <ProfileManagerDrawer
-        open={isProfileManagerOpen}
-        onClose={() => setIsProfileManagerOpen(false)}
-      />
     </>
   )
 }
@@ -203,7 +207,7 @@ export function AppSettingsDrawer({
 function GeneralSettingsPanel({
   onOpenProfileManager,
 }: {
-  onOpenProfileManager: () => void
+  onOpenProfileManager?: () => void
 }) {
   const { t, i18n } = useTranslation()
   return (
@@ -229,7 +233,12 @@ function GeneralSettingsPanel({
                 onClick={() => changeLanguage(lang as Language)}
                 aria-pressed={isActive}
               >
-                {isActive && <Cog6ToothIcon className="h-3.5 w-3.5" />}
+                {isActive && (
+                  <Cog6ToothIcon
+                    className="h-3.5 w-3.5"
+                    aria-hidden="true"
+                  />
+                )}
                 {lang === 'en-US'
                   ? t('settings.language.enUS')
                   : t('settings.language.zhCN')}
@@ -239,19 +248,21 @@ function GeneralSettingsPanel({
         </div>
       </section>
 
-      <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
-        <h3 className="text-sm font-semibold uppercase text-slate-500">
-          {t('settings.members')}
-        </h3>
-        <p className="text-xs text-slate-500">{t('settings.membersHint')}</p>
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-500 hover:bg-emerald-50"
-          onClick={onOpenProfileManager}
-        >
-          {t('settings.manageMembers')}
-        </button>
-      </section>
+      {onOpenProfileManager && (
+        <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5">
+          <h3 className="text-sm font-semibold uppercase text-slate-500">
+            {t('settings.members')}
+          </h3>
+          <p className="text-xs text-slate-500">{t('settings.membersHint')}</p>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-500 hover:bg-emerald-50"
+            onClick={onOpenProfileManager}
+          >
+            {t('settings.manageMembers')}
+          </button>
+        </section>
+      )}
     </div>
   )
 }

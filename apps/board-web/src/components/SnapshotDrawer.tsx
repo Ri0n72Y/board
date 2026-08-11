@@ -476,7 +476,7 @@ function Diagnostics({ projection }: { projection: BoardCurrentProjection }) {
   return (
     <section className="grid gap-3 rounded-lg border border-amber-300 bg-amber-50 p-5 text-amber-950">
       <div className="flex flex-wrap items-center gap-2">
-        <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />
+        <ExclamationTriangleIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
         <h3 className="text-sm font-semibold uppercase">
           {t('snapshot.diagnostics')}
         </h3>
@@ -553,8 +553,16 @@ function titleFromBody(body: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined
 }
 
+const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
 function formatDate(value: string): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
+  return dateTimeFormatter.format(date)
 }

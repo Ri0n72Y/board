@@ -24,6 +24,7 @@ export function EditableSection({
 }: EditableSectionProps) {
   const canEdit = Boolean(onEdit && !disabled)
   const content = editing && editor ? editor : children
+  const interactive = canEdit && !editing
   return (
     <section
       className={cn(
@@ -33,13 +34,23 @@ export function EditableSection({
           : dirty
             ? 'border-amber-400 bg-amber-50/30'
             : 'border-slate-200',
-        canEdit &&
-          !editing &&
+        interactive &&
           'cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/20'
       )}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? title : undefined}
       onClick={(event) => {
         event.stopPropagation()
         if (!editing && canEdit) onEdit?.()
+      }}
+      onKeyDown={(event) => {
+        if (!interactive) return
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          event.stopPropagation()
+          onEdit?.()
+        }
       }}
     >
       {inline && !editing ? (

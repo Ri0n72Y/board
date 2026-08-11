@@ -85,6 +85,7 @@ export function AgentDraftQueuePanel({
                   ? 'rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white'
                   : 'rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200'
               }
+              aria-pressed={statusFilter === f.value}
               onClick={() => setStatusFilter(f.value)}
             >
               {f.label}

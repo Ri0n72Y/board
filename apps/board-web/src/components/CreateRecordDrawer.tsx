@@ -8,7 +8,6 @@ import type {
 import {
   ExclamationTriangleIcon,
   PlusIcon,
-  XMarkIcon,
 } from '@heroicons/react/20/solid'
 import { useTranslation } from 'react-i18next'
 import axios from 'axios'
@@ -23,6 +22,7 @@ import { Button } from './ui/Button'
 import { Select } from './ui/Select'
 import { SearchSelect } from './ui/SearchSelect'
 import { TextInput } from './ui/TextInput'
+import { AnimatedDrawer } from './ui/AnimatedDrawer'
 
 interface CreateRecordDrawerProps {
   open: boolean
@@ -177,57 +177,51 @@ export function CreateRecordDrawer({
   if (!open) return null
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-slate-950/30"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) close()
-      }}
-    >
-      <aside
-        aria-labelledby="create-record-title"
-        aria-modal="true"
-        className="ml-auto grid h-full w-full max-w-2xl grid-rows-[auto_1fr_auto] overflow-hidden border-l border-slate-200 bg-stone-50 text-slate-950 shadow-xl"
-        role="dialog"
-      >
-        <header className="flex min-w-0 items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4">
-          <div className="min-w-0">
-            <p className="mb-1 text-xs font-bold uppercase text-slate-500">
-              {t('create.subtitle')}
-            </p>
-            <h2
-              className="text-xl font-semibold leading-tight"
-              id="create-record-title"
-            >
-              {t('create.title')}
-            </h2>
-          </div>
+    <AnimatedDrawer
+      open={open}
+      onClose={close}
+      title={t('create.title')}
+      subtitle={t('create.subtitle')}
+      closeLabel={t('create.close')}
+      size="lg"
+      footer={
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button
             type="button"
             variant="ghost"
             onClick={close}
-            title={t('create.closeTitle')}
-            icon={<XMarkIcon className="h-4 w-4" />}
+            disabled={isCreating}
           >
-            {t('create.close')}
+            {t('create.cancel')}
           </Button>
-        </header>
-
-        <div className="min-h-0 overflow-y-auto px-5 py-4">
-          <form
-            className="grid gap-4"
-            onSubmit={(event) => {
-              event.preventDefault()
-              void submit()
-            }}
+          <Button
+            type="button"
+            onClick={() => void submit()}
+            disabled={isCreating}
+            icon={<PlusIcon className="h-4 w-4" />}
           >
-            {error && (
-              <section
-                className="flex items-start gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"
-                role="alert"
-              >
-                <ExclamationTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>{error}</span>
+            {isCreating ? t('create.creating') : t('create.createButton')}
+          </Button>
+        </div>
+      }
+    >
+      <form
+        className="grid gap-4"
+        onSubmit={(event) => {
+          event.preventDefault()
+          void submit()
+        }}
+      >
+        {error && (
+          <section
+            className="flex items-start gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"
+            role="alert"
+          >
+            <ExclamationTriangleIcon
+              className="mt-0.5 h-4 w-4 shrink-0"
+              aria-hidden="true"
+            />
+            <span>{error}</span>
               </section>
             )}
 
@@ -297,6 +291,7 @@ export function CreateRecordDrawer({
                           ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
                           : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
                       }
+                      aria-pressed={effectiveStatusTag === tag}
                       onClick={() => setForm((c) => ({ ...c, statusTag: tag }))}
                       disabled={isCreating}
                     >
@@ -327,6 +322,7 @@ export function CreateRecordDrawer({
                           ? 'inline-flex min-h-[28px] max-w-full items-center rounded-full border border-emerald-700 bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800'
                           : 'inline-flex min-h-[28px] max-w-full items-center rounded-full bg-slate-100 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-200'
                       }
+                      aria-pressed={effectivePriorityTag === tag}
                       onClick={() =>
                         setForm((c) => ({
                           ...c,
@@ -408,28 +404,7 @@ export function CreateRecordDrawer({
               disabled={isCreating}
             />
           </form>
-        </div>
-
-        <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 bg-white px-5 py-4">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={close}
-            disabled={isCreating}
-          >
-            {t('create.cancel')}
-          </Button>
-          <Button
-            type="button"
-            onClick={() => void submit()}
-            disabled={isCreating}
-            icon={<PlusIcon className="h-4 w-4" />}
-          >
-            {isCreating ? t('create.creating') : t('create.createButton')}
-          </Button>
-        </footer>
-      </aside>
-    </div>
+    </AnimatedDrawer>
   )
 }
 

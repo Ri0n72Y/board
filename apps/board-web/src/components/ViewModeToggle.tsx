@@ -44,7 +44,7 @@ export function ViewModeToggle({ value, onChange }: ViewModeToggleProps) {
             title={option.label}
             onClick={() => onChange(option.value)}
           >
-            <Icon className="h-4 w-4" />
+            <Icon className="h-4 w-4" aria-hidden="true" />
             {option.label}
           </button>
         )

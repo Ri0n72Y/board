@@ -1,6 +1,7 @@
 import type { AgentSuggestionSummary } from '@labour-board/shared'
 import { useTranslation } from 'react-i18next'
 import { cn } from '../../lib/cn'
+import { formatDate } from './format'
 import { keyStableTextItems } from '../../utils/stableTextKeys'
 
 interface AgentSuggestionCardProps {
@@ -77,7 +78,7 @@ export function AgentSuggestionCard({
       )}
 
       <div className="flex items-center gap-3 text-[10px] text-slate-400">
-        <span>{new Date(suggestion.createdAt).toLocaleString()}</span>
+        <span>{formatDate(suggestion.createdAt)}</span>
         <span className="tabular-nums">
           {suggestion.provider}/{suggestion.model}
         </span>

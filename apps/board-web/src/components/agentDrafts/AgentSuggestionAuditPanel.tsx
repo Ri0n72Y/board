@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AgentSuggestionDetail } from '@labour-board/shared'
+import { formatDate } from './format'
 
 interface AgentSuggestionAuditPanelProps {
   audit: AgentSuggestionDetail['audit']
@@ -36,7 +37,7 @@ export function AgentSuggestionAuditPanel({
           />
           <AuditItem
             label={t('agent.suggestions.auditGeneratedAt')}
-            value={new Date(audit.generatedAt).toLocaleString()}
+            value={formatDate(audit.generatedAt)}
           />
           <AuditItem
             label={t('agent.suggestions.auditContextChars')}

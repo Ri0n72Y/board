@@ -3,6 +3,7 @@ import type { AgentDraftDetail, AgentDraftStatus } from '@labour-board/shared'
 import { ArrowPathIcon } from '@heroicons/react/20/solid'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/Button'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { ErrorBlock } from './ErrorBlock'
 
 interface AgentDraftReviewActionsProps {
@@ -24,6 +25,7 @@ export function AgentDraftReviewActions({
 }: AgentDraftReviewActionsProps) {
   const { t } = useTranslation()
   const [reviewNote, setReviewNote] = useState(draft.reviewNote ?? '')
+  const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional sync on key change
@@ -70,13 +72,7 @@ export function AgentDraftReviewActions({
         <Button
           type="button"
           disabled={isReviewing}
-          onClick={() =>
-            onUpdateReview(
-              draft.id,
-              'discarded',
-              reviewNote.trim() || undefined
-            )
-          }
+          onClick={() => setIsDiscardConfirmOpen(true)}
         >
           {t('agent.review.markDiscarded')}
         </Button>
@@ -92,6 +88,20 @@ export function AgentDraftReviewActions({
           </Button>
         )}
       </div>
+
+      <ConfirmDialog
+        open={isDiscardConfirmOpen}
+        title={t('agent.review.discardConfirmTitle')}
+        message={t('agent.review.discardConfirmMessage')}
+        confirmLabel={t('agent.review.discardConfirmAction')}
+        cancelLabel={t('agent.review.cancel')}
+        busy={isReviewing}
+        onConfirm={() => {
+          setIsDiscardConfirmOpen(false)
+          onUpdateReview(draft.id, 'discarded', reviewNote.trim() || undefined)
+        }}
+        onCancel={() => setIsDiscardConfirmOpen(false)}
+      />
     </section>
   )
 }

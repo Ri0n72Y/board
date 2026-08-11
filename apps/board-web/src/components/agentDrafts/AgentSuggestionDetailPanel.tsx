@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type {
   AgentSuggestionDetail,
@@ -7,6 +8,7 @@ import type {
   RecordResponse,
 } from '@labour-board/shared'
 import { Button } from '../ui/Button'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { MarkdownPreview } from '../ui/MarkdownPreview'
 import { AgentSuggestionMetaBar } from './AgentSuggestionMetaBar'
 import { AgentSuggestionActions } from './AgentSuggestionActions'
@@ -36,6 +38,7 @@ export function AgentSuggestionDetailPanel({
   onReviewSuggestion,
 }: AgentSuggestionDetailPanelProps) {
   const { t } = useTranslation()
+  const [isRejectConfirmOpen, setIsRejectConfirmOpen] = useState(false)
 
   if (!suggestion) return null
 
@@ -60,7 +63,7 @@ export function AgentSuggestionDetailPanel({
             <Button
               type="button"
               variant="ghost"
-              onClick={() => onReviewSuggestion(id, 'discarded')}
+              onClick={() => setIsRejectConfirmOpen(true)}
               disabled={isReviewing}
             >
               {t('agent.suggestions.reject')}
@@ -109,6 +112,20 @@ export function AgentSuggestionDetailPanel({
       <AgentSuggestionDiagnosticsPanel
         suggestionId={suggestion.id}
         diagnostics={suggestion.diagnostics}
+      />
+
+      <ConfirmDialog
+        open={isRejectConfirmOpen}
+        title={t('agent.suggestions.rejectConfirmTitle')}
+        message={t('agent.suggestions.rejectConfirmMessage')}
+        confirmLabel={t('agent.suggestions.rejectConfirmAction')}
+        cancelLabel={t('agent.review.cancel')}
+        busy={isReviewing}
+        onConfirm={() => {
+          setIsRejectConfirmOpen(false)
+          onReviewSuggestion(id, 'discarded')
+        }}
+        onCancel={() => setIsRejectConfirmOpen(false)}
       />
     </div>
   )

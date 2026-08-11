@@ -1,4 +1,5 @@
 import type { AgentSuggestionDetail } from '@labour-board/shared'
+import { formatDate } from './format'
 
 interface AgentSuggestionMetaBarProps {
   suggestion: AgentSuggestionDetail
@@ -15,7 +16,7 @@ export function AgentSuggestionMetaBar({
         {suggestion.provider}/{suggestion.model}
       </span>
       <span className="text-slate-400">|</span>
-      <span>{new Date(suggestion.createdAt).toLocaleString()}</span>
+      <span>{formatDate(suggestion.createdAt)}</span>
       <span className="text-slate-400">|</span>
       <span className="font-mono text-[10px] text-slate-400">
         ctx:{suggestion.contextHash.slice(0, 8)}

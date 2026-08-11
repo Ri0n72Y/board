@@ -100,7 +100,7 @@ function HistoryStatus({ history }: { history: RecordHistoryResponse }) {
       className="flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900"
       role="alert"
     >
-      <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />
+      <ExclamationTriangleIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
       <span className="text-sm font-semibold">{t('history.statusLabel')}</span>
       <Badge>{t(`history.status.${history.status}`)}</Badge>
       <span className="text-sm">{t('history.statusIncomplete')}</span>

@@ -2,7 +2,7 @@ import { Button as HuiButton } from '@headlessui/react'
 import { type ComponentProps, type ReactNode, forwardRef } from 'react'
 import { cn } from '../../lib/cn'
 
-type ButtonVariant = 'default' | 'ghost'
+type ButtonVariant = 'default' | 'ghost' | 'danger'
 
 interface ButtonProps extends ComponentProps<'button'> {
   variant?: ButtonVariant
@@ -13,6 +13,8 @@ const variantClass: Record<ButtonVariant, string> = {
   default: 'bg-white text-slate-950 hover:border-emerald-700',
   ghost:
     'border-transparent bg-transparent text-slate-400 hover:border-slate-300 hover:text-slate-600',
+  danger:
+    'border-red-200 bg-red-50 text-red-700 hover:border-red-400 hover:bg-red-100',
 }
 
 const base =

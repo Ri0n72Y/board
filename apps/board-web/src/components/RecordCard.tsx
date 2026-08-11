@@ -73,7 +73,7 @@ export function RecordCard({
   const { t, i18n } = useTranslation()
   const isZh = (i18n.resolvedLanguage ?? i18n.language).startsWith('zh')
   const movingLabel = t('move.moving', {
-    defaultValue: isZh ? '移动中...' : 'Moving...',
+    defaultValue: isZh ? '移动中…' : 'Moving…',
   })
   const current = record.body
   const body = asDisplayBody(current.body)
@@ -509,6 +509,16 @@ function asDisplayBody(body: RecordBody): Record<string, string> {
   return result
 }
 
+const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
 function formatDate(value: string) {
-  return new Date(value).toLocaleString()
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return dateTimeFormatter.format(date)
 }

@@ -107,7 +107,7 @@ export function BoardFilters({
           className="mr-2 inline-flex items-center gap-1 text-xs text-amber-700"
           role="alert"
         >
-          <ExclamationTriangleIcon className="h-3 w-3 shrink-0" />
+          <ExclamationTriangleIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
           {metadataError?.config && t('metadata.error.config')}
           {metadataError?.config && metadataError?.profiles && ' '}
           {metadataError?.profiles && t('metadata.error.profiles')}
@@ -117,7 +117,7 @@ export function BoardFilters({
       {/* Main filter row — compact, single row, dropdowns visible */}
       <div className="flex min-h-9 flex-nowrap items-center gap-6 overflow-visible">
         <div className="relative min-w-0 flex-[1_1_32rem]">
-          <MagnifyingGlassIcon className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+          <MagnifyingGlassIcon className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" aria-hidden="true" />
           <input
             type="text"
             className="h-9 w-full rounded-md border border-slate-200 bg-white pl-8 pr-3 text-sm text-slate-950 outline-none placeholder:text-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-100"
