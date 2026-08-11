@@ -17,8 +17,15 @@ const zhCN = {
     // ─── Sidebar navigation ───
     'sidebar.board': '看板',
     'sidebar.issues': '问题',
+    'sidebar.members': '成员',
     'sidebar.workspace': '工作区',
     'sidebar.actions': '操作',
+    'sidebar.search': '搜索…',
+
+    // ─── Command palette ───
+    'commandPalette.placeholder': '搜索记录…',
+    'commandPalette.noResults': '没有匹配的记录',
+    'commandPalette.hint': '↑↓ 导航 · Enter 打开 · Esc 关闭',
 
     // ─── View mode toggle ───
     'viewMode.list': '列表视图',
@@ -433,6 +440,10 @@ const zhCN = {
     'agent.review.updateFailed': '审核更新失败',
     'agent.review.markReviewed': '标记为已审核',
     'agent.review.markDiscarded': '标记为已丢弃',
+    'agent.review.discardConfirmTitle': '丢弃该草稿？',
+    'agent.review.discardConfirmMessage': '丢弃后该草稿将无法恢复，也不能再生成正式移交。',
+    'agent.review.discardConfirmAction': '确认丢弃',
+    'agent.review.cancel': '取消',
     'agent.review.resetToDraft': '重置为草稿',
     'agent.review.saving': '保存中...',
 
@@ -559,6 +570,9 @@ const zhCN = {
     'agent.suggestions.downloadMarkdown': '下载 Markdown',
     'agent.suggestions.accept': '接受',
     'agent.suggestions.reject': '拒绝',
+    'agent.suggestions.rejectConfirmTitle': '拒绝该建议？',
+    'agent.suggestions.rejectConfirmMessage': '拒绝后该建议将标记为已拒绝，不再提供补丁草稿。',
+    'agent.suggestions.rejectConfirmAction': '确认拒绝',
     'agent.suggestions.accepted': '已接受',
     'agent.suggestions.rejected': '已拒绝',
     'agent.suggestions.updating': '处理中...',

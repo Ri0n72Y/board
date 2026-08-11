@@ -13,6 +13,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { Button } from '../components/ui/Button'
 import { AppSidebar } from '../components/AppSidebar'
+import { CommandPalette } from '../components/CommandPalette'
 import { BoardFilters } from '../components/BoardFilters'
 import { BoardView } from '../components/BoardView'
 import { CreateRecordDrawer } from '../components/CreateRecordDrawer'
@@ -24,6 +25,7 @@ import { RecordDetailDrawer } from '../components/RecordDetailDrawer'
 import { SnapshotDrawer } from '../components/SnapshotDrawer'
 import { AgentDraftsDrawer } from '../components/AgentDraftsDrawer'
 import { AppSettingsDrawer } from '../components/AppSettingsDrawer'
+import { ProfileManagerDrawer } from '../components/ProfileManagerDrawer'
 import { AdvancedFiltersDrawer } from '../components/AdvancedFiltersDrawer'
 import { StatusBadge } from '../components/StatusBadge'
 import {
@@ -115,8 +117,10 @@ export function BoardCurrentPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isContextExportOpen, setIsContextExportOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isMembersOpen, setIsMembersOpen] = useState(false)
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
   const [isIssuesVisible, setIsIssuesVisible] = useState(true)
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
   const [viewMode, setViewMode] = useState<BoardViewMode>('board')
   const [detailRecord, setDetailRecord] = useState<RecordResponse<
     RecordItem<RecordBody>
@@ -202,6 +206,20 @@ export function BoardCurrentPage() {
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [setFilters])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setIsCommandPaletteOpen((open) => !open)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   const knownTags = useMemo(
     () => mergeKnownTags(projection, config),
@@ -460,6 +478,8 @@ export function BoardCurrentPage() {
           onOpenContextPack={() => setIsContextExportOpen(true)}
           onExportCurrent={boardExportController.exportCurrentMarkdown}
           onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenSearch={() => setIsCommandPaletteOpen(true)}
+          onOpenMembers={() => setIsMembersOpen(true)}
         />
 
         <div className="grid h-full w-full grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden">
@@ -546,7 +566,7 @@ export function BoardCurrentPage() {
               className="mb-1 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-900"
               role="alert"
             >
-              <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" />
+              <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span>
                 {t('status.refreshError')}: {t(error, { defaultValue: error })}
               </span>
@@ -558,7 +578,7 @@ export function BoardCurrentPage() {
               className="mb-1 flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-800"
               role="alert"
             >
-              <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" />
+              <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span>
                 {t('status.exportError')}:{' '}
                 {boardExportController.currentExportError}
@@ -571,7 +591,7 @@ export function BoardCurrentPage() {
               className="mb-1 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-900"
               role="alert"
             >
-              <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" />
+              <ExclamationTriangleIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span>{t('status.projectionPartial')}</span>
             </section>
           )}
@@ -618,7 +638,7 @@ export function BoardCurrentPage() {
                 role="alert"
               >
                 <p className="flex items-center gap-2 font-semibold">
-                  <ExclamationTriangleIcon className="h-5 w-5" />
+                  <ExclamationTriangleIcon className="h-5 w-5" aria-hidden="true" />
                   {t('status.projectionBlocked')}
                 </p>
                 <p>
@@ -842,7 +862,12 @@ export function BoardCurrentPage() {
         columnOrderIds={boardColumnOrderIds}
         onVisibleColumnIdsChange={updateVisibleBoardColumnIds}
         onColumnOrderIdsChange={updateBoardColumnOrderIds}
+        onOpenMembers={() => setIsMembersOpen(true)}
         onClose={() => setIsSettingsOpen(false)}
+      />
+      <ProfileManagerDrawer
+        open={isMembersOpen}
+        onClose={() => setIsMembersOpen(false)}
       />
       <AdvancedFiltersDrawer
         open={isAdvancedFiltersOpen}
@@ -858,6 +883,13 @@ export function BoardCurrentPage() {
         onAssetIdChange={updateAssetId}
         onRelationTargetChange={updateRelationTarget}
         onClose={() => setIsAdvancedFiltersOpen(false)}
+      />
+
+      <CommandPalette
+        open={isCommandPaletteOpen}
+        records={records}
+        onOpenRecord={openDetail}
+        onClose={() => setIsCommandPaletteOpen(false)}
       />
     </div>
   )

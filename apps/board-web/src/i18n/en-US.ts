@@ -17,8 +17,15 @@ const enUS = {
     // ─── Sidebar navigation ───
     'sidebar.board': 'Board',
     'sidebar.issues': 'Issues',
+    'sidebar.members': 'Members',
     'sidebar.workspace': 'Workspace',
     'sidebar.actions': 'Actions',
+    'sidebar.search': 'Search…',
+
+    // ─── Command palette ───
+    'commandPalette.placeholder': 'Search records…',
+    'commandPalette.noResults': 'No matching records',
+    'commandPalette.hint': '↑↓ navigate · Enter open · Esc close',
 
     // ─── View mode toggle ───
     'viewMode.list': 'List View',
@@ -464,6 +471,11 @@ const enUS = {
     'agent.review.updateFailed': 'Review update failed',
     'agent.review.markReviewed': 'Mark Reviewed',
     'agent.review.markDiscarded': 'Mark Discarded',
+    'agent.review.discardConfirmTitle': 'Discard this draft?',
+    'agent.review.discardConfirmMessage':
+      'A discarded draft cannot be recovered or used to generate a formal handoff.',
+    'agent.review.discardConfirmAction': 'Discard draft',
+    'agent.review.cancel': 'Cancel',
     'agent.review.resetToDraft': 'Reset to Draft',
     'agent.review.saving': 'Saving...',
 
@@ -602,6 +614,10 @@ const enUS = {
     'agent.suggestions.downloadMarkdown': 'Download Markdown',
     'agent.suggestions.accept': 'Accept',
     'agent.suggestions.reject': 'Reject',
+    'agent.suggestions.rejectConfirmTitle': 'Reject this suggestion?',
+    'agent.suggestions.rejectConfirmMessage':
+      'A rejected suggestion is marked as rejected and its patch draft is no longer offered.',
+    'agent.suggestions.rejectConfirmAction': 'Reject suggestion',
     'agent.suggestions.accepted': 'Accepted',
     'agent.suggestions.rejected': 'Rejected',
     'agent.suggestions.updating': 'Updating...',

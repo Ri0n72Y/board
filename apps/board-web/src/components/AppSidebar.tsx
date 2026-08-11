@@ -7,6 +7,8 @@ import {
   ArrowDownTrayIcon,
   ExclamationTriangleIcon,
   Cog6ToothIcon,
+  MagnifyingGlassIcon,
+  UsersIcon,
 } from '@heroicons/react/20/solid'
 import { cn } from '../lib/cn'
 
@@ -21,6 +23,8 @@ interface AppSidebarProps {
   onOpenContextPack: () => void
   onExportCurrent: () => void
   onOpenSettings: () => void
+  onOpenSearch: () => void
+  onOpenMembers: () => void
 }
 
 function SidebarItem({
@@ -52,7 +56,9 @@ function SidebarItem({
         disabled && 'cursor-not-allowed opacity-40 hover:bg-transparent'
       )}
     >
-      <span className="h-4 w-4 shrink-0">{icon}</span>
+      <span className="h-4 w-4 shrink-0" aria-hidden="true">
+        {icon}
+      </span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {typeof badge === 'number' && badge > 0 && (
         <span className="shrink-0 rounded-full bg-red-100 px-1.5 text-[11px] font-semibold text-red-700">
@@ -82,6 +88,8 @@ export function AppSidebar({
   onOpenContextPack,
   onExportCurrent,
   onOpenSettings,
+  onOpenSearch,
+  onOpenMembers,
 }: AppSidebarProps) {
   const { t } = useTranslation()
 
@@ -97,6 +105,25 @@ export function AppSidebar({
       </div>
 
       <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
+        <div className="relative mb-2">
+          <MagnifyingGlassIcon
+            className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            aria-hidden="true"
+          />
+          <button
+            type="button"
+            onClick={onOpenSearch}
+            className="flex h-8 w-full items-center rounded-md border border-slate-200 bg-slate-50 pl-8 pr-2 text-sm text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+          >
+            <span className="min-w-0 flex-1 truncate text-left">
+              {t('sidebar.search')}
+            </span>
+            <kbd className="shrink-0 rounded border border-slate-200 bg-white px-1 text-[10px] font-medium text-slate-400">
+              ⌘K
+            </kbd>
+          </button>
+        </div>
+
         <SidebarGroupLabel>{t('sidebar.workspace')}</SidebarGroupLabel>
         <SidebarItem
           icon={<Squares2X2Icon className="h-4 w-4" />}
@@ -137,6 +164,11 @@ export function AppSidebar({
       </nav>
 
       <div className="shrink-0 border-t border-slate-200 px-3 py-2">
+        <SidebarItem
+          icon={<UsersIcon className="h-4 w-4" />}
+          label={t('sidebar.members')}
+          onClick={onOpenMembers}
+        />
         <SidebarItem
           icon={<Cog6ToothIcon className="h-4 w-4" />}
           label={t('header.settings')}
