@@ -7,6 +7,7 @@ import type {
 } from '@labour-board/shared'
 import { useTranslation } from 'react-i18next'
 import { RecordCard } from './RecordCard'
+import { ColumnDensitySummary } from './ColumnDensitySummary'
 import type { BoardStatusColumn } from '../utils/boardView'
 import type { RecordReferenceOption } from '../utils/recordReferenceOptions'
 import type { BoardColumnInsertion } from '../hooks/useBoardStatusDnd'
@@ -60,7 +61,7 @@ export function BoardStatusDropColumn({
   onStatusChange,
   onCardClick,
 }: BoardStatusDropColumnProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { isDropTarget, setDropRef } = useStatusColumnDropTarget({
     columnId: column.id,
     tag: column.tag,
@@ -79,7 +80,7 @@ export function BoardStatusDropColumn({
     <section
       ref={setDropRef}
       className={cn(
-        'grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3 rounded-lg border border-slate-200 bg-slate-100 p-4 transition-colors',
+        'grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] gap-3 rounded-lg border border-slate-200 bg-slate-100 p-4 transition-colors',
         isDropTarget && 'border-emerald-400 bg-emerald-50'
       )}
       aria-label={column.label}
@@ -94,6 +95,11 @@ export function BoardStatusDropColumn({
           {column.records.length}
         </span>
       </header>
+      <ColumnDensitySummary
+        records={column.records}
+        profiles={profiles}
+        lang={i18n.resolvedLanguage}
+      />
 
       {column.records.length > 0 || showPreviewInThisColumn ? (
         <div className="grid min-h-0 auto-rows-max items-start gap-3 overflow-y-auto overscroll-behavior-contain pr-1 [scrollbar-width:thin]">

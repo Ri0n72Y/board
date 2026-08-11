@@ -94,6 +94,8 @@ const zhCN = {
     'filters.noKnownTags': '无已知标签。',
     'filters.projectionSummary': '投影摘要',
     'board.horizontalScrollHint': '在此区域横向滚动以查看其他列。',
+    'board.columnPriorityDistribution': '各列优先级分布',
+    'board.columnAssignees': '负责人',
     'board.hiddenColumnsNotice_other':
       '已隐藏 {{columns}} 个状态列，包含 {{records}} 条记录。',
     'board.hiddenUncategorizedNotice': '有 {{count}} 条记录位于隐藏的未分类列',
