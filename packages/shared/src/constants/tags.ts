@@ -37,13 +37,13 @@ export const REQUIRED_TAG_NAMESPACES = [
 
 export const REQUIRED_STATUS_TAGS = [
   {
-    id: 'status:backlog',
-    displayName: 'backlog',
+    id: 'status:todo',
+    displayName: 'todo',
     locked: true,
   },
   {
-    id: 'status:todo',
-    displayName: 'todo',
+    id: 'status:doing',
+    displayName: 'doing',
     locked: true,
   },
   {
@@ -55,6 +55,17 @@ export const REQUIRED_STATUS_TAGS = [
     id: 'status:done',
     displayName: 'done',
     locked: true,
+  },
+] as const satisfies readonly TagDefinition[]
+
+export const CUSTOM_STATUS_TAGS = [
+  {
+    id: 'status:backlog',
+    displayName: 'backlog',
+  },
+  {
+    id: 'status:blocked',
+    displayName: 'blocked',
   },
 ] as const satisfies readonly TagDefinition[]
 

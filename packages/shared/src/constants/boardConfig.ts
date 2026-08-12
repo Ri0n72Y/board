@@ -5,6 +5,7 @@ import {
   DEFAULT_PRIORITY_TAGS,
   DEFAULT_TRANSACTION_TAGS,
   REQUIRED_STATUS_TAGS,
+  CUSTOM_STATUS_TAGS,
   REQUIRED_TAG_NAMESPACES,
   ARCHIVED_TAG,
 } from './tags.js'
@@ -30,7 +31,7 @@ export const DEFAULT_BOARD_CONFIG = {
     namespaces: [...REQUIRED_TAG_NAMESPACES],
     status: {
       required: [...REQUIRED_STATUS_TAGS],
-      custom: [],
+      custom: [...CUSTOM_STATUS_TAGS],
     },
     priority: {
       defaults: [...DEFAULT_PRIORITY_TAGS],
