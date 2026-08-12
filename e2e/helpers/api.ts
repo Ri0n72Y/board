@@ -46,6 +46,7 @@ export class BoardApi {
       currentVersion: number
       tagChanges?: { add?: string[]; remove?: string[] }
       body?: Record<string, unknown>
+      description?: string
     }
   ): Promise<unknown> {
     const res = await this.request.post(`${API_BASE}/records/${recordId}/patches`, {
@@ -89,8 +90,9 @@ export class BoardApi {
       const patches = hist.data?.patches ?? []
       const last = patches[patches.length - 1]
       if (last) {
-        parentId = last.id
-        currentVersion = last.version ?? 0
+        // history patch 无 version 字段：currentVersion = 链长度（服务端 head.currentVersion）
+        parentId = last.body?.id ?? last.id
+        currentVersion = patches.length
       }
     }
     await this.patchRecord(recordId, {

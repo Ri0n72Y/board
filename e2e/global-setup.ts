@@ -32,33 +32,44 @@ export default async function globalSetup(): Promise<() => void> {
   const logDir = mkdtempSync(join(tmpdir(), 'board-e2e-'))
   cleanupLog = join(logDir, 'services.log')
 
-  apiProc = spawn('pnpm --filter @labour-board/api dev', {
-    cwd: root,
-    stdio: ['ignore', 'pipe', 'pipe'],
-    shell: true,
-  })
-  apiProc.stdout?.on('data', (d) => process.stdout.write(`[api] ${d}`))
-  apiProc.stderr?.on('data', (d) => process.stderr.write(`[api] ${d}`))
+  try {
+    apiProc = spawn('pnpm --filter @labour-board/api dev', {
+      cwd: root,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      shell: true,
+    })
+    apiProc.stdout?.on('data', (d) => process.stdout.write(`[api] ${d}`))
+    apiProc.stderr?.on('data', (d) => process.stderr.write(`[api] ${d}`))
 
-  await waitFor(['http://localhost:8787/health', 'http://localhost:8787/health'], 60_000)
+    await waitFor(['http://localhost:8787/health'], 60_000)
 
-  webProc = spawn(
-    'pnpm --filter @labour-board/web dev -- --port 5173 --strictPort',
-    { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], shell: true }
-  )
-  webProc.stdout?.on('data', (d) => process.stdout.write(`[web] ${d}`))
-  webProc.stderr?.on('data', (d) => process.stderr.write(`[web] ${d}`))
+    webProc = spawn(
+      'pnpm --filter @labour-board/web dev -- --port 5173 --strictPort',
+      { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], shell: true }
+    )
+    webProc.stdout?.on('data', (d) => process.stdout.write(`[web] ${d}`))
+    webProc.stderr?.on('data', (d) => process.stderr.write(`[web] ${d}`))
 
-  await waitFor(['http://localhost:5173', 'http://localhost:5173'], 60_000)
+    await waitFor(['http://localhost:5173'], 60_000)
+  } catch (err) {
+    await teardown()
+    throw err
+  }
 
-  return async () => {
-    for (const p of [webProc, apiProc]) {
-      if (!p) continue
-      try {
+  return teardown
+}
+
+async function teardown(): Promise<void> {
+  for (const p of [webProc, apiProc]) {
+    if (!p) continue
+    try {
+      if (process.platform === 'win32') {
         execSync(`taskkill /PID ${p.pid} /T /F`, { stdio: 'ignore' })
-      } catch {
-        /* already dead */
+      } else {
+        process.kill(-p.pid!, 'SIGTERM')
       }
+    } catch {
+      /* already dead */
     }
   }
 }
