@@ -29,7 +29,6 @@ const TEST_DATA_DIR = resolve(
   '../../../../test-data'
 )
 const BOARD_YAML = resolve(TEST_DATA_DIR, 'mocked_board.yaml')
-const RECORDS_JSON = resolve(TEST_DATA_DIR, 'mocked_records.json')
 
 function printUsage() {
   console.log(
@@ -38,6 +37,8 @@ function printUsage() {
       '',
       'Options:',
       '  --reset    Clear existing records in the target collection before import.',
+      '  --data FILE  Records JSON file under test-data/ to import (default: mocked_records.json).',
+      '  --profiles FILE  Optional profiles JSON file under test-data/ to import.',
       '  --help     Show this help message.',
       '',
       'Environment:',
@@ -60,6 +61,12 @@ async function main() {
   const args = process.argv.slice(2)
   const reset = args.includes('--reset')
   const help = args.includes('--help')
+  const dataFlagIndex = args.indexOf('--data')
+  const dataFileName =
+    dataFlagIndex >= 0 && args[dataFlagIndex + 1]
+      ? args[dataFlagIndex + 1]
+      : 'mocked_records.json'
+  const RECORDS_JSON = resolve(TEST_DATA_DIR, dataFileName)
 
   if (help) {
     printUsage()
@@ -220,6 +227,40 @@ async function main() {
     console.error(`ERROR: Failed to insert records: ${(err as Error).message}`)
     await client.close()
     process.exit(1)
+  }
+
+  // ─── Import profiles (optional) ───
+  const profilesFlagIndex = args.indexOf('--profiles')
+  const profilesFileName =
+    profilesFlagIndex >= 0 && args[profilesFlagIndex + 1]
+      ? args[profilesFlagIndex + 1]
+      : undefined
+  if (profilesFileName) {
+    const profilesJson = resolve(TEST_DATA_DIR, profilesFileName)
+    const profilesCollection = db.collection('profiles')
+    let rawProfiles: unknown
+    try {
+      const text = await readFile(profilesJson, 'utf8')
+      rawProfiles = JSON.parse(text)
+    } catch (err) {
+      console.error(
+        `ERROR: Failed to read profiles file ${profilesJson}: ${(err as Error).message}`
+      )
+      await client.close()
+      process.exit(1)
+    }
+    if (!Array.isArray(rawProfiles)) {
+      console.error('ERROR: Profiles file must contain a JSON array.')
+      await client.close()
+      process.exit(1)
+    }
+    if (reset) {
+      await profilesCollection.deleteMany({})
+    }
+    const result = await profilesCollection.insertMany(
+      rawProfiles as Record<string, unknown>[]
+    )
+    console.log(`  ✓ Inserted ${result.insertedCount} profiles`)
   }
 
   // ─── Verify ───
