@@ -47,6 +47,11 @@ export const REQUIRED_STATUS_TAGS = [
     locked: true,
   },
   {
+    id: 'status:wip',
+    displayName: 'wip',
+    locked: true,
+  },
+  {
     id: 'status:done',
     displayName: 'done',
     locked: true,
